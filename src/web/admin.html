@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Web Sales Total</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a class="brand" href="/" aria-label="Trang chu Web Sales Total">
+          <span class="brand-logo" aria-hidden="true">
+            <svg viewBox="0 0 100 100" role="img">
+              <circle cx="50" cy="50" r="46" class="logo-core" />
+              <path d="M28 56 L42 70 L72 36" class="logo-check" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Web Sales Total</strong>
+            <small>Admin Dashboard</small>
+          </span>
+        </a>
+        <div class="menu-links">
+          <div class="menu-primary-links">
+            <a href="/">Homepage</a>
+            <a href="/portal">Portal</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <section class="panel section-admin">
+        <div class="panel-title">
+          <div class="admin-label-row">
+            <span class="admin-badge-label">ADMIN</span>
+            <h2>Bảng điều hành vận hành</h2>
+          </div>
+          <p>Trang nội bộ để xem KPI, đơn hàng mới, giao dịch thanh toán và subscription active.</p>
+        </div>
+        <div class="admin-actions">
+          <button id="loadAdmin">Tải dashboard</button>
+          <form method="post" action="/auth/admin/logout">
+            <button type="submit">Đăng xuất</button>
+          </form>
+          <span class="admin-helper">Tạm thời chưa bật auth production trong MVP này.</span>
+        </div>
+        <pre id="adminData" class="json-box"></pre>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <strong>Web Sales Total</strong>
+          <span>Admin route riêng cho vận hành nội bộ</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./admin.js"></script>
+  </body>
+</html>

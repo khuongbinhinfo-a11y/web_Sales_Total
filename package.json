@@ -1,6 +1,7 @@
 {
   "name": "web_sales_total",
   "version": "1.0.0",
+  "description": "SaaS commerce MVP for selling software plans, top-ups, and usage-based credits.",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
@@ -13,12 +14,15 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0",
+    "stripe": "^22.0.2",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

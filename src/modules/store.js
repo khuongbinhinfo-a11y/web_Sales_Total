@@ -29,6 +29,24 @@ function mapUsageLog(row) {
   };
 }
 
+function mapKeyDelivery(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    productId: row.product_id,
+    keyId: row.key_id,
+    keyValue: row.key_value,
+    deliveredToCustomer: row.delivered_to_customer,
+    deliveryChannel: row.delivery_channel,
+    deliveredPayload: row.delivered_payload,
+    deliveredAt: row.delivered_at
+  };
+}
+
 function computePeriod(cycle) {
   const startAt = new Date();
   const endAt = new Date(startAt);
@@ -111,6 +129,48 @@ async function createOrder({ customerId, appId, productId }) {
   };
 }
 
+async function getOrderById(orderId) {
+  const result = await pool.query(
+    `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+     FROM orders
+     WHERE id = $1::uuid`,
+    [orderId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapOrder(result.rows[0]);
+}
+
+async function getOrderKeyDelivery(orderId) {
+  const deliveryResult = await pool.query(
+    `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+            d.delivered_payload, d.delivered_at, k.key_value
+     FROM order_key_deliveries d
+     JOIN product_keys k ON k.id = d.key_id
+     WHERE d.order_id = $1::uuid`,
+    [orderId]
+  );
+
+  if (deliveryResult.rowCount === 0) {
+    return null;
+  }
+
+  return mapKeyDelivery(deliveryResult.rows[0]);
+}
+
+async function getOrderDetailsById(orderId) {
+  const order = await getOrderById(orderId);
+  if (!order) {
+    return null;
+  }
+
+  const keyDelivery = await getOrderKeyDelivery(orderId);
+  return { order, keyDelivery };
+}
+
 async function recordWebhookEvent(event) {
   const result = await pool.query(
     `INSERT INTO payment_webhook_events(event_id, order_id, provider, provider_transaction_id, status, payload)
@@ -148,8 +208,9 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
 
     const orderRow = orderResult.rows[0];
     if (orderRow.status === "paid") {
+      const existingDelivery = await getOrderKeyDelivery(orderId);
       await client.query("COMMIT");
-      return { order: mapOrder(orderRow), idempotent: true };
+      return { order: mapOrder(orderRow), keyDelivery: existingDelivery, idempotent: true };
     }
 
     const txResult = await client.query(
@@ -238,8 +299,67 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       ]
     );
 
+    const deliveryResult = await client.query(
+      `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+              d.delivered_payload, d.delivered_at, k.key_value
+       FROM order_key_deliveries d
+       JOIN product_keys k ON k.id = d.key_id
+       WHERE d.order_id = $1::uuid`,
+      [paidOrder.id]
+    );
+
+    let keyDelivery = deliveryResult.rowCount === 0 ? null : mapKeyDelivery(deliveryResult.rows[0]);
+
+    if (!keyDelivery) {
+      const keyResult = await client.query(
+        `SELECT id, key_value
+         FROM product_keys
+         WHERE product_id = $1 AND status = 'available'
+         ORDER BY created_at ASC
+         FOR UPDATE SKIP LOCKED
+         LIMIT 1`,
+        [paidOrder.product_id]
+      );
+
+      if (keyResult.rowCount > 0) {
+        const selectedKey = keyResult.rows[0];
+
+        await client.query(
+          `UPDATE product_keys
+           SET status = 'delivered', delivered_order_id = $1::uuid, updated_at = NOW()
+           WHERE id = $2::uuid`,
+          [paidOrder.id, selectedKey.id]
+        );
+
+        const insertedDelivery = await client.query(
+          `INSERT INTO order_key_deliveries(
+             id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload
+           )
+           VALUES (gen_random_uuid(), $1::uuid, $2, $3::uuid, $4, 'portal_auto', $5::jsonb)
+           ON CONFLICT (order_id) DO NOTHING
+           RETURNING id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload, delivered_at`,
+          [
+            paidOrder.id,
+            paidOrder.product_id,
+            selectedKey.id,
+            paidOrder.customer_id,
+            JSON.stringify({ keyValue: selectedKey.key_value, source: "auto_after_paid" })
+          ]
+        );
+
+        if (insertedDelivery.rowCount > 0) {
+          keyDelivery = {
+            ...mapKeyDelivery(insertedDelivery.rows[0]),
+            keyValue: selectedKey.key_value
+          };
+        } else {
+          keyDelivery = await getOrderKeyDelivery(paidOrder.id);
+        }
+      }
+    }
+
     await client.query("COMMIT");
-    return { order: mapOrder(paidOrder), idempotent: false };
+    return { order: mapOrder(paidOrder), keyDelivery, idempotent: false };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -380,7 +500,7 @@ async function consumeUsage({ customerId, appId, featureKey, creditsToConsume, u
 }
 
 async function getCustomerSnapshot(customerId) {
-  const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs] = await Promise.all([
+  const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs, keyDeliveries] = await Promise.all([
     pool.query("SELECT id, email, full_name FROM customers WHERE id = $1", [customerId]),
     pool.query(
       `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
@@ -410,6 +530,15 @@ async function getCustomerSnapshot(customerId) {
     pool.query(
       `SELECT id, request_id, customer_id, app_id, feature_key, units, credits_consumed, status, metadata, created_at
        FROM ai_usage_logs WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 100`,
+      [customerId]
+    ),
+    pool.query(
+      `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+              d.delivered_payload, d.delivered_at, k.key_value
+       FROM order_key_deliveries d
+       JOIN product_keys k ON k.id = d.key_id
+       WHERE d.delivered_to_customer = $1
+       ORDER BY d.delivered_at DESC`,
       [customerId]
     )
   ]);
@@ -459,6 +588,8 @@ async function getCustomerSnapshot(customerId) {
       createdAt: row.created_at
     })),
     usageLogs: usageLogs.rows.map(mapUsageLog)
+    ,
+    keyDeliveries: keyDeliveries.rows.map(mapKeyDelivery)
   };
 }
 
@@ -522,9 +653,12 @@ async function getAdminDashboard() {
 module.exports = {
   getPublicCatalog,
   createOrder,
+  getOrderById,
+  getOrderDetailsById,
   markOrderPaid,
   consumeUsage,
   recordWebhookEvent,
+  getOrderKeyDelivery,
   getCustomerSnapshot,
   getAdminDashboard
 };

@@ -1,87 +1,151 @@
-# Web Sales Total (MVP)
+# Web Sales Total
 
-Ban khoi dau cho he thong web ban hang tong da app theo mo hinh modular monolith.
+Web Sales Total la SaaS commerce MVP cho web ban phan mem tong.
 
-## Tinh nang da co
-- Public catalog app + product
-- Tao checkout order
-- Mock payment page va webhook callback
-- Idempotency webhook event
-- Grant subscription + entitlement + credit wallet + ledger
-- Customer portal JSON
-- Admin dashboard JSON
+Muc tieu ban nay:
+- Ban goi subscription va one-time top-up
+- Tao order va checkout
+- Xac nhan thanh toan qua webhook idempotent (Sepay/Stripe/mock)
+- Cap subscription, entitlement, wallet, ledger sau thanh toan
+- Tu dong cap key ngay sau khi don paid (neu con key ton kho)
+- Co route rieng cho homepage, portal va admin
+- San sang deploy theo monolith Node.js + Express + PostgreSQL
 
-## Chay local tren VS Code
-1. Mo terminal tai workspace `f:/web_Sales_Total`
-2. Chay `npm install` (neu chua cai package)
-3. Khoi dong PostgreSQL bang Docker: `docker compose up -d`
-4. Chay migration + seed: `npm run db:setup`
-5. Chay server: `npm run dev`
-6. Mo URL: `http://localhost:3900`
+## Kien truc
+- Backend entry: `src/server.js`
+- Frontend tinh: `src/web/*`, duoc serve truc tiep boi Express
+- Database: PostgreSQL
+- Business logic: `src/modules/store.js`
+- Payment flow (Sepay-first, mock/stripe fallback): `src/modules/payment.js`
 
-Neu gap loi ket noi Docker API, hay mo Docker Desktop truoc khi chay `docker compose up -d`.
+## Yeu cau moi truong
+Copy `.env.example` thanh `.env` va cap nhat gia tri:
 
-Mac dinh project nay dung cong 3900 de tranh trung voi cac website local khac cua ban.
-
-## Bien moi truong
-- File mau: `.env.example`
-- File chay local da tao san: `.env`
-
-Gia tri mac dinh:
-- `PORT=3900`
-- `DATABASE_URL=postgres://postgres:postgres@localhost:5432/web_sales_total`
-- `WEBHOOK_SIGNATURE_SECRET=demo-signature`
-
-## Luong test nhanh
-1. Vao trang catalog va bam `Mua ngay`
-2. Cua so payment mock mo ra tai `/pay/{orderId}`
-3. Bam `Xac nhan da thanh toan`
-4. Quay lai trang chinh, bam `Tai portal` va `Tai admin dashboard` de xem du lieu cap nhat
-
-## API chinh
-- `GET /api/catalog`
-- `POST /api/checkout`
-- `POST /api/webhooks/payment`
-- `POST /api/usage/consume`
-- `GET /api/portal/:customerId`
-- `GET /api/admin/dashboard`
-- `GET /api/health`
-
-## Consume usage API
-Endpoint: `POST /api/usage/consume`
-
-Payload mau:
-```json
-{
-	"customerId": "cus-demo",
-	"appId": "app-study-12",
-	"featureKey": "ai_tutor_chat",
-	"creditsToConsume": 5,
-	"units": 1,
-	"requestId": "req-usage-001",
-	"metadata": {
-		"model": "gpt-4o-mini",
-		"sessionId": "s123"
-	}
-}
+```env
+PORT=3900
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/web_sales_total
+WEBHOOK_SIGNATURE_SECRET=demo-signature
+PAYMENT_PROVIDER_MODE=mock
+APP_BASE_URL=http://localhost:3900
+NODE_ENV=development
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+SEPAY_WEBHOOK_SECRET=
+SEPAY_BANK_CODE=970422
+SEPAY_BANK_ACCOUNT_NUMBER=
+SEPAY_ACCOUNT_NAME=
+SEPAY_QR_TEMPLATE_URL=
+SESSION_SIGNING_SECRET=replace-with-strong-secret
+PORTAL_ACCESS_KEY=portal-demo
+ADMIN_ACCESS_KEY=admin-demo
 ```
 
-Ket qua:
-- Du credit: tru wallet, ghi `credit_ledger` reason `usage_consume`, ghi `ai_usage_logs` status `consumed`.
-- Thieu credit: khong tru wallet, van ghi `ai_usage_logs` status `rejected_insufficient`.
+Ghi chu:
+- `PAYMENT_PROVIDER_MODE=sepay` la mode khuyen nghi khi ban that
+- `PAYMENT_PROVIDER_MODE=mock` dung cho MVP test end-to-end
+- `PAYMENT_PROVIDER_MODE=stripe` dung adapter webhook Stripe
+- Sepay webhook se xac thuc bang `SEPAY_WEBHOOK_SECRET`
+- Portal/Admin dang duoc bao ve boi session cookie ky so (muc toi thieu)
 
-## Top-up flow theo ledger
-- Product co `cycle = one_time` se duoc xu ly la top-up.
-- Khi webhook payment thanh cong: cong wallet + ghi ledger reason `topup_purchase`.
-- Top-up khong ghi de subscription/entitlement hien tai.
+## Chay local
+1. Cai package:
+```bash
+npm install
+```
 
-## Lenh DB
-- `npm run db:migrate`
-- `npm run db:seed`
-- `npm run db:setup`
+2. Chay PostgreSQL (neu dung Docker):
+```bash
+docker compose up -d
+```
 
-## Dinh huong tiep theo
-- Tach module thanh toan that (provider that)
-- Dua database PostgreSQL + migration
-- Them RBAC admin theo app
-- Them Notification Center (queue + retry)
+3. Chay migration + seed:
+```bash
+npm run db:setup
+```
+
+4. Chay app:
+```bash
+npm run dev
+```
+
+5. Mo cac route:
+- Homepage: `http://localhost:3900/`
+- Portal: `http://localhost:3900/portal`
+- Admin: `http://localhost:3900/admin`
+
+## Scripts
+- `npm run dev`: chay local voi nodemon
+- `npm start`: chay server production mode (khong watch)
+- `npm run db:migrate`: apply SQL migrations
+- `npm run db:seed`: seed du lieu mau
+- `npm run db:setup`: migrate + seed
+
+## API chinh
+- `GET /api/health`
+- `GET /api/catalog`
+- `POST /api/orders`
+- `GET /api/orders/:orderId`
+- `POST /api/payments/webhooks`
+- `POST /api/payments/webhooks/stripe`
+- `POST /api/payments/webhooks/sepay`
+- `POST /api/payments/mock/confirm`
+- `POST /api/usage/consume`
+- `GET /api/portal/:customerId`
+- `GET /api/customers/:customerId/snapshot`
+- `GET /api/admin/dashboard`
+
+Legacy alias van hoat dong:
+- `POST /api/checkout`
+- `POST /api/webhooks/payment`
+
+## Smoke test nhanh
+1. Vao homepage, bam `Mua ngay` de tao order.
+2. Trang `/pay/:orderId` hien thong tin chuyen khoan Sepay (hoac mock mode).
+3. Thanh toan that: Sepay callback vao `/api/payments/webhooks/sepay` de paid + cap key tu dong.
+4. Mock mode: bam `Xac nhan da thanh toan` de goi endpoint mock confirm.
+5. Vao `/portal` de xem wallet, ledger, subscriptions cap nhat.
+6. Vao `/admin` de xem KPI va giao dich moi.
+
+## Auth toi thieu cho Portal/Admin
+- Login portal: `GET /portal/login` (dung `PORTAL_ACCESS_KEY`)
+- Login admin: `GET /admin/login` (dung `ADMIN_ACCESS_KEY`)
+- API portal va admin yeu cau cookie session hop le
+
+## Stripe webhook adapter
+- Dat `PAYMENT_PROVIDER_MODE=stripe`
+- Cau hinh `STRIPE_SECRET_KEY` va `STRIPE_WEBHOOK_SECRET`
+- Gui webhook vao `POST /api/payments/webhooks/stripe`
+- Event ho tro: `checkout.session.completed`, `payment_intent.succeeded`
+- Metadata bat buoc: `orderId` hoac `order_id`
+
+## Sepay webhook + auto delivery key
+- Dat `PAYMENT_PROVIDER_MODE=sepay`
+- Cau hinh:
+  - `SEPAY_WEBHOOK_SECRET`
+  - `SEPAY_BANK_CODE`
+  - `SEPAY_BANK_ACCOUNT_NUMBER`
+  - `SEPAY_ACCOUNT_NAME`
+  - `SEPAY_QR_TEMPLATE_URL` (khong bat buoc)
+- Endpoint callback: `POST /api/payments/webhooks/sepay`
+- Header xac thuc webhook ho tro: `x-sepay-signature`, `x-sepay-token`, hoac `Authorization: Bearer <secret>`
+- Payload can mang `orderId`/`order_id` hoac co `orderId` trong noi dung chuyen khoan.
+- Khi paid thanh cong: order -> paid, cap subscription/wallet/ledger va cap key tu dong neu ton kho con key.
+
+## Deploy Cloud Run (co ban)
+1. Tao PostgreSQL (Cloud SQL hoac external) va lay `DATABASE_URL`.
+2. Build va deploy service:
+```bash
+gcloud run deploy web-sales-total \
+  --source . \
+  --platform managed \
+  --region asia-southeast1 \
+  --allow-unauthenticated \
+  --set-env-vars PORT=8080,NODE_ENV=production,PAYMENT_PROVIDER_MODE=mock,APP_BASE_URL=https://<your-service-url>,WEBHOOK_SIGNATURE_SECRET=<strong-secret>,SESSION_SIGNING_SECRET=<strong-secret>,PORTAL_ACCESS_KEY=<portal-key>,ADMIN_ACCESS_KEY=<admin-key>,DATABASE_URL=<postgres-url>
+```
+
+3. Cloud Run se cap `PORT`, app da su dung `process.env.PORT`.
+
+## Pham vi MVP hien tai
+- Auth hien tai la muc toi thieu (chua RBAC/chua user management)
+- Stripe adapter webhook co san, checkout provider that chua hoan tat
+- Chua co recurring billing automation theo nha cung cap thanh toan

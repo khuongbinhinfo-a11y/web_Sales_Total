@@ -47,6 +47,18 @@ async function seed() {
        ON CONFLICT (customer_id, app_id) DO NOTHING`
     );
 
+    await client.query(
+      `INSERT INTO product_keys(id, product_id, key_value, status)
+       VALUES
+         (gen_random_uuid(), 'prod-study-month', 'WST-MONTH-0001-ABCD', 'available'),
+         (gen_random_uuid(), 'prod-study-month', 'WST-MONTH-0002-EFGH', 'available'),
+         (gen_random_uuid(), 'prod-study-year', 'WST-YEAR-0001-ABCD', 'available'),
+         (gen_random_uuid(), 'prod-study-year', 'WST-YEAR-0002-EFGH', 'available'),
+         (gen_random_uuid(), 'prod-study-topup', 'WST-TOPUP-0001-ABCD', 'available'),
+         (gen_random_uuid(), 'prod-study-topup', 'WST-TOPUP-0002-EFGH', 'available')
+       ON CONFLICT (key_value) DO NOTHING`
+    );
+
     await client.query("COMMIT");
     console.log("Seed completed.");
   } catch (error) {

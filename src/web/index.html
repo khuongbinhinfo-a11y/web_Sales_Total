@@ -3,238 +3,144 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="meta_title">Ứng Dụng Thông Minh - Nền tảng bán hàng đa ứng dụng</title>
+    <title data-i18n="meta_title">Web Sales Total - Nền tảng bán phần mềm tổng</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <nav class="top-nav">
-      <div class="top-nav-inner">
-        <a class="brand" href="#top" aria-label="Trang chu Ung Dung Thong Minh">
-          <span class="brand-logo" aria-hidden="true">
-            <svg viewBox="0 0 100 100" role="img">
-              <circle cx="50" cy="50" r="46" class="logo-core" />
-              <path d="M28 56 L42 70 L72 36" class="logo-check" />
-            </svg>
-          </span>
-          <span class="brand-copy">
-            <strong data-i18n="brand_name">Ứng Dụng Thông Minh</strong>
-            <small data-i18n="brand_tagline">Học thông minh, không giới hạn</small>
+    <div class="promo-strip" data-i18n="promo_strip">Khuyen mai hom nay: thanh toan Sepay, giao key tu dong sau khi don paid.</div>
+
+    <header class="site-header" id="top">
+      <div class="container nav-row">
+        <a class="brand" href="#top">
+          <span class="brand-dot"></span>
+          <span class="brand-text">
+            <strong data-i18n="brand_name">Web Sales Total</strong>
+            <small data-i18n="brand_tagline">Store key ban tu dong 24/7</small>
           </span>
         </a>
-        <div class="menu-links">
-          <div class="menu-primary-links">
-            <a href="#features" data-i18n="menu_features">Tính năng</a>
-            <a href="#catalog" data-i18n="menu_catalog">Bảng giá</a>
-            <a href="#account" data-i18n="menu_account">Tài khoản</a>
-          </div>
-          <div class="menu-utility-links">
-            <button id="langToggle" class="lang-toggle" type="button">EN</button>
-            <span class="menu-divider" aria-hidden="true"></span>
-            <a href="#admin" class="admin-link" data-i18n="menu_admin">Admin</a>
-          </div>
-        </div>
-      </div>
-    </nav>
 
-    <header class="hero" id="top">
-      <div class="hero-inner">
-        <p class="badge" data-i18n="hero_badge">✦ SaaS commerce cho gói, credit và AI usage</p>
-        <h1>
-          <span data-i18n="hero_title_line1">Bán phần mềm nhanh,</span><br />
-          <span class="hero-accent" data-i18n="hero_title_line2">vận hành gọn</span>
-        </h1>
-        <p class="hero-desc" data-i18n="hero_desc">
-          Một nền tảng duy nhất để bán gói thuê bao, top-up credit, xử lý thanh toán, cấp quyền và theo dõi usage theo thời gian thực.
-        </p>
-        <div class="hero-stats">
-          <div class="stat">
-            <strong data-i18n="stat_users">3 mô hình</strong>
-            <span data-i18n="stat_users_label">Subscription · Top-up · One-time</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <strong data-i18n="stat_apps">Realtime</strong>
-            <span data-i18n="stat_apps_label">Webhook và ledger</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <strong data-i18n="stat_uptime">99.9%</strong>
-            <span data-i18n="stat_uptime_label">Luồng vận hành ổn định</span>
-          </div>
-        </div>
-        <div class="hero-ctas">
-          <a href="#catalog" class="cta-primary" data-i18n="hero_cta_buy">Xem bảng giá</a>
-          <a href="#features" class="cta-secondary" data-i18n="hero_cta_features">Xem tính năng bán hàng</a>
-        </div>
+        <nav class="top-links">
+          <a href="#catalog" data-i18n="menu_catalog">Sản phẩm</a>
+          <a href="/portal/login" data-i18n="menu_login">Đăng nhập</a>
+          <a class="admin-link is-hidden" href="/admin" data-i18n="menu_admin">Quản trị</a>
+          <button id="langToggle" class="lang-toggle" type="button">EN</button>
+        </nav>
       </div>
     </header>
 
-    <section class="trust-strip">
-      <div class="trust-strip-inner">
-        <span class="trust-pill" data-i18n="trust_1">Checkout cho subscription</span>
-        <span class="trust-pill" data-i18n="trust_2">Top-up ví credit</span>
-        <span class="trust-pill" data-i18n="trust_3">Webhook thanh toán</span>
-        <span class="trust-pill" data-i18n="trust_4">Entitlement và usage log</span>
-      </div>
-    </section>
-
     <main>
-
-      <!-- FEATURES -->
-      <section id="features" class="section-features">
-        <div class="section-head">
-          <h2 data-i18n="features_title">Bộ công cụ bán phần mềm đầy đủ</h2>
-          <p data-i18n="features_desc">Từ trang bán hàng đến vận hành nội bộ, mọi thứ đi trong một luồng thống nhất</p>
-        </div>
-        <div class="features-grid">
-          <div class="feat-card">
-            <div class="feat-icon">🛒</div>
-            <h3 data-i18n="feat1_title">Catalog công khai</h3>
-            <p data-i18n="feat1_desc">Trưng bày gói tháng, năm hoặc mua một lần với CTA rõ ràng và checkout nhanh.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon">🔁</div>
-            <h3 data-i18n="feat2_title">Subscription automation</h3>
-            <p data-i18n="feat2_desc">Tự động kích hoạt thuê bao, gia hạn chu kỳ và cập nhật trạng thái đơn hàng sau thanh toán.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon">💳</div>
-            <h3 data-i18n="feat3_title">Ví credit linh hoạt</h3>
-            <p data-i18n="feat3_desc">Bán top-up, trừ usage, ghi ledger hai chiều và giữ lịch sử rõ ràng cho từng ứng dụng.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon">🔔</div>
-            <h3 data-i18n="feat4_title">Webhook và đối soát</h3>
-            <p data-i18n="feat4_desc">Nhận callback thanh toán, chống lặp giao dịch và ghi nhận transaction an toàn.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon">👤</div>
-            <h3 data-i18n="feat5_title">Customer portal</h3>
-            <p data-i18n="feat5_desc">Khách hàng xem subscription, entitlement, wallet và lịch sử giao dịch trong một màn hình.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon">📊</div>
-            <h3 data-i18n="feat6_title">Bảng điều hành quản trị</h3>
-            <p data-i18n="feat6_desc">Theo dõi KPI, đơn hàng gần đây và gói đang hoạt động mà không lẫn với phần bán hàng.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- HOW IT WORKS -->
-      <section class="section-steps">
-        <div class="section-head">
-          <h2 data-i18n="steps_title">Luồng bán hàng chuẩn cho SaaS</h2>
-          <p data-i18n="steps_desc">Thiết lập gói, chốt đơn, tự động cấp quyền</p>
-        </div>
-        <div class="steps-row">
-          <div class="step">
-            <div class="step-num">1</div>
-            <h3 data-i18n="step1_title">Tạo sản phẩm</h3>
-            <p data-i18n="step1_desc">Khai báo gói thuê bao, gói nạp credit hoặc sản phẩm mua một lần cho từng app.</p>
-          </div>
-          <div class="step-arrow">→</div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <h3 data-i18n="step2_title">Nhận thanh toán</h3>
-            <p data-i18n="step2_desc">Khách chọn gói, tạo order, thanh toán và webhook xác nhận giao dịch.</p>
-          </div>
-          <div class="step-arrow">→</div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <h3 data-i18n="step3_title">Cấp quyền tự động</h3>
-            <p data-i18n="step3_desc">Subscription, entitlement và wallet được cập nhật ngay để khách dùng dịch vụ tức thì.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- PRICING -->
-      <section id="catalog" class="section-pricing">
-        <div class="section-head">
-          <h2 data-i18n="catalog_title">Bảng giá cho các mô hình bán phần mềm</h2>
-          <p data-i18n="catalog_desc">Hỗ trợ subscription, top-up credit và thanh toán one-time với cùng một backend.</p>
-        </div>
-        <div class="pricing-note" data-i18n="pricing_note">Gợi ý: dùng gói năm làm gói chủ lực, top-up cho nhu cầu phát sinh và one-time cho tiện ích bổ sung.</div>
-        <div id="productList" class="pricing-grid"></div>
-      </section>
-
-      <!-- CTA BANNER -->
-      <section class="section-cta-banner">
-        <div class="cta-banner">
-          <h2 data-i18n="cta_title">Sẵn sàng chốt quy trình bán hàng?</h2>
-          <p data-i18n="cta_desc">Trang chủ tập trung bán hàng, còn quản trị được giữ ở lối vào riêng để đội vận hành xử lý nội bộ.</p>
-          <a href="#catalog" class="cta-primary" data-i18n="cta_btn">Xem gói đang bán</a>
-        </div>
-      </section>
-
-      <!-- ACCOUNT -->
-      <section id="account" class="panel section-account">
-        <div class="panel-title">
-          <h2 data-i18n="account_title">Cổng khách hàng</h2>
-          <p data-i18n="account_desc">Tra cứu subscription, credit, entitlement và lịch sử giao dịch của từng khách</p>
-        </div>
-        <div class="toolbar">
-          <input id="customerId" value="cus-demo" data-i18n-placeholder="portal_customer_placeholder" />
-          <button id="loadPortal" data-i18n="portal_load">Xem tài khoản</button>
-        </div>
-        <pre id="portalData" class="json-box"></pre>
-        <details class="usage-details">
-          <summary data-i18n="usage_summary">🔧 Kiểm thử API consume usage</summary>
-          <div class="usage-inner">
-            <p data-i18n="usage_desc">Trừ credit và ghi usage log + ledger</p>
-            <div class="toolbar">
-              <input id="usageCustomerId" value="cus-demo" data-i18n-placeholder="usage_customer_placeholder" />
-              <input id="usageAppId" value="app-study-12" data-i18n-placeholder="usage_app_placeholder" />
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-content">
+            <p class="hero-badge" data-i18n="hero_badge">Marketplace key ban chay</p>
+            <h1>
+              <span data-i18n="hero_title_line1">Mua key phan mem</span>
+              <span class="hero-accent" data-i18n="hero_title_line2">nhan ngay sau thanh toan</span>
+            </h1>
+            <p class="hero-desc" data-i18n="hero_desc">Chon goi, thanh toan Sepay, he thong tu dong cap key va hien ngay tren trang don hang.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#catalog" data-i18n="hero_cta_buy">Mua ngay</a>
+              <a class="btn btn-ghost" href="/portal" data-i18n="hero_cta_portal">Tra cuu don / lay key</a>
             </div>
-            <div class="toolbar">
-              <input id="usageFeatureKey" value="ai_tutor_chat" data-i18n-placeholder="usage_feature_placeholder" />
-              <input id="usageCredits" value="5" data-i18n-placeholder="usage_credits_placeholder" />
-              <input id="usageUnits" value="1" data-i18n-placeholder="usage_units_placeholder" />
+            <div class="hero-points">
+              <span data-i18n="hero_point_1">Gia ro rang</span>
+              <span data-i18n="hero_point_2">Giao key tu dong</span>
+              <span data-i18n="hero_point_3">Ho tro 24/7</span>
             </div>
-            <div class="toolbar">
-              <input id="usageRequestId" value="req-usage-demo-1" data-i18n-placeholder="usage_request_placeholder" />
-              <button id="consumeUsage" data-i18n="usage_consume">Consume</button>
-            </div>
-            <pre id="usageData" class="json-box"></pre>
           </div>
-        </details>
+          <aside class="hero-card">
+            <h3 data-i18n="hero_card_title">Quy trinh mua key</h3>
+            <ul>
+              <li data-i18n="hero_card_item_1">1. Chon goi trong danh muc san pham</li>
+              <li data-i18n="hero_card_item_2">2. Chuyen khoan Sepay voi noi dung ma don</li>
+              <li data-i18n="hero_card_item_3">3. Trang don hang tu dong cap key khi paid</li>
+            </ul>
+            <div class="trust-row">
+              <span data-i18n="trust_1">Sepay xac nhan nhanh</span>
+              <span data-i18n="trust_2">Don hang cap key tu dong</span>
+            </div>
+          </aside>
+        </div>
       </section>
 
-      <!-- ADMIN -->
-      <section id="admin" class="panel section-admin">
-        <div class="panel-title">
-          <div class="admin-label-row">
-            <span class="admin-badge-label" data-i18n="admin_badge">ADMIN</span>
-            <h2 data-i18n="admin_title">Bảng điều hành quản trị</h2>
+      <section class="category-strip">
+        <div class="container">
+          <h2 data-i18n="cat_title">Danh muc noi bat</h2>
+          <div class="category-list">
+            <a href="#catalog" data-i18n="cat_1">Windows Key</a>
+            <a href="#catalog" data-i18n="cat_2">Office Ban Quyen</a>
+            <a href="#catalog" data-i18n="cat_3">Tai khoan AI Tools</a>
+            <a href="#catalog" data-i18n="cat_4">Goi Top-up</a>
           </div>
-          <p data-i18n="admin_desc">Lối vào nội bộ cho vận hành. Giữ riêng khỏi luồng bán hàng nhưng vẫn truy cập trực tiếp từ menu.</p>
         </div>
-        <div class="admin-actions">
-          <button id="loadAdmin" data-i18n="admin_load">Mở dashboard quản trị</button>
-          <span class="admin-helper" data-i18n="admin_helper">Dùng khi cần xem KPI, giao dịch gần đây và subscription đang hoạt động.</span>
-        </div>
-        <pre id="adminData" class="json-box"></pre>
       </section>
 
+      <section id="catalog" class="section storefront">
+        <div class="container">
+          <div class="section-head left">
+            <h2 data-i18n="catalog_title">Deal hot hom nay</h2>
+            <p data-i18n="catalog_desc">Bam Mua ngay de tao don. Sau khi he thong nhan thanh toan, key se duoc cap tu dong.</p>
+          </div>
+          <div id="productList" class="pricing-grid"></div>
+        </div>
+      </section>
+
+      <section id="support" class="section flow">
+        <div class="container">
+          <div class="section-head left">
+            <h2 data-i18n="steps_title">Huong dan mua nhanh</h2>
+            <p data-i18n="steps_desc">3 buoc de nhan key tu dong</p>
+          </div>
+          <div class="flow-row">
+            <div class="flow-step">
+              <span>1</span>
+              <h3 data-i18n="step1_title">Chon san pham</h3>
+              <p data-i18n="step1_desc">Xem gia va bam Mua ngay o goi phu hop.</p>
+            </div>
+            <div class="flow-step">
+              <span>2</span>
+              <h3 data-i18n="step2_title">Thanh toan Sepay</h3>
+              <p data-i18n="step2_desc">Chuyen khoan dung noi dung ma don de xac nhan nhanh.</p>
+            </div>
+            <div class="flow-step">
+              <span>3</span>
+              <h3 data-i18n="step3_title">Nhan key tu dong</h3>
+              <p data-i18n="step3_desc">Khi don paid, key hien ngay tren trang don hang va portal.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-brand">
-          <strong data-i18n="brand_name">Ứng Dụng Thông Minh</strong>
-          <span data-i18n="footer_tagline">© 2026 · Nền tảng bán phần mềm, subscription và credit</span>
+      <div class="container footer-row">
+        <div>
+          <strong data-i18n="brand_name">Web Sales Total</strong>
+          <p data-i18n="footer_tagline">© 2026 · Store key tu dong cho web ban hang</p>
         </div>
-        <nav class="footer-links">
-          <a href="#features" data-i18n="menu_features">Tính năng</a>
-          <a href="#catalog" data-i18n="menu_catalog">Bảng giá</a>
-          <a href="#account" data-i18n="menu_account">Tài khoản</a>
-        </nav>
-        <small class="footer-dev"><span data-i18n="footer_url_label">Dev:</span> http://localhost:3900</small>
+        <small><span data-i18n="footer_url_label">Sales API:</span> /api/catalog · <a href="/portal">Portal</a> · <a href="/admin">Admin</a></small>
       </div>
     </footer>
 
-    <script src="/main.js"></script>
+    <a class="floating-buy" href="#catalog" data-i18n="menu_quick_buy">Mua ngay</a>
+
+    <script src="./main.js"></script>
+    <script>
+      (function () {
+        const adminLink = document.querySelector(".admin-link");
+        if (!adminLink) {
+          return;
+        }
+
+        const fromStorage = localStorage.getItem("wst_show_admin_menu") === "1";
+        const fromQuery = new URLSearchParams(window.location.search).get("admin") === "1";
+        if (fromStorage || fromQuery) {
+          adminLink.classList.remove("is-hidden");
+        }
+      })();
+    </script>
   </body>
 </html>

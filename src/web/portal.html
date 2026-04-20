@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Portal | Web Sales Total</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a class="brand" href="/" aria-label="Trang chu Web Sales Total">
+          <span class="brand-logo" aria-hidden="true">
+            <svg viewBox="0 0 100 100" role="img">
+              <circle cx="50" cy="50" r="46" class="logo-core" />
+              <path d="M28 56 L42 70 L72 36" class="logo-check" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Web Sales Total</strong>
+            <small>Customer Portal</small>
+          </span>
+        </a>
+        <div class="menu-links">
+          <div class="menu-primary-links">
+            <a href="/">Homepage</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/admin">Admin</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <section class="panel section-account">
+        <div class="panel-title">
+          <h2>Cổng khách hàng</h2>
+          <p>Tra cứu subscription, entitlement, ví credit và lịch sử giao dịch.</p>
+        </div>
+        <div class="toolbar">
+          <input id="customerId" value="cus-demo" placeholder="customerId" />
+          <button id="loadPortal">Tải dữ liệu portal</button>
+          <form method="post" action="/auth/portal/logout">
+            <button type="submit">Đăng xuất</button>
+          </form>
+        </div>
+        <pre id="portalData" class="json-box"></pre>
+
+        <details class="usage-details" open>
+          <summary>Consume usage từ ví credit</summary>
+          <div class="usage-inner">
+            <p>Dùng endpoint usage để trừ credit và ghi ledger theo request idempotent.</p>
+            <div class="toolbar">
+              <input id="usageCustomerId" value="cus-demo" placeholder="customerId" />
+              <input id="usageAppId" value="app-study-12" placeholder="appId" />
+            </div>
+            <div class="toolbar">
+              <input id="usageFeatureKey" value="ai_tutor_chat" placeholder="featureKey" />
+              <input id="usageCredits" value="5" placeholder="creditsToConsume" />
+              <input id="usageUnits" value="1" placeholder="units" />
+            </div>
+            <div class="toolbar">
+              <input id="usageRequestId" value="req-usage-demo-1" placeholder="requestId" />
+              <button id="consumeUsage">Consume</button>
+            </div>
+            <pre id="usageData" class="json-box"></pre>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <strong>Web Sales Total</strong>
+          <span>Portal riêng cho khách hàng</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./portal.js"></script>
+  </body>
+</html>
