@@ -24,11 +24,11 @@ const dropLogout       = document.getElementById("dropLogout");
 
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
-  { id:"demo-hoc01", appId:"hoctap",  name:"Kho hoc cap toc 01",          cycle:"one_time", price:299000, credits:1, image:"/products/image/hoc-cap-01.png" },
-  { id:"demo-hoc12", appId:"hoctap",  name:"Kho hoc cap toc 12",          cycle:"one_time", price:349000, credits:1, image:"/products/image/hoc-cap-12.png" },
+  { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1, image:"/products/image/hoc-cap-01.png" },
+  { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1, image:"/products/image/hoc-cap-12.png" },
   { id:"demo-map",   appId:"lamviec", name:"Quet data Google Map",        cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },
-  { id:"demo-cv1",   appId:"lamviec", name:"Cong cu cong viec 01",         cycle:"monthly",  price:399000, credits:2, image:"/products/image/Screenshot%202026-04-20%20203856.png" },
-  { id:"demo-cv2",   appId:"lamviec", name:"Cong cu cong viec 02",         cycle:"monthly",  price:429000, credits:2, image:"/products/image/Screenshot%202026-04-20%20204104.png" }
+  { id:"demo-cv1",   appId:"lamviec", name:"Phan mem tao video dong bo nhan vat", cycle:"monthly",  price:399000, credits:2, image:"/products/image/Screenshot%202026-04-20%20203856.png" },
+  { id:"demo-cv2",   appId:"lamviec", name:"Phan mem quan ly site bat dong san va bai viet", cycle:"monthly",  price:300000, credits:2, image:"/products/image/Screenshot%202026-04-20%20204104.png" }
 ];
 
 /* ── category icon map ── */
@@ -43,8 +43,8 @@ const fixedCategories = ["hoctap","lamviec"];
 const T = {
   vi:{
     meta_title:"Ứng Dụng Thông Minh - Mua key phần mềm bản quyền giá tốt",
-    brand_tagline:"Key bản quyền chính hãng",
-    announce:"🔥 Thanh toán Sepay — giao key tự động ngay sau khi chuyển khoản thành công",
+    brand_tagline:"Key bản quyền",
+    announce:"🔥 Thanh toán linh hoạt — giao key tự động ngay sau khi thanh toán thành công",
     search_placeholder:"Tìm sản phẩm...",
     nav_products:"Sản phẩm", nav_lookup:"Tra cứu đơn", nav_login:"Đăng nhập", nav_admin:"Admin",
     nav_my_products:"Sản phẩm đã mua", nav_balance:"Số dư", nav_logout:"Đăng xuất",
@@ -52,7 +52,7 @@ const T = {
     hero_line1:"Mua key phần mềm bản quyền", hero_line2:"Giao ngay sau thanh toán",
     hero_sub:"Chọn sản phẩm → Thanh Toán → Nhận key tự động. Nhanh gọn, an toàn, hỗ trợ 24/7.",
     hero_guide:"Hướng dẫn mua",
-    hc_auto:"Key tự động 24/7", hc_sepay:"Thanh toán linh động", hc_safe:"Bảo hành chính hãng",
+    hc_auto:"Key tự động 24/7", hc_sepay:"Thanh toán linh hoạt", hc_safe:"Bảo hành uy tín",
     trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
     cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
     cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
@@ -61,7 +61,7 @@ const T = {
     step1_t:"Chọn sản phẩm", step1_d:"Duyệt danh mục, chọn gói phù hợp và bấm Mua ngay.",
     step2_t:"Thanh toán", step2_d:"Quét QR tự động, nhanh chóng.",
     step3_t:"Nhận key tự động", step3_d:"Key hiển thị ngay trên trang đơn hàng và cổng khách hàng.",
-    footer_desc:"Nền tảng bán key phần mềm bản quyền tự động. Thanh toán Sepay, giao key ngay.",
+    footer_desc:"Nền tảng bán key phần mềm bản quyền tự động. Thanh toán linh hoạt, giao key ngay.",
     footer_quick:"Truy cập nhanh", footer_policy:"Chính sách", footer_contact:"Liên hệ",
     card_buy:"Mua ngay", card_sold:"đã bán",
     tag_best:"NÊN CHỌN",
@@ -89,11 +89,11 @@ const T = {
     testimonials_title:"Đánh giá từ khách hàng",
     testimonials_sub:"Hơn 10,000 khách hàng hài lòng",
     testimonial_1:"\"Key giao rất nhanh, dùng thử ngay được, chất lượng tốt. Sẽ quay lại.\"",
-    testimonial_author_1:"Nguyễn Văn A",
+    testimonial_author_1:"Dũng LÊ",
     testimonial_2:"\"Tư vấn tận tình, hỗ trợ 24/7. Rất uy tín. Giá cả hợp lý.\"",
-    testimonial_author_2:"Trần Thị B",
+    testimonial_author_2:"Nga Trương",
     testimonial_3:"\"Mua lần thứ 5 rồi. Luôn ổn định. Đặc biệt hỗ trợ nhanh.\"",
-    testimonial_author_3:"Lê Văn C",
+    testimonial_author_3:"Trần NGọc Hải",
     purchased_title:"Sản phẩm đã mua",
     wallet_title:"💰 Số dư Credit",
     wallet_empty:"Chưa có credit",
@@ -111,7 +111,7 @@ const T = {
   },
   en:{
     meta_title:"Ứng Dụng Thông Minh - Buy genuine software keys",
-    brand_tagline:"Genuine license keys",
+    brand_tagline:"Licensed software keys",
     announce:"🔥 Pay with Sepay — automatic key delivery right after transfer",
     search_placeholder:"Search products...",
     nav_products:"Products", nav_lookup:"Order lookup", nav_login:"Login", nav_admin:"Admin",
@@ -120,7 +120,7 @@ const T = {
     hero_line1:"Buy genuine software keys", hero_line2:"Delivered instantly after payment",
     hero_sub:"Select product → Pay → Get key automatically. Fast, safe, 24/7 support.",
     hero_guide:"How to buy",
-    hc_auto:"24/7 auto delivery", hc_sepay:"Flexible payment", hc_safe:"Official warranty",
+    hc_auto:"24/7 auto delivery", hc_sepay:"Flexible payment", hc_safe:"Reliable warranty",
     trust_products:"Products", trust_orders:"Orders delivered", trust_rating:"Rating", trust_support:"Support",
     cat_title:"Product categories", cat_sub:"Choose a category or browse all products below", cat_all:"All",
     cat_hoctap:"Study", cat_lamviec:"Work",
@@ -157,11 +157,11 @@ const T = {
     testimonials_title:"Customer Reviews",
     testimonials_sub:"Over 10,000 satisfied customers",
     testimonial_1:"\"Key delivered very fast, works immediately, great quality. Will be back.\"",
-    testimonial_author_1:"Nguyen Van A",
+    testimonial_author_1:"Dung LE",
     testimonial_2:"\"Helpful consultants, 24/7 support. Very trustworthy. Good prices.\"",
-    testimonial_author_2:"Tran Thi B",
+    testimonial_author_2:"Nga Truong",
     testimonial_3:"\"Bought 5 times already. Always reliable. Especially fast support.\"",
-    testimonial_author_3:"Le Van C",
+    testimonial_author_3:"Tran NGoc Hai",
     purchased_title:"My Purchased Products",
     wallet_title:"💰 Credit Balance",
     wallet_empty:"No credits yet",
