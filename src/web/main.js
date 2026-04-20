@@ -26,9 +26,9 @@ const dropLogout       = document.getElementById("dropLogout");
 const fallbackProducts = [
   { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1, image:"/products/image/hoc-cap-01.png" },
   { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1, image:"/products/image/hoc-cap-12.png" },
-  { id:"demo-map",   appId:"lamviec", name:"Quet data Google Map",        cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },
-  { id:"demo-cv1",   appId:"lamviec", name:"Phan mem tao video dong bo nhan vat", cycle:"monthly",  price:399000, credits:2, image:"/products/image/Screenshot%202026-04-20%20203856.png" },
-  { id:"demo-cv2",   appId:"lamviec", name:"Phan mem quan ly site bat dong san va bai viet", cycle:"monthly",  price:300000, credits:2, image:"/products/image/Screenshot%202026-04-20%20204104.png" }
+  { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",        cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },
+  { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2, image:"/products/image/Screenshot%202026-04-20%20203856.png" },
+  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly",  price:300000, credits:2, image:"/products/image/Screenshot%202026-04-20%20204104.png" }
 ];
 
 /* ── category icon map ── */
@@ -213,8 +213,7 @@ function iconFor(appId){
   return catIcons.default;
 }
 
-function pseudoSold(name){ let h=0; for(let i=0;i<name.length;i++) h=((h<<5)-h)+name.charCodeAt(i); return Math.abs(h%4000)+100; }
-function pseudoOldPrice(price){ return Math.round(price * (1.4 + (price%7)*0.1)); }
+function catLabel(appId){ const k="cat_"+(appId||"").toLowerCase(); return t(k); }
 
 /* ═══════════════ AUTH STATE ═══════════════ */
 function setLoggedIn(snapshot){
@@ -431,8 +430,6 @@ function renderProducts(){
   productList.innerHTML = "";
   filtered.forEach(p => {
     const isFeat = p.cycle === "yearly";
-    const sold   = pseudoSold(p.name);
-    const oldP   = pseudoOldPrice(p.price);
     const icon   = iconFor(p.appId);
     const visual = p.image
       ? `<img class="p-card-img-photo" src="${p.image}" alt="${p.name}">`
@@ -443,14 +440,12 @@ function renderProducts(){
       ${isFeat ? `<span class="p-badge">${t("tag_best")}</span>` : ""}
       <div class="p-card-img">${visual}</div>
       <div class="p-card-body">
-        <span class="p-card-cat">${(p.appId||"").toUpperCase()}</span>
+        <span class="p-card-cat">${catLabel(p.appId)}</span>
         <h3 class="p-card-name">${p.name}</h3>
         <p class="p-card-meta">${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}</p>
         <div class="p-card-price-row">
           <span class="p-card-price">${fmtVnd(p.price)}</span>
-          <span class="p-card-old-price">${fmtVnd(oldP)}</span>
         </div>
-        <span class="p-card-sold">🔥 ${sold.toLocaleString()} ${t("card_sold")}</span>
       </div>
       <button class="p-card-btn">🛒 ${t("card_buy")}</button>`;
 
