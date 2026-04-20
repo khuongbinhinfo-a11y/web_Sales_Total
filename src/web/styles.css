@@ -118,15 +118,14 @@ button{font-family:inherit;cursor:pointer}
 .banner-carousel::before,.banner-carousel::after{content:"";position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
 .banner-carousel::before{left:0;background:linear-gradient(to right,#f3eeff,transparent)}
 .banner-carousel::after{right:0;background:linear-gradient(to left,#f3eeff,transparent)}
-.banner-track{display:flex;gap:20px;animation:bannerScroll 30s linear infinite;width:max-content}
-.banner-track:hover{animation-play-state:paused}
+.banner-track{display:flex;gap:20px;width:max-content;transition:transform .8s cubic-bezier(.4,0,.2,1)}
+.banner-track:hover~*{}
 .banner-card{flex-shrink:0;width:280px;height:160px;border-radius:16px;overflow:hidden;position:relative;display:flex;align-items:flex-end;padding:16px 20px;color:#fff;font-weight:700;font-size:.92rem;box-shadow:0 4px 16px rgba(0,0,0,.1);transition:transform .3s ease;cursor:pointer}
 .banner-card:hover{transform:translateY(-4px) scale(1.02)}
 .banner-card::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 60%);z-index:1}
 .banner-card-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:4px}
 .banner-card-title{font-size:.95rem;font-weight:800;text-shadow:0 1px 4px rgba(0,0,0,.3)}
 .banner-card-sub{font-size:.75rem;font-weight:500;opacity:.85}
-@keyframes bannerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
 /* ═══════════════════ SECTIONS ═══════════════════ */
 .section-head{margin-bottom:32px}

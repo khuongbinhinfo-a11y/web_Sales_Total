@@ -498,6 +498,38 @@ function renderBanner(){
   });
   // duplicate for seamless loop
   track.innerHTML = items.join("") + items.join("");
+
+  // step-scroll with pause
+  const cardW = 280 + 20; // card width + gap
+  const total = allProducts.length;
+  let step = 0;
+  let paused = false;
+  let timer;
+
+  track.closest(".banner-carousel").addEventListener("mouseenter", ()=>{ paused = true; });
+  track.closest(".banner-carousel").addEventListener("mouseleave", ()=>{ paused = false; });
+
+  function advance(){
+    if(paused) return;
+    step++;
+    if(step >= total){
+      // jump back seamlessly
+      track.style.transition = "none";
+      track.style.transform = "translateX(0)";
+      step = 0;
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          track.style.transition = "transform .8s cubic-bezier(.4,0,.2,1)";
+          step++;
+          track.style.transform = `translateX(-${step * cardW}px)`;
+        });
+      });
+    } else {
+      track.style.transform = `translateX(-${step * cardW}px)`;
+    }
+  }
+
+  timer = setInterval(advance, 3000);
 }
 
 /* ── load catalog ── */
