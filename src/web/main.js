@@ -471,6 +471,35 @@ function renderProducts(){
   });
 }
 
+/* ── banner carousel ── */
+const bannerColors = [
+  "linear-gradient(135deg,#43e97b,#38f9d7)",
+  "linear-gradient(135deg,#667eea,#764ba2)",
+  "linear-gradient(135deg,#f85032,#e73827)",
+  "linear-gradient(135deg,#ff9a9e,#fecfef)",
+  "linear-gradient(135deg,#a18cd1,#fbc2eb)",
+  "linear-gradient(135deg,#fbc2eb,#a6c1ee)",
+  "linear-gradient(135deg,#ff6a00,#ee0979)",
+  "linear-gradient(135deg,#11998e,#38ef7d)"
+];
+function renderBanner(){
+  const track = document.getElementById("bannerTrack");
+  if(!track || !allProducts.length) return;
+  const items = allProducts.map((p,i)=>{
+    const bg = bannerColors[i % bannerColors.length];
+    const img = p.image ? `<img src="${p.image}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">` : "";
+    return `<div class="banner-card" style="background:${img ? '#222' : bg}">
+      ${img}
+      <div class="banner-card-content">
+        <div class="banner-card-title">${p.name}</div>
+        <div class="banner-card-sub">${fmtVnd(p.price)} · ${fmtCycle(p.cycle)}</div>
+      </div>
+    </div>`;
+  });
+  // duplicate for seamless loop
+  track.innerHTML = items.join("") + items.join("");
+}
+
 /* ── load catalog ── */
 async function loadCatalog(){
   try{
@@ -487,6 +516,7 @@ async function loadCatalog(){
   }
   buildTabs();
   renderProducts();
+  renderBanner();
 }
 
 searchInput.addEventListener("input", renderProducts);
