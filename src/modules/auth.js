@@ -73,6 +73,27 @@ function clearAuthCookie(res, name) {
   res.setHeader("Set-Cookie", `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${secureFlag}`);
 }
 
+function createCustomerSessionToken(customerId, email) {
+  const payload = { scope: "customer", customerId, email, exp: Date.now() + 12 * 60 * 60 * 1000 };
+  const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const signature = signValue(encodedPayload);
+  return `${encodedPayload}.${signature}`;
+}
+
+function getCustomerFromSession(req) {
+  const cookies = parseCookies(req);
+  const token = cookies.wst_customer_session;
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const [encodedPayload, signature] = token.split(".");
+  if (!encodedPayload || !signature) return null;
+  if (signature !== signValue(encodedPayload)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+    if (payload.scope !== "customer" || !payload.exp || Number(payload.exp) < Date.now()) return null;
+    return { customerId: payload.customerId, email: payload.email };
+  } catch { return null; }
+}
+
 function wantsHtml(req) {
   const accept = (req.headers.accept || "").toLowerCase();
   return accept.includes("text/html");
@@ -197,5 +218,8 @@ module.exports = {
   handleAdminLogin,
   portalLoginPage,
   adminLoginPage,
-  clearAuthCookie
+  clearAuthCookie,
+  setAuthCookie,
+  createCustomerSessionToken,
+  getCustomerFromSession
 };

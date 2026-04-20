@@ -10,7 +10,8 @@ const {
   getOrderDetailsById,
   consumeUsage,
   getCustomerSnapshot,
-  getAdminDashboard
+  getAdminDashboard,
+  findOrCreateCustomerByEmail
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -30,7 +31,10 @@ const {
   handleAdminLogin,
   portalLoginPage,
   adminLoginPage,
-  clearAuthCookie
+  clearAuthCookie,
+  setAuthCookie,
+  createCustomerSessionToken,
+  getCustomerFromSession
 } = require("./modules/auth");
 
 const app = express();
@@ -114,7 +118,9 @@ app.get(
 );
 
 async function handleCreateOrder(req, res) {
-  const { customerId = "cus-demo", appId, productId } = req.body;
+  const session = getCustomerFromSession(req);
+  const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
+  const { appId, productId } = req.body;
   const { order, product } = await createOrder({ customerId, appId, productId });
 
   res.status(201).json({
@@ -243,6 +249,36 @@ app.get("/portal/login", (req, res) => {
   res.send(portalLoginPage());
 });
 
+/* ── Customer email auth ── */
+app.post(
+  "/api/auth/customer/login",
+  asyncHandler(async (req, res) => {
+    const { email, fullName } = req.body;
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    const customer = await findOrCreateCustomerByEmail(email.trim().toLowerCase(), fullName);
+    const token = createCustomerSessionToken(customer.id, customer.email);
+    setAuthCookie(res, "wst_customer_session", token);
+    return res.json({ customer });
+  })
+);
+
+app.get(
+  "/api/auth/me",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerFromSession(req);
+    if (!session) return res.status(401).json({ message: "Not logged in" });
+    const snapshot = await getCustomerSnapshot(session.customerId);
+    return res.json(snapshot);
+  })
+);
+
+app.post("/api/auth/customer/logout", (req, res) => {
+  clearAuthCookie(res, "wst_customer_session");
+  return res.json({ ok: true });
+});
+
 app.get("/admin/login", (req, res) => {
   res.send(adminLoginPage());
 });
@@ -276,75 +312,80 @@ app.get(
   const amountFormatted = Number(order.amount).toLocaleString("vi-VN");
   const sepayPanel = sepayCheckoutEnabled
     ? `<div class="sepay-box">
-            <h3>Thong tin chuyen khoan Sepay</h3>
-            <p><strong>Ngan hang:</strong> ${sepayCheckout.bankCode || "(chua cau hinh)"}</p>
-            <p><strong>So tai khoan:</strong> ${sepayCheckout.accountNumber || "(chua cau hinh)"}</p>
-            <p><strong>Chu tai khoan:</strong> ${sepayCheckout.accountName || "(chua cau hinh)"}</p>
-            <p><strong>So tien:</strong> ${amountFormatted} ${order.currency}</p>
-            <p><strong>Noi dung:</strong> <code>${sepayCheckout.transferContent}</code></p>
+            <h3>💳 Thông tin chuyển khoản Sepay</h3>
+            <p><strong>Ngân hàng:</strong> ${sepayCheckout.bankCode || "(chưa cấu hình)"}</p>
+            <p><strong>Số tài khoản:</strong> ${sepayCheckout.accountNumber || "(chưa cấu hình)"}</p>
+            <p><strong>Chủ tài khoản:</strong> ${sepayCheckout.accountName || "(chưa cấu hình)"}</p>
+            <p><strong>Số tiền:</strong> ${amountFormatted} ${order.currency}</p>
+            <p><strong>Nội dung CK:</strong> <code>${sepayCheckout.transferContent}</code></p>
             ${sepayCheckout.qrUrl ? `<p><img src="${sepayCheckout.qrUrl}" alt="Sepay QR" style="max-width:260px;border-radius:12px" /></p>` : ""}
-            <p class="muted">Neu chua co QR URL, co the dung chuoi tao QR thu cong:</p>
-            <p class="small">${sepayCheckout.fallbackQrText}</p>
+            <p style="font-size:.82rem;color:#64748b;margin-top:8px">Nếu chưa có QR URL, dùng chuỗi tạo QR thủ công:</p>
+            <p style="font-size:.78rem;word-break:break-all;color:#94a3b8">${sepayCheckout.fallbackQrText}</p>
          </div>`
     : "";
 
   const html = `<!doctype html>
-  <html>
+  <html lang="vi">
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>Checkout Payment</title>
-      <style>
-        body { font-family: Segoe UI, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
-        button { border: none; background: #22c55e; color: #052e16; font-weight: 700; padding: 12px 18px; border-radius: 10px; cursor: pointer; }
-        .card { max-width: 560px; margin: 24px auto; background: #111827; padding: 20px; border-radius: 12px; }
-        .small { opacity: 0.8; margin-top: 12px; white-space: pre-wrap; }
-        .muted { color: #93c5fd; font-size: 13px; }
-        .sepay-box { border: 1px solid #334155; border-radius: 12px; padding: 14px; margin: 14px 0; background: #0b1220; }
-      </style>
+      <title>Thanh toán đơn hàng | Ứng Dụng Thông Minh</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+      <link rel="stylesheet" href="/styles.css" />
     </head>
-    <body>
-      <div class="card">
-        <h2>Checkout Session</h2>
-        <p>Order ID: <strong>${order.id}</strong></p>
-        <p class="muted">Payment mode: ${env.paymentProviderMode}</p>
-        <p>${mockCheckoutEnabled ? "Xac nhan thanh toan de gia lap callback provider." : "Thanh toan that se duoc provider callback vao webhook de cap key tu dong."}</p>
+    <body style="background:var(--bg,#f8fafc);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px">
+      <div style="max-width:560px;width:100%;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:32px;border:1px solid #e2e8f0">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <span style="font-size:1.6rem">⚡</span>
+          <div>
+            <strong style="font-size:1.1rem">Ứng Dụng Thông Minh</strong>
+            <p style="margin:0;font-size:.78rem;color:#64748b">Checkout</p>
+          </div>
+        </div>
+        <h2 style="margin:0 0 4px;font-size:1.3rem;font-weight:800">Thanh toán đơn hàng</h2>
+        <p style="color:#64748b;font-size:.88rem;margin:0 0 16px">Order ID: <code style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:.82rem">${order.id}</code></p>
+        <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
         ${sepayPanel}
-        <button id="payNow" ${mockCheckoutEnabled ? "" : "disabled"}>Xac nhan da thanh toan</button>
-        <p class="small" id="result"></p>
+        <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+          <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s" ${mockCheckoutEnabled ? "" : "disabled"}>✅ Xác nhận đã thanh toán</button>
+          <a href="/" style="display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:12px;border:1.5px solid #e2e8f0;font-weight:600;font-size:.9rem;color:#0f172a">← Trang chủ</a>
+        </div>
+        <div id="result" style="margin-top:16px"></div>
       </div>
       <script>
         const orderId = '${order.id}';
         const resultEl = document.getElementById('result');
 
         async function refreshOrderStatus() {
-          const response = await fetch('/api/orders/' + orderId);
-          if (!response.ok) {
-            return;
-          }
-
-          const data = await response.json();
-          if (data.order && data.order.status === 'paid') {
-            const keyLine = data.keyDelivery && data.keyDelivery.keyValue
-              ? '\\nKEY: ' + data.keyDelivery.keyValue
-              : '\\nKEY: Dang cap, vui long doi them';
-            resultEl.textContent = 'Thanh toan thanh cong. Don da paid.' + keyLine;
+          const r = await fetch('/api/orders/' + orderId);
+          if (!r.ok) return;
+          const d = await r.json();
+          if (d.order && d.order.status === 'paid') {
+            const keyVal = d.keyDelivery && d.keyDelivery.keyValue;
+            resultEl.innerHTML = '<div style="background:#f0fdf4;border:1.5px dashed #86efac;border-radius:10px;padding:16px;margin-top:8px">'
+              + '<p style="margin:0 0 4px;font-weight:700;color:#166534">✅ Thanh toán thành công!</p>'
+              + (keyVal
+                  ? '<p style="margin:0;font-family:monospace;font-size:1rem;font-weight:700;color:#166534">🔑 KEY: ' + keyVal + '</p>'
+                  : '<p style="margin:0;color:#64748b;font-size:.88rem">🔑 Key đang được cấp, vui lòng đợi thêm...</p>')
+              + '</div>';
           }
         }
 
         document.getElementById('payNow').addEventListener('click', async () => {
-          const response = await fetch('/api/payments/mock/confirm', {
+          const btn = document.getElementById('payNow');
+          btn.disabled = true; btn.textContent = '⏳ Đang xử lý...';
+          const r = await fetch('/api/payments/mock/confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId })
           });
-
-          const data = await response.json();
-          resultEl.textContent = JSON.stringify(data, null, 2);
+          const d = await r.json();
           refreshOrderStatus();
+          if(!d.ok) { btn.disabled = false; btn.textContent = '✅ Xác nhận đã thanh toán'; }
         });
 
-        setInterval(refreshOrderStatus, 5000);
+        setInterval(refreshOrderStatus, 4000);
         refreshOrderStatus();
       </script>
     </body>
@@ -383,6 +424,10 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(webRoot));
+app.use(
+  "/products/image",
+  express.static(path.join(__dirname, "..", "products", "image"))
+);
 
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
@@ -411,5 +456,5 @@ app.use((error, req, res, next) => {
 
 const host = "0.0.0.0";
 app.listen(env.port, host, () => {
-  console.log(`Web Sales Total running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
+  console.log(`Ứng Dụng Thông Minh running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
 });

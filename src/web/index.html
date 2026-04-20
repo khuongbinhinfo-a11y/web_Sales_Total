@@ -3,144 +3,289 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="meta_title">Web Sales Total - Nền tảng bán phần mềm tổng</title>
+    <title data-i18n="meta_title">Ứng Dụng Thông Minh - Mua key phần mềm bản quyền giá tốt</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="promo-strip" data-i18n="promo_strip">Khuyen mai hom nay: thanh toan Sepay, giao key tu dong sau khi don paid.</div>
 
-    <header class="site-header" id="top">
-      <div class="container nav-row">
-        <a class="brand" href="#top">
-          <span class="brand-dot"></span>
-          <span class="brand-text">
-            <strong data-i18n="brand_name">Web Sales Total</strong>
-            <small data-i18n="brand_tagline">Store key ban tu dong 24/7</small>
+    <header class="header" id="top">
+      <div class="container header-inner">
+        <a class="logo" href="#top">
+          <img class="logo-img" src="/logo.png" alt="Logo" />
+          <span class="logo-text">
+            <strong>Ứng Dụng Thông Minh</strong>
+            <small data-i18n="brand_tagline">Key bản quyền chính hãng</small>
           </span>
         </a>
-
-        <nav class="top-links">
-          <a href="#catalog" data-i18n="menu_catalog">Sản phẩm</a>
-          <a href="/portal/login" data-i18n="menu_login">Đăng nhập</a>
-          <a class="admin-link is-hidden" href="/admin" data-i18n="menu_admin">Quản trị</a>
-          <button id="langToggle" class="lang-toggle" type="button">EN</button>
+        <div class="header-search">
+          <input type="text" id="searchInput" placeholder="Tìm sản phẩm..." data-i18n-placeholder="search_placeholder" />
+        </div>
+        <nav class="header-nav" id="headerNav">
+          <a href="#catalog" data-i18n="nav_products">Sản phẩm</a>
+          <a href="#" id="navMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
+          <a href="#" id="navBalance" class="balance-badge is-hidden"><span id="balanceAmount">0</span> credit</a>
+          <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
+          <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register" data-i18n="nav_register">Đăng ký</a>
+          <div id="userMenu" class="user-menu is-hidden">
+            <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
+            <div class="user-dropdown" id="userDropdown">
+              <a href="#" id="dropMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
+              <a href="/portal" data-i18n="nav_lookup">Tra cứu đơn</a>
+              <a href="#" id="dropLogout" class="dd-logout" data-i18n="nav_logout">Đăng xuất</a>
+            </div>
+          </div>
+          <a class="admin-link is-hidden" href="/admin" data-i18n="nav_admin">Admin</a>
+          <button id="langToggle" class="lang-btn" type="button">VI / EN</button>
         </nav>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">☰</button>
       </div>
     </header>
 
     <main>
       <section class="hero">
-        <div class="container hero-grid">
-          <div class="hero-content">
-            <p class="hero-badge" data-i18n="hero_badge">Marketplace key ban chay</p>
+        <div class="container hero-inner">
+          <div class="hero-text">
+            <span class="hero-badge" data-i18n="hero_badge">🏆 Store key uy tín #1</span>
             <h1>
-              <span data-i18n="hero_title_line1">Mua key phan mem</span>
-              <span class="hero-accent" data-i18n="hero_title_line2">nhan ngay sau thanh toan</span>
+              <span data-i18n="hero_line1">Mua key phần mềm bản quyền</span><br/>
+              <span class="gradient-text" data-i18n="hero_line2">Giao ngay sau thanh toán</span>
             </h1>
-            <p class="hero-desc" data-i18n="hero_desc">Chon goi, thanh toan Sepay, he thong tu dong cap key va hien ngay tren trang don hang.</p>
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="#catalog" data-i18n="hero_cta_buy">Mua ngay</a>
-              <a class="btn btn-ghost" href="/portal" data-i18n="hero_cta_portal">Tra cuu don / lay key</a>
-            </div>
-            <div class="hero-points">
-              <span data-i18n="hero_point_1">Gia ro rang</span>
-              <span data-i18n="hero_point_2">Giao key tu dong</span>
-              <span data-i18n="hero_point_3">Ho tro 24/7</span>
+            <p class="hero-sub" data-i18n="hero_sub">Chọn sản phẩm → Thanh Toán → Nhận key tự động. Nhanh gọn, an toàn, hỗ trợ 24/7.</p>
+            <div class="hero-btns">
+              <a href="#how" class="btn btn-outline" data-i18n="hero_guide">Hướng dẫn mua</a>
             </div>
           </div>
-          <aside class="hero-card">
-            <h3 data-i18n="hero_card_title">Quy trinh mua key</h3>
-            <ul>
-              <li data-i18n="hero_card_item_1">1. Chon goi trong danh muc san pham</li>
-              <li data-i18n="hero_card_item_2">2. Chuyen khoan Sepay voi noi dung ma don</li>
-              <li data-i18n="hero_card_item_3">3. Trang don hang tu dong cap key khi paid</li>
-            </ul>
-            <div class="trust-row">
-              <span data-i18n="trust_1">Sepay xac nhan nhanh</span>
-              <span data-i18n="trust_2">Don hang cap key tu dong</span>
+          <div class="hero-visual">
+            <div class="hero-card-stack">
+              <div class="hero-card-item hc1"><span class="hc-icon">🔑</span><span data-i18n="hc_auto">Key tự động 24/7</span></div>
+              <div class="hero-card-item hc2"><span class="hc-icon">💳</span><span data-i18n="hc_sepay">Thanh toán linh động</span></div>
+              <div class="hero-card-item hc3"><span class="hc-icon">🛡️</span><span data-i18n="hc_safe">Bảo hành chính hãng</span></div>
             </div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="category-strip">
-        <div class="container">
-          <h2 data-i18n="cat_title">Danh muc noi bat</h2>
-          <div class="category-list">
-            <a href="#catalog" data-i18n="cat_1">Windows Key</a>
-            <a href="#catalog" data-i18n="cat_2">Office Ban Quyen</a>
-            <a href="#catalog" data-i18n="cat_3">Tai khoan AI Tools</a>
-            <a href="#catalog" data-i18n="cat_4">Goi Top-up</a>
           </div>
         </div>
       </section>
 
-      <section id="catalog" class="section storefront">
-        <div class="container">
-          <div class="section-head left">
-            <h2 data-i18n="catalog_title">Deal hot hom nay</h2>
-            <p data-i18n="catalog_desc">Bam Mua ngay de tao don. Sau khi he thong nhan thanh toan, key se duoc cap tu dong.</p>
-          </div>
-          <div id="productList" class="pricing-grid"></div>
+      <section class="trust-bar">
+        <div class="container trust-inner">
+          <div class="trust-stat"><strong>500+</strong><span data-i18n="trust_products">Sản phẩm</span></div>
+          <div class="trust-stat"><strong>10K+</strong><span data-i18n="trust_orders">Đơn đã giao</span></div>
+          <div class="trust-stat"><strong>4.9★</strong><span data-i18n="trust_rating">Đánh giá</span></div>
+          <div class="trust-stat"><strong>24/7</strong><span data-i18n="trust_support">Hỗ trợ</span></div>
         </div>
       </section>
 
-      <section id="support" class="section flow">
+      <section class="categories" id="catalog">
         <div class="container">
-          <div class="section-head left">
-            <h2 data-i18n="steps_title">Huong dan mua nhanh</h2>
-            <p data-i18n="steps_desc">3 buoc de nhan key tu dong</p>
+          <div class="section-head">
+            <h2 data-i18n="cat_title">Danh mục sản phẩm</h2>
+            <p data-i18n="cat_sub">Chọn danh mục hoặc xem tất cả sản phẩm bên dưới</p>
           </div>
-          <div class="flow-row">
-            <div class="flow-step">
-              <span>1</span>
-              <h3 data-i18n="step1_title">Chon san pham</h3>
-              <p data-i18n="step1_desc">Xem gia va bam Mua ngay o goi phu hop.</p>
+          <div class="cat-tabs" id="catTabs">
+            <button class="cat-tab active" data-cat="all" data-i18n="cat_all">Tất cả</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="products">
+        <div class="container">
+          <div class="section-head">
+            <h2 data-i18n="products_title">🔥 Sản phẩm bán chạy</h2>
+          </div>
+          <div id="productList" class="product-grid"></div>
+          <p id="catalogNotice" class="catalog-notice"></p>
+        </div>
+      </section>
+
+      <section class="how-section" id="how">
+        <div class="container">
+          <div class="section-head center">
+            <h2 data-i18n="how_title">Hướng dẫn mua hàng</h2>
+            <p data-i18n="how_sub">Chỉ 3 bước đơn giản để nhận key tự động</p>
+          </div>
+          <div class="steps-row">
+            <div class="step-card">
+              <div class="step-num">1</div>
+              <div class="step-icon">🛒</div>
+              <h3 data-i18n="step1_t">Chọn sản phẩm</h3>
+              <p data-i18n="step1_d">Duyệt danh mục, chọn gói phù hợp và bấm Mua ngay.</p>
             </div>
-            <div class="flow-step">
-              <span>2</span>
-              <h3 data-i18n="step2_title">Thanh toan Sepay</h3>
-              <p data-i18n="step2_desc">Chuyen khoan dung noi dung ma don de xac nhan nhanh.</p>
+            <div class="step-arrow">→</div>
+            <div class="step-card">
+              <div class="step-num">2</div>
+              <div class="step-icon">💳</div>
+              <h3 data-i18n="step2_t">Thanh toán</h3>
+              <p data-i18n="step2_d">Quét QR tự động, nhanh chóng.</p>
             </div>
-            <div class="flow-step">
-              <span>3</span>
-              <h3 data-i18n="step3_title">Nhan key tu dong</h3>
-              <p data-i18n="step3_desc">Khi don paid, key hien ngay tren trang don hang va portal.</p>
+            <div class="step-arrow">→</div>
+            <div class="step-card">
+              <div class="step-num">3</div>
+              <div class="step-icon">🔑</div>
+              <h3 data-i18n="step3_t">Nhận key tự động</h3>
+              <p data-i18n="step3_d">Key hiển thị ngay trên trang đơn hàng và cổng khách hàng.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="testimonials">
+        <div class="container">
+          <div class="section-head center">
+            <h2 data-i18n="testimonials_title">Đánh giá từ khách hàng</h2>
+            <p data-i18n="testimonials_sub">Hơn 10,000 khách hàng hài lòng</p>
+          </div>
+          <div class="testimonials-grid">
+            <div class="testimonial-card">
+              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+              <p class="testimonial-text" data-i18n="testimonial_1">"Key giao rất nhanh, dùng thử ngay được, chất lượng tốt. Sẽ quay lại."</p>
+              <div class="testimonial-person">
+                <img class="testimonial-avatar" src="https://i.pravatar.cc/96?img=12" alt="Nguyen Van A" loading="lazy" referrerpolicy="no-referrer" />
+                <div class="testimonial-meta">
+                  <div class="testimonial-author" data-i18n="testimonial_author_1">Nguyễn Văn A</div>
+                  <div class="testimonial-role">Chu shop online</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+              <p class="testimonial-text" data-i18n="testimonial_2">"Tư vấn tận tình, hỗ trợ 24/7. Rất uy tín. Giá cả hợp lý."</p>
+              <div class="testimonial-person">
+                <img class="testimonial-avatar" src="https://i.pravatar.cc/96?img=47" alt="Tran Thi B" loading="lazy" referrerpolicy="no-referrer" />
+                <div class="testimonial-meta">
+                  <div class="testimonial-author" data-i18n="testimonial_author_2">Trần Thị B</div>
+                  <div class="testimonial-role">Freelancer thiet ke</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+              <p class="testimonial-text" data-i18n="testimonial_3">"Mua lần thứ 5 rồi. Luôn ổn định. Đặc biệt hỗ trợ nhanh."</p>
+              <div class="testimonial-person">
+                <img class="testimonial-avatar" src="https://i.pravatar.cc/96?img=31" alt="Le Van C" loading="lazy" referrerpolicy="no-referrer" />
+                <div class="testimonial-meta">
+                  <div class="testimonial-author" data-i18n="testimonial_author_3">Lê Văn C</div>
+                  <div class="testimonial-role">Nhan vien van phong</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="container footer-row">
-        <div>
-          <strong data-i18n="brand_name">Web Sales Total</strong>
-          <p data-i18n="footer_tagline">© 2026 · Store key tu dong cho web ban hang</p>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <img class="footer-logo" src="/logo.png" alt="Logo" />
+          <strong>Ứng Dụng Thông Minh</strong>
+          <p data-i18n="footer_desc">Nền tảng bán key phần mềm bản quyền tự động. Thanh toán Sepay, giao key ngay.</p>
         </div>
-        <small><span data-i18n="footer_url_label">Sales API:</span> /api/catalog · <a href="/portal">Portal</a> · <a href="/admin">Admin</a></small>
+        <div class="footer-links">
+          <h4 data-i18n="footer_quick">Truy cập nhanh</h4>
+          <a href="#catalog">🛒 Sản phẩm</a>
+          <a href="/portal">🔍 Tra cứu đơn</a>
+          <a href="#how">📖 Hướng dẫn mua</a>
+        </div>
+        <div class="footer-links">
+          <h4 data-i18n="footer_policy">Chính sách</h4>
+          <a href="#">🛡️ Bảo hành &amp; hoàn tiền</a>
+          <a href="#">🔒 Chính sách bảo mật</a>
+          <a href="#">📜 Điều khoản sử dụng</a>
+        </div>
+        <div class="footer-links">
+          <h4 data-i18n="footer_contact">Liên hệ</h4>
+          <span>📧 Email: khuongbinh.info@gmail.com</span>
+          <span>📱 SĐT: 0902 96 46 85</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="container"><span>© 2026 Ứng Dụng Thông Minh. All rights reserved.</span></div>
       </div>
     </footer>
 
-    <a class="floating-buy" href="#catalog" data-i18n="menu_quick_buy">Mua ngay</a>
+    <a class="fab fab-zalo" href="https://zalo.me/0902964685" target="_blank" rel="noopener" title="Chat Zalo">
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none"><path d="M24 2C11.85 2 2 11.07 2 22.27c0 6.07 3.13 11.49 8.02 15.07-.2 1.97-.73 4.89-2.02 7.22 0 0 4.48-.86 8.32-3.52 2.44.7 5.05 1.08 7.68 1.08C36.15 42.12 46 33.05 46 22.27 46 11.07 36.15 2 24 2z" fill="#fff"/><text x="12" y="30" font-size="18" font-weight="900" fill="#0068ff" font-family="Arial">Z</text></svg>
+    </a>
+    <a class="fab fab-buy" href="#catalog">🛒</a>
+
+    <!-- Login / Register Modal -->
+    <div class="modal-overlay" id="loginModal">
+      <div class="modal-card">
+        <button class="modal-close" id="loginModalClose">✕</button>
+        <div class="modal-tabs">
+          <button class="modal-tab active" id="tabLogin" data-i18n="modal_login_title">Đăng nhập</button>
+          <button class="modal-tab" id="tabRegister" data-i18n="modal_register_title">Đăng ký</button>
+        </div>
+
+        <!-- Login form -->
+        <div id="loginPane" class="modal-pane">
+          <p class="modal-sub" data-i18n="modal_login_desc">Nhập email để đăng nhập.</p>
+          <form id="loginForm">
+            <label data-i18n="modal_login_email_label">Email</label>
+            <input type="email" id="loginEmail" required placeholder="you@example.com" autocomplete="email" />
+            <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_login_btn">Đăng nhập</button>
+          </form>
+          <p class="modal-note"><span data-i18n="modal_login_no_account">Chưa có tài khoản?</span> <a href="#" id="switchToRegister" data-i18n="modal_register_link">Đăng ký ngay</a></p>
+        </div>
+
+        <!-- Register form -->
+        <div id="registerPane" class="modal-pane" style="display:none">
+          <p class="modal-sub" data-i18n="modal_register_desc">Nhập email và họ tên để tạo tài khoản mới.</p>
+          <form id="registerForm">
+            <label data-i18n="modal_login_email_label">Email</label>
+            <input type="email" id="registerEmail" required placeholder="you@example.com" autocomplete="email" />
+            <label data-i18n="modal_register_name_label">Họ tên</label>
+            <input type="text" id="registerName" required placeholder="Nguyễn Văn A" autocomplete="name" />
+            <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_register_btn">Đăng ký</button>
+          </form>
+          <p class="modal-note"><span data-i18n="modal_register_has_account">Đã có tài khoản?</span> <a href="#" id="switchToLogin" data-i18n="modal_login_link">Đăng nhập ngay</a></p>
+        </div>
+
+        <p id="loginError" class="modal-error"></p>
+      </div>
+    </div>
+
+    <!-- Purchased Products Drawer -->
+    <div class="drawer-overlay" id="purchasedDrawer">
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <h2 data-i18n="purchased_title">Sản phẩm đã mua</h2>
+          <button class="modal-close" id="purchasedDrawerClose">✕</button>
+        </div>
+        <div class="drawer-body" id="purchasedContent">
+          <div class="drawer-section">
+            <h3 data-i18n="wallet_title">💰 Số dư Credit</h3>
+            <div id="drawerWallet" class="wallet-summary"></div>
+          </div>
+          <div class="drawer-section">
+            <h3 data-i18n="purchased_subs_title">📋 Gói đang sử dụng</h3>
+            <div id="drawerSubs"></div>
+          </div>
+          <div class="drawer-section">
+            <h3 data-i18n="purchased_keys_title">🔑 Key đã nhận</h3>
+            <div id="drawerKeys"></div>
+          </div>
+          <div class="drawer-section">
+            <h3 data-i18n="purchased_orders_title">🛒 Lịch sử đơn hàng</h3>
+            <div id="drawerOrders"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="./main.js"></script>
     <script>
       (function () {
-        const adminLink = document.querySelector(".admin-link");
-        if (!adminLink) {
-          return;
-        }
-
-        const fromStorage = localStorage.getItem("wst_show_admin_menu") === "1";
-        const fromQuery = new URLSearchParams(window.location.search).get("admin") === "1";
-        if (fromStorage || fromQuery) {
-          adminLink.classList.remove("is-hidden");
-        }
+        var al = document.querySelector(".admin-link");
+        if (!al) return;
+        if (localStorage.getItem("wst_show_admin_menu") === "1" || new URLSearchParams(location.search).get("admin") === "1")
+          al.classList.remove("is-hidden");
       })();
+      document.getElementById("mobileMenuBtn").addEventListener("click", function () {
+        document.getElementById("headerNav").classList.toggle("open");
+      });
     </script>
   </body>
 </html>

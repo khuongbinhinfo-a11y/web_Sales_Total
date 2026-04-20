@@ -650,6 +650,17 @@ async function getAdminDashboard() {
   };
 }
 
+async function findOrCreateCustomerByEmail(email, fullName) {
+  const existing = await pool.query("SELECT id, email, full_name FROM customers WHERE email = $1", [email]);
+  if (existing.rowCount > 0) {
+    return { id: existing.rows[0].id, email: existing.rows[0].email, fullName: existing.rows[0].full_name };
+  }
+  const id = `cus-${Date.now()}`;
+  const name = fullName || email.split("@")[0];
+  await pool.query("INSERT INTO customers(id, email, full_name) VALUES ($1, $2, $3)", [id, email, name]);
+  return { id, email, fullName: name };
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -660,5 +671,6 @@ module.exports = {
   recordWebhookEvent,
   getOrderKeyDelivery,
   getCustomerSnapshot,
-  getAdminDashboard
+  getAdminDashboard,
+  findOrCreateCustomerByEmail
 };

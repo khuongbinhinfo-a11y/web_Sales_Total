@@ -3,64 +3,91 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard | Web Sales Total</title>
+    <title>Admin Dashboard | Ứng Dụng Thông Minh</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
-    <nav class="top-nav">
-      <div class="top-nav-inner">
-        <a class="brand" href="/" aria-label="Trang chu Web Sales Total">
-          <span class="brand-logo" aria-hidden="true">
-            <svg viewBox="0 0 100 100" role="img">
-              <circle cx="50" cy="50" r="46" class="logo-core" />
-              <path d="M28 56 L42 70 L72 36" class="logo-check" />
-            </svg>
-          </span>
-          <span class="brand-copy">
-            <strong>Web Sales Total</strong>
-            <small>Admin Dashboard</small>
-          </span>
+  <body class="page-shell">
+    <header class="page-header">
+      <div class="container">
+        <a class="logo" href="/">
+          <img class="logo-img" src="/logo.png" alt="Logo" /><span class="logo-text"><strong>Ứng Dụng Thông Minh</strong><small>Admin Dashboard</small></span>
         </a>
-        <div class="menu-links">
-          <div class="menu-primary-links">
-            <a href="/">Homepage</a>
-            <a href="/portal">Portal</a>
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <main>
-      <section class="panel section-admin">
-        <div class="panel-title">
-          <div class="admin-label-row">
-            <span class="admin-badge-label">ADMIN</span>
-            <h2>Bảng điều hành vận hành</h2>
-          </div>
-          <p>Trang nội bộ để xem KPI, đơn hàng mới, giao dịch thanh toán và subscription active.</p>
-        </div>
-        <div class="admin-actions">
-          <button id="loadAdmin">Tải dashboard</button>
-          <form method="post" action="/auth/admin/logout">
-            <button type="submit">Đăng xuất</button>
+        <nav class="page-header-nav">
+          <a href="/">🏠 Trang chủ</a>
+          <a href="/portal">👤 Portal</a>
+          <form method="post" action="/auth/admin/logout" style="display:inline">
+            <button type="submit" class="btn-logout">Đăng xuất</button>
           </form>
-          <span class="admin-helper">Tạm thời chưa bật auth production trong MVP này.</span>
-        </div>
-        <pre id="adminData" class="json-box"></pre>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-brand">
-          <strong>Web Sales Total</strong>
-          <span>Admin route riêng cho vận hành nội bộ</span>
-        </div>
+        </nav>
       </div>
-    </footer>
+    </header>
+
+    <div class="admin-layout">
+      <nav class="admin-sidebar">
+        <a href="#section-kpi" class="active"><span class="icon">📊</span> Tổng quan</a>
+        <a href="#section-orders"><span class="icon">🛒</span> Đơn hàng</a>
+        <a href="#section-transactions"><span class="icon">💳</span> Giao dịch</a>
+        <a href="#section-subs"><span class="icon">🔄</span> Subscription</a>
+        <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
+        <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
+      </nav>
+
+      <main class="admin-main" id="adminMain">
+        <!-- KPI -->
+        <section id="section-kpi" class="admin-section">
+          <h3>📊 Tổng quan hệ thống</h3>
+          <div class="kpi-row" id="kpiRow">
+            <div class="kpi-card"><div class="kpi-label">Tổng doanh thu</div><div class="kpi-value primary" id="kpiRevenue">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Đơn đã thanh toán</div><div class="kpi-value success" id="kpiPaid">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Đơn chờ xử lý</div><div class="kpi-value accent" id="kpiPending">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Tổng khách hàng</div><div class="kpi-value" id="kpiCustomers">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Ứng dụng</div><div class="kpi-value" id="kpiApps">—</div></div>
+          </div>
+        </section>
+
+        <!-- Orders -->
+        <section id="section-orders" class="admin-section">
+          <h3>🛒 Đơn hàng gần nhất</h3>
+          <div class="table-wrap" id="ordersWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+        </section>
+
+        <!-- Transactions -->
+        <section id="section-transactions" class="admin-section">
+          <h3>💳 Giao dịch thanh toán</h3>
+          <div class="table-wrap" id="txWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+        </section>
+
+        <!-- Subscriptions -->
+        <section id="section-subs" class="admin-section">
+          <h3>🔄 Subscription đang hoạt động</h3>
+          <div class="table-wrap" id="subsWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+        </section>
+
+        <!-- Keys placeholder -->
+        <section id="section-keys" class="admin-section">
+          <h3>🔑 Quản lý kho key</h3>
+          <div class="info-card">
+            <p style="color:var(--muted);font-size:.88rem">Tính năng quản lý kho key (import/export, xem tồn kho, trạng thái) sẽ được bổ sung trong phiên bản tiếp theo.</p>
+            <div id="keySummary"></div>
+          </div>
+        </section>
+
+        <!-- Customers placeholder -->
+        <section id="section-customers" class="admin-section">
+          <h3>👥 Khách hàng</h3>
+          <div class="info-card">
+            <p style="color:var(--muted);font-size:.88rem">Tra cứu nhanh: nhập Customer ID rồi chuyển sang Portal để xem chi tiết.</p>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <input id="lookupCustId" value="cus-demo" placeholder="Customer ID" style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.88rem" />
+              <button id="lookupBtn" class="btn btn-outline" style="min-height:38px;font-size:.85rem">Xem Portal</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <script src="./admin.js"></script>
   </body>
