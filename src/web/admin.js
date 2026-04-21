@@ -8,6 +8,17 @@ function badge(s){
 }
 let meAdmin = null;
 let sepaySecretConfigured = false;
+let currentGateApp = "desktop";
+let currentGateData = null;
+
+function escapeHtml(value){
+  return String(value || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/\"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
 
 function isPublicWebhookUrl(url){
   const value = String(url || "").trim().toLowerCase();
@@ -411,6 +422,172 @@ function bindSepayForm(){
   });
 }
 
+function gateRowHtml(item, section){
+  const required = item.required ? "required" : "optional";
+  return `<tr data-gate-section="${section}" data-gate-id="${escapeHtml(item.id)}">
+    <td style="font-family:monospace;font-size:.78rem">${escapeHtml(item.id)}</td>
+    <td><span class="status-badge ${item.required ? "status-pending" : ""}">${required}</span></td>
+    <td style="text-align:center"><input class="gate-passed" type="checkbox" ${item.passed ? "checked" : ""} /></td>
+    <td><input class="gate-evidence" value="${escapeHtml(item.evidence || "")}" placeholder="Nhập bằng chứng" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff" /></td>
+  </tr>`;
+}
+
+function renderGateChecklist(data){
+  const readyWrap = document.getElementById("gateReadyWrap");
+  const doneWrap = document.getElementById("gateDoneWrap");
+  const summaryBar = document.getElementById("gateSummaryBar");
+  if(!readyWrap || !doneWrap || !summaryBar) return;
+
+  const summary = data.summary || { readyPassed:0, readyRequired:0, donePassed:0, doneRequired:0, allPassed:false };
+  const okText = summary.allPassed ? "PASS" : "CHUA DAT";
+  summaryBar.textContent = `App: ${data.app} · Ready ${summary.readyPassed}/${summary.readyRequired} · Done ${summary.donePassed}/${summary.doneRequired} · ${okText}`;
+
+  const readyRows = (data.data?.definitionOfReady || []).map(item=>gateRowHtml(item, "ready")).join("");
+  const doneRows = (data.data?.definitionOfDone || []).map(item=>gateRowHtml(item, "done")).join("");
+
+  readyWrap.innerHTML = `<table class="data-table"><thead><tr>
+    <th>ID</th><th>Loai</th><th>Passed</th><th>Evidence</th>
+  </tr></thead><tbody>${readyRows || '<tr><td colspan="4" style="color:var(--muted)">Khong co du lieu</td></tr>'}</tbody></table>`;
+
+  doneWrap.innerHTML = `<table class="data-table"><thead><tr>
+    <th>ID</th><th>Loai</th><th>Passed</th><th>Evidence</th>
+  </tr></thead><tbody>${doneRows || '<tr><td colspan="4" style="color:var(--muted)">Khong co du lieu</td></tr>'}</tbody></table>`;
+}
+
+async function loadGateStatus(){
+  const wrap = document.getElementById("gateStatusWrap");
+  if(!wrap) return;
+  try {
+    const res = await fetch("/api/admin/ai-gates");
+    if(res.status===401){ window.location.href="/admin/login"; return; }
+    if(res.status===403){
+      wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Ban khong co quyen xem AI Gate.</p>`;
+      return;
+    }
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">${payload.message || "Khong tai duoc trang thai gate"}</p>`;
+      return;
+    }
+    const gates = Array.isArray(payload.gates) ? payload.gates : [];
+    wrap.innerHTML = `<table class="data-table"><thead><tr>
+      <th>App</th><th>Checklist</th><th>Ready</th><th>Done</th><th>Ket qua</th><th>Cap nhat</th>
+    </tr></thead><tbody>${gates.map(g=>`<tr>
+      <td>${escapeHtml(g.app || "")}</td>
+      <td style="font-size:.8rem">${escapeHtml(g.fileName || "—")}</td>
+      <td>${g.summary?.readyPassed || 0}/${g.summary?.readyRequired || 0}</td>
+      <td>${g.summary?.donePassed || 0}/${g.summary?.doneRequired || 0}</td>
+      <td>${g.summary?.allPassed ? '<span class="status-badge status-active">PASS</span>' : '<span class="status-badge" style="background:#fee2e2;color:#991b1b">FAIL</span>'}</td>
+      <td style="font-size:.8rem">${escapeHtml(g.updatedAt || "—")}</td>
+    </tr>`).join("")}</tbody></table>`;
+  } catch(err){
+    wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">Loi tai trang thai gate: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function loadGateDetail(app){
+  const msg = document.getElementById("gateMsg");
+  if(msg){ msg.textContent = "Dang tai checklist..."; msg.style.color = "var(--muted)"; }
+  try {
+    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(app)}`);
+    if(res.status===401){ window.location.href="/admin/login"; return; }
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      if(msg){ msg.textContent = payload.message || "Khong tai duoc checklist"; msg.style.color = "var(--danger)"; }
+      return;
+    }
+    currentGateApp = payload.app || app;
+    currentGateData = payload;
+    renderGateChecklist(payload);
+    if(msg){ msg.textContent = `Da tai ${payload.fileName}`; msg.style.color = "var(--success)"; }
+  } catch(err){
+    if(msg){ msg.textContent = `Loi tai checklist: ${err.message}`; msg.style.color = "var(--danger)"; }
+  }
+}
+
+function collectGateUpdates(section){
+  const rows = document.querySelectorAll(`tr[data-gate-section="${section}"]`);
+  return Array.from(rows).map((row)=>({
+    id: row.dataset.gateId,
+    passed: !!row.querySelector(".gate-passed")?.checked,
+    evidence: row.querySelector(".gate-evidence")?.value || ""
+  }));
+}
+
+async function saveGateChecklist(){
+  const msg = document.getElementById("gateMsg");
+  if(!currentGateApp) return;
+  if(msg){ msg.textContent = "Dang luu checklist..."; msg.style.color = "var(--muted)"; }
+  try {
+    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        definitionOfReady: collectGateUpdates("ready"),
+        definitionOfDone: collectGateUpdates("done")
+      })
+    });
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      if(msg){ msg.textContent = payload.message || "Luu checklist that bai"; msg.style.color = "var(--danger)"; }
+      return;
+    }
+    currentGateData = payload;
+    renderGateChecklist(payload);
+    await loadGateStatus();
+    if(msg){ msg.textContent = "Da luu checklist thanh cong"; msg.style.color = "var(--success)"; }
+  } catch(err){
+    if(msg){ msg.textContent = `Loi luu checklist: ${err.message}`; msg.style.color = "var(--danger)"; }
+  }
+}
+
+async function commitGateChecklist(){
+  const msg = document.getElementById("gateCommitMsg");
+  const message = document.getElementById("gateCommitMessage")?.value?.trim();
+  const branch = document.getElementById("gateCommitBranch")?.value?.trim();
+  if(msg){ msg.textContent = "Dang commit qua GitHub API..."; msg.style.color = "var(--muted)"; }
+  try {
+    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}/commit`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ message, branch })
+    });
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      if(msg){ msg.textContent = payload.message || "Commit that bai"; msg.style.color = "var(--danger)"; }
+      return;
+    }
+    const detail = payload.commitUrl ? ` · ${payload.commitUrl}` : "";
+    if(msg){ msg.textContent = `Commit thanh cong: ${payload.commitSha || ""}${detail}`; msg.style.color = "var(--success)"; }
+  } catch(err){
+    if(msg){ msg.textContent = `Loi commit: ${err.message}`; msg.style.color = "var(--danger)"; }
+  }
+}
+
+function bindAiGateControls(){
+  const appSelect = document.getElementById("gateAppSelect");
+  const reloadBtn = document.getElementById("gateReloadBtn");
+  const saveBtn = document.getElementById("gateSaveBtn");
+  const commitBtn = document.getElementById("gateCommitBtn");
+  if(!appSelect || !reloadBtn || !saveBtn || !commitBtn) return;
+
+  appSelect.addEventListener("change", ()=>{
+    currentGateApp = appSelect.value;
+    loadGateDetail(currentGateApp);
+  });
+
+  reloadBtn.addEventListener("click", ()=>{
+    loadGateStatus();
+    loadGateDetail(appSelect.value);
+  });
+
+  saveBtn.addEventListener("click", ()=> saveGateChecklist());
+  commitBtn.addEventListener("click", ()=> commitGateChecklist());
+
+  loadGateStatus();
+  loadGateDetail(appSelect.value);
+}
+
 // Sidebar nav highlight
 document.querySelectorAll(".admin-sidebar a").forEach(a=>{
   a.addEventListener("click", ()=>{
@@ -427,6 +604,7 @@ document.getElementById("lookupBtn").addEventListener("click",()=>{
 
 bindCreateAdminForm();
 bindSepayForm();
+bindAiGateControls();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();

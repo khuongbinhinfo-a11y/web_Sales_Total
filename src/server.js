@@ -1,6 +1,8 @@
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
+const yaml = require("js-yaml");
 const { OAuth2Client } = require("google-auth-library");
 const { env } = require("./config/env");
 const { pool } = require("./db/pool");
@@ -82,6 +84,194 @@ app.use(express.urlencoded({ extended: false }));
 function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
+const aiGateFileByApp = {
+  default: "definition-ready-done.yaml",
+  desktop: "definition-ready-done.desktop.yaml",
+  webapp: "definition-ready-done.webapp.yaml",
+  admin: "definition-ready-done.admin.yaml"
+};
+
+function normalizeAppName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function resolveAiGateApp(appRaw) {
+  const v = normalizeAppName(appRaw);
+  if (!v || v === "default" || v === "core" || v === "platform") return "default";
+  if (v === "desktop" || v === "electron") return "desktop";
+  if (v === "web" || v === "webapp" || v === "frontend") return "webapp";
+  if (v === "admin" || v === "backoffice") return "admin";
+  return "default";
+}
+
+function aiGateFilePath(appRaw) {
+  const app = resolveAiGateApp(appRaw);
+  const fileName = aiGateFileByApp[app] || aiGateFileByApp.default;
+  return { app, fileName, filePath: path.join(aiGatesDir, fileName) };
+}
+
+function ensureChecklistItems(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => ({
+      id: String(item?.id || "").trim(),
+      required: Boolean(item?.required),
+      passed: Boolean(item?.passed),
+      evidence: String(item?.evidence || "").trim()
+    }))
+    .filter((item) => item.id);
+}
+
+function toGateSummary(data) {
+  const ready = ensureChecklistItems(data?.definitionOfReady);
+  const done = ensureChecklistItems(data?.definitionOfDone);
+
+  const readyRequired = ready.filter((x) => x.required).length;
+  const readyPassed = ready.filter((x) => x.required && x.passed).length;
+  const doneRequired = done.filter((x) => x.required).length;
+  const donePassed = done.filter((x) => x.required && x.passed).length;
+
+  return {
+    readyRequired,
+    readyPassed,
+    doneRequired,
+    donePassed,
+    allPassed: readyRequired === readyPassed && doneRequired === donePassed
+  };
+}
+
+async function readAiGateChecklist(appRaw) {
+  const resolved = aiGateFilePath(appRaw);
+  if (!fs.existsSync(resolved.filePath)) {
+    const err = new Error(`Checklist file not found: ${resolved.fileName}`);
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const raw = await fs.promises.readFile(resolved.filePath, "utf8");
+  const parsed = yaml.load(raw);
+  if (!parsed || typeof parsed !== "object") {
+    const err = new Error("Checklist YAML invalid");
+    err.statusCode = 500;
+    throw err;
+  }
+
+  const data = {
+    ...parsed,
+    definitionOfReady: ensureChecklistItems(parsed.definitionOfReady),
+    definitionOfDone: ensureChecklistItems(parsed.definitionOfDone)
+  };
+
+  return {
+    app: resolved.app,
+    fileName: resolved.fileName,
+    filePath: resolved.filePath,
+    data,
+    summary: toGateSummary(data)
+  };
+}
+
+function applyChecklistUpdates(existingItems, updates) {
+  const current = ensureChecklistItems(existingItems);
+  const byId = new Map((Array.isArray(updates) ? updates : []).map((u) => [String(u?.id || "").trim(), u]));
+
+  return current.map((item) => {
+    const patch = byId.get(item.id);
+    if (!patch) return item;
+    return {
+      ...item,
+      passed: typeof patch.passed === "boolean" ? patch.passed : item.passed,
+      evidence: patch.evidence !== undefined ? String(patch.evidence || "").trim() : item.evidence
+    };
+  });
+}
+
+async function writeAiGateChecklist(appRaw, nextData) {
+  const resolved = aiGateFilePath(appRaw);
+  const dumped = yaml.dump(nextData, { lineWidth: 140, noRefs: true });
+  await fs.promises.writeFile(resolved.filePath, dumped, "utf8");
+  return resolved;
+}
+
+async function getGithubFileSha({ owner, repo, branch, filePath }) {
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(branch)}`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${env.githubToken}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "web-sales-total-admin"
+    }
+  });
+
+  if (res.status === 404) {
+    return "";
+  }
+
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(payload?.message || "Cannot read target file from GitHub");
+    err.statusCode = res.status;
+    throw err;
+  }
+  return String(payload.sha || "");
+}
+
+async function commitChecklistToGithub({ app, message, branch }) {
+  if (!env.githubToken) {
+    const err = new Error("GITHUB_TOKEN chưa cấu hình");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const resolved = aiGateFilePath(app);
+  const localContent = await fs.promises.readFile(resolved.filePath, "utf8");
+  const owner = env.githubRepoOwner;
+  const repo = env.githubRepoName;
+  const targetBranch = String(branch || env.githubRepoBranch || "main").trim();
+  const targetFilePath = `docs/ai-gates/${resolved.fileName}`;
+
+  const sha = await getGithubFileSha({ owner, repo, branch: targetBranch, filePath: targetFilePath });
+
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(targetFilePath)}`;
+  const payload = {
+    message: message || `chore(ai-gate): update ${resolved.fileName}`,
+    content: Buffer.from(localContent, "utf8").toString("base64"),
+    branch: targetBranch
+  };
+  if (sha) payload.sha = sha;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${env.githubToken}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "User-Agent": "web-sales-total-admin"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result?.message || "Commit file thất bại");
+    err.statusCode = res.status;
+    throw err;
+  }
+
+  return {
+    app: resolved.app,
+    fileName: resolved.fileName,
+    branch: targetBranch,
+    commitSha: result?.commit?.sha || "",
+    commitUrl: result?.commit?.html_url || "",
+    contentUrl: result?.content?.html_url || ""
   };
 }
 
@@ -538,6 +728,98 @@ app.get(
       return res.status(401).json({ message: "Unauthorized" });
     }
     return res.json({ admin });
+  })
+);
+
+app.get(
+  "/api/admin/ai-gates",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const apps = ["default", "desktop", "webapp", "admin"];
+    const output = [];
+
+    for (const appName of apps) {
+      try {
+        const loaded = await readAiGateChecklist(appName);
+        output.push({
+          app: loaded.app,
+          fileName: loaded.fileName,
+          checklistId: loaded.data.checklistId || "",
+          updatedAt: loaded.data?.enforcement?.updatedAt || "",
+          blockMerge: Boolean(loaded.data?.enforcement?.blockMerge),
+          summary: loaded.summary
+        });
+      } catch {
+        output.push({
+          app: appName,
+          fileName: aiGateFileByApp[appName] || "",
+          checklistId: "",
+          updatedAt: "",
+          blockMerge: false,
+          summary: { readyRequired: 0, readyPassed: 0, doneRequired: 0, donePassed: 0, allPassed: false },
+          missing: true
+        });
+      }
+    }
+
+    return res.json({ gates: output });
+  })
+);
+
+app.get(
+  "/api/admin/ai-gates/:app",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const loaded = await readAiGateChecklist(req.params.app);
+    return res.json({
+      app: loaded.app,
+      fileName: loaded.fileName,
+      data: loaded.data,
+      summary: loaded.summary
+    });
+  })
+);
+
+app.put(
+  "/api/admin/ai-gates/:app",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const loaded = await readAiGateChecklist(req.params.app);
+    const body = req.body || {};
+
+    const next = {
+      ...loaded.data,
+      enforcement: {
+        ...(loaded.data.enforcement || {}),
+        updatedAt: new Date().toISOString().slice(0, 10),
+        blockMerge: typeof body?.enforcement?.blockMerge === "boolean"
+          ? body.enforcement.blockMerge
+          : Boolean(loaded.data?.enforcement?.blockMerge)
+      },
+      definitionOfReady: applyChecklistUpdates(loaded.data.definitionOfReady, body.definitionOfReady),
+      definitionOfDone: applyChecklistUpdates(loaded.data.definitionOfDone, body.definitionOfDone)
+    };
+
+    await writeAiGateChecklist(req.params.app, next);
+    const reloaded = await readAiGateChecklist(req.params.app);
+    return res.json({
+      ok: true,
+      app: reloaded.app,
+      fileName: reloaded.fileName,
+      data: reloaded.data,
+      summary: reloaded.summary
+    });
+  })
+);
+
+app.post(
+  "/api/admin/ai-gates/:app/commit",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const branch = String(req.body?.branch || "").trim();
+    const message = String(req.body?.message || "").trim();
+    const committed = await commitChecklistToGithub({ app: req.params.app, message, branch });
+    return res.json({ ok: true, ...committed });
   })
 );
 

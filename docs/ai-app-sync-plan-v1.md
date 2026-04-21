@@ -28,6 +28,15 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
 - Rule check: scripts/validate-api-contracts.mjs
 - CI gate: .github/workflows/api-contract.yml
 
+## 3.1 Conflict resolution policy
+- OpenAPI YAML la master source.
+- Postman collection la derived artifact.
+- Neu YAML va Postman mau thuan:
+  - Buoc 1: sua OpenAPI truoc (neu can doi contract)
+  - Buoc 2: regen/cap nhat Postman theo OpenAPI
+  - Buoc 3: bat buoc pass npm run api:check truoc merge
+- Cam merge neu co conflict chua resolve giua 2 artifact.
+
 ## 4. Quy trinh cho moi app moi
 
 ### Phase A - Kickoff (Day 0)
@@ -41,7 +50,7 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
 - Tu dong generate API client/types tu OpenAPI.
 - Mapping endpoint vao man hinh app.
 
-### Phase C - Implementation (Day 2-4)
+### Phase C - Implementation (Day 2-3)
 - Implement bat buoc:
   - Auth flow
   - Catalog + order + checkout redirect
@@ -51,7 +60,7 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
   - device binding
   - offline grace policy
 
-### Phase D - Verification (Day 4-5)
+### Phase D - Verification (Day 4)
 - Chay smoke test theo Postman collection.
 - Chay integration checklist:
   - docs/integration-checklist.md
@@ -61,6 +70,18 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
 - Pass full checklist critical.
 - Pass api:check va workflow CI.
 - Co rollback plan trong ticket.
+- Human owner sign-off bat buoc voi thay doi breaking (v2).
+
+## 4.1 Escalation path khi vi pham rule
+- Rule 1 vi pham (goi endpoint ngoai OpenAPI):
+  - Muc do: P0
+  - Xu ly: block merge ngay, tao issue fix trong 4h.
+- Rule 2 vi pham (code truoc contract):
+  - Muc do: P1
+  - Xu ly: freeze PR, bo sung de xuat contract + review lai.
+- Rule 3 vi pham (doi payload khong changelog):
+  - Muc do: P1
+  - Xu ly: bat buoc cap nhat changelog truoc khi unfreeze.
 
 ## 5. Gate bat buoc trong pipeline
 - Gate 1: Contract parity
@@ -87,9 +108,17 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
 
 ## 8. Weekly operating cadence
 - Thu 2: Review changelog + chot contract tuan.
+  - Chairman: Platform AI owner
+  - Approver cuoi: Human owner (neu co breaking change)
 - Thu 3-4: App AI implement.
 - Thu 5: Integration test chung.
 - Thu 6: Release hoac rollback.
+
+## 8.1 Rollback SLA
+- Neu phat hien lech contract tren production:
+  - T0: ghi nhan incident va khoa rollout trong 15 phut
+  - T0 + 60 phut: xong rollback phien ban gay lech
+  - T0 + 24 gio: hoan tat RCA va action items
 
 ## 9. KPI de do muc do dong bo
 - Contract parity pass rate = 100%.

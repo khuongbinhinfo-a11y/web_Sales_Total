@@ -38,6 +38,10 @@ SEPAY_QR_TEMPLATE_URL=
 SESSION_SIGNING_SECRET=replace-with-strong-secret
 PORTAL_ACCESS_KEY=portal-demo
 ADMIN_ACCESS_KEY=admin-demo
+GITHUB_TOKEN=
+GITHUB_REPO_OWNER=khuongbinhinfo-a11y
+GITHUB_REPO_NAME=web_Sales_Total
+GITHUB_REPO_BRANCH=main
 ```
 
 Ghi chu:
@@ -110,6 +114,7 @@ Legacy alias van hoat dong:
 - Login portal: `GET /portal/login` (dung `PORTAL_ACCESS_KEY`)
 - Login admin: `GET /admin/login` (dung `ADMIN_ACCESS_KEY`)
 - API portal va admin yeu cau cookie session hop le
+- Canh bao bao mat: truoc khi deploy staging/prod, bat buoc doi `PORTAL_ACCESS_KEY` va `ADMIN_ACCESS_KEY` thanh gia tri manh, khong duoc de gia tri demo.
 
 ## Stripe webhook adapter
 - Dat `PAYMENT_PROVIDER_MODE=stripe`
@@ -181,3 +186,8 @@ gcloud run deploy web-sales-total \
 - CI workflow: [.github/workflows/ai-readiness-gate.yml](.github/workflows/ai-readiness-gate.yml)
 - Neu `enforcement.blockMerge=true` va con item required chua `passed: true`, CI se fail de chan merge.
 - Huong dan quan ly gate: [docs/ai-gates/README.md](docs/ai-gates/README.md)
+- UI admin quan ly gate:
+  - Vao `/admin` -> muc `AI Gate`
+  - Xem trang thai gate theo app
+  - Chinh `passed` + `evidence` va luu checklist
+  - Commit checklist len GitHub qua API (can `GITHUB_TOKEN`)

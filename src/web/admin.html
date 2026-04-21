@@ -34,6 +34,7 @@
         <a href="#section-wallets"><span class="icon">💰</span> Số dư credit</a>
         <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
         <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
+        <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
       </nav>
@@ -152,6 +153,58 @@
               <button type="submit" class="btn btn-accent" style="min-height:40px;width:200px">Lưu cấu hình Sepay</button>
               <p id="sepayConfigMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
             </form>
+          </div>
+        </section>
+
+        <section id="section-ai-gates" class="admin-section">
+          <h3>✅ Quản lý AI Gate theo app</h3>
+          <div class="info-card" style="margin-bottom:12px">
+            <div style="display:grid;grid-template-columns:220px 1fr auto auto;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Chọn app</label>
+                <select id="gateAppSelect" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff">
+                  <option value="desktop">desktop</option>
+                  <option value="webapp">webapp</option>
+                  <option value="admin">admin</option>
+                  <option value="default">default</option>
+                </select>
+              </div>
+              <div id="gateSummaryBar" style="font-size:.84rem;color:var(--muted)">Đang tải trạng thái gate...</div>
+              <button id="gateReloadBtn" class="btn btn-outline" style="min-height:38px;font-size:.84rem">Tải lại</button>
+              <button id="gateSaveBtn" class="btn btn-accent" style="min-height:38px;font-size:.84rem">Lưu checklist</button>
+            </div>
+            <p id="gateMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div class="table-wrap" style="margin-bottom:12px">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--line);font-size:.82rem;font-weight:700;color:var(--muted)">Trạng thái gate theo app</div>
+            <div id="gateStatusWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+          </div>
+
+          <div class="table-wrap" style="margin-bottom:12px">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--line);font-size:.82rem;font-weight:700;color:var(--muted)">Definition Of Ready</div>
+            <div id="gateReadyWrap"><p style="padding:16px;color:var(--muted)">Chưa chọn app</p></div>
+          </div>
+
+          <div class="table-wrap" style="margin-bottom:12px">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--line);font-size:.82rem;font-weight:700;color:var(--muted)">Definition Of Done</div>
+            <div id="gateDoneWrap"><p style="padding:16px;color:var(--muted)">Chưa chọn app</p></div>
+          </div>
+
+          <div class="info-card">
+            <h3 style="margin-bottom:8px">📝 Commit checklist lên GitHub</h3>
+            <div style="display:grid;grid-template-columns:1fr 220px auto;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Commit message</label>
+                <input id="gateCommitMessage" placeholder="chore(ai-gate): update checklist" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Branch (optional)</label>
+                <input id="gateCommitBranch" placeholder="main" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff" />
+              </div>
+              <button id="gateCommitBtn" class="btn btn-outline" style="min-height:38px;font-size:.84rem">Commit qua GitHub API</button>
+            </div>
+            <p id="gateCommitMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
           </div>
         </section>
 

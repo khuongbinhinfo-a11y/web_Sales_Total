@@ -98,7 +98,11 @@ const env = {
   sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
   customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
-  adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo"
+  adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo",
+  githubToken: process.env.GITHUB_TOKEN || "",
+  githubRepoOwner: process.env.GITHUB_REPO_OWNER || "khuongbinhinfo-a11y",
+  githubRepoName: process.env.GITHUB_REPO_NAME || "web_Sales_Total",
+  githubRepoBranch: process.env.GITHUB_REPO_BRANCH || "main"
 };
 
 if (!env.databaseUrl) {
