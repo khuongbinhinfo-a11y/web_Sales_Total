@@ -278,16 +278,26 @@ app.post(
 );
 
 app.post(
-  ["/api/payments/webhooks/sepay", "/api/webhooks/sepay"],
+  ["/api/payments/webhooks/sepay", "/api/webhooks/sepay", "/api/pay", "/api/pay/"],
   asyncHandler(async (req, res) => {
     const signature = normalizeSepayWebhookSignature(
       req.header("x-sepay-signature") ||
       req.header("x-sepay-token") ||
+      req.header("x-sepay-apikey") ||
+      req.header("x-sepay-api-key") ||
+      req.header("x-api-key") ||
+      req.header("x-webhook-secret") ||
       req.header("authorization") ||
       req.query.apiKey ||
       req.query.apikey ||
+      req.query.api_key ||
+      req.query.token ||
+      req.query.secret ||
       req.body?.apiKey ||
-      req.body?.apikey
+      req.body?.apikey ||
+      req.body?.api_key ||
+      req.body?.token ||
+      req.body?.secret
     );
 
     const normalized = parseSepayWebhook(req.body, signature);

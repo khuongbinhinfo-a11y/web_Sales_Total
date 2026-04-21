@@ -175,11 +175,15 @@ async function getOrderByCode(orderCode) {
     return null;
   }
 
+  const compactCode = normalizedCode.replace(/[^A-Z0-9]/g, "");
+
   const result = await pool.query(
     `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
      FROM orders
-     WHERE order_code = $1`,
-    [normalizedCode]
+     WHERE order_code = $1 OR REPLACE(order_code, '-', '') = $2
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [normalizedCode, compactCode]
   );
 
   if (result.rowCount === 0) {
