@@ -1049,7 +1049,7 @@ app.get(
           <p id="paidPopupText" style="margin:0 0 14px;color:#0f172a;font-size:.92rem">Hệ thống đã xác nhận đơn hàng của bạn.</p>
           <div id="paidPopupKey" style="display:none;margin:0 0 14px;padding:10px 12px;background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;font-family:monospace;color:#166534;font-weight:700"></div>
           <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-            <a href="/portal" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;background:#16a34a;color:#fff;font-weight:700">Xem sản phẩm đã mua</a>
+            <a href="/?myproducts=1" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;background:#16a34a;color:#fff;font-weight:700">Xem sản phẩm đã mua</a>
             <button id="paidPopupClose" style="min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:600;cursor:pointer">Đóng</button>
           </div>
         </div>

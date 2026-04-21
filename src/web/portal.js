@@ -181,4 +181,30 @@ document.getElementById("loadPortal").addEventListener("click",()=>{
 document.getElementById("consumeUsage").addEventListener("click", consumeUsage);
 document.getElementById("tgRefreshBtn")?.addEventListener("click", refreshTelegramLink);
 loadTelegramLinkInfo();
-loadPortal("cus-demo");
+
+/* Auto-load portal via session — no need to remember customer ID */
+(async function autoLoadFromSession(){
+  try {
+    const res = await fetch("/api/auth/me");
+    if(!res.ok) {
+      // Not logged in — fall back to manual input or demo
+      loadPortal("cus-demo");
+      return;
+    }
+    const data = await res.json();
+    const cid = data?.customer?.id;
+    if(cid){
+      const input = document.getElementById("customerId");
+      if(input) input.value = cid;
+      // Hide manual load UI for logged-in users
+      const loadBtn = document.getElementById("loadPortal");
+      if(loadBtn) loadBtn.style.display = "none";
+      if(input) input.style.display = "none";
+      loadPortal(cid);
+    } else {
+      loadPortal("cus-demo");
+    }
+  } catch {
+    loadPortal("cus-demo");
+  }
+})();

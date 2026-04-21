@@ -46,10 +46,10 @@ function imagePathByName(fileName) {
 const productImageLibrary = {
   study01: imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
   study12: imagePathByName("phần mềm học tập khối cấp 12.jpeg"),
-  map: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
+  map: imagePathByName("Phần mềm quét data KH-GGmap.jpeg"),
   mapAlt: imagePathByName("phần mềm quét data KH_1.jpeg"),
-  video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật-2.jpeg"),
-  bds: imagePathByName("Quản_lý_website_BDS-2.jpeg")
+  video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật.jpeg"),
+  bds: imagePathByName("Quản_lý_website_BDS.jpeg")
 };
 
 function normalizeText(value) {
@@ -749,29 +749,29 @@ function renderProducts(){
 }
 
 /* ── banner carousel ── */
-const bannerColors = [
-  "linear-gradient(135deg,#43e97b,#38f9d7)",
-  "linear-gradient(135deg,#667eea,#764ba2)",
-  "linear-gradient(135deg,#f85032,#e73827)",
-  "linear-gradient(135deg,#ff9a9e,#fecfef)",
-  "linear-gradient(135deg,#a18cd1,#fbc2eb)",
-  "linear-gradient(135deg,#fbc2eb,#a6c1ee)",
-  "linear-gradient(135deg,#ff6a00,#ee0979)",
-  "linear-gradient(135deg,#11998e,#38ef7d)"
+/* "Trăng tím" (moonlit purple) fallback gradients — elegant deep violet/silver */
+const moonPurpleGradients = [
+  "linear-gradient(135deg,#1e1b4b 0%,#4c1d95 100%)",
+  "linear-gradient(135deg,#2d1b69 0%,#7c3aed 100%)",
+  "linear-gradient(135deg,#1e3a5f 0%,#5b21b6 100%)",
+  "linear-gradient(135deg,#3b0e6e 0%,#a855f7 100%)",
+  "linear-gradient(135deg,#0f172a 0%,#4f46e5 100%)",
+  "linear-gradient(135deg,#1e0936 0%,#7c2d87 100%)"
 ];
 function renderBanner(){
   const track = document.getElementById("bannerTrack");
   if(!track || !allProducts.length) return;
   const items = allProducts.map((p,i)=>{
-    const bg = bannerColors[i % bannerColors.length];
-    const img = p.image ? `<img src="${p.image}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">` : "";
-    return `<div class="banner-card" style="background:${img ? '#222' : bg}">
-      ${img}
+    const fallbackBg = moonPurpleGradients[i % moonPurpleGradients.length];
+    const bgStyle = p.image
+      ? `background-image:url("${p.image}");background-size:cover;background-position:center top`
+      : `background:${fallbackBg}`;
+    return `<a class="banner-card" href="/product/${encodeURIComponent(p.id)}" style="${bgStyle}">
       <div class="banner-card-content">
         <div class="banner-card-title">${p.name}</div>
         <div class="banner-card-sub">${fmtVnd(p.price)} · ${fmtCycle(p.cycle)}</div>
       </div>
-    </div>`;
+    </a>`;
   });
   // duplicate for seamless loop
   track.innerHTML = items.join("") + items.join("");
@@ -840,5 +840,18 @@ langToggle.addEventListener("click", ()=>{
 
 applyLang();
 loadCatalog();
-checkAuth();
+checkAuth().then(() => {
+  // Auto-open purchased drawer when redirected from payment success page
+  if (new URLSearchParams(location.search).get("myproducts") === "1") {
+    history.replaceState(null, "", location.pathname);
+    if (currentUser) {
+      openPurchasedDrawer();
+    } else {
+      pendingOpenPurchasedAfterAuth = true;
+      showLoginTab();
+      loginModal.classList.add("show");
+      ensureGoogleAuthInit();
+    }
+  }
+});
 setTimeout(ensureGoogleAuthInit, 50);
