@@ -814,11 +814,10 @@ main{
   .pd-content{padding-bottom:56px}
   .pd-features{grid-template-columns:1fr}
   .pd-buy-filters{gap:6px;padding:8px}
-  .pd-buy-filter-row{flex-direction:row;align-items:center;gap:4px}
-  .pd-buy-filter-label{min-width:34px;font-size:.68rem;letter-spacing:.01em}
-  .pd-buy-filter-row .pd-plan-toggle{display:flex;flex:1;min-width:0;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-  .pd-buy-filter-row .pd-plan-toggle::-webkit-scrollbar{display:none}
-  .pd-plan-tier-btn,.pd-plan-period-btn{flex:0 0 auto;min-height:30px;padding:0 9px;font-size:.78rem;white-space:nowrap}
+  .pd-buy-filter-row{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:4px}
+  .pd-buy-filter-label{min-width:0;font-size:.66rem;letter-spacing:.01em}
+  .pd-buy-filter-row .pd-plan-toggle{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-width:0}
+  .pd-plan-tier-btn,.pd-plan-period-btn{width:100%;min-height:29px;padding:0 4px;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pd-plan-zone{padding:10px}
   .pd-plan-zone-filter{padding:6px 8px;gap:6px;margin-bottom:10px}
   .pd-plan-zone-label{min-width:42px;font-size:.68rem}
