@@ -1069,6 +1069,241 @@ async function listCustomers(limit = 100) {
   }));
 }
 
+async function ensureAdminLoginSecuritySchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_login_guards (
+      dimension TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      fail_count INT NOT NULL DEFAULT 0,
+      first_failed_at TIMESTAMPTZ,
+      lock_until TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT admin_login_guards_pk PRIMARY KEY (dimension, subject),
+      CONSTRAINT admin_login_guards_dimension_check CHECK (dimension IN ('ip', 'username', 'pair'))
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_admin_login_guards_lock_until
+      ON admin_login_guards(lock_until)
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_login_audits (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      username TEXT,
+      ip_address TEXT NOT NULL,
+      user_agent TEXT,
+      login_method TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      reason TEXT,
+      admin_user_id UUID REFERENCES admin_users(id),
+      role TEXT,
+      requires_otp BOOLEAN NOT NULL DEFAULT FALSE,
+      otp_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      CONSTRAINT admin_login_audits_method_check CHECK (login_method IN ('password', 'owner_key')),
+      CONSTRAINT admin_login_audits_outcome_check CHECK (outcome IN ('success', 'failure', 'blocked', 'challenge'))
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_admin_login_audits_attempted_at
+      ON admin_login_audits(attempted_at DESC)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_admin_login_audits_username
+      ON admin_login_audits(username)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_admin_login_audits_ip
+      ON admin_login_audits(ip_address)
+  `);
+}
+
+function normalizeGuardValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function guardPairSubject(ipAddress, username) {
+  return `${normalizeGuardValue(ipAddress)}|${normalizeGuardValue(username)}`;
+}
+
+async function getAdminLoginBlockState({ ipAddress, username }) {
+  const safeIp = normalizeGuardValue(ipAddress) || "unknown";
+  const safeUsername = normalizeGuardValue(username);
+  const pair = guardPairSubject(safeIp, safeUsername || "_");
+
+  const result = await pool.query(
+    `SELECT dimension, lock_until
+     FROM admin_login_guards
+     WHERE lock_until IS NOT NULL
+       AND lock_until > NOW()
+       AND (
+         (dimension = 'ip' AND subject = $1)
+         OR (dimension = 'username' AND subject = $2)
+         OR (dimension = 'pair' AND subject = $3)
+       )
+     ORDER BY lock_until DESC`,
+    [safeIp, safeUsername, pair]
+  );
+
+  if (result.rowCount === 0) {
+    return { blocked: false, retryAfterSeconds: 0, dimensions: [] };
+  }
+
+  const lockUntil = new Date(result.rows[0].lock_until).getTime();
+  return {
+    blocked: true,
+    retryAfterSeconds: Math.max(1, Math.ceil((lockUntil - Date.now()) / 1000)),
+    dimensions: result.rows.map((row) => row.dimension)
+  };
+}
+
+async function upsertAdminLoginGuard({ dimension, subject, windowMs, maxAttempts, lockoutMs }) {
+  if (!subject) {
+    return;
+  }
+
+  const existing = await pool.query(
+    `SELECT fail_count, first_failed_at, lock_until
+     FROM admin_login_guards
+     WHERE dimension = $1 AND subject = $2`,
+    [dimension, subject]
+  );
+
+  const now = Date.now();
+  if (existing.rowCount === 0) {
+    const lockUntil = maxAttempts <= 1 ? new Date(now + lockoutMs) : null;
+    await pool.query(
+      `INSERT INTO admin_login_guards(dimension, subject, fail_count, first_failed_at, lock_until, updated_at)
+       VALUES ($1, $2, 1, NOW(), $3, NOW())`,
+      [dimension, subject, lockUntil]
+    );
+    return;
+  }
+
+  const row = existing.rows[0];
+  const firstFailedAt = row.first_failed_at ? new Date(row.first_failed_at).getTime() : 0;
+  const withinWindow = firstFailedAt > 0 && now - firstFailedAt <= windowMs;
+  const nextFailCount = withinWindow ? Number(row.fail_count || 0) + 1 : 1;
+  const nextFirstFailedAt = withinWindow ? new Date(firstFailedAt) : new Date(now);
+  const currentLockUntil = row.lock_until ? new Date(row.lock_until).getTime() : 0;
+  const nextLockUntil = nextFailCount >= maxAttempts
+    ? new Date(now + lockoutMs)
+    : currentLockUntil > now
+      ? new Date(currentLockUntil)
+      : null;
+
+  await pool.query(
+    `UPDATE admin_login_guards
+     SET fail_count = $3,
+         first_failed_at = $4,
+         lock_until = $5,
+         updated_at = NOW()
+     WHERE dimension = $1 AND subject = $2`,
+    [dimension, subject, nextFailCount, nextFirstFailedAt, nextLockUntil]
+  );
+}
+
+async function registerAdminLoginFailureGuard({ ipAddress, username, windowMs, maxAttempts, lockoutMs }) {
+  const safeIp = normalizeGuardValue(ipAddress) || "unknown";
+  const safeUsername = normalizeGuardValue(username);
+
+  await upsertAdminLoginGuard({
+    dimension: "ip",
+    subject: safeIp,
+    windowMs,
+    maxAttempts,
+    lockoutMs
+  });
+
+  if (safeUsername) {
+    await upsertAdminLoginGuard({
+      dimension: "username",
+      subject: safeUsername,
+      windowMs,
+      maxAttempts,
+      lockoutMs
+    });
+
+    await upsertAdminLoginGuard({
+      dimension: "pair",
+      subject: guardPairSubject(safeIp, safeUsername),
+      windowMs,
+      maxAttempts,
+      lockoutMs
+    });
+  }
+}
+
+async function clearAdminLoginFailureGuard({ ipAddress, username }) {
+  const safeIp = normalizeGuardValue(ipAddress) || "unknown";
+  const safeUsername = normalizeGuardValue(username);
+
+  if (!safeUsername) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE admin_login_guards
+     SET fail_count = 0,
+         first_failed_at = NULL,
+         lock_until = NULL,
+         updated_at = NOW()
+     WHERE (dimension = 'username' AND subject = $1)
+        OR (dimension = 'pair' AND subject = $2)`,
+    [safeUsername, guardPairSubject(safeIp, safeUsername)]
+  );
+}
+
+async function recordAdminLoginAudit({
+  username,
+  ipAddress,
+  userAgent,
+  loginMethod,
+  outcome,
+  reason,
+  adminUserId,
+  role,
+  requiresOtp,
+  otpVerified,
+  metadata
+}) {
+  await pool.query(
+    `INSERT INTO admin_login_audits(
+      username,
+      ip_address,
+      user_agent,
+      login_method,
+      outcome,
+      reason,
+      admin_user_id,
+      role,
+      requires_otp,
+      otp_verified,
+      metadata
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7::uuid, $8, $9, $10, $11::jsonb)`,
+    [
+      normalizeGuardValue(username) || null,
+      normalizeGuardValue(ipAddress) || "unknown",
+      String(userAgent || "").slice(0, 500) || null,
+      String(loginMethod || "password"),
+      String(outcome || "failure"),
+      reason ? String(reason).slice(0, 500) : null,
+      adminUserId || null,
+      role ? String(role) : null,
+      Boolean(requiresOtp),
+      Boolean(otpVerified),
+      JSON.stringify(metadata || {})
+    ]
+  );
+}
+
 async function findAdminByUsername(username) {
   const result = await pool.query(
     `SELECT id, username, email, role, permissions, password_hash, is_active, created_by, created_at, last_login_at
@@ -1231,6 +1466,11 @@ module.exports = {
   linkCustomerTelegramChat,
   getCustomerTelegramByCustomerId,
   listCustomers,
+  ensureAdminLoginSecuritySchema,
+  getAdminLoginBlockState,
+  registerAdminLoginFailureGuard,
+  clearAdminLoginFailureGuard,
+  recordAdminLoginAudit,
   findAdminByUsername,
   findAdminById,
   markAdminLoginSuccess,

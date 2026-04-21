@@ -37,7 +37,13 @@ SEPAY_ACCOUNT_NAME=
 SEPAY_QR_TEMPLATE_URL=
 SESSION_SIGNING_SECRET=replace-with-strong-secret
 PORTAL_ACCESS_KEY=portal-demo
-ADMIN_ACCESS_KEY=admin-demo
+ADMIN_ACCESS_KEY=
+ADMIN_OWNER_KEY_LOGIN_ENABLED=false
+ADMIN_LOGIN_WINDOW_MS=900000
+ADMIN_LOGIN_MAX_ATTEMPTS=5
+ADMIN_LOGIN_LOCKOUT_MS=900000
+ADMIN_OTP_TTL_MS=600000
+ADMIN_OTP_REQUIRED_ROLES=owner,manager
 GITHUB_TOKEN=
 GITHUB_REPO_OWNER=khuongbinhinfo-a11y
 GITHUB_REPO_NAME=web_Sales_Total
@@ -112,9 +118,14 @@ Legacy alias van hoat dong:
 
 ## Auth toi thieu cho Portal/Admin
 - Login portal: `GET /portal/login` (dung `PORTAL_ACCESS_KEY`)
-- Login admin: `GET /admin/login` (dung `ADMIN_ACCESS_KEY`)
+- Login admin: `GET /admin/login` (uu tien username/password tu `admin_users`)
+- Owner key login qua `ADMIN_ACCESS_KEY` mac dinh bi tat, chi bat khi set `ADMIN_OWNER_KEY_LOGIN_ENABLED=true`
+- Dang nhap admin co gioi han brute-force theo IP (429 + lockout tam thoi neu sai nhieu lan)
+- Role `owner` va `manager` bat buoc OTP email khi login thanh cong password (2FA)
+- Tu dong guard theo 3 lop: `ip`, `username`, va cap `ip|username` de chan tan cong phan tan
+- Audit day du login admin vao DB (success, failure, blocked, challenge OTP): bang `admin_login_audits`
 - API portal va admin yeu cau cookie session hop le
-- Canh bao bao mat: truoc khi deploy staging/prod, bat buoc doi `PORTAL_ACCESS_KEY` va `ADMIN_ACCESS_KEY` thanh gia tri manh, khong duoc de gia tri demo.
+- Canh bao bao mat: production bat buoc `SESSION_SIGNING_SECRET` manh; neu bat owner key login thi `ADMIN_ACCESS_KEY` phai dai >= 16 ky tu va khong dung gia tri demo.
 
 ## Stripe webhook adapter
 - Dat `PAYMENT_PROVIDER_MODE=stripe`
@@ -145,7 +156,7 @@ gcloud run deploy web-sales-total \
   --platform managed \
   --region asia-southeast1 \
   --allow-unauthenticated \
-  --set-env-vars PORT=8080,NODE_ENV=production,PAYMENT_PROVIDER_MODE=mock,APP_BASE_URL=https://<your-service-url>,WEBHOOK_SIGNATURE_SECRET=<strong-secret>,SESSION_SIGNING_SECRET=<strong-secret>,PORTAL_ACCESS_KEY=<portal-key>,ADMIN_ACCESS_KEY=<admin-key>,DATABASE_URL=<postgres-url>
+  --set-env-vars PORT=8080,NODE_ENV=production,PAYMENT_PROVIDER_MODE=mock,APP_BASE_URL=https://<your-service-url>,WEBHOOK_SIGNATURE_SECRET=<strong-secret>,SESSION_SIGNING_SECRET=<strong-secret>,PORTAL_ACCESS_KEY=<portal-key>,ADMIN_OWNER_KEY_LOGIN_ENABLED=false,DATABASE_URL=<postgres-url>
 ```
 
 3. Cloud Run se cap `PORT`, app da su dung `process.env.PORT`.

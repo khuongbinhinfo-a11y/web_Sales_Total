@@ -1,6 +1,82 @@
 const crypto = require("crypto");
 const { env } = require("../config/env");
 
+const adminLoginAttempts = new Map();
+
+function getClientIp(req) {
+  const forwardedFor = String(req?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
+  const socketIp = String(req?.socket?.remoteAddress || "").trim();
+  return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
+}
+
+function pruneAdminLoginAttempt(ip, now) {
+  const record = adminLoginAttempts.get(ip);
+  if (!record) {
+    return null;
+  }
+
+  if (record.lockUntil && record.lockUntil > now) {
+    return record;
+  }
+
+  if (record.lockUntil && record.lockUntil <= now) {
+    adminLoginAttempts.delete(ip);
+    return null;
+  }
+
+  if (!record.firstFailedAt || now - record.firstFailedAt > env.adminLoginWindowMs) {
+    adminLoginAttempts.delete(ip);
+    return null;
+  }
+
+  return record;
+}
+
+function isAdminLoginAllowed(req) {
+  const now = Date.now();
+  const ip = getClientIp(req);
+  const record = pruneAdminLoginAttempt(ip, now);
+  if (!record) {
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  if (record.lockUntil && record.lockUntil > now) {
+    const retryAfterSeconds = Math.ceil((record.lockUntil - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+function registerAdminLoginFailure(req) {
+  const now = Date.now();
+  const ip = getClientIp(req);
+  const current = pruneAdminLoginAttempt(ip, now);
+
+  if (!current) {
+    adminLoginAttempts.set(ip, {
+      failures: 1,
+      firstFailedAt: now,
+      lockUntil: 0
+    });
+    return;
+  }
+
+  const failures = Number(current.failures || 0) + 1;
+  const lockUntil = failures >= env.adminLoginMaxAttempts ? now + env.adminLoginLockoutMs : 0;
+  adminLoginAttempts.set(ip, {
+    failures,
+    firstFailedAt: current.firstFailedAt || now,
+    lockUntil
+  });
+}
+
+function clearAdminLoginFailures(req) {
+  const ip = getClientIp(req);
+  adminLoginAttempts.delete(ip);
+}
+
 const ADMIN_ROLE_PERMISSIONS = {
   owner: ["*"],
   manager: ["dashboard:read", "customers:read", "customers:write", "orders:read", "keys:read", "admins:read"],
@@ -110,15 +186,33 @@ function setAuthCookie(res, name, token, req) {
   const domainFlag = resolvedDomain ? ` Domain=${resolvedDomain};` : "";
   const maxAgeSeconds = name === "wst_customer_session"
     ? env.customerSessionDays * 24 * 60 * 60
-    : 12 * 60 * 60;
-  res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`);
+    : name === "wst_admin_otp_challenge"
+      ? Math.max(60, Math.floor(env.adminOtpTtlMs / 1000))
+      : 12 * 60 * 60;
+  const newCookie = `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`;
+  const existing = res.getHeader("Set-Cookie");
+  if (!existing) {
+    res.setHeader("Set-Cookie", newCookie);
+    return;
+  }
+
+  const nextCookies = Array.isArray(existing) ? [...existing, newCookie] : [String(existing), newCookie];
+  res.setHeader("Set-Cookie", nextCookies);
 }
 
 function clearAuthCookie(res, name, req) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
   const resolvedDomain = resolveCookieDomain(req);
   const domainFlag = resolvedDomain ? ` Domain=${resolvedDomain};` : "";
-  res.setHeader("Set-Cookie", `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${domainFlag}${secureFlag}`);
+  const newCookie = `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${domainFlag}${secureFlag}`;
+  const existing = res.getHeader("Set-Cookie");
+  if (!existing) {
+    res.setHeader("Set-Cookie", newCookie);
+    return;
+  }
+
+  const nextCookies = Array.isArray(existing) ? [...existing, newCookie] : [String(existing), newCookie];
+  res.setHeader("Set-Cookie", nextCookies);
 }
 
 function createCustomerSessionToken(customerId, email) {
@@ -150,6 +244,37 @@ function createAdminSessionToken(adminProfile) {
   return `${encodedPayload}.${signature}`;
 }
 
+function createAdminOtpChallengeToken(adminProfile) {
+  const payload = {
+    scope: "admin_otp_challenge",
+    adminUserId: adminProfile.id || null,
+    username: adminProfile.username || "",
+    role: adminProfile.role || "support",
+    exp: Date.now() + env.adminOtpTtlMs
+  };
+  const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const signature = signValue(encodedPayload);
+  return `${encodedPayload}.${signature}`;
+}
+
+function getAdminOtpChallengeFromSession(req) {
+  const cookies = parseCookies(req);
+  const payload = decodeSessionToken(cookies.wst_admin_otp_challenge);
+  if (!payload || payload.scope !== "admin_otp_challenge") {
+    return null;
+  }
+
+  return {
+    adminUserId: payload.adminUserId || null,
+    username: payload.username || "",
+    role: payload.role || "support"
+  };
+}
+
+function isOtpRequiredForAdminRole(role) {
+  return env.adminOtpRequiredRoles.includes(String(role || "").trim().toLowerCase());
+}
+
 function getCustomerFromSession(req) {
   const cookies = parseCookies(req);
   const token = cookies.wst_customer_session;
@@ -171,17 +296,11 @@ function getAdminFromSession(req) {
     return null;
   }
 
-  // Backward compatibility for old tokens that only had {scope, exp}.
-  // Treat them as owner to avoid locking out existing sessions after role rollout.
+  // Reject legacy tokens that do not carry role/permission claims.
   const hasRole = typeof payload.role === "string" && payload.role.length > 0;
   const hasPermissions = Array.isArray(payload.permissions) && payload.permissions.length > 0;
   if (!hasRole && !hasPermissions) {
-    return {
-      id: payload.adminUserId || null,
-      username: payload.username || "admin",
-      role: "owner",
-      permissions: ["*"]
-    };
+    return null;
   }
 
   return {
@@ -297,6 +416,14 @@ function handlePortalLogin(req, res) {
 
 function handleAdminLogin(req, res) {
   const { accessKey } = req.body;
+  if (!env.adminOwnerKeyLoginEnabled) {
+    return res.status(403).send("Owner key login is disabled");
+  }
+
+  if (!env.adminAccessKey) {
+    return res.status(503).send("Owner key login is not configured");
+  }
+
   if (!accessKey || accessKey !== env.adminAccessKey) {
     return res.status(401).send("Invalid admin key");
   }
@@ -358,14 +485,16 @@ function adminLoginPage() {
     <div class="card">
       <h2>Admin Login</h2>
       <form method="post" action="/auth/admin/login">
-        <label>Admin access key (owner)</label>
-        <input type="password" name="accessKey" autocomplete="off" placeholder="admin-demo" />
-        <div class="tip">Hoac dang nhap bang tai khoan admin cap duoi ben duoi.</div>
+        <label>Owner access key (tuỳ chọn, nếu hệ thống bật)</label>
+        <input type="password" name="accessKey" autocomplete="off" placeholder="owner access key" />
+        <div class="tip">Khuyen nghi dang nhap bang username/password de quan ly phan quyen chat che.</div>
         <hr />
         <label>Username</label>
         <input type="text" name="username" autocomplete="username" placeholder="manager01" />
         <label>Password</label>
         <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" />
+        <label>OTP email (bat buoc cho owner/manager)</label>
+        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
         <button type="submit">Login Admin</button>
       </form>
     </div>
@@ -384,6 +513,9 @@ module.exports = {
   clearAuthCookie,
   setAuthCookie,
   createAdminSessionToken,
+  createAdminOtpChallengeToken,
+  getAdminOtpChallengeFromSession,
+  isOtpRequiredForAdminRole,
   getAdminFromSession,
   requireAdminPermission,
   hasAdminPermission,
@@ -391,5 +523,8 @@ module.exports = {
   verifyPassword,
   getPermissionsByRole,
   createCustomerSessionToken,
-  getCustomerFromSession
+  getCustomerFromSession,
+  isAdminLoginAllowed,
+  registerAdminLoginFailure,
+  clearAdminLoginFailures
 };

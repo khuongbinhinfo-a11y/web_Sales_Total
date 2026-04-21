@@ -69,6 +69,32 @@ function loadGoogleClientIdFromOAuthFile() {
 
 const resolvedGoogleClientId = String(process.env.GOOGLE_CLIENT_ID || "").trim() || loadGoogleClientIdFromOAuthFile();
 
+function toBool(value, fallback = false) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  return String(value).trim().toLowerCase() === "true";
+}
+
+function toPositiveInt(value, fallback) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return fallback;
+  }
+  return Math.floor(numeric);
+}
+
+function parseCsvList(value, fallback = []) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  return raw
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 3900,
@@ -98,7 +124,13 @@ const env = {
   sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
   customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
-  adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo",
+  adminAccessKey: String(process.env.ADMIN_ACCESS_KEY || "").trim(),
+  adminOwnerKeyLoginEnabled: toBool(process.env.ADMIN_OWNER_KEY_LOGIN_ENABLED, false),
+  adminLoginWindowMs: toPositiveInt(process.env.ADMIN_LOGIN_WINDOW_MS, 15 * 60 * 1000),
+  adminLoginMaxAttempts: toPositiveInt(process.env.ADMIN_LOGIN_MAX_ATTEMPTS, 5),
+  adminLoginLockoutMs: toPositiveInt(process.env.ADMIN_LOGIN_LOCKOUT_MS, 15 * 60 * 1000),
+  adminOtpTtlMs: toPositiveInt(process.env.ADMIN_OTP_TTL_MS, 10 * 60 * 1000),
+  adminOtpRequiredRoles: parseCsvList(process.env.ADMIN_OTP_REQUIRED_ROLES, ["owner", "manager"]),
   githubToken: process.env.GITHUB_TOKEN || "",
   githubRepoOwner: process.env.GITHUB_REPO_OWNER || "khuongbinhinfo-a11y",
   githubRepoName: process.env.GITHUB_REPO_NAME || "web_Sales_Total",
@@ -107,6 +139,24 @@ const env = {
 
 if (!env.databaseUrl) {
   throw new Error("Missing DATABASE_URL. Copy .env.example to .env and set DATABASE_URL.");
+}
+
+if (env.nodeEnv === "production") {
+  if (!env.sessionSigningSecret || env.sessionSigningSecret === "dev-session-secret") {
+    throw new Error("SESSION_SIGNING_SECRET must be set to a strong secret in production.");
+  }
+
+  if (env.adminOwnerKeyLoginEnabled) {
+    if (!env.adminAccessKey) {
+      throw new Error("ADMIN_ACCESS_KEY is required when ADMIN_OWNER_KEY_LOGIN_ENABLED=true.");
+    }
+    if (env.adminAccessKey.length < 16) {
+      throw new Error("ADMIN_ACCESS_KEY must be at least 16 characters in production.");
+    }
+    if (env.adminAccessKey.toLowerCase() === "admin-demo") {
+      throw new Error("ADMIN_ACCESS_KEY cannot use demo defaults in production.");
+    }
+  }
 }
 
 module.exports = { env };

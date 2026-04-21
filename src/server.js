@@ -20,6 +20,7 @@ const {
   registerCustomerByEmail,
   updateCustomerPasswordByEmail,
   ensureCustomerAuthSchema,
+  ensureAdminLoginSecuritySchema,
   getCustomerTelegramProfile,
   ensureCustomerTelegramLinkToken,
   refreshCustomerTelegramLinkToken,
@@ -32,7 +33,11 @@ const {
   createAdminUser,
   listAdminUsers,
   countActiveOwners,
-  updateAdminUserById
+  updateAdminUserById,
+  getAdminLoginBlockState,
+  registerAdminLoginFailureGuard,
+  clearAdminLoginFailureGuard,
+  recordAdminLoginAudit
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -59,6 +64,9 @@ const {
   clearAuthCookie,
   setAuthCookie,
   createAdminSessionToken,
+  createAdminOtpChallengeToken,
+  getAdminOtpChallengeFromSession,
+  isOtpRequiredForAdminRole,
   getAdminFromSession,
   verifyPassword,
   hashPassword,
@@ -85,6 +93,13 @@ function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
+}
+
+function getRequestIp(req) {
+  const forwardedFor = String(req?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
+  const socketIp = String(req?.socket?.remoteAddress || "").trim();
+  return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
 }
 
 const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
@@ -1218,27 +1233,265 @@ app.post("/auth/portal/login", handlePortalLogin);
 app.post(
   "/auth/admin/login",
   asyncHandler(async (req, res) => {
-    const { accessKey, username, password } = req.body;
+    const { accessKey, username, password, otp } = req.body;
+    const safeUsername = String(username || "").trim().toLowerCase();
+    const ipAddress = getRequestIp(req);
+    const userAgent = String(req.headers["user-agent"] || "");
+
+    const blockState = await getAdminLoginBlockState({
+      ipAddress,
+      username: safeUsername
+    });
+    if (blockState.blocked) {
+      await recordAdminLoginAudit({
+        username: safeUsername,
+        ipAddress,
+        userAgent,
+        loginMethod: accessKey ? "owner_key" : "password",
+        outcome: "blocked",
+        reason: `blocked:${blockState.dimensions.join(",") || "unknown"}`
+      });
+      res.setHeader("Retry-After", String(blockState.retryAfterSeconds || 60));
+      return res.status(429).send("Too many failed admin login attempts. Please try again later.");
+    }
 
     if (accessKey) {
-      return handleAdminLogin(req, res);
+      if (isOtpRequiredForAdminRole("owner")) {
+        await registerAdminLoginFailureGuard({
+          ipAddress,
+          username: safeUsername || "owner",
+          windowMs: env.adminLoginWindowMs,
+          maxAttempts: env.adminLoginMaxAttempts,
+          lockoutMs: env.adminLoginLockoutMs
+        });
+        await recordAdminLoginAudit({
+          username: safeUsername || "owner",
+          ipAddress,
+          userAgent,
+          loginMethod: "owner_key",
+          outcome: "failure",
+          reason: "owner_key_blocked_by_2fa_policy",
+          role: "owner",
+          requiresOtp: true,
+          otpVerified: false
+        });
+        return res.status(403).send("Owner key login is disabled under mandatory OTP policy");
+      }
+
+      const result = handleAdminLogin(req, res);
+      if (res.statusCode >= 400) {
+        await registerAdminLoginFailureGuard({
+          ipAddress,
+          username: safeUsername || "owner",
+          windowMs: env.adminLoginWindowMs,
+          maxAttempts: env.adminLoginMaxAttempts,
+          lockoutMs: env.adminLoginLockoutMs
+        });
+        await recordAdminLoginAudit({
+          username: safeUsername || "owner",
+          ipAddress,
+          userAgent,
+          loginMethod: "owner_key",
+          outcome: "failure",
+          reason: "invalid_owner_key",
+          role: "owner",
+          requiresOtp: false,
+          otpVerified: false
+        });
+      } else {
+        await clearAdminLoginFailureGuard({ ipAddress, username: safeUsername || "owner" });
+        await recordAdminLoginAudit({
+          username: safeUsername || "owner",
+          ipAddress,
+          userAgent,
+          loginMethod: "owner_key",
+          outcome: "success",
+          reason: "owner_key_login_success",
+          role: "owner",
+          requiresOtp: false,
+          otpVerified: false
+        });
+      }
+      return result;
     }
 
     if (!username || !password) {
+      await registerAdminLoginFailureGuard({
+        ipAddress,
+        username: safeUsername,
+        windowMs: env.adminLoginWindowMs,
+        maxAttempts: env.adminLoginMaxAttempts,
+        lockoutMs: env.adminLoginLockoutMs
+      });
+      await recordAdminLoginAudit({
+        username: safeUsername,
+        ipAddress,
+        userAgent,
+        loginMethod: "password",
+        outcome: "failure",
+        reason: "missing_username_or_password",
+        requiresOtp: false,
+        otpVerified: false
+      });
       return res.status(401).send("Invalid admin credentials");
     }
 
-    const admin = await findAdminByUsername(String(username).trim().toLowerCase());
+    const admin = await findAdminByUsername(safeUsername);
     if (!admin || !admin.isActive) {
+      await registerAdminLoginFailureGuard({
+        ipAddress,
+        username: safeUsername,
+        windowMs: env.adminLoginWindowMs,
+        maxAttempts: env.adminLoginMaxAttempts,
+        lockoutMs: env.adminLoginLockoutMs
+      });
+      await recordAdminLoginAudit({
+        username: safeUsername,
+        ipAddress,
+        userAgent,
+        loginMethod: "password",
+        outcome: "failure",
+        reason: admin ? "inactive_admin" : "admin_not_found",
+        adminUserId: admin?.id || null,
+        role: admin?.role || null,
+        requiresOtp: false,
+        otpVerified: false
+      });
       return res.status(401).send("Invalid admin credentials");
     }
 
     const ok = verifyPassword(password, admin.passwordHash);
     if (!ok) {
+      await registerAdminLoginFailureGuard({
+        ipAddress,
+        username: safeUsername,
+        windowMs: env.adminLoginWindowMs,
+        maxAttempts: env.adminLoginMaxAttempts,
+        lockoutMs: env.adminLoginLockoutMs
+      });
+      await recordAdminLoginAudit({
+        username: safeUsername,
+        ipAddress,
+        userAgent,
+        loginMethod: "password",
+        outcome: "failure",
+        reason: "invalid_password",
+        adminUserId: admin.id,
+        role: admin.role,
+        requiresOtp: isOtpRequiredForAdminRole(admin.role),
+        otpVerified: false
+      });
       return res.status(401).send("Invalid admin credentials");
     }
 
+    const requiresOtp = isOtpRequiredForAdminRole(admin.role);
+    let otpVerified = false;
+    if (requiresOtp) {
+      if (!isEmailOtpConfigured()) {
+        await registerAdminLoginFailureGuard({
+          ipAddress,
+          username: safeUsername,
+          windowMs: env.adminLoginWindowMs,
+          maxAttempts: env.adminLoginMaxAttempts,
+          lockoutMs: env.adminLoginLockoutMs
+        });
+        await recordAdminLoginAudit({
+          username: safeUsername,
+          ipAddress,
+          userAgent,
+          loginMethod: "password",
+          outcome: "failure",
+          reason: "otp_email_not_configured",
+          adminUserId: admin.id,
+          role: admin.role,
+          requiresOtp: true,
+          otpVerified: false
+        });
+        return res.status(503).send("OTP email is not configured");
+      }
+
+      const otpPurpose = `admin_login:${admin.id}`;
+      const challenge = getAdminOtpChallengeFromSession(req);
+      const challengeMatched = challenge
+        && challenge.adminUserId === admin.id
+        && challenge.username === admin.username;
+
+      if (!otp) {
+        await issueAndSendOtp({ email: admin.email, purpose: otpPurpose });
+        setAuthCookie(
+          res,
+          "wst_admin_otp_challenge",
+          createAdminOtpChallengeToken({ id: admin.id, username: admin.username, role: admin.role }),
+          req
+        );
+        await recordAdminLoginAudit({
+          username: safeUsername,
+          ipAddress,
+          userAgent,
+          loginMethod: "password",
+          outcome: "challenge",
+          reason: "otp_sent",
+          adminUserId: admin.id,
+          role: admin.role,
+          requiresOtp: true,
+          otpVerified: false
+        });
+        return res.status(202).send("OTP sent to admin email. Please submit OTP to continue login.");
+      }
+
+      if (!challengeMatched) {
+        await issueAndSendOtp({ email: admin.email, purpose: otpPurpose });
+        setAuthCookie(
+          res,
+          "wst_admin_otp_challenge",
+          createAdminOtpChallengeToken({ id: admin.id, username: admin.username, role: admin.role }),
+          req
+        );
+        await recordAdminLoginAudit({
+          username: safeUsername,
+          ipAddress,
+          userAgent,
+          loginMethod: "password",
+          outcome: "challenge",
+          reason: "otp_resent_challenge_mismatch",
+          adminUserId: admin.id,
+          role: admin.role,
+          requiresOtp: true,
+          otpVerified: false
+        });
+        return res.status(401).send("OTP session expired. A new OTP has been sent.");
+      }
+
+      const verify = await verifyOtpCode({ email: admin.email, purpose: otpPurpose, code: otp });
+      if (!verify.ok) {
+        await registerAdminLoginFailureGuard({
+          ipAddress,
+          username: safeUsername,
+          windowMs: env.adminLoginWindowMs,
+          maxAttempts: env.adminLoginMaxAttempts,
+          lockoutMs: env.adminLoginLockoutMs
+        });
+        await recordAdminLoginAudit({
+          username: safeUsername,
+          ipAddress,
+          userAgent,
+          loginMethod: "password",
+          outcome: "failure",
+          reason: `otp_failed:${verify.message}`,
+          adminUserId: admin.id,
+          role: admin.role,
+          requiresOtp: true,
+          otpVerified: false
+        });
+        return res.status(401).send(verify.message || "Invalid OTP");
+      }
+
+      otpVerified = true;
+      clearAuthCookie(res, "wst_admin_otp_challenge", req);
+    }
+
     await markAdminLoginSuccess(admin.id);
+    await clearAdminLoginFailureGuard({ ipAddress, username: safeUsername });
 
     const token = createAdminSessionToken({
       id: admin.id,
@@ -1247,6 +1500,20 @@ app.post(
       permissions: admin.permissions
     });
     setAuthCookie(res, "wst_admin_session", token, req);
+
+    await recordAdminLoginAudit({
+      username: safeUsername,
+      ipAddress,
+      userAgent,
+      loginMethod: "password",
+      outcome: "success",
+      reason: "password_login_success",
+      adminUserId: admin.id,
+      role: admin.role,
+      requiresOtp,
+      otpVerified
+    });
+
     return res.redirect("/admin");
   })
 );
@@ -1557,6 +1824,7 @@ app.listen(env.port, host, async () => {
   try {
     await ensureCustomerAuthSchema();
     await ensureEmailOtpSchema();
+    await ensureAdminLoginSecuritySchema();
     console.log("✅ Customer auth schema ready");
   } catch (error) {
     console.error("⚠️ Could not auto-ensure customer auth schema:", error.message);
