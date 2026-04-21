@@ -386,7 +386,10 @@ function bindSepayForm(){
         msg.style.color = "var(--danger)";
         return;
       }
-      msg.textContent = data.message || "Đã lưu cấu hình Sepay";
+      const keyStatusText = data.secretConfigured
+        ? "API key: đã lưu"
+        : "API key: chưa cấu hình";
+      msg.textContent = `${data.message || "Đã lưu cấu hình Sepay"} (${keyStatusText})`;
       msg.style.color = "var(--success)";
       if(data.webhookUrl){
         document.getElementById("sepayWebhookUrl").value = data.webhookUrl;
