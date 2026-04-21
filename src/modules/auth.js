@@ -139,6 +139,19 @@ function getAdminFromSession(req) {
     return null;
   }
 
+  // Backward compatibility for old tokens that only had {scope, exp}.
+  // Treat them as owner to avoid locking out existing sessions after role rollout.
+  const hasRole = typeof payload.role === "string" && payload.role.length > 0;
+  const hasPermissions = Array.isArray(payload.permissions) && payload.permissions.length > 0;
+  if (!hasRole && !hasPermissions) {
+    return {
+      id: payload.adminUserId || null,
+      username: payload.username || "admin",
+      role: "owner",
+      permissions: ["*"]
+    };
+  }
+
   return {
     id: payload.adminUserId || null,
     username: payload.username || "admin",

@@ -252,8 +252,25 @@ app.get(
   "/api/admin/dashboard",
   requireAdminPermission("dashboard:read"),
   asyncHandler(async (req, res) => {
-    const dashboard = await getAdminDashboard();
-    res.json(dashboard);
+    try {
+      const dashboard = await getAdminDashboard();
+      return res.json(dashboard);
+    } catch (error) {
+      return res.json({
+        degraded: true,
+        message: "Dashboard đang chạy ở chế độ tạm thời do DB chưa sẵn sàng",
+        kpi: {
+          totalApps: 0,
+          totalCustomers: 0,
+          paidOrders: 0,
+          pendingOrders: 0,
+          totalRevenue: 0
+        },
+        latestOrders: [],
+        latestTransactions: [],
+        activeSubscriptions: []
+      });
+    }
   })
 );
 

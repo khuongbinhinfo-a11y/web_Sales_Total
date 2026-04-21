@@ -41,6 +41,19 @@ function showAdminError(message){
 
 function renderDashboard(d){
   const k = d.kpi || { totalRevenue:0, paidOrders:0, pendingOrders:0, totalCustomers:0, totalApps:0 };
+
+  if(d.degraded){
+    const host = document.getElementById("adminMain");
+    const old = document.getElementById("adminDegradedNotice");
+    if(old){ old.remove(); }
+    const notice = document.createElement("div");
+    notice.id = "adminDegradedNotice";
+    notice.className = "info-card";
+    notice.style.marginBottom = "16px";
+    notice.innerHTML = `<h3>ℹ️ Chế độ tạm thời</h3><p style="color:var(--muted)">${d.message || "DB chưa sẵn sàng, đang hiển thị dữ liệu rỗng."}</p>`;
+    host.prepend(notice);
+  }
+
   document.getElementById("kpiRevenue").textContent = fmtVnd(k.totalRevenue);
   document.getElementById("kpiPaid").textContent = k.paidOrders;
   document.getElementById("kpiPending").textContent = k.pendingOrders;
