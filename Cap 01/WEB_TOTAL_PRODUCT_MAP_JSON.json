@@ -1,10 +1,10 @@
 {
   "meta": {
     "source": "GET /api/catalog",
-    "generatedAt": "2026-04-22T00:05:00+07:00",
+    "generatedAt": "2026-04-21T23:58:00+07:00",
     "repository": "khuongbinhinfo-a11y/web_Sales_Total",
     "notes": [
-      "Standard va Premium da co productId rieng cho month/year/lifetime.",
+      "Lifetime da co productId rieng cho Standard va Premium.",
       "basic/free hien chua co productId thu phi va duoc map null o moi chu ky."
     ]
   },
@@ -26,7 +26,7 @@
     {
       "id": "prod-study-month",
       "appId": "app-study-12",
-      "name": "Goi Thang Tieu Chuan",
+      "name": "PHAN MEM HOC TAP CHO HOC SINH KHOI CAP 01",
       "cycle": "monthly",
       "price": 89000,
       "currency": "VND",
@@ -34,33 +34,13 @@
       "active": true
     },
     {
-      "id": "prod-study-premium-month",
-      "appId": "app-study-12",
-      "name": "Goi Thang Cao Cap",
-      "cycle": "monthly",
-      "price": 119000,
-      "currency": "VND",
-      "credits": 240,
-      "active": true
-    },
-    {
       "id": "prod-study-year",
       "appId": "app-study-12",
-      "name": "Goi Nam Tieu Chuan",
+      "name": "Goi Nam",
       "cycle": "yearly",
       "price": 599000,
       "currency": "VND",
       "credits": 1800,
-      "active": true
-    },
-    {
-      "id": "prod-study-premium-year",
-      "appId": "app-study-12",
-      "name": "Goi Nam Cao Cap",
-      "cycle": "yearly",
-      "price": 899000,
-      "currency": "VND",
-      "credits": 3600,
       "active": true
     },
     {
@@ -107,8 +87,8 @@
         "lifetime": "prod-study-standard-lifetime"
       },
       "premium": {
-        "monthly": "prod-study-premium-month",
-        "yearly": "prod-study-premium-year",
+        "monthly": null,
+        "yearly": null,
         "lifetime": "prod-study-premium-lifetime"
       }
     }

@@ -246,6 +246,7 @@ let selectedCheckoutProduct = null;
 let catalogProducts = [];
 let selectedPlanPeriod = "month";
 let selectedPlanTier = "standard";
+let selectedPlanUnavailable = false;
 
 const planBlueprintByApp = {
   hoctap: {
@@ -324,6 +325,23 @@ const planBlueprintByApp = {
       { label: "Badge & Theme", values: { free: false, standard: false, premium: true } },
       { label: "Hỗ trợ ưu tiên", values: { free: false, standard: false, premium: true } }
     ]
+  }
+};
+
+const planProductIdMapByApp = {
+  "app-study-12": {
+    month: {
+      standard: "prod-study-month",
+      premium: "prod-study-premium-month"
+    },
+    year: {
+      standard: "prod-study-year",
+      premium: "prod-study-premium-year"
+    },
+    lifetime: {
+      standard: "prod-study-standard-lifetime",
+      premium: "prod-study-premium-lifetime"
+    }
   }
 };
 
@@ -408,6 +426,12 @@ function cycleFromPeriod(period) {
   return "one_time";
 }
 
+function labelFromPeriod(period) {
+  if (period === "month") return "Hàng tháng";
+  if (period === "year") return "Hàng năm";
+  return "Trọn đời";
+}
+
 function formatPlanPrice(value) {
   if (!value) return "Miễn phí";
   return `${Number(value).toLocaleString("vi-VN")}đ`;
@@ -420,6 +444,21 @@ function inferTierByProduct(targets, product) {
 }
 
 function pickPlanTargets(appId, period, fallbackProduct) {
+  const appKey = String(appId || "");
+  const explicitMap = planProductIdMapByApp[appKey]?.[period];
+  if (explicitMap) {
+    const fromMap = { free: null, standard: null, premium: null };
+    if (explicitMap.standard) {
+      fromMap.standard = catalogProducts.find((item) => item.id === explicitMap.standard) || null;
+    }
+    if (explicitMap.premium) {
+      fromMap.premium = catalogProducts.find((item) => item.id === explicitMap.premium) || null;
+    }
+    if (fromMap.standard || fromMap.premium) {
+      return fromMap;
+    }
+  }
+
   const cycle = cycleFromPeriod(period);
   const pool = catalogProducts
     .filter((item) => !isInternalTestProduct(item))
@@ -512,6 +551,7 @@ function renderPlanZone(product) {
   const zone = document.getElementById("pdPlanZone");
   const tierToggle = document.getElementById("pdTierToggle");
   const toggle = document.getElementById("pdPlanToggle");
+  const zoneToggle = document.getElementById("pdPlanToggleZone");
   const grid = document.getElementById("pdPlanGrid");
   const compare = document.getElementById("pdPlanCompare");
   const compareBtn = document.getElementById("pdCompareToggle");
@@ -533,10 +573,14 @@ function renderPlanZone(product) {
   selectedPlanTier = inferTierByProduct(initialTargets, product);
 
   const periods = ["month", "year", "lifetime"];
-  toggle.innerHTML = periods.map((period) => `
+  const periodButtons = periods.map((period) => `
     <button class="pd-plan-period-btn ${selectedPlanPeriod === period ? "is-active" : ""}" data-period="${period}" type="button">
       ${blueprint.periodLabels[period]}
     </button>`).join("");
+  toggle.innerHTML = periodButtons;
+  if (zoneToggle) {
+    zoneToggle.innerHTML = periodButtons;
+  }
 
   const tierButtons = blueprint.tiers.map((tier) => `
     <button class="pd-plan-tier-btn ${selectedPlanTier === tier.key ? "is-active" : ""}" data-tier="${tier.key}" type="button">
@@ -545,6 +589,25 @@ function renderPlanZone(product) {
   tierToggle.innerHTML = tierButtons;
 
   renderPlanCompare(blueprint);
+
+  function syncPeriodButtons() {
+    [toggle, zoneToggle].filter(Boolean).forEach((container) => {
+      container.querySelectorAll(".pd-plan-period-btn").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.period === selectedPlanPeriod);
+      });
+    });
+  }
+
+  function bindPeriodToggle(container) {
+    if (!container) return;
+    container.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPlanPeriod = button.dataset.period;
+        syncPeriodButtons();
+        paintPlanCards();
+      });
+    });
+  }
 
   function paintPlanCards() {
     const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
@@ -555,8 +618,12 @@ function renderPlanZone(product) {
 
     const selectedTarget = targets[selectedPlanTier] || null;
     const selectedPrice = Number(prices?.[selectedPlanTier] || 0);
-    selectedCheckoutProduct = selectedPlanTier === "free" ? null : selectedTarget;
+    const selectedTargetPrice = Number(selectedTarget?.price || 0);
+    const selectedPriceMatched = selectedTarget && selectedTargetPrice === selectedPrice;
+    selectedPlanUnavailable = selectedPlanTier !== "free" && !selectedPriceMatched;
+    selectedCheckoutProduct = (selectedPlanTier === "free" || selectedPlanUnavailable) ? null : selectedTarget;
     document.getElementById("pdPrice").textContent = fmtVnd(selectedPrice);
+    document.getElementById("pdCycle").textContent = `Loại: ${labelFromPeriod(selectedPlanPeriod)}`;
     updateBuyBtn();
 
     tierToggle.querySelectorAll(".pd-plan-tier-btn").forEach((btn) => {
@@ -568,9 +635,11 @@ function renderPlanZone(product) {
       const saveText = String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
       const features = (tier.features || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       const targetProduct = targets[tier.key];
+      const targetPrice = Number(targetProduct?.price || 0);
+      const isPurchasable = tier.key !== "free" && !!targetProduct && targetPrice === price;
       const isCurrent = targetProduct && currentProduct && targetProduct.id === currentProduct.id;
       const isSelected = tier.key === selectedPlanTier;
-      const buyLabel = tier.key === "free" ? "Đang dùng" : (isCurrent ? "Thanh toán QR" : "Thanh toán QR");
+      const buyLabel = tier.key === "free" ? "Đang dùng" : (isPurchasable ? "Thanh toán QR" : "Chưa mở bán");
       const unit = selectedPlanPeriod === "month" ? "/tháng" : selectedPlanPeriod === "year" ? "/năm" : "(1 lần)";
 
       return `
@@ -583,7 +652,7 @@ function renderPlanZone(product) {
           <p class="pd-plan-save">${escapeHtml(saveText)}</p>
           <ul class="pd-plan-features">${features}</ul>
           <div class="pd-plan-actions">
-            <button class="pd-plan-buy" type="button" data-target-id="${targetProduct?.id || ""}" ${tier.key === "free" ? "disabled" : ""}>${buyLabel}</button>
+            <button class="pd-plan-buy" type="button" data-target-id="${isPurchasable ? (targetProduct?.id || "") : ""}" ${tier.key === "free" || !isPurchasable ? "disabled" : ""}>${buyLabel}</button>
             <button class="pd-plan-activate" type="button">Nhập mã kích hoạt</button>
           </div>
         </article>`;
@@ -621,11 +690,12 @@ function renderPlanZone(product) {
   toggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
     button.addEventListener("click", () => {
       selectedPlanPeriod = button.dataset.period;
-      toggle.querySelectorAll(".pd-plan-period-btn").forEach((btn) => btn.classList.remove("is-active"));
-      button.classList.add("is-active");
+      syncPeriodButtons();
       paintPlanCards();
     });
   });
+
+  bindPeriodToggle(zoneToggle);
 
   compareBtn.onclick = () => {
     const opening = compare.classList.contains("is-hidden");
@@ -738,8 +808,15 @@ async function checkAuth(){
 function updateBuyBtn(){
   const btn = document.getElementById("pdBuyBtn");
   const note = document.getElementById("pdBuyNote");
-  const active = selectedCheckoutProduct || currentProduct;
+  const hasPlanBlueprint = !!getPlanBlueprint(currentProduct);
+  const active = hasPlanBlueprint ? selectedCheckoutProduct : (selectedCheckoutProduct || currentProduct);
   if(!btn||!currentProduct) return;
+  if (hasPlanBlueprint && selectedPlanUnavailable) {
+    btn.textContent = "⏳ Sắp mở bán";
+    btn.disabled = true;
+    if(note) note.textContent = "Chu kỳ/gói này chưa có mã sản phẩm đúng giá, tạm thời chưa thanh toán được.";
+    return;
+  }
   if(!active){
     btn.textContent = "🆓 Gói miễn phí";
     btn.disabled = true;
@@ -759,7 +836,9 @@ function updateBuyBtn(){
 
 document.getElementById("pdBuyBtn").addEventListener("click", async ()=>{
   if(!currentProduct) return;
-  await startCheckoutForProduct(selectedCheckoutProduct || currentProduct);
+  const hasPlanBlueprint = !!getPlanBlueprint(currentProduct);
+  const active = hasPlanBlueprint ? selectedCheckoutProduct : (selectedCheckoutProduct || currentProduct);
+  await startCheckoutForProduct(active);
 });
 
 /* ── Load product ── */

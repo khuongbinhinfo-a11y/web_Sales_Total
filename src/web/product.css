@@ -152,6 +152,26 @@ main{
   box-shadow:var(--pd-shadow-sm);
 }
 
+.pd-plan-zone-filter{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(90,128,183,.24);
+  background:rgba(255,255,255,.52);
+}
+
+.pd-plan-zone-label{
+  min-width:52px;
+  font-size:.72rem;
+  font-weight:900;
+  color:#47617c;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
 .pd-plan-toggle{
   display:flex;
   flex-wrap:wrap;
@@ -793,13 +813,15 @@ main{
 @media(max-width:768px){
   .pd-content{padding-bottom:56px}
   .pd-features{grid-template-columns:1fr}
-  .pd-buy-filters{gap:8px;padding:9px}
-  .pd-buy-filter-row{flex-direction:row;align-items:center;gap:6px}
-  .pd-buy-filter-label{min-width:42px;font-size:.68rem}
-  .pd-buy-filter-row .pd-plan-toggle{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .pd-buy-filters{gap:6px;padding:8px}
+  .pd-buy-filter-row{flex-direction:row;align-items:center;gap:4px}
+  .pd-buy-filter-label{min-width:34px;font-size:.68rem;letter-spacing:.01em}
+  .pd-buy-filter-row .pd-plan-toggle{display:flex;flex:1;min-width:0;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .pd-buy-filter-row .pd-plan-toggle::-webkit-scrollbar{display:none}
-  .pd-plan-tier-btn,.pd-plan-period-btn{min-height:28px;padding:0 10px;font-size:.74rem}
+  .pd-plan-tier-btn,.pd-plan-period-btn{flex:0 0 auto;min-height:30px;padding:0 9px;font-size:.78rem;white-space:nowrap}
   .pd-plan-zone{padding:10px}
+  .pd-plan-zone-filter{padding:6px 8px;gap:6px;margin-bottom:10px}
+  .pd-plan-zone-label{min-width:42px;font-size:.68rem}
   .pd-plan-grid{grid-template-columns:1fr}
   .pd-plan-card{min-height:auto}
   .pd-download-app-btn{min-height:38px;padding:0 16px;font-size:.84rem}
