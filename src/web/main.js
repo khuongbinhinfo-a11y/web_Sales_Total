@@ -24,6 +24,7 @@ const dropLogout       = document.getElementById("dropLogout");
 
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
+  { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1, image:"/products/image/quet-data-gg-map.png" },
   { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1, image:"/products/image/hoc-cap-01.png" },
   { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1, image:"/products/image/hoc-cap-12.png" },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",        cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },

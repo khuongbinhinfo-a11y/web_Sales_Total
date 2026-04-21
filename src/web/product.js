@@ -2,6 +2,7 @@
 
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
+  { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1, image:"/products/image/quet-data-gg-map.png" },
   { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1, image:"/products/image/hoc-cap-01.png" },
   { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1, image:"/products/image/hoc-cap-12.png" },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },
@@ -11,6 +12,22 @@ const fallbackProducts = [
 
 /* ── product catalog content (features + guide per product) ── */
 const productContent = {
+  "demo-test2k": {
+    desc: "Gói test 2.000 VND để kiểm tra nhanh luồng thanh toán tự động, webhook và giao key.",
+    icon: "🧪",
+    features: [
+      { icon:"⚡", title:"Test nhanh", detail:"Giá nhỏ để chạy thử checkout" },
+      { icon:"🔔", title:"Test webhook", detail:"Xác minh callback Sepay về hệ thống" },
+      { icon:"🔑", title:"Test giao key", detail:"Kiểm tra cấp key tự động sau paid" },
+      { icon:"📈", title:"Test vận hành", detail:"Đối soát dashboard và Telegram" },
+    ],
+    guide: [
+      { title:"Mua gói test", detail:"Chọn gói test 2K và tạo đơn hàng." },
+      { title:"Thanh toán", detail:"Quét QR và chuyển khoản đúng số tiền hiển thị." },
+      { title:"Chờ webhook", detail:"Hệ thống nhận webhook và tự động cập nhật paid." },
+      { title:"Nhận key", detail:"Key test sẽ hiển thị trong portal sau vài giây." },
+    ]
+  },
   "demo-hoc01": {
     desc: "Trọn bộ học liệu cấp tiểu học 01. Chương trình theo chuẩn Bộ GD&ĐT, giao diện thân thiện với trẻ em.",
     icon: "📚",

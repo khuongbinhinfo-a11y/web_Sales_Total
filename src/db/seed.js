@@ -20,6 +20,7 @@ async function seed() {
     await client.query(
       `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active)
        VALUES
+         ('prod-test-2k', 'app-study-12', 'Goi Test 2K', 'one_time', 2000, 'VND', 1, TRUE),
          ('prod-study-month', 'app-study-12', 'Goi Thang', 'monthly', 99000, 'VND', 120, TRUE),
          ('prod-study-year', 'app-study-12', 'Goi Nam', 'yearly', 890000, 'VND', 1800, TRUE),
          ('prod-study-topup', 'app-study-12', 'Top-up 300 Credit', 'one_time', 149000, 'VND', 300, TRUE)
@@ -50,6 +51,8 @@ async function seed() {
     await client.query(
       `INSERT INTO product_keys(id, product_id, key_value, status)
        VALUES
+         (gen_random_uuid(), 'prod-test-2k', 'WST-TEST-2K-0001', 'available'),
+         (gen_random_uuid(), 'prod-test-2k', 'WST-TEST-2K-0002', 'available'),
          (gen_random_uuid(), 'prod-study-month', 'WST-MONTH-0001-ABCD', 'available'),
          (gen_random_uuid(), 'prod-study-month', 'WST-MONTH-0002-EFGH', 'available'),
          (gen_random_uuid(), 'prod-study-year', 'WST-YEAR-0001-ABCD', 'available'),
