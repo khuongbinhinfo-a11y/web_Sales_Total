@@ -1026,6 +1026,31 @@ async function registerCustomerByEmail(email, fullName, passwordHash) {
   };
 }
 
+async function updateCustomerPasswordByEmail(email, passwordHash) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const updated = await pool.query(
+    `UPDATE customers
+     SET password_hash = $2
+     WHERE email = $1
+     RETURNING id, email, full_name`,
+    [normalizedEmail, passwordHash]
+  );
+
+  if (updated.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    id: updated.rows[0].id,
+    email: updated.rows[0].email,
+    fullName: updated.rows[0].full_name
+  };
+}
+
+async function ensureCustomerAuthSchema() {
+  await pool.query("ALTER TABLE customers ADD COLUMN IF NOT EXISTS password_hash TEXT");
+}
+
 async function listCustomers(limit = 100) {
   const safeLimit = Number.isInteger(limit) && limit > 0 && limit <= 500 ? limit : 100;
   const result = await pool.query(
@@ -1197,6 +1222,8 @@ module.exports = {
   createCustomerAccount,
   findCustomerByEmail,
   registerCustomerByEmail,
+  updateCustomerPasswordByEmail,
+  ensureCustomerAuthSchema,
   getCustomerTelegramProfile,
   ensureCustomerTelegramLinkToken,
   refreshCustomerTelegramLinkToken,

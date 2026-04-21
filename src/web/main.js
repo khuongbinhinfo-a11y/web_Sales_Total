@@ -17,6 +17,13 @@ const loginModal       = document.getElementById("loginModal");
 const loginModalClose  = document.getElementById("loginModalClose");
 const loginForm        = document.getElementById("loginForm");
 const loginError       = document.getElementById("loginError");
+const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+const googleLoginWrap  = document.getElementById("googleLoginWrap");
+const googleLoginBtn   = document.getElementById("googleLoginBtn");
+const googleRegisterWrap = document.getElementById("googleRegisterWrap");
+const googleRegisterBtn  = document.getElementById("googleRegisterBtn");
+const registerCodeInput = document.getElementById("registerCode");
+const sendRegisterCodeBtn = document.getElementById("sendRegisterCodeBtn");
 const purchasedDrawer  = document.getElementById("purchasedDrawer");
 const purchasedClose   = document.getElementById("purchasedDrawerClose");
 const dropMyProducts   = document.getElementById("dropMyProducts");
@@ -148,6 +155,9 @@ const T = {
     modal_register_error_password:"Mật khẩu tối thiểu 8 ký tự",
     modal_register_has_account:"Đã có tài khoản?",
     modal_login_link:"Đăng nhập ngay",
+    modal_google_or:"Hoặc tiếp tục với Google",
+    modal_google_not_ready:"Đăng nhập Google chưa được bật.",
+    modal_google_failed:"Không thể đăng nhập bằng Google. Vui lòng thử lại.",
     nav_register:"Đăng ký",
     testimonials_title:"Đánh giá từ khách hàng",
     testimonials_sub:"Hơn 10,000 khách hàng hài lòng",
@@ -220,6 +230,9 @@ const T = {
     modal_register_error_password:"Password must be at least 8 characters",
     modal_register_has_account:"Already have an account?",
     modal_login_link:"Login now",
+    modal_google_or:"Or continue with Google",
+    modal_google_not_ready:"Google sign-in is not enabled.",
+    modal_google_failed:"Unable to continue with Google. Please try again.",
     nav_register:"Register",
     testimonials_title:"Customer Reviews",
     testimonials_sub:"Over 10,000 satisfied customers",
@@ -251,6 +264,7 @@ let allProducts = [];
 let activeCat = "all";
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
 let pendingOpenPurchasedAfterAuth = false;
+let googleAuthInitialized = false;
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
@@ -358,6 +372,76 @@ async function finalizeAuthFlow(){
   loginError.textContent = t("modal_login_error_db");
 }
 
+async function handleGoogleCredential(credential){
+  try {
+    const res = await fetch("/api/auth/customer/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      loginError.textContent = data.message || t("modal_google_failed");
+      return;
+    }
+    await finalizeAuthFlow();
+  } catch {
+    loginError.textContent = t("modal_google_failed");
+  }
+}
+
+async function initGoogleAuth(){
+  if (googleAuthInitialized) return;
+
+  try {
+    const res = await fetch("/api/auth/google/config");
+    if (!res.ok) return;
+
+    const config = await res.json();
+    const enabled = Boolean(config?.enabled && config?.clientId);
+    if (!enabled) {
+      return;
+    }
+
+    if (!window.google?.accounts?.id) {
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: config.clientId,
+      callback: (response) => {
+        if (!response?.credential) {
+          loginError.textContent = t("modal_google_failed");
+          return;
+        }
+        handleGoogleCredential(response.credential);
+      }
+    });
+
+    if (googleLoginWrap && googleRegisterWrap && googleLoginBtn && googleRegisterBtn) {
+      googleLoginWrap.style.display = "block";
+      googleRegisterWrap.style.display = "block";
+      googleLoginBtn.innerHTML = "";
+      googleRegisterBtn.innerHTML = "";
+
+      const buttonOptions = {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "pill",
+        width: 320
+      };
+
+      window.google.accounts.id.renderButton(googleLoginBtn, buttonOptions);
+      window.google.accounts.id.renderButton(googleRegisterBtn, buttonOptions);
+      googleAuthInitialized = true;
+    }
+  } catch {
+    // Keep email/password auth available even if Google script fails.
+  }
+}
+
 /* ═══════════════ LOGIN MODAL ═══════════════ */
 const navRegisterBtn   = document.getElementById("navRegisterBtn");
 const tabLogin         = document.getElementById("tabLogin");
@@ -404,19 +488,92 @@ registerForm.addEventListener("submit", async (e)=>{
   const email = document.getElementById("registerEmail").value.trim();
   const fullName = document.getElementById("registerName").value.trim();
   const password = document.getElementById("registerPassword").value;
+  const code = (registerCodeInput?.value || "").trim();
   if(!email){ loginError.textContent = t("modal_login_error_email"); return; }
   if(!fullName){ loginError.textContent = t("modal_register_error_name"); return; }
   if(!password || password.length < 8){ loginError.textContent = t("modal_register_error_password"); return; }
+  if(!code || code.length !== 6){ loginError.textContent = "Vui lòng nhập mã xác minh 6 số"; return; }
   loginError.textContent = "";
   try {
     const res = await fetch("/api/auth/customer/register",{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ email, fullName, password })
+      body: JSON.stringify({ email, fullName, password, code })
     });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
     await finalizeAuthFlow();
   } catch {
     loginError.textContent = t("modal_login_error_db");
+  }
+});
+
+sendRegisterCodeBtn?.addEventListener("click", async ()=>{
+  const email = document.getElementById("registerEmail").value.trim();
+  if(!email){ loginError.textContent = t("modal_login_error_email"); return; }
+
+  loginError.textContent = "";
+  sendRegisterCodeBtn.disabled = true;
+  sendRegisterCodeBtn.textContent = "Đang gửi...";
+  try {
+    const res = await fetch("/api/auth/customer/register/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      loginError.textContent = data.message || "Không gửi được mã";
+      return;
+    }
+    loginError.style.color = "#16a34a";
+    loginError.textContent = data.message || "Đã gửi mã xác minh";
+  } catch {
+    loginError.textContent = "Không gửi được mã xác minh";
+  } finally {
+    sendRegisterCodeBtn.disabled = false;
+    sendRegisterCodeBtn.textContent = "Gửi mã";
+    setTimeout(() => { loginError.style.color = ""; }, 1200);
+  }
+});
+
+forgotPasswordLink?.addEventListener("click", async (e)=>{
+  e.preventDefault();
+
+  const email = window.prompt("Nhập email tài khoản để nhận mã reset:");
+  if(!email) return;
+
+  try {
+    const sendRes = await fetch("/api/auth/customer/password-reset/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() })
+    });
+    const sendData = await sendRes.json();
+    if(!sendRes.ok){
+      loginError.textContent = sendData.message || "Không gửi được mã reset";
+      return;
+    }
+
+    const code = window.prompt("Nhập mã 6 số đã gửi về Gmail:");
+    if(!code) return;
+    const newPassword = window.prompt("Nhập mật khẩu mới (tối thiểu 8 ký tự):");
+    if(!newPassword) return;
+
+    const confirmRes = await fetch("/api/auth/customer/password-reset/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), code: code.trim(), newPassword })
+    });
+    const confirmData = await confirmRes.json();
+    if(!confirmRes.ok){
+      loginError.textContent = confirmData.message || "Không đặt lại được mật khẩu";
+      return;
+    }
+
+    loginError.style.color = "#16a34a";
+    loginError.textContent = confirmData.message || "Đặt lại mật khẩu thành công";
+    setTimeout(() => { loginError.style.color = ""; }, 1200);
+  } catch {
+    loginError.textContent = "Có lỗi khi xử lý quên mật khẩu";
   }
 });
 
@@ -670,3 +827,4 @@ langToggle.addEventListener("click", ()=>{
 applyLang();
 loadCatalog();
 checkAuth();
+setTimeout(initGoogleAuth, 50);

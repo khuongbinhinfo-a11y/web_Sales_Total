@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const { OAuth2Client } = require("google-auth-library");
 const { env } = require("./config/env");
 const { pool } = require("./db/pool");
 const { getSepayRuntimeSettings, updateSepayRuntimeSettings } = require("./config/runtimeSettings");
@@ -15,6 +16,8 @@ const {
   createCustomerAccount,
   findCustomerByEmail,
   registerCustomerByEmail,
+  updateCustomerPasswordByEmail,
+  ensureCustomerAuthSchema,
   getCustomerTelegramProfile,
   ensureCustomerTelegramLinkToken,
   refreshCustomerTelegramLinkToken,
@@ -61,9 +64,16 @@ const {
   createCustomerSessionToken,
   getCustomerFromSession
 } = require("./modules/auth");
+const {
+  ensureEmailOtpSchema,
+  issueAndSendOtp,
+  verifyOtpCode,
+  isEmailOtpConfigured
+} = require("./modules/emailOtp");
 
 const app = express();
 const webRoot = path.join(__dirname, "web");
+const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 
 app.disable("x-powered-by");
 app.use(cors());
@@ -156,6 +166,35 @@ function extractStartTokenFromTelegramText(text) {
   }
 
   return String(startMatch[1] || "").trim();
+}
+
+async function verifyGoogleCredential(idToken) {
+  if (!googleOAuthClient || !env.googleClientId) {
+    const err = new Error("Google login is not configured");
+    err.statusCode = 503;
+    throw err;
+  }
+
+  const ticket = await googleOAuthClient.verifyIdToken({
+    idToken,
+    audience: env.googleClientId
+  });
+
+  const payload = ticket.getPayload() || {};
+  const verified = payload.email_verified === true || payload.email_verified === "true";
+  const email = String(payload.email || "").trim().toLowerCase();
+  const fullName = String(payload.name || "").trim();
+
+  if (!verified || !email) {
+    const err = new Error("Google account email is not verified");
+    err.statusCode = 401;
+    throw err;
+  }
+
+  return {
+    email,
+    fullName: fullName || email.split("@")[0]
+  };
 }
 
 app.post(
@@ -743,7 +782,7 @@ app.post(
     };
 
     const token = createCustomerSessionToken(customer.id, customer.email);
-    setAuthCookie(res, "wst_customer_session", token);
+    setAuthCookie(res, "wst_customer_session", token, req);
     return res.json({ customer: safeCustomer });
   })
 );
@@ -751,12 +790,21 @@ app.post(
 app.post(
   "/api/auth/customer/register",
   asyncHandler(async (req, res) => {
-    const { email, fullName, password } = req.body;
+    const { email, fullName, password, code } = req.body;
     if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ message: "Email không hợp lệ" });
     }
     if (!password || typeof password !== "string" || password.length < 8) {
       return res.status(400).json({ message: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+
+    const otpVerify = await verifyOtpCode({
+      email: email.trim().toLowerCase(),
+      purpose: "signup",
+      code: String(code || "")
+    });
+    if (!otpVerify.ok) {
+      return res.status(400).json({ message: otpVerify.message || "Mã xác minh không hợp lệ" });
     }
 
     const passwordHash = hashPassword(password);
@@ -766,8 +814,100 @@ app.post(
     }
 
     const token = createCustomerSessionToken(result.customer.id, result.customer.email);
-    setAuthCookie(res, "wst_customer_session", token);
+    setAuthCookie(res, "wst_customer_session", token, req);
     return res.status(result.created ? 201 : 200).json(result);
+  })
+);
+
+app.post(
+  "/api/auth/customer/register/send-code",
+  asyncHandler(async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!isEmailOtpConfigured()) {
+      return res.status(503).json({ message: "Hệ thống email OTP chưa cấu hình" });
+    }
+
+    await issueAndSendOtp({ email, purpose: "signup" });
+    return res.json({ ok: true, message: "Đã gửi mã xác minh đến email của bạn" });
+  })
+);
+
+app.post(
+  "/api/auth/customer/password-reset/send-code",
+  asyncHandler(async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!isEmailOtpConfigured()) {
+      return res.status(503).json({ message: "Hệ thống email OTP chưa cấu hình" });
+    }
+
+    await issueAndSendOtp({ email, purpose: "reset_password" });
+    return res.json({ ok: true, message: "Nếu email tồn tại, mã reset đã được gửi" });
+  })
+);
+
+app.post(
+  "/api/auth/customer/password-reset/confirm",
+  asyncHandler(async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const code = String(req.body?.code || "").trim();
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu mới tối thiểu 8 ký tự" });
+    }
+
+    const otpVerify = await verifyOtpCode({ email, purpose: "reset_password", code });
+    if (!otpVerify.ok) {
+      return res.status(400).json({ message: otpVerify.message || "Mã reset không hợp lệ" });
+    }
+
+    const passwordHash = hashPassword(newPassword);
+    const updated = await updateCustomerPasswordByEmail(email, passwordHash);
+    if (!updated) {
+      return res.status(404).json({ message: "Không tìm thấy tài khoản với email này" });
+    }
+
+    return res.json({ ok: true, message: "Đặt lại mật khẩu thành công" });
+  })
+);
+
+app.get(
+  "/api/auth/google/config",
+  asyncHandler(async (req, res) => {
+    return res.json({
+      enabled: Boolean(env.googleClientId),
+      clientId: env.googleClientId || ""
+    });
+  })
+);
+
+app.post(
+  "/api/auth/customer/google",
+  asyncHandler(async (req, res) => {
+    const credential = String(req.body?.credential || "").trim();
+    if (!credential) {
+      return res.status(400).json({ message: "Missing Google credential" });
+    }
+
+    const profile = await verifyGoogleCredential(credential);
+    const account = await createCustomerAccount(profile.email, profile.fullName);
+
+    const token = createCustomerSessionToken(account.customer.id, account.customer.email);
+    setAuthCookie(res, "wst_customer_session", token, req);
+    return res.json({
+      customer: account.customer,
+      created: account.created,
+      provider: "google"
+    });
   })
 );
 
@@ -777,14 +917,14 @@ app.get(
     const session = getCustomerFromSession(req);
     if (!session) return res.status(401).json({ message: "Not logged in" });
     const refreshedToken = createCustomerSessionToken(session.customerId, session.email || "");
-    setAuthCookie(res, "wst_customer_session", refreshedToken);
+    setAuthCookie(res, "wst_customer_session", refreshedToken, req);
     const snapshot = await getCustomerSnapshot(session.customerId);
     return res.json(snapshot);
   })
 );
 
 app.post("/api/auth/customer/logout", (req, res) => {
-  clearAuthCookie(res, "wst_customer_session");
+  clearAuthCookie(res, "wst_customer_session", req);
   return res.json({ ok: true });
 });
 
@@ -824,18 +964,18 @@ app.post(
       role: admin.role,
       permissions: admin.permissions
     });
-    setAuthCookie(res, "wst_admin_session", token);
+    setAuthCookie(res, "wst_admin_session", token, req);
     return res.redirect("/admin");
   })
 );
 
 app.post("/auth/portal/logout", (req, res) => {
-  clearAuthCookie(res, "wst_portal_session");
+  clearAuthCookie(res, "wst_portal_session", req);
   res.redirect("/portal/login");
 });
 
 app.post("/auth/admin/logout", (req, res) => {
-  clearAuthCookie(res, "wst_admin_session");
+  clearAuthCookie(res, "wst_admin_session", req);
   res.redirect("/admin/login");
 });
 
@@ -1102,15 +1242,42 @@ app.use((req, res) => {
 
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
-  const message = statusCode >= 500 ? "Internal server error" : error.message;
+  const errorCode = String(error?.code || "").toUpperCase();
+  const errorMessage = String(error?.message || "");
+  const isAuthApi = req.path.startsWith("/api/auth/customer/");
+  const dbUnavailableCodes = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "3D000", "08001", "08006"]);
+  const dbUnavailable =
+    dbUnavailableCodes.has(errorCode) ||
+    /ECONNREFUSED|connect|Connection terminated|database .* does not exist/i.test(errorMessage);
+
+  let message = statusCode >= 500 ? "Internal server error" : error.message;
+  let finalStatusCode = statusCode;
+
+  if (statusCode >= 500 && isAuthApi && dbUnavailable) {
+    finalStatusCode = 503;
+    message = "Hệ thống tạm thời chưa kết nối được cơ sở dữ liệu. Vui lòng thử lại sau 1-2 phút.";
+  }
+
+  if (statusCode >= 500 && isAuthApi && errorCode === "42703") {
+    finalStatusCode = 503;
+    message = "Cơ sở dữ liệu chưa cập nhật schema đăng nhập. Vui lòng chạy migrate và thử lại.";
+  }
+
   if (statusCode >= 500) {
     console.error(error);
   }
-  res.status(statusCode).json({ message });
+  res.status(finalStatusCode).json({ message });
 });
 
 const host = "0.0.0.0";
 app.listen(env.port, host, async () => {
   console.log(`Ứng Dụng Thông Minh running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
+  try {
+    await ensureCustomerAuthSchema();
+    await ensureEmailOtpSchema();
+    console.log("✅ Customer auth schema ready");
+  } catch (error) {
+    console.error("⚠️ Could not auto-ensure customer auth schema:", error.message);
+  }
   await setupTelegramWebhook();
 });

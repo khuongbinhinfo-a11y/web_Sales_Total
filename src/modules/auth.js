@@ -80,18 +80,44 @@ function parseCookies(req) {
   return cookies;
 }
 
-function setAuthCookie(res, name, token) {
+function getRequestHost(req) {
+  const forwardedHost = String(req?.headers?.["x-forwarded-host"] || "").split(",")[0].trim();
+  const hostHeader = String(req?.headers?.host || "").trim();
+  const host = (forwardedHost || hostHeader).toLowerCase();
+  return host.replace(/:\d+$/, "");
+}
+
+function resolveCookieDomain(req) {
+  const configured = String(env.sessionCookieDomain || "").trim();
+  if (!configured) {
+    return "";
+  }
+
+  const normalizedConfigured = configured.replace(/^\./, "").toLowerCase();
+  const requestHost = getRequestHost(req);
+  if (!requestHost) {
+    return configured;
+  }
+
+  const matchesRoot = requestHost === normalizedConfigured;
+  const matchesSubdomain = requestHost.endsWith(`.${normalizedConfigured}`);
+  return matchesRoot || matchesSubdomain ? configured : "";
+}
+
+function setAuthCookie(res, name, token, req) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
-  const domainFlag = env.sessionCookieDomain ? ` Domain=${env.sessionCookieDomain};` : "";
+  const resolvedDomain = resolveCookieDomain(req);
+  const domainFlag = resolvedDomain ? ` Domain=${resolvedDomain};` : "";
   const maxAgeSeconds = name === "wst_customer_session"
     ? env.customerSessionDays * 24 * 60 * 60
     : 12 * 60 * 60;
   res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`);
 }
 
-function clearAuthCookie(res, name) {
+function clearAuthCookie(res, name, req) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
-  const domainFlag = env.sessionCookieDomain ? ` Domain=${env.sessionCookieDomain};` : "";
+  const resolvedDomain = resolveCookieDomain(req);
+  const domainFlag = resolvedDomain ? ` Domain=${resolvedDomain};` : "";
   res.setHeader("Set-Cookie", `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${domainFlag}${secureFlag}`);
 }
 
@@ -265,7 +291,7 @@ function handlePortalLogin(req, res) {
     return res.status(401).send("Invalid portal key");
   }
 
-  setAuthCookie(res, "wst_portal_session", createSessionToken("portal"));
+  setAuthCookie(res, "wst_portal_session", createSessionToken("portal"), req);
   return res.redirect("/portal");
 }
 
@@ -281,7 +307,7 @@ function handleAdminLogin(req, res) {
     role: "owner",
     permissions: ["*"]
   });
-  setAuthCookie(res, "wst_admin_session", token);
+  setAuthCookie(res, "wst_admin_session", token, req);
   return res.redirect("/admin");
 }
 

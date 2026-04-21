@@ -15,10 +15,6 @@
       <div class="container header-inner">
         <a class="logo" href="#top">
           <img class="logo-img" src="/logo.png" alt="Logo" />
-          <span class="logo-text">
-            <strong>Ứng Dụng Thông Minh</strong>
-            <small data-i18n="brand_tagline">Key bản quyền</small>
-          </span>
         </a>
         <div class="header-search">
           <input type="text" id="searchInput" placeholder="Tìm sản phẩm..." data-i18n-placeholder="search_placeholder" />
@@ -229,6 +225,11 @@
             <input type="password" id="loginPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="current-password" />
             <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_login_btn">Đăng nhập</button>
           </form>
+          <p class="modal-note"><a href="#" id="forgotPasswordLink">Quên mật khẩu?</a></p>
+          <div id="googleLoginWrap" class="google-auth-wrap" style="display:none">
+            <p class="google-auth-label" data-i18n="modal_google_or">Hoặc tiếp tục với Google</p>
+            <div id="googleLoginBtn"></div>
+          </div>
           <p class="modal-note"><span data-i18n="modal_login_no_account">Chưa có tài khoản?</span> <a href="#" id="switchToRegister" data-i18n="modal_register_link">Đăng ký ngay</a></p>
         </div>
 
@@ -242,8 +243,17 @@
             <input type="text" id="registerName" required placeholder="Nguyễn Văn A" autocomplete="name" />
             <label data-i18n="modal_register_password_label">Mật khẩu</label>
             <input type="password" id="registerPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" />
+            <label>Mã xác minh email</label>
+            <div class="otp-row">
+              <input type="text" id="registerCode" inputmode="numeric" maxlength="6" placeholder="Nhập 6 số" autocomplete="one-time-code" />
+              <button type="button" id="sendRegisterCodeBtn" class="otp-send-btn">Gửi mã</button>
+            </div>
             <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_register_btn">Đăng ký</button>
           </form>
+          <div id="googleRegisterWrap" class="google-auth-wrap" style="display:none">
+            <p class="google-auth-label" data-i18n="modal_google_or">Hoặc tiếp tục với Google</p>
+            <div id="googleRegisterBtn"></div>
+          </div>
           <p class="modal-note"><span data-i18n="modal_register_has_account">Đã có tài khoản?</span> <a href="#" id="switchToLogin" data-i18n="modal_login_link">Đăng nhập ngay</a></p>
         </div>
 
@@ -279,6 +289,7 @@
       </div>
     </div>
 
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="./main.js"></script>
     <script>
       (function () {
