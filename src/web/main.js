@@ -64,9 +64,13 @@ function normalizeText(value) {
 function resolveProductImage(product) {
   const name = normalizeText(product?.name);
   const appId = normalizeText(product?.appId);
-  const hint = `${name} ${appId}`;
+  const productId = normalizeText(product?.id);
+  const hint = `${name} ${appId} ${productId}`;
 
   const isStudy = /(hoc|study|cap|lop)/.test(hint);
+  if (/(goi test 2k|test 2k|prod test 2k|demo test2k)/.test(hint)) {
+    return productImageLibrary.study01;
+  }
   if (/(cap 01|cap 1|lop 1|study 01|study 1|khoi 01|khoi 1)/.test(hint)) {
     return productImageLibrary.study01;
   }
@@ -297,6 +301,12 @@ function iconFor(appId){
 }
 
 function catLabel(appId){ const k="cat_"+(appId||"").toLowerCase(); return t(k); }
+
+function softwareCode(appId) {
+  const raw = String(appId || "").trim();
+  if (!raw) return "APP-UNKNOWN";
+  return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
 
 function softwareIntro(product){
   const raw = String(product?.shortDescription || product?.description || "").trim();
@@ -720,7 +730,7 @@ function renderProducts(){
     const visual = resolvedImage
       ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${p.name}">`
       : `<div class="p-card-img-fallback">
-          <span class="p-card-img-kicker">${catLabel(p.appId)}</span>
+          <span class="p-card-img-kicker">${softwareCode(p.appId)}</span>
           <strong>${p.name}</strong>
           <p>${intro}</p>
         </div>`;
@@ -730,7 +740,7 @@ function renderProducts(){
       ${isFeat ? `<span class="p-badge">${t("tag_best")}</span>` : ""}
       <div class="p-card-img">${visual}</div>
       <div class="p-card-body">
-        <span class="p-card-cat">${catLabel(p.appId)}</span>
+        <span class="p-card-cat">${softwareCode(p.appId)}</span>
         <h3 class="p-card-name">${p.name}</h3>
         <p class="p-card-intro">${intro}</p>
         <p class="p-card-meta">${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}</p>

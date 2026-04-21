@@ -35,9 +35,13 @@ function normalizeText(value) {
 function resolveProductImage(product) {
   const name = normalizeText(product?.name);
   const appId = normalizeText(product?.appId);
-  const hint = `${name} ${appId}`;
+  const productId = normalizeText(product?.id);
+  const hint = `${name} ${appId} ${productId}`;
 
   const isStudy = /(hoc|study|cap|lop)/.test(hint);
+  if (/(goi test 2k|test 2k|prod test 2k|demo test2k)/.test(hint)) {
+    return productImageLibrary.study01;
+  }
   if (/(cap 01|cap 1|lop 1|study 01|study 1|khoi 01|khoi 1)/.test(hint)) {
     return productImageLibrary.study01;
   }
@@ -180,6 +184,12 @@ function fmtCycle(c){
   if(c==="monthly") return "Hàng tháng";
   if(c==="yearly")  return "Hàng năm";
   return "Một lần";
+}
+
+function softwareCode(appId) {
+  const raw = String(appId || "").trim();
+  if (!raw) return "APP-UNKNOWN";
+  return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
 }
 
 /* ── Tab switching ── */
@@ -358,8 +368,7 @@ function renderProduct(p){
   }
 
   // buy box
-  const catLabels = {hoctap:"Học tập",lamviec:"Làm việc"};
-  document.getElementById("pdCatBadge").textContent = catLabels[(p.appId||"").toLowerCase()] || p.appId;
+  document.getElementById("pdCatBadge").textContent = softwareCode(p.appId);
   document.getElementById("pdTitle").textContent = p.name;
   document.getElementById("pdCycle").textContent = `Loại: ${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}`;
   document.getElementById("pdPrice").textContent = fmtVnd(p.price);

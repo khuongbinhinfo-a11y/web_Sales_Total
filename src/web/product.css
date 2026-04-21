@@ -1,8 +1,5 @@
 /* PRODUCT DETAIL PAGE */
 
-/* Larger logo on product page header */
-.header .logo-img { height: 78px; }
-
 :root{
   --pd-bg-1:#fbf9ff;
   --pd-bg-2:#f5f8ff;
