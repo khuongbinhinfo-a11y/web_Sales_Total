@@ -11,16 +11,36 @@ async function loadAdmin(){
   try {
     const res = await fetch("/api/admin/dashboard");
     if(res.status===401){ window.location.href="/admin/login"; return; }
+    if(res.status===403){
+      const payload = await res.json().catch(()=>({}));
+      const required = payload.requiredPermission || "dashboard:read";
+      showAdminError(`Tài khoản hiện tại không có quyền truy cập dashboard (thiếu: ${required}).`);
+      return;
+    }
+    if(!res.ok){
+      const payload = await res.json().catch(()=>({}));
+      showAdminError(payload.message || "API dashboard đang lỗi hoặc DB chưa sẵn sàng.");
+      return;
+    }
+
     const d = await res.json();
+    if(!d || !d.kpi){
+      showAdminError("Dữ liệu dashboard không hợp lệ. Vui lòng kiểm tra API /api/admin/dashboard.");
+      return;
+    }
     renderDashboard(d);
   } catch(e){
     console.error("Admin load error",e);
-    document.getElementById("adminMain").innerHTML = `<div class="info-card" style="margin:32px"><h3>⚠️ Không thể tải dashboard</h3><p style="color:var(--muted)">API/DB chưa sẵn sàng. Hãy chạy PostgreSQL và seed dữ liệu.</p><pre style="font-size:.82rem;color:var(--danger)">${e.message}</pre></div>`;
+    showAdminError(`API/DB chưa sẵn sàng. Hãy chạy PostgreSQL và migrate dữ liệu. (${e.message})`);
   }
 }
 
+function showAdminError(message){
+  document.getElementById("adminMain").innerHTML = `<div class="info-card" style="margin:32px"><h3>⚠️ Không thể tải dashboard</h3><p style="color:var(--muted)">${message}</p><p style="font-size:.82rem;color:var(--muted)">Kiểm tra nhanh: PostgreSQL đang chạy, đã chạy npm run db:migrate, và đăng nhập đúng quyền.</p></div>`;
+}
+
 function renderDashboard(d){
-  const k = d.kpi;
+  const k = d.kpi || { totalRevenue:0, paidOrders:0, pendingOrders:0, totalCustomers:0, totalApps:0 };
   document.getElementById("kpiRevenue").textContent = fmtVnd(k.totalRevenue);
   document.getElementById("kpiPaid").textContent = k.paidOrders;
   document.getElementById("kpiPending").textContent = k.pendingOrders;

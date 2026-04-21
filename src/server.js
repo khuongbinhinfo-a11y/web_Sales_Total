@@ -11,7 +11,13 @@ const {
   consumeUsage,
   getCustomerSnapshot,
   getAdminDashboard,
-  findOrCreateCustomerByEmail
+  findOrCreateCustomerByEmail,
+  createCustomerAccount,
+  listCustomers,
+  findAdminByUsername,
+  markAdminLoginSuccess,
+  createAdminUser,
+  listAdminUsers
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -26,6 +32,7 @@ const {
 const {
   requirePortalAuth,
   requireAdminAuth,
+  requireAdminPermission,
   requirePortalOrAdmin,
   handlePortalLogin,
   handleAdminLogin,
@@ -33,6 +40,11 @@ const {
   adminLoginPage,
   clearAuthCookie,
   setAuthCookie,
+  createAdminSessionToken,
+  getAdminFromSession,
+  verifyPassword,
+  hashPassword,
+  getPermissionsByRole,
   createCustomerSessionToken,
   getCustomerFromSession
 } = require("./modules/auth");
@@ -229,7 +241,7 @@ app.get(
 
 app.get(
   "/api/customers/:customerId/snapshot",
-  requireAdminAuth,
+  requireAdminPermission("customers:read"),
   asyncHandler(async (req, res) => {
     const snapshot = await getCustomerSnapshot(req.params.customerId);
     res.json(snapshot);
@@ -238,10 +250,97 @@ app.get(
 
 app.get(
   "/api/admin/dashboard",
-  requireAdminAuth,
+  requireAdminPermission("dashboard:read"),
   asyncHandler(async (req, res) => {
     const dashboard = await getAdminDashboard();
     res.json(dashboard);
+  })
+);
+
+app.get(
+  "/api/admin/me",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const admin = getAdminFromSession(req);
+    if (!admin) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    return res.json({ admin });
+  })
+);
+
+app.get(
+  "/api/admin/users",
+  requireAdminPermission("customers:read"),
+  asyncHandler(async (req, res) => {
+    const limit = Number(req.query.limit || 100);
+    const users = await listCustomers(limit);
+    return res.json({ users });
+  })
+);
+
+app.post(
+  "/api/admin/users",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const { email, fullName } = req.body;
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+
+    const result = await createCustomerAccount(email, fullName);
+    return res.status(result.created ? 201 : 200).json(result);
+  })
+);
+
+app.get(
+  "/api/admin/admin-users",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const admins = await listAdminUsers();
+    return res.json({ admins });
+  })
+);
+
+app.post(
+  "/api/admin/admin-users",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const actor = getAdminFromSession(req);
+    const { username, email, password, role } = req.body;
+    const safeUsername = typeof username === "string" ? username.trim().toLowerCase() : "";
+    const safeEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const safeRole = typeof role === "string" ? role.trim().toLowerCase() : "support";
+
+    if (!safeUsername || !/^[a-z0-9._-]{3,32}$/.test(safeUsername)) {
+      return res.status(400).json({ message: "username không hợp lệ (3-32 ký tự a-z0-9._-)" });
+    }
+    if (!safeEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+    if (!["owner", "manager", "support"].includes(safeRole)) {
+      return res.status(400).json({ message: "role phải là owner | manager | support" });
+    }
+
+    const existed = await findAdminByUsername(safeUsername);
+    if (existed) {
+      return res.status(409).json({ message: "Username admin đã tồn tại" });
+    }
+
+    const passwordHash = hashPassword(password);
+    const createdAdmin = await createAdminUser({
+      username: safeUsername,
+      email: safeEmail,
+      passwordHash,
+      role: safeRole,
+      permissions: getPermissionsByRole(safeRole),
+      createdBy: actor?.id || null
+    });
+
+    return res.status(201).json({ admin: createdAdmin });
   })
 );
 
@@ -284,7 +383,41 @@ app.get("/admin/login", (req, res) => {
 });
 
 app.post("/auth/portal/login", handlePortalLogin);
-app.post("/auth/admin/login", handleAdminLogin);
+app.post(
+  "/auth/admin/login",
+  asyncHandler(async (req, res) => {
+    const { accessKey, username, password } = req.body;
+
+    if (accessKey) {
+      return handleAdminLogin(req, res);
+    }
+
+    if (!username || !password) {
+      return res.status(401).send("Invalid admin credentials");
+    }
+
+    const admin = await findAdminByUsername(String(username).trim().toLowerCase());
+    if (!admin || !admin.isActive) {
+      return res.status(401).send("Invalid admin credentials");
+    }
+
+    const ok = verifyPassword(password, admin.passwordHash);
+    if (!ok) {
+      return res.status(401).send("Invalid admin credentials");
+    }
+
+    await markAdminLoginSuccess(admin.id);
+
+    const token = createAdminSessionToken({
+      id: admin.id,
+      username: admin.username,
+      role: admin.role,
+      permissions: admin.permissions
+    });
+    setAuthCookie(res, "wst_admin_session", token);
+    return res.redirect("/admin");
+  })
+);
 
 app.post("/auth/portal/logout", (req, res) => {
   clearAuthCookie(res, "wst_portal_session");

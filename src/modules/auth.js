@@ -1,6 +1,12 @@
 const crypto = require("crypto");
 const { env } = require("../config/env");
 
+const ADMIN_ROLE_PERMISSIONS = {
+  owner: ["*"],
+  manager: ["dashboard:read", "customers:read", "customers:write", "orders:read", "keys:read", "admins:read"],
+  support: ["dashboard:read", "customers:read", "orders:read"]
+};
+
 function signValue(value) {
   return crypto.createHmac("sha256", env.sessionSigningSecret).update(value).digest("hex");
 }
@@ -16,29 +22,40 @@ function createSessionToken(scope) {
   return `${encodedPayload}.${signature}`;
 }
 
-function verifySessionToken(token, expectedScope) {
+function decodeSessionToken(token) {
   if (!token || typeof token !== "string" || !token.includes(".")) {
-    return false;
+    return null;
   }
 
   const [encodedPayload, signature] = token.split(".");
   if (!encodedPayload || !signature) {
-    return false;
+    return null;
   }
 
   const expectedSignature = signValue(encodedPayload);
   if (signature !== expectedSignature) {
-    return false;
+    return null;
   }
 
-  const payloadRaw = Buffer.from(encodedPayload, "base64url").toString("utf8");
-  const payload = JSON.parse(payloadRaw);
+  try {
+    const payloadRaw = Buffer.from(encodedPayload, "base64url").toString("utf8");
+    const payload = JSON.parse(payloadRaw);
+    if (!payload.exp || Number(payload.exp) < Date.now()) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function verifySessionToken(token, expectedScope) {
+  const payload = decodeSessionToken(token);
+  if (!payload) {
+    return false;
+  }
 
   if (payload.scope !== expectedScope) {
-    return false;
-  }
-
-  if (!payload.exp || Number(payload.exp) < Date.now()) {
     return false;
   }
 
@@ -80,6 +97,27 @@ function createCustomerSessionToken(customerId, email) {
   return `${encodedPayload}.${signature}`;
 }
 
+function getPermissionsByRole(role) {
+  return ADMIN_ROLE_PERMISSIONS[role] || [];
+}
+
+function createAdminSessionToken(adminProfile) {
+  const role = adminProfile.role || "support";
+  const payload = {
+    scope: "admin",
+    adminUserId: adminProfile.id || null,
+    username: adminProfile.username || "admin",
+    role,
+    permissions: Array.isArray(adminProfile.permissions) && adminProfile.permissions.length > 0
+      ? adminProfile.permissions
+      : getPermissionsByRole(role),
+    exp: Date.now() + 12 * 60 * 60 * 1000
+  };
+  const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const signature = signValue(encodedPayload);
+  return `${encodedPayload}.${signature}`;
+}
+
 function getCustomerFromSession(req) {
   const cookies = parseCookies(req);
   const token = cookies.wst_customer_session;
@@ -94,6 +132,73 @@ function getCustomerFromSession(req) {
   } catch { return null; }
 }
 
+function getAdminFromSession(req) {
+  const cookies = parseCookies(req);
+  const payload = decodeSessionToken(cookies.wst_admin_session);
+  if (!payload || payload.scope !== "admin") {
+    return null;
+  }
+
+  return {
+    id: payload.adminUserId || null,
+    username: payload.username || "admin",
+    role: payload.role || "support",
+    permissions: Array.isArray(payload.permissions) ? payload.permissions : []
+  };
+}
+
+function hasAdminPermission(adminSession, permission) {
+  if (!adminSession || !Array.isArray(adminSession.permissions)) {
+    return false;
+  }
+  return adminSession.permissions.includes("*") || adminSession.permissions.includes(permission);
+}
+
+function requireAdminPermission(permission) {
+  return (req, res, next) => {
+    const adminSession = getAdminFromSession(req);
+    if (!adminSession) {
+      if (wantsHtml(req)) {
+        return res.redirect("/admin/login");
+      }
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!hasAdminPermission(adminSession, permission)) {
+      return res.status(403).json({ message: "Forbidden", requiredPermission: permission });
+    }
+
+    req.adminSession = adminSession;
+    return next();
+  };
+}
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedHash) {
+  if (!storedHash || typeof storedHash !== "string" || !storedHash.includes(":")) {
+    return false;
+  }
+  const [salt, originalHash] = storedHash.split(":");
+  if (!salt || !originalHash) {
+    return false;
+  }
+
+  const computedHash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const originalBuffer = Buffer.from(originalHash, "hex");
+  const computedBuffer = Buffer.from(computedHash, "hex");
+
+  if (originalBuffer.length !== computedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(originalBuffer, computedBuffer);
+}
+
 function wantsHtml(req) {
   const accept = (req.headers.accept || "").toLowerCase();
   return accept.includes("text/html");
@@ -105,8 +210,7 @@ function isPortalAuthenticated(req) {
 }
 
 function isAdminAuthenticated(req) {
-  const cookies = parseCookies(req);
-  return verifySessionToken(cookies.wst_admin_session, "admin");
+  return getAdminFromSession(req) !== null;
 }
 
 function requireAuth(scope, loginPath) {
@@ -152,7 +256,13 @@ function handleAdminLogin(req, res) {
     return res.status(401).send("Invalid admin key");
   }
 
-  setAuthCookie(res, "wst_admin_session", createSessionToken("admin"));
+  const token = createAdminSessionToken({
+    id: null,
+    username: "owner",
+    role: "owner",
+    permissions: ["*"]
+  });
+  setAuthCookie(res, "wst_admin_session", token);
   return res.redirect("/admin");
 }
 
@@ -193,16 +303,24 @@ function adminLoginPage() {
     <style>
       body{font-family:Segoe UI,sans-serif;background:#f5f7fa;padding:24px}
       .card{max-width:420px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;border:1px solid #dce3ea}
-      input{width:100%;padding:10px;border:1px solid #c8d2dd;border-radius:8px;margin:10px 0}
+      input{width:100%;padding:10px;border:1px solid #c8d2dd;border-radius:8px;margin:8px 0}
       button{border:0;background:#8b3d00;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+      .tip{font-size:12px;color:#64748b;margin:8px 0 0}
+      hr{border:0;border-top:1px solid #e2e8f0;margin:16px 0}
     </style>
   </head>
   <body>
     <div class="card">
       <h2>Admin Login</h2>
       <form method="post" action="/auth/admin/login">
-        <label>Admin access key</label>
-        <input type="password" name="accessKey" autocomplete="off" required />
+        <label>Admin access key (owner)</label>
+        <input type="password" name="accessKey" autocomplete="off" placeholder="admin-demo" />
+        <div class="tip">Hoac dang nhap bang tai khoan admin cap duoi ben duoi.</div>
+        <hr />
+        <label>Username</label>
+        <input type="text" name="username" autocomplete="username" placeholder="manager01" />
+        <label>Password</label>
+        <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" />
         <button type="submit">Login Admin</button>
       </form>
     </div>
@@ -220,6 +338,13 @@ module.exports = {
   adminLoginPage,
   clearAuthCookie,
   setAuthCookie,
+  createAdminSessionToken,
+  getAdminFromSession,
+  requireAdminPermission,
+  hasAdminPermission,
+  hashPassword,
+  verifyPassword,
+  getPermissionsByRole,
   createCustomerSessionToken,
   getCustomerFromSession
 };

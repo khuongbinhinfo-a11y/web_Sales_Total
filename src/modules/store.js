@@ -661,6 +661,127 @@ async function findOrCreateCustomerByEmail(email, fullName) {
   return { id, email, fullName: name };
 }
 
+async function createCustomerAccount(email, fullName) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const existed = await pool.query("SELECT id, email, full_name FROM customers WHERE email = $1", [normalizedEmail]);
+  if (existed.rowCount > 0) {
+    return {
+      customer: {
+        id: existed.rows[0].id,
+        email: existed.rows[0].email,
+        fullName: existed.rows[0].full_name
+      },
+      created: false
+    };
+  }
+
+  const id = `cus-${Date.now()}`;
+  const name = fullName || normalizedEmail.split("@")[0];
+  const createdResult = await pool.query(
+    "INSERT INTO customers(id, email, full_name) VALUES ($1, $2, $3) RETURNING id, email, full_name",
+    [id, normalizedEmail, name]
+  );
+
+  return {
+    customer: {
+      id: createdResult.rows[0].id,
+      email: createdResult.rows[0].email,
+      fullName: createdResult.rows[0].full_name
+    },
+    created: true
+  };
+}
+
+async function listCustomers(limit = 100) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 && limit <= 500 ? limit : 100;
+  const result = await pool.query(
+    `SELECT id, email, full_name, created_at
+     FROM customers
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [safeLimit]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    createdAt: row.created_at
+  }));
+}
+
+async function findAdminByUsername(username) {
+  const result = await pool.query(
+    `SELECT id, username, email, role, permissions, password_hash, is_active, created_by, created_at, last_login_at
+     FROM admin_users
+     WHERE username = $1`,
+    [username]
+  );
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    passwordHash: row.password_hash,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  };
+}
+
+async function markAdminLoginSuccess(adminId) {
+  await pool.query("UPDATE admin_users SET last_login_at = NOW() WHERE id = $1::uuid", [adminId]);
+}
+
+async function createAdminUser({ username, email, passwordHash, role, permissions, createdBy }) {
+  const result = await pool.query(
+    `INSERT INTO admin_users(id, username, email, password_hash, role, permissions, created_by)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::uuid)
+     RETURNING id, username, email, role, permissions, is_active, created_by, created_at, last_login_at`,
+    [username, email, passwordHash, role, JSON.stringify(permissions || []), createdBy || null]
+  );
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  };
+}
+
+async function listAdminUsers() {
+  const result = await pool.query(
+    `SELECT id, username, email, role, permissions, is_active, created_by, created_at, last_login_at
+     FROM admin_users
+     ORDER BY created_at DESC`
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  }));
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -672,5 +793,11 @@ module.exports = {
   getOrderKeyDelivery,
   getCustomerSnapshot,
   getAdminDashboard,
-  findOrCreateCustomerByEmail
+  findOrCreateCustomerByEmail,
+  createCustomerAccount,
+  listCustomers,
+  findAdminByUsername,
+  markAdminLoginSuccess,
+  createAdminUser,
+  listAdminUsers
 };
