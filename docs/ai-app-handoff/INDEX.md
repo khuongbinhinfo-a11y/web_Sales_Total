@@ -24,6 +24,7 @@ Thu muc nay da gom san cac file can thiet de ban giao cho AI-app.
   - `integration-checklist.md`
   - `ai-app-sync-plan-v1.md`
   - `app-onboarding-ticket-template.md`
+  - `WEB_TOTAL_PRODUCT_MAP_JSON.json` (map productId de AI-app noi checkout)
 - Gate theo app:
   - `ai-gates/definition-ready-done.desktop.yaml`
   - `ai-gates/definition-ready-done.webapp.yaml`

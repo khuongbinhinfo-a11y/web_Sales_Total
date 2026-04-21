@@ -242,8 +242,10 @@ const productContent = {
 let lang = localStorage.getItem("wst_lang") || "vi";
 let currentUser = null;
 let currentProduct = null;
+let selectedCheckoutProduct = null;
 let catalogProducts = [];
 let selectedPlanPeriod = "month";
+let selectedPlanTier = "standard";
 
 const planBlueprintByApp = {
   hoctap: {
@@ -413,6 +415,12 @@ function formatPlanPrice(value) {
   return `${Number(value).toLocaleString("vi-VN")}đ`;
 }
 
+function inferTierByProduct(targets, product) {
+  if (!product) return "standard";
+  const found = Object.entries(targets).find(([, p]) => p && p.id === product.id);
+  return found ? found[0] : "standard";
+}
+
 function pickPlanTargets(appId, period, fallbackProduct) {
   const cycle = cycleFromPeriod(period);
   const pool = catalogProducts
@@ -505,13 +513,14 @@ async function startCheckoutForProduct(product) {
 
 function renderPlanZone(product) {
   const zone = document.getElementById("pdPlanZone");
+  const tierToggle = document.getElementById("pdTierToggle");
   const toggle = document.getElementById("pdPlanToggle");
   const grid = document.getElementById("pdPlanGrid");
   const compare = document.getElementById("pdPlanCompare");
   const compareBtn = document.getElementById("pdCompareToggle");
   const blueprint = getPlanBlueprint(product);
 
-  if (!zone || !toggle || !grid || !compare || !compareBtn) {
+  if (!zone || !tierToggle || !toggle || !grid || !compare || !compareBtn) {
     return;
   }
 
@@ -523,28 +532,55 @@ function renderPlanZone(product) {
   zone.classList.remove("is-hidden");
   selectedPlanPeriod = periodFromCycle(product.cycle);
 
+  const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+  selectedPlanTier = inferTierByProduct(initialTargets, product);
+
   const periods = ["month", "year", "lifetime"];
   toggle.innerHTML = periods.map((period) => `
     <button class="pd-plan-period-btn ${selectedPlanPeriod === period ? "is-active" : ""}" data-period="${period}" type="button">
       ${blueprint.periodLabels[period]}
     </button>`).join("");
 
+  const tierButtons = blueprint.tiers.map((tier) => `
+    <button class="pd-plan-tier-btn ${selectedPlanTier === tier.key ? "is-active" : ""}" data-tier="${tier.key}" type="button">
+      ${tier.icon} ${escapeHtml(tier.name)}
+    </button>`).join("");
+  tierToggle.innerHTML = tierButtons;
+
   renderPlanCompare(blueprint);
 
   function paintPlanCards() {
     const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+    if (!targets[selectedPlanTier]) {
+      selectedPlanTier = targets.standard ? "standard" : (targets.basic ? "basic" : "free");
+    }
+
+    const selectedTarget = targets[selectedPlanTier] || null;
+    selectedCheckoutProduct = selectedTarget;
+    if (selectedTarget) {
+      document.getElementById("pdPrice").textContent = fmtVnd(selectedTarget.price);
+    } else {
+      document.getElementById("pdPrice").textContent = "Miễn phí";
+    }
+    updateBuyBtn();
+
+    tierToggle.querySelectorAll(".pd-plan-tier-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tier === selectedPlanTier);
+    });
+
     grid.innerHTML = blueprint.tiers.map((tier) => {
       const price = Number(prices?.[tier.key] || 0);
       const saveText = String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
       const features = (tier.features || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       const targetProduct = targets[tier.key];
       const isCurrent = targetProduct && currentProduct && targetProduct.id === currentProduct.id;
+      const isSelected = tier.key === selectedPlanTier;
       const buyLabel = tier.key === "free" ? "Đang dùng" : (isCurrent ? "Thanh toán QR" : "Thanh toán QR");
       const unit = selectedPlanPeriod === "month" ? "/tháng" : selectedPlanPeriod === "year" ? "/năm" : "(1 lần)";
 
       return `
-        <article class="pd-plan-card ${isCurrent ? "is-current" : ""}" data-tier="${tier.key}">
+        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"}" data-tier="${tier.key}">
           ${tier.tag ? `<span class="pd-plan-top-tag">${escapeHtml(tier.tag)}</span>` : ""}
           <p class="pd-plan-tier">${tier.icon}</p>
           <h3 class="pd-plan-name">${escapeHtml(tier.name)}</h3>
@@ -580,6 +616,13 @@ function renderPlanZone(product) {
   }
 
   paintPlanCards();
+
+  tierToggle.querySelectorAll(".pd-plan-tier-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedPlanTier = button.dataset.tier;
+      paintPlanCards();
+    });
+  });
 
   toggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
     button.addEventListener("click", () => {
@@ -701,7 +744,16 @@ async function checkAuth(){
 function updateBuyBtn(){
   const btn = document.getElementById("pdBuyBtn");
   const note = document.getElementById("pdBuyNote");
+  const active = selectedCheckoutProduct || currentProduct;
   if(!btn||!currentProduct) return;
+  if(!active){
+    btn.textContent = "🆓 Gói miễn phí";
+    btn.disabled = true;
+    if(note) note.textContent = "Bạn có thể dùng gói miễn phí ngay không cần thanh toán.";
+    return;
+  }
+
+  btn.disabled = false;
   if(!currentUser){
     btn.textContent = "🔐 Đăng nhập để mua";
     if(note) note.textContent = "Cần đăng nhập để tiến hành mua hàng";
@@ -713,7 +765,7 @@ function updateBuyBtn(){
 
 document.getElementById("pdBuyBtn").addEventListener("click", async ()=>{
   if(!currentProduct) return;
-  await startCheckoutForProduct(currentProduct);
+  await startCheckoutForProduct(selectedCheckoutProduct || currentProduct);
 });
 
 /* ── Load product ── */
@@ -747,6 +799,7 @@ async function loadProduct(productId){
   }
 
   currentProduct = product;
+  selectedCheckoutProduct = product;
   renderProduct(product);
 }
 

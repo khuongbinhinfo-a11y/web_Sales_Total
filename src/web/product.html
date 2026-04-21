@@ -64,17 +64,8 @@
 
         <!-- TOP SECTION: image + buy box -->
         <div class="pd-top">
-          <div class="pd-left-stack">
-            <div class="pd-gallery">
-              <div class="pd-main-img" id="pdMainImg"></div>
-            </div>
-
-            <section class="pd-plan-zone" id="pdPlanZone">
-              <div class="pd-plan-toggle" id="pdPlanToggle"></div>
-              <div class="pd-plan-grid" id="pdPlanGrid"></div>
-              <button class="pd-plan-compare-btn" id="pdCompareToggle" type="button">Mở bảng so sánh chi tiết</button>
-              <div class="pd-plan-compare is-hidden" id="pdPlanCompare"></div>
-            </section>
+          <div class="pd-gallery">
+            <div class="pd-main-img" id="pdMainImg"></div>
           </div>
 
           <div class="pd-buy-box">
@@ -83,6 +74,16 @@
             <p class="pd-cycle" id="pdCycle"></p>
             <div class="pd-price-row">
               <span class="pd-price" id="pdPrice"></span>
+            </div>
+            <div class="pd-buy-filters">
+              <div class="pd-buy-filter-row">
+                <span class="pd-buy-filter-label">Gói</span>
+                <div class="pd-plan-toggle pd-plan-toggle-tier" id="pdTierToggle"></div>
+              </div>
+              <div class="pd-buy-filter-row">
+                <span class="pd-buy-filter-label">Chu kỳ</span>
+                <div class="pd-plan-toggle" id="pdPlanToggle"></div>
+              </div>
             </div>
             <div class="pd-highlights">
               <div class="pd-hi"><span class="pd-hi-icon">⚡</span><span>Giao key tự động ngay sau thanh toán</span></div>
@@ -124,6 +125,12 @@
           </div>
 
         </div>
+
+        <section class="pd-plan-zone" id="pdPlanZone">
+          <div class="pd-plan-grid" id="pdPlanGrid"></div>
+          <button class="pd-plan-compare-btn" id="pdCompareToggle" type="button">Mở bảng so sánh chi tiết</button>
+          <div class="pd-plan-compare is-hidden" id="pdPlanCompare"></div>
+        </section>
 
       </div><!-- /pd-content -->
     </main>

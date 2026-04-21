@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "source": "GET /api/catalog",
+    "generatedAt": "2026-04-21T23:12:00+07:00",
+    "repository": "khuongbinhinfo-a11y/web_Sales_Total",
+    "notes": [
+      "Catalog hien tai chua co productId rieng cho basic/standard/premium theo tung chu ky.",
+      "lifetime hien tai chua co productId dung nghia (one_time dang la topup credit)."
+    ]
+  },
+  "apps": [
+    {
+      "id": "app-study-12",
+      "name": "Phan mem hoc tap khoi cap 01",
+      "slug": "phan-mem-hoc-tap-khoi-cap-01",
+      "status": "active"
+    },
+    {
+      "id": "app-ai-writing",
+      "name": "AI Writing Coach",
+      "slug": "ai-writing-coach",
+      "status": "coming_soon"
+    }
+  ],
+  "catalogProducts": [
+    {
+      "id": "prod-study-month",
+      "appId": "app-study-12",
+      "name": "PHAN MEM HOC TAP CHO HOC SINH KHOI CAP 01",
+      "cycle": "monthly",
+      "price": 99000,
+      "currency": "VND",
+      "credits": 120,
+      "active": true
+    },
+    {
+      "id": "prod-study-year",
+      "appId": "app-study-12",
+      "name": "Goi Nam",
+      "cycle": "yearly",
+      "price": 890000,
+      "currency": "VND",
+      "credits": 1800,
+      "active": true
+    },
+    {
+      "id": "prod-study-topup",
+      "appId": "app-study-12",
+      "name": "Top-up 300 Credit",
+      "cycle": "one_time",
+      "price": 149000,
+      "currency": "VND",
+      "credits": 300,
+      "active": true
+    }
+  ],
+  "webTotalProductMap": {
+    "app-study-12": {
+      "basic": {
+        "monthly": "prod-study-month",
+        "yearly": "prod-study-year",
+        "lifetime": null
+      },
+      "standard": {
+        "monthly": "prod-study-month",
+        "yearly": "prod-study-year",
+        "lifetime": null
+      },
+      "premium": {
+        "monthly": "prod-study-month",
+        "yearly": "prod-study-year",
+        "lifetime": null
+      }
+    }
+  }
+}
