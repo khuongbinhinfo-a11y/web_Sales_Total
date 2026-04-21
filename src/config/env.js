@@ -3,6 +3,28 @@ const dotenv = require("dotenv");
 // Load environment variables once at process startup.
 dotenv.config();
 
+function isIpAddress(hostname) {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+}
+
+function resolveSessionCookieDomain(appBaseUrl) {
+  const explicit = (process.env.SESSION_COOKIE_DOMAIN || "").trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  try {
+    const parsed = new URL(appBaseUrl || "");
+    const hostname = String(parsed.hostname || "").trim().toLowerCase();
+    if (!hostname || hostname === "localhost" || isIpAddress(hostname)) {
+      return "";
+    }
+    return hostname.startsWith(".") ? hostname : `.${hostname}`;
+  } catch {
+    return "";
+  }
+}
+
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 3900,
@@ -23,6 +45,7 @@ const env = {
   telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
   telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
   sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || "dev-session-secret",
+  sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
   adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo"
 };

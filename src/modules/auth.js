@@ -82,12 +82,14 @@ function parseCookies(req) {
 
 function setAuthCookie(res, name, token) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
-  res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200;${secureFlag}`);
+  const domainFlag = env.sessionCookieDomain ? ` Domain=${env.sessionCookieDomain};` : "";
+  res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200;${domainFlag}${secureFlag}`);
 }
 
 function clearAuthCookie(res, name) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
-  res.setHeader("Set-Cookie", `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${secureFlag}`);
+  const domainFlag = env.sessionCookieDomain ? ` Domain=${env.sessionCookieDomain};` : "";
+  res.setHeader("Set-Cookie", `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${domainFlag}${secureFlag}`);
 }
 
 function createCustomerSessionToken(customerId, email) {
