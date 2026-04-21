@@ -83,6 +83,12 @@ main{
   margin-bottom:24px;
 }
 
+.pd-gallery{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
 .pd-main-img{
   width:100%;
   aspect-ratio:16/9;
@@ -103,6 +109,38 @@ main{
   object-fit:contain;
   padding:14px;
   background:#fff;
+}
+
+.pd-gallery-cta{
+  min-height:72px;
+  border-radius:16px;
+  border:1px dashed rgba(90,128,183,.3);
+  background:rgba(255,255,255,.64);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.pd-download-app-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 20px;
+  border-radius:999px;
+  font-size:.9rem;
+  font-weight:800;
+  color:#fff;
+  text-decoration:none;
+  background:linear-gradient(135deg,#2b96d9,#1f7fc0);
+  box-shadow:0 8px 18px rgba(31,127,192,.26);
+  transition:transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+
+.pd-download-app-btn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.03);
+  box-shadow:0 10px 20px rgba(31,127,192,.32);
 }
 
 .pd-plan-zone{
@@ -749,6 +787,7 @@ main{
   .pd-top{grid-template-columns:1fr;gap:20px}
   .pd-buy-box{position:static}
   .pd-plan-grid{grid-template-columns:1fr}
+  .pd-gallery-cta{min-height:60px}
 }
 
 @media(max-width:768px){
@@ -763,6 +802,7 @@ main{
   .pd-plan-zone{padding:10px}
   .pd-plan-grid{grid-template-columns:1fr}
   .pd-plan-card{min-height:auto}
+  .pd-download-app-btn{min-height:38px;padding:0 16px;font-size:.84rem}
   .pd-tab-bar{display:flex;width:100%}
   .pd-tab-btn{flex:1;padding:10px 8px;font-size:.81rem;text-align:center}
   .pd-title{font-size:1.38rem}

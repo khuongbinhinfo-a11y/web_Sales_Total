@@ -306,7 +306,7 @@ const planBlueprintByApp = {
     prices: {
       month: { free: 0, standard: 89000, premium: 119000 },
       year: { free: 0, standard: 599000, premium: 899000 },
-      lifetime: { free: 0, standard: 1690000, premium: 2490000 }
+      lifetime: { free: 0, standard: 999000, premium: 1599000 }
     },
     compareRows: [
       { label: "Số môn học", values: { free: "1", standard: "Tất cả", premium: "Tất cả" } },
@@ -340,6 +340,17 @@ function softwareCode(appId) {
   const raw = String(appId || "").trim();
   if (!raw) return "APP-UNKNOWN";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function resolveDownloadLink(product, content) {
+  const customLink = String(content?.downloadUrl || "").trim();
+  if (customLink) return customLink;
+
+  const app = normalizeText(product?.appId);
+  if (app.includes("hoc") || app.includes("study")) {
+    return "/portal";
+  }
+  return "/portal";
 }
 
 function escapeHtml(value) {
@@ -545,11 +556,7 @@ function renderPlanZone(product) {
     const selectedTarget = targets[selectedPlanTier] || null;
     const selectedPrice = Number(prices?.[selectedPlanTier] || 0);
     selectedCheckoutProduct = selectedPlanTier === "free" ? null : selectedTarget;
-    if (selectedPrice > 0) {
-      document.getElementById("pdPrice").textContent = fmtVnd(selectedPrice);
-    } else {
-      document.getElementById("pdPrice").textContent = "Miễn phí";
-    }
+    document.getElementById("pdPrice").textContent = fmtVnd(selectedPrice);
     updateBuyBtn();
 
     tierToggle.querySelectorAll(".pd-plan-tier-btn").forEach((btn) => {
@@ -828,6 +835,11 @@ function renderProduct(p){
       { title:"Bắt đầu sử dụng", detail:"Tạo tài khoản hoặc đăng nhập và trải nghiệm đầy đủ tính năng." },
     ]
   };
+
+  const downloadBtn = document.getElementById("pdDownloadAppBtn");
+  if (downloadBtn) {
+    downloadBtn.href = resolveDownloadLink(p, content);
+  }
 
   // desc tab
   document.getElementById("pdDescIcon").textContent = content.icon;
