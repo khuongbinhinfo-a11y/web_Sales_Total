@@ -267,36 +267,19 @@ const planBlueprintByApp = {
         ]
       },
       {
-        key: "basic",
-        icon: "📚",
-        name: "Cơ bản",
-        saveByPeriod: { month: "", year: "Tiết kiệm 32%", lifetime: "" },
-        features: [
-          "3 môn học",
-          "2 lớp",
-          "2 hồ sơ học sinh",
-          "Thử thách hàng ngày",
-          "Phòng trí nhớ",
-          "Giọng đọc tiếng Việt",
-          "Không quảng cáo"
-        ]
-      },
-      {
         key: "standard",
         icon: "⭐",
         name: "Tiêu chuẩn",
         tag: "Phổ biến nhất",
-        saveByPeriod: { month: "Tiết kiệm 35%", year: "Tiết kiệm 35%", lifetime: "" },
+        saveByPeriod: { month: "Tiết kiệm 30%", year: "Tiết kiệm 44%", lifetime: "" },
         features: [
-          "Tất cả 5 môn học",
-          "Tất cả 5 lớp",
+          "Tất cả môn học",
+          "Tối đa 3 lớp",
           "3 hồ sơ học sinh",
           "Ôn tập thông minh AI",
-          "Thi đấu Bot & PvP",
-          "Cửa hàng Avatar",
-          "Bảng điều khiển phụ huynh",
-          "Chế độ ngoại tuyến",
-          "Xuất dữ liệu backup",
+          "Bảng phụ huynh cơ bản",
+          "Phòng trí nhớ + TTS",
+          "Báo cáo tiến độ cơ bản",
           "Không quảng cáo"
         ]
       },
@@ -304,10 +287,14 @@ const planBlueprintByApp = {
         key: "premium",
         icon: "👑",
         name: "Cao cấp",
-        saveByPeriod: { month: "Tiết kiệm 33%", year: "Tiết kiệm 33%", lifetime: "" },
+        saveByPeriod: { month: "Tiết kiệm 35%", year: "Tiết kiệm 37%", lifetime: "" },
         features: [
-          "Mọi tính năng Tiêu chuẩn",
+          "Tất cả môn + tất cả lớp",
           "5 hồ sơ học sinh",
+          "Toàn bộ tính năng AI nâng cao",
+          "Thi đấu Bot & PvP",
+          "Cửa hàng Avatar",
+          "Ngoại tuyến + xuất backup",
           "Hỗ trợ ưu tiên 24/7",
           "Cập nhật nội dung sớm",
           "Badge & Theme độc quyền",
@@ -317,25 +304,25 @@ const planBlueprintByApp = {
       }
     ],
     prices: {
-      month: { free: 0, basic: 2000, standard: 89000, premium: 149000 },
-      year: { free: 0, basic: 399000, standard: 699000, premium: 1190000 },
-      lifetime: { free: 0, basic: 699000, standard: 1299000, premium: 1990000 }
+      month: { free: 0, standard: 89000, premium: 119000 },
+      year: { free: 0, standard: 599000, premium: 899000 },
+      lifetime: { free: 0, standard: 1690000, premium: 2490000 }
     },
     compareRows: [
-      { label: "Số môn học", values: { free: "1", basic: "3", standard: "Tất cả", premium: "Tất cả" } },
-      { label: "Số lớp", values: { free: "1", basic: "2", standard: "Tất cả", premium: "Tất cả" } },
-      { label: "Hồ sơ học sinh", values: { free: "1", basic: "2", standard: "3", premium: "5" } },
-      { label: "Thử thách hằng ngày", values: { free: false, basic: true, standard: true, premium: true } },
-      { label: "Thi đấu", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Cửa hàng Avatar", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Ôn tập thông minh", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Phòng trí nhớ", values: { free: false, basic: true, standard: true, premium: true } },
-      { label: "Bảng phụ huynh", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Ngoại tuyến", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Giọng đọc TTS", values: { free: false, basic: true, standard: true, premium: true } },
-      { label: "Xuất dữ liệu", values: { free: false, basic: false, standard: true, premium: true } },
-      { label: "Không quảng cáo", values: { free: false, basic: true, standard: true, premium: true } },
-      { label: "Hỗ trợ ưu tiên", values: { free: false, basic: false, standard: false, premium: true } }
+      { label: "Số môn học", values: { free: "1", standard: "Tất cả", premium: "Tất cả" } },
+      { label: "Số lớp", values: { free: "1", standard: "3", premium: "Tất cả" } },
+      { label: "Hồ sơ học sinh", values: { free: "1", standard: "3", premium: "5" } },
+      { label: "Thử thách hằng ngày", values: { free: false, standard: true, premium: true } },
+      { label: "Thi đấu", values: { free: false, standard: false, premium: true } },
+      { label: "Cửa hàng Avatar", values: { free: false, standard: false, premium: true } },
+      { label: "Ôn tập thông minh", values: { free: false, standard: true, premium: true } },
+      { label: "Bảng phụ huynh", values: { free: false, standard: true, premium: true } },
+      { label: "Ngoại tuyến", values: { free: false, standard: false, premium: true } },
+      { label: "Giọng đọc TTS", values: { free: false, standard: true, premium: true } },
+      { label: "Xuất dữ liệu", values: { free: false, standard: false, premium: true } },
+      { label: "Không quảng cáo", values: { free: false, standard: true, premium: true } },
+      { label: "Badge & Theme", values: { free: false, standard: false, premium: true } },
+      { label: "Hỗ trợ ưu tiên", values: { free: false, standard: false, premium: true } }
     ]
   }
 };
@@ -429,22 +416,23 @@ function pickPlanTargets(appId, period, fallbackProduct) {
     .filter((item) => item.cycle === cycle)
     .sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
 
-  const targets = { free: null, basic: null, standard: null, premium: null };
+  const targets = { free: null, standard: null, premium: null };
   if (!pool.length) {
     if (fallbackProduct && fallbackProduct.cycle === cycle) {
       targets.standard = fallbackProduct;
+      targets.premium = fallbackProduct;
     }
     return targets;
   }
 
   if (pool.length === 1) {
     targets.standard = pool[0];
+    targets.premium = pool[0];
     return targets;
   }
 
-  const mid = pool[Math.floor((pool.length - 1) / 2)];
-  targets.basic = pool[0];
-  targets.standard = mid;
+  const stdIndex = Math.max(0, Math.floor((pool.length - 1) / 2));
+  targets.standard = pool[stdIndex];
   targets.premium = pool[pool.length - 1];
 
   if (fallbackProduct && fallbackProduct.cycle === cycle) {
@@ -455,13 +443,14 @@ function pickPlanTargets(appId, period, fallbackProduct) {
 
 function renderPlanCompare(blueprint) {
   const compare = document.getElementById("pdPlanCompare");
+  const tiers = blueprint?.tiers || [];
   const rows = (blueprint?.compareRows || []).map((row) => {
-    const cells = ["free", "basic", "standard", "premium"].map((tier) => {
-      const value = row.values?.[tier];
+    const cells = tiers.map((tierItem) => {
+      const value = row.values?.[tierItem.key];
       if (typeof value === "boolean") {
         return value ? '<td class="pd-plan-tick">✓</td>' : '<td class="pd-plan-miss">✕</td>';
       }
-      return `<td>${escapeHtml(value)}</td>`;
+      return `<td>${escapeHtml(value ?? "")}</td>`;
     }).join("");
 
     return `<tr><td>${escapeHtml(row.label)}</td>${cells}</tr>`;
@@ -472,10 +461,7 @@ function renderPlanCompare(blueprint) {
       <thead>
         <tr>
           <th>Tính năng</th>
-          <th>🌱 Miễn phí</th>
-          <th>📚 Cơ bản</th>
-          <th>⭐ Tiêu chuẩn</th>
-          <th>👑 Cao cấp</th>
+          ${tiers.map((tier) => `<th>${tier.icon} ${escapeHtml(tier.name)}</th>`).join("")}
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -553,13 +539,14 @@ function renderPlanZone(product) {
     const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
     if (!targets[selectedPlanTier]) {
-      selectedPlanTier = targets.standard ? "standard" : (targets.basic ? "basic" : "free");
+      selectedPlanTier = targets.standard ? "standard" : "free";
     }
 
     const selectedTarget = targets[selectedPlanTier] || null;
-    selectedCheckoutProduct = selectedTarget;
-    if (selectedTarget) {
-      document.getElementById("pdPrice").textContent = fmtVnd(selectedTarget.price);
+    const selectedPrice = Number(prices?.[selectedPlanTier] || 0);
+    selectedCheckoutProduct = selectedPlanTier === "free" ? null : selectedTarget;
+    if (selectedPrice > 0) {
+      document.getElementById("pdPrice").textContent = fmtVnd(selectedPrice);
     } else {
       document.getElementById("pdPrice").textContent = "Miễn phí";
     }

@@ -126,24 +126,25 @@ main{
 .pd-buy-filters{
   display:flex;
   flex-direction:column;
-  gap:8px;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid rgba(124,109,216,.2);
-  background:rgba(239,246,255,.62);
+  gap:10px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #d8e3f0;
+  background:#ffffff;
+  box-shadow:0 4px 12px rgba(31,73,125,.06);
 }
 
 .pd-buy-filter-row{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
 }
 
 .pd-buy-filter-label{
-  min-width:52px;
-  font-size:.78rem;
+  min-width:48px;
+  font-size:.72rem;
   font-weight:900;
-  color:#355777;
+  color:#47617c;
   text-transform:uppercase;
   letter-spacing:.05em;
 }
@@ -151,41 +152,49 @@ main{
 .pd-plan-period-btn{
   border:none;
   border-radius:999px;
-  min-height:32px;
-  padding:0 14px;
-  font-size:.88rem;
+  min-height:30px;
+  padding:0 12px;
+  font-size:.82rem;
   font-weight:800;
-  color:#4f6482;
-  background:rgba(255,255,255,.68);
-  transition:.2s ease;
+  color:#58718c;
+  background:#f4f8fc;
+  transition:all .2s ease;
 }
 
 .pd-plan-tier-btn{
   border:none;
   border-radius:999px;
-  min-height:32px;
-  padding:0 12px;
-  font-size:.84rem;
+  min-height:30px;
+  padding:0 11px;
+  font-size:.8rem;
   font-weight:800;
-  color:#355777;
-  background:rgba(255,255,255,.68);
-  transition:.2s ease;
+  color:#476a8c;
+  background:#f4f8fc;
+  transition:all .2s ease;
+}
+
+.pd-plan-period-btn:hover,
+.pd-plan-tier-btn:hover{
+  background:#e9f2fa;
+  transform:translateY(-1px) scale(1.01);
 }
 
 .pd-plan-period-btn.is-active{
   color:#fff;
-  background:#1584ca;
+  background:linear-gradient(135deg,#2b96d9,#1f7fc0);
+  box-shadow:0 4px 12px rgba(31,127,192,.26);
 }
 
 .pd-plan-tier-btn.is-active{
   color:#fff;
-  background:#1f6fb0;
+  background:linear-gradient(135deg,#297fc8,#1f67a5);
+  box-shadow:0 4px 12px rgba(31,103,165,.22);
 }
 
 .pd-plan-grid{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:10px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
 }
 
 .pd-plan-card{
@@ -197,21 +206,31 @@ main{
   background:#f8fbff;
   padding:10px 10px 9px;
   box-shadow:0 8px 18px rgba(18,52,96,.1);
-  transition:.2s ease;
+  transition:transform .22s ease, box-shadow .22s ease, opacity .22s ease;
+}
+
+.pd-plan-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 24px rgba(18,52,96,.16);
 }
 
 .pd-plan-card.is-muted{
-  opacity:.46;
-  transform:scale(.985);
+  opacity:.82;
+  transform:scale(.993);
 }
 
 .pd-plan-card.is-selected{
   box-shadow:0 12px 24px rgba(18,52,96,.18);
-  transform:translateY(-1px);
+  transform:translateY(-2px);
+  animation:planSoftIn .24s ease;
+}
+
+@keyframes planSoftIn{
+  from{opacity:.8;transform:translateY(1px)}
+  to{opacity:1;transform:translateY(-2px)}
 }
 
 .pd-plan-card[data-tier="free"]{ border-color:#707f92; }
-.pd-plan-card[data-tier="basic"]{ border-color:#7ba8ff; }
 .pd-plan-card[data-tier="standard"]{ border-color:#f19800; background:#fffaf1; }
 .pd-plan-card[data-tier="premium"]{ border-color:#8a61ff; }
 
@@ -312,6 +331,13 @@ main{
   padding:0 10px;
   font-size:.84rem;
   font-weight:800;
+  transition:transform .15s ease, filter .15s ease;
+}
+
+.pd-plan-buy:hover,
+.pd-plan-activate:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.02);
 }
 
 .pd-plan-buy{ background:#2f67e7; color:#fff; }
@@ -722,14 +748,18 @@ main{
 @media(max-width:980px){
   .pd-top{grid-template-columns:1fr;gap:20px}
   .pd-buy-box{position:static}
-  .pd-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pd-plan-grid{grid-template-columns:1fr}
 }
 
 @media(max-width:768px){
   .pd-content{padding-bottom:56px}
   .pd-features{grid-template-columns:1fr}
-  .pd-buy-filter-row{flex-direction:column;align-items:flex-start;gap:6px}
-  .pd-buy-filter-label{min-width:0}
+  .pd-buy-filters{gap:8px;padding:9px}
+  .pd-buy-filter-row{flex-direction:row;align-items:center;gap:6px}
+  .pd-buy-filter-label{min-width:42px;font-size:.68rem}
+  .pd-buy-filter-row .pd-plan-toggle{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .pd-buy-filter-row .pd-plan-toggle::-webkit-scrollbar{display:none}
+  .pd-plan-tier-btn,.pd-plan-period-btn{min-height:28px;padding:0 10px;font-size:.74rem}
   .pd-plan-zone{padding:10px}
   .pd-plan-grid{grid-template-columns:1fr}
   .pd-plan-card{min-height:auto}
