@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const { env } = require("./config/env");
 const { pool } = require("./db/pool");
+const { getSepayRuntimeSettings, updateSepayRuntimeSettings } = require("./config/runtimeSettings");
 
 const {
   getPublicCatalog,
@@ -15,9 +16,12 @@ const {
   createCustomerAccount,
   listCustomers,
   findAdminByUsername,
+  findAdminById,
   markAdminLoginSuccess,
   createAdminUser,
-  listAdminUsers
+  listAdminUsers,
+  countActiveOwners,
+  updateAdminUserById
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -26,6 +30,8 @@ const {
   parseStripeWebhook,
   parseSepayWebhook,
   buildSepayCheckout,
+  sendTelegramMessage,
+  isTelegramNotifyEnabled,
   isMockPaymentMode,
   isSepayPaymentMode
 } = require("./modules/payment");
@@ -264,11 +270,15 @@ app.get(
           totalCustomers: 0,
           paidOrders: 0,
           pendingOrders: 0,
-          totalRevenue: 0
+          totalRevenue: 0,
+          totalCreditBalance: 0,
+          totalWallets: 0,
+          customersWithWallet: 0
         },
         latestOrders: [],
         latestTransactions: [],
-        activeSubscriptions: []
+        activeSubscriptions: [],
+        topWallets: []
       });
     }
   })
@@ -358,6 +368,126 @@ app.post(
     });
 
     return res.status(201).json({ admin: createdAdmin });
+  })
+);
+
+app.post(
+  "/api/admin/notifications/telegram/test",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    if (!isTelegramNotifyEnabled()) {
+      return res.status(400).json({
+        message: "Telegram chưa bật hoặc thiếu TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID",
+        configured: false
+      });
+    }
+
+    const actor = getAdminFromSession(req);
+    const text = req.body?.text || `🧪 Test Telegram từ Admin: ${actor?.username || "unknown"} @ ${new Date().toISOString()}`;
+    const result = await sendTelegramMessage({ text });
+    if (!result.ok) {
+      return res.status(502).json({ message: "Gửi Telegram thất bại", result });
+    }
+
+    return res.json({ ok: true, result });
+  })
+);
+
+app.get(
+  "/api/admin/integrations/sepay",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const current = getSepayRuntimeSettings();
+    return res.json({
+      paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
+      sepay: {
+        webhookSecret: current.webhookSecret ? "********" : "",
+        bankCode: current.bankCode || env.sepayBankCode,
+        bankAccountNumber: current.bankAccountNumber || env.sepayBankAccountNumber,
+        accountName: current.accountName || env.sepayAccountName,
+        qrTemplateUrl: current.qrTemplateUrl || env.sepayQrTemplateUrl
+      },
+      webhookUrl: `${env.appBaseUrl}/api/payments/webhooks/sepay`
+    });
+  })
+);
+
+app.put(
+  "/api/admin/integrations/sepay",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const {
+      paymentProviderMode,
+      webhookSecret,
+      bankCode,
+      bankAccountNumber,
+      accountName,
+      qrTemplateUrl
+    } = req.body || {};
+
+    const safeMode = String(paymentProviderMode || "").trim().toLowerCase();
+    if (safeMode && !["mock", "sepay", "stripe"].includes(safeMode)) {
+      return res.status(400).json({ message: "paymentProviderMode chỉ nhận mock | sepay | stripe" });
+    }
+
+    const next = updateSepayRuntimeSettings({
+      paymentProviderMode: safeMode || "",
+      webhookSecret: String(webhookSecret || "").trim(),
+      bankCode: String(bankCode || "").trim(),
+      bankAccountNumber: String(bankAccountNumber || "").trim(),
+      accountName: String(accountName || "").trim(),
+      qrTemplateUrl: String(qrTemplateUrl || "").trim()
+    });
+
+    return res.json({
+      ok: true,
+      message: "Đã lưu cấu hình Sepay runtime",
+      paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
+      webhookUrl: `${env.appBaseUrl}/api/payments/webhooks/sepay`
+    });
+  })
+);
+
+app.patch(
+  "/api/admin/admin-users/:adminId",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const actor = getAdminFromSession(req);
+    const { role, isActive } = req.body;
+    const safeRole = typeof role === "string" ? role.trim().toLowerCase() : "";
+    const safeActive = typeof isActive === "boolean" ? isActive : null;
+
+    if (!["owner", "manager", "support"].includes(safeRole)) {
+      return res.status(400).json({ message: "role phải là owner | manager | support" });
+    }
+    if (safeActive === null) {
+      return res.status(400).json({ message: "isActive phải là boolean" });
+    }
+
+    const target = await findAdminById(req.params.adminId);
+    if (!target) {
+      return res.status(404).json({ message: "Không tìm thấy admin user" });
+    }
+
+    if (actor?.id && actor.id === target.id && !safeActive) {
+      return res.status(400).json({ message: "Không thể tự vô hiệu hóa tài khoản hiện tại" });
+    }
+
+    if (target.role === "owner" && (!safeActive || safeRole !== "owner")) {
+      const activeOwnerCount = await countActiveOwners();
+      if (activeOwnerCount <= 1) {
+        return res.status(400).json({ message: "Hệ thống cần ít nhất 1 owner đang hoạt động" });
+      }
+    }
+
+    const updated = await updateAdminUserById({
+      adminId: req.params.adminId,
+      role: safeRole,
+      isActive: safeActive,
+      permissions: getPermissionsByRole(safeRole)
+    });
+
+    return res.json({ admin: updated });
   })
 );
 

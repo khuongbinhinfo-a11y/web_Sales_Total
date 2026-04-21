@@ -31,6 +31,9 @@
         <a href="#section-orders"><span class="icon">🛒</span> Đơn hàng</a>
         <a href="#section-transactions"><span class="icon">💳</span> Giao dịch</a>
         <a href="#section-subs"><span class="icon">🔄</span> Subscription</a>
+        <a href="#section-wallets"><span class="icon">💰</span> Số dư credit</a>
+        <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
+        <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
       </nav>
@@ -44,6 +47,7 @@
             <div class="kpi-card"><div class="kpi-label">Đơn đã thanh toán</div><div class="kpi-value success" id="kpiPaid">—</div></div>
             <div class="kpi-card"><div class="kpi-label">Đơn chờ xử lý</div><div class="kpi-value accent" id="kpiPending">—</div></div>
             <div class="kpi-card"><div class="kpi-label">Tổng khách hàng</div><div class="kpi-value" id="kpiCustomers">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Tổng số dư credit</div><div class="kpi-value" id="kpiCredits">—</div></div>
             <div class="kpi-card"><div class="kpi-label">Ứng dụng</div><div class="kpi-value" id="kpiApps">—</div></div>
           </div>
         </section>
@@ -64,6 +68,91 @@
         <section id="section-subs" class="admin-section">
           <h3>🔄 Subscription đang hoạt động</h3>
           <div class="table-wrap" id="subsWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+        </section>
+
+        <section id="section-wallets" class="admin-section">
+          <h3>💰 Ví credit lớn nhất</h3>
+          <div class="table-wrap" id="walletWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
+        </section>
+
+        <section id="section-admin-access" class="admin-section">
+          <h3>🛡️ Quản lý phân quyền admin</h3>
+
+          <div class="info-card" style="margin-bottom:12px">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Tạo tài khoản sub-admin và phân quyền theo role.</p>
+            <form id="createAdminForm" style="display:grid;grid-template-columns:1fr 1fr 1fr 140px auto;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Username</label>
+                <input id="newAdminUsername" required placeholder="support01" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Email</label>
+                <input id="newAdminEmail" type="email" required placeholder="support@company.com" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu</label>
+                <input id="newAdminPassword" type="password" required minlength="8" placeholder="Tối thiểu 8 ký tự" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Role</label>
+                <select id="newAdminRole" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem;background:#fff">
+                  <option value="support">support</option>
+                  <option value="manager">manager</option>
+                  <option value="owner">owner</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-accent" style="min-height:38px;font-size:.85rem">Tạo sub-admin</button>
+            </form>
+            <p id="adminFormMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div class="table-wrap" id="adminUsersWrap"><p style="padding:16px;color:var(--muted)">Đang tải danh sách admin...</p></div>
+        </section>
+
+        <section id="section-sepay" class="admin-section">
+          <h3>🏦 Cấu hình Sepay (không cần sửa code)</h3>
+          <div class="info-card">
+            <form id="sepayConfigForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Payment mode</label>
+                <select id="sepayMode" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff">
+                  <option value="mock">mock</option>
+                  <option value="sepay">sepay</option>
+                  <option value="stripe">stripe</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Webhook URL</label>
+                <input id="sepayWebhookUrl" readonly style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f8fafc;font-size:.85rem" />
+              </div>
+
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Sepay webhook secret</label>
+                <input id="sepaySecret" placeholder="Nhập token webhook từ Sepay" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mã ngân hàng</label>
+                <input id="sepayBankCode" placeholder="970422" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+              </div>
+
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Số tài khoản</label>
+                <input id="sepayAccount" placeholder="1903xxxx" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Chủ tài khoản</label>
+                <input id="sepayAccountName" placeholder="CONG TY ABC" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+              </div>
+
+              <div style="grid-column:span 2">
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">QR template URL</label>
+                <input id="sepayQrTemplate" placeholder="https://...{bank}...{account}...{amount}...{memo}" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+              </div>
+
+              <button type="submit" class="btn btn-accent" style="min-height:40px;width:200px">Lưu cấu hình Sepay</button>
+              <p id="sepayConfigMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+            </form>
+          </div>
         </section>
 
         <!-- Keys placeholder -->

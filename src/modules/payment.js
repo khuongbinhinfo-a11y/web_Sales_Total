@@ -1,16 +1,121 @@
 const { env } = require("../config/env");
 const { recordWebhookEvent, markOrderPaid } = require("./store");
+const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
+
+function getPaymentProviderMode() {
+  const runtime = readRuntimeSettings();
+  return runtime.paymentProviderMode || env.paymentProviderMode;
+}
+
+function getSepayConfig() {
+  const runtime = getSepayRuntimeSettings();
+  return {
+    webhookSecret: runtime.webhookSecret || env.sepayWebhookSecret,
+    bankCode: runtime.bankCode || env.sepayBankCode,
+    bankAccountNumber: runtime.bankAccountNumber || env.sepayBankAccountNumber,
+    accountName: runtime.accountName || env.sepayAccountName,
+    qrTemplateUrl: runtime.qrTemplateUrl || env.sepayQrTemplateUrl
+  };
+}
+
+function isTelegramNotifyEnabled() {
+  return env.telegramNotifyEnabled && Boolean(env.telegramBotToken) && Boolean(env.telegramChatId);
+}
+
+function maskKeyValue(keyValue) {
+  if (!keyValue || keyValue.length < 8) {
+    return "********";
+  }
+  return `${keyValue.slice(0, 4)}****${keyValue.slice(-4)}`;
+}
+
+async function sendTelegramMessage({ text, chatId }) {
+  if (!env.telegramBotToken) {
+    return { ok: false, skipped: true, reason: "missing_bot_token" };
+  }
+  const targetChatId = chatId || env.telegramChatId;
+  if (!targetChatId) {
+    return { ok: false, skipped: true, reason: "missing_chat_id" };
+  }
+
+  const response = await fetch(`https://api.telegram.org/bot${env.telegramBotToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: targetChatId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true
+    })
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.ok) {
+    return {
+      ok: false,
+      skipped: false,
+      reason: payload?.description || `http_${response.status}`
+    };
+  }
+
+  return {
+    ok: true,
+    skipped: false,
+    messageId: payload?.result?.message_id || null,
+    chatId: payload?.result?.chat?.id || targetChatId
+  };
+}
+
+function buildTelegramPaidMessage({ order, keyDelivery }) {
+  const orderId = order?.id || "(unknown)";
+  const appId = order?.appId || "(unknown)";
+  const customerId = order?.customerId || "(unknown)";
+  const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
+  const currency = order?.currency || "VND";
+
+  const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
+  const keyText = env.telegramIncludeKey ? keyValue : maskKeyValue(keyValue);
+
+  return [
+    "✅ <b>Thanh toán thành công</b>",
+    `• Order: <code>${orderId}</code>`,
+    `• Customer: <code>${customerId}</code>`,
+    `• App: <code>${appId}</code>`,
+    `• Số tiền: <b>${amount} ${currency}</b>`,
+    `• Key: <code>${keyText}</code>`,
+    `• Portal: ${env.appBaseUrl}/portal`
+  ].join("\n");
+}
+
+async function notifyPaidOrderToTelegram({ order, keyDelivery }) {
+  if (!isTelegramNotifyEnabled()) {
+    return { ok: false, skipped: true, reason: "telegram_disabled" };
+  }
+
+  try {
+    const text = buildTelegramPaidMessage({ order, keyDelivery });
+    return await sendTelegramMessage({ text });
+  } catch (error) {
+    return { ok: false, skipped: false, reason: error.message || "send_failed" };
+  }
+}
 
 function isMockPaymentMode() {
-  return env.paymentProviderMode === "mock";
+  return getPaymentProviderMode() === "mock";
 }
 
 function isStripePaymentMode() {
-  return env.paymentProviderMode === "stripe";
+  return getPaymentProviderMode() === "stripe";
 }
 
 function isSepayPaymentMode() {
-  return env.paymentProviderMode === "sepay";
+  return getPaymentProviderMode() === "sepay";
 }
 
 function verifyInternalWebhookSignature(signature) {
@@ -59,11 +164,17 @@ async function processPaidWebhook(payload) {
     payload
   });
 
+  const telegramNotification = await notifyPaidOrderToTelegram({
+    order: result.order,
+    keyDelivery: result.keyDelivery || null
+  });
+
   return {
     ok: true,
     idempotent: result.idempotent,
     order: result.order,
-    keyDelivery: result.keyDelivery || null
+    keyDelivery: result.keyDelivery || null,
+    telegramNotification
   };
 }
 
@@ -104,7 +215,9 @@ function verifySepayWebhookSignature(signature) {
     throw error;
   }
 
-  if (!env.sepayWebhookSecret) {
+  const sepay = getSepayConfig();
+
+  if (!sepay.webhookSecret) {
     const error = new Error("Missing SEPAY_WEBHOOK_SECRET");
     error.statusCode = 500;
     throw error;
@@ -116,7 +229,7 @@ function verifySepayWebhookSignature(signature) {
     throw error;
   }
 
-  if (signature !== env.sepayWebhookSecret) {
+  if (signature !== sepay.webhookSecret) {
     const error = new Error("Invalid Sepay signature");
     error.statusCode = 401;
     throw error;
@@ -189,23 +302,24 @@ function parseSepayWebhook(payload, signature) {
 }
 
 function buildSepayCheckout(order) {
+  const sepay = getSepayConfig();
   const transferContent = `PAY ${order.id}`;
-  const fallbackQrText = `bank=${env.sepayBankCode}|account=${env.sepayBankAccountNumber}|amount=${order.amount}|memo=${transferContent}`;
+  const fallbackQrText = `bank=${sepay.bankCode}|account=${sepay.bankAccountNumber}|amount=${order.amount}|memo=${transferContent}`;
 
   let qrUrl = "";
-  if (env.sepayQrTemplateUrl) {
-    qrUrl = env.sepayQrTemplateUrl
-      .replace("{bank}", encodeURIComponent(env.sepayBankCode))
-      .replace("{account}", encodeURIComponent(env.sepayBankAccountNumber))
+  if (sepay.qrTemplateUrl) {
+    qrUrl = sepay.qrTemplateUrl
+      .replace("{bank}", encodeURIComponent(sepay.bankCode))
+      .replace("{account}", encodeURIComponent(sepay.bankAccountNumber))
       .replace("{amount}", encodeURIComponent(String(order.amount)))
       .replace("{memo}", encodeURIComponent(transferContent));
   }
 
   return {
     provider: "sepay",
-    bankCode: env.sepayBankCode,
-    accountNumber: env.sepayBankAccountNumber,
-    accountName: env.sepayAccountName,
+    bankCode: sepay.bankCode,
+    accountNumber: sepay.bankAccountNumber,
+    accountName: sepay.accountName,
     amount: order.amount,
     currency: order.currency,
     transferContent,
@@ -274,6 +388,8 @@ module.exports = {
   parseSepayWebhook,
   verifySepayWebhookSignature,
   buildSepayCheckout,
+  sendTelegramMessage,
+  isTelegramNotifyEnabled,
   isMockPaymentMode,
   isStripePaymentMode,
   isSepayPaymentMode

@@ -17,6 +17,10 @@ const env = {
   sepayBankAccountNumber: process.env.SEPAY_BANK_ACCOUNT_NUMBER || "",
   sepayAccountName: process.env.SEPAY_ACCOUNT_NAME || "",
   sepayQrTemplateUrl: process.env.SEPAY_QR_TEMPLATE_URL || "",
+  telegramNotifyEnabled: String(process.env.TELEGRAM_NOTIFY_ENABLED || "false").toLowerCase() === "true",
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
+  telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+  telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
   sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || "dev-session-secret",
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
   adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo"

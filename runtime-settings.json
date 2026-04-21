@@ -1,0 +1,10 @@
+{
+  "paymentProviderMode": "",
+  "sepay": {
+    "webhookSecret": "",
+    "bankCode": "",
+    "bankAccountNumber": "",
+    "accountName": "",
+    "qrTemplateUrl": ""
+  }
+}

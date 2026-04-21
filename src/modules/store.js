@@ -594,7 +594,7 @@ async function getCustomerSnapshot(customerId) {
 }
 
 async function getAdminDashboard() {
-  const [kpiResult, latestOrders, latestTransactions, activeSubscriptions] = await Promise.all([
+  const [kpiResult, latestOrders, latestTransactions, activeSubscriptions, walletStatsResult, topWalletsResult] = await Promise.all([
     pool.query(
       `SELECT
          (SELECT COUNT(*)::int FROM apps) AS total_apps,
@@ -614,17 +614,39 @@ async function getAdminDashboard() {
     pool.query(
       `SELECT id, customer_id, app_id, product_id, status, start_at, end_at, renewal_mode, created_at
        FROM subscriptions WHERE status = 'active' ORDER BY created_at DESC`
+    ),
+    pool.query(
+      `SELECT
+         COALESCE(SUM(balance), 0)::bigint AS total_credit_balance,
+         COUNT(*)::int AS total_wallets,
+         COUNT(DISTINCT customer_id)::int AS customers_with_wallet
+       FROM credit_wallets`
+    ),
+    pool.query(
+      `SELECT w.customer_id, c.full_name, c.email, w.app_id, w.balance, w.updated_at
+       FROM credit_wallets w
+       JOIN customers c ON c.id = w.customer_id
+       ORDER BY w.balance DESC, w.updated_at DESC
+       LIMIT 10`
     )
   ]);
 
   const kpi = kpiResult.rows[0];
+  const walletStats = walletStatsResult.rows[0] || {
+    total_credit_balance: 0,
+    total_wallets: 0,
+    customers_with_wallet: 0
+  };
   return {
     kpi: {
       totalApps: kpi.total_apps,
       totalCustomers: kpi.total_customers,
       paidOrders: kpi.paid_orders,
       pendingOrders: kpi.pending_orders,
-      totalRevenue: Number(kpi.total_revenue)
+      totalRevenue: Number(kpi.total_revenue),
+      totalCreditBalance: Number(walletStats.total_credit_balance),
+      totalWallets: Number(walletStats.total_wallets),
+      customersWithWallet: Number(walletStats.customers_with_wallet)
     },
     latestOrders: latestOrders.rows.map(mapOrder),
     latestTransactions: latestTransactions.rows.map((row) => ({
@@ -646,6 +668,14 @@ async function getAdminDashboard() {
       endAt: row.end_at,
       renewalMode: row.renewal_mode,
       createdAt: row.created_at
+    })),
+    topWallets: topWalletsResult.rows.map((row) => ({
+      customerId: row.customer_id,
+      fullName: row.full_name,
+      email: row.email,
+      appId: row.app_id,
+      balance: Number(row.balance),
+      updatedAt: row.updated_at
     }))
   };
 }
@@ -736,6 +766,32 @@ async function findAdminByUsername(username) {
   };
 }
 
+async function findAdminById(adminId) {
+  const result = await pool.query(
+    `SELECT id, username, email, role, permissions, password_hash, is_active, created_by, created_at, last_login_at
+     FROM admin_users
+     WHERE id = $1::uuid`,
+    [adminId]
+  );
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    passwordHash: row.password_hash,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  };
+}
+
 async function markAdminLoginSuccess(adminId) {
   await pool.query("UPDATE admin_users SET last_login_at = NOW() WHERE id = $1::uuid", [adminId]);
 }
@@ -782,6 +838,45 @@ async function listAdminUsers() {
   }));
 }
 
+async function countActiveOwners() {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+     FROM admin_users
+     WHERE role = 'owner' AND is_active = TRUE`
+  );
+  return Number(result.rows[0]?.total || 0);
+}
+
+async function updateAdminUserById({ adminId, role, permissions, isActive }) {
+  const result = await pool.query(
+    `UPDATE admin_users
+     SET role = $2,
+         permissions = $3::jsonb,
+         is_active = $4,
+         updated_at = NOW()
+     WHERE id = $1::uuid
+     RETURNING id, username, email, role, permissions, is_active, created_by, created_at, last_login_at`,
+    [adminId, role, JSON.stringify(permissions || []), isActive]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  };
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -797,7 +892,10 @@ module.exports = {
   createCustomerAccount,
   listCustomers,
   findAdminByUsername,
+  findAdminById,
   markAdminLoginSuccess,
   createAdminUser,
-  listAdminUsers
+  listAdminUsers,
+  countActiveOwners,
+  updateAdminUserById
 };
