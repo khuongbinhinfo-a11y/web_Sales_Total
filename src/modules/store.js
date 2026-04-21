@@ -770,6 +770,88 @@ async function createCustomerAccount(email, fullName) {
   };
 }
 
+async function findCustomerByEmail(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const result = await pool.query(
+    "SELECT id, email, full_name, password_hash FROM customers WHERE email = $1",
+    [normalizedEmail]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    passwordHash: row.password_hash || ""
+  };
+}
+
+async function registerCustomerByEmail(email, fullName, passwordHash) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await pool.query(
+    "SELECT id, email, full_name, password_hash FROM customers WHERE email = $1",
+    [normalizedEmail]
+  );
+
+  if (existing.rowCount > 0) {
+    const row = existing.rows[0];
+    if (row.password_hash) {
+      return {
+        customer: {
+          id: row.id,
+          email: row.email,
+          fullName: row.full_name
+        },
+        created: false,
+        passwordSet: false
+      };
+    }
+
+    const nextName = (fullName || row.full_name || normalizedEmail.split("@")[0]).trim();
+    const updated = await pool.query(
+      `UPDATE customers
+       SET full_name = $2,
+           password_hash = $3
+       WHERE id = $1
+       RETURNING id, email, full_name`,
+      [row.id, nextName, passwordHash]
+    );
+
+    return {
+      customer: {
+        id: updated.rows[0].id,
+        email: updated.rows[0].email,
+        fullName: updated.rows[0].full_name
+      },
+      created: false,
+      passwordSet: true
+    };
+  }
+
+  const id = `cus-${Date.now()}`;
+  const name = (fullName || normalizedEmail.split("@")[0]).trim();
+  const created = await pool.query(
+    `INSERT INTO customers(id, email, full_name, password_hash)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, email, full_name`,
+    [id, normalizedEmail, name, passwordHash]
+  );
+
+  return {
+    customer: {
+      id: created.rows[0].id,
+      email: created.rows[0].email,
+      fullName: created.rows[0].full_name
+    },
+    created: true,
+    passwordSet: true
+  };
+}
+
 async function listCustomers(limit = 100) {
   const safeLimit = Number.isInteger(limit) && limit > 0 && limit <= 500 ? limit : 100;
   const result = await pool.query(
@@ -939,6 +1021,8 @@ module.exports = {
   getAdminDashboard,
   findOrCreateCustomerByEmail,
   createCustomerAccount,
+  findCustomerByEmail,
+  registerCustomerByEmail,
   listCustomers,
   findAdminByUsername,
   findAdminById,

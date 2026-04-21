@@ -12,8 +12,9 @@ const {
   consumeUsage,
   getCustomerSnapshot,
   getAdminDashboard,
-  findOrCreateCustomerByEmail,
   createCustomerAccount,
+  findCustomerByEmail,
+  registerCustomerByEmail,
   listCustomers,
   findAdminByUsername,
   findAdminById,
@@ -503,18 +504,63 @@ app.get("/portal/login", (req, res) => {
   res.send(portalLoginPage());
 });
 
-/* ── Customer email auth ── */
+/* ── Customer account auth ── */
 app.post(
   "/api/auth/customer/login",
   asyncHandler(async (req, res) => {
-    const { email, fullName } = req.body;
+    const { email, password } = req.body;
     if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ message: "Email không hợp lệ" });
     }
-    const customer = await findOrCreateCustomerByEmail(email.trim().toLowerCase(), fullName);
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+
+    const customer = await findCustomerByEmail(email.trim().toLowerCase());
+    if (!customer) {
+      return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
+    if (!customer.passwordHash) {
+      return res.status(400).json({ message: "Tài khoản này chưa có mật khẩu. Hãy bấm Đăng ký để thiết lập mật khẩu." });
+    }
+
+    const passwordOk = verifyPassword(password, customer.passwordHash);
+    if (!passwordOk) {
+      return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
+
+    const safeCustomer = {
+      id: customer.id,
+      email: customer.email,
+      fullName: customer.fullName
+    };
+
     const token = createCustomerSessionToken(customer.id, customer.email);
     setAuthCookie(res, "wst_customer_session", token);
-    return res.json({ customer });
+    return res.json({ customer: safeCustomer });
+  })
+);
+
+app.post(
+  "/api/auth/customer/register",
+  asyncHandler(async (req, res) => {
+    const { email, fullName, password } = req.body;
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+
+    const passwordHash = hashPassword(password);
+    const result = await registerCustomerByEmail(email.trim().toLowerCase(), fullName, passwordHash);
+    if (!result.passwordSet) {
+      return res.status(409).json({ message: "Email này đã có tài khoản. Vui lòng đăng nhập." });
+    }
+
+    const token = createCustomerSessionToken(result.customer.id, result.customer.email);
+    setAuthCookie(res, "wst_customer_session", token);
+    return res.status(result.created ? 201 : 200).json(result);
   })
 );
 

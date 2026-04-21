@@ -225,6 +225,8 @@
           <form id="loginForm">
             <label data-i18n="modal_login_email_label">Email</label>
             <input type="email" id="loginEmail" required placeholder="you@example.com" autocomplete="email" />
+            <label data-i18n="modal_login_password_label">Mật khẩu</label>
+            <input type="password" id="loginPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="current-password" />
             <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_login_btn">Đăng nhập</button>
           </form>
           <p class="modal-note"><span data-i18n="modal_login_no_account">Chưa có tài khoản?</span> <a href="#" id="switchToRegister" data-i18n="modal_register_link">Đăng ký ngay</a></p>
@@ -238,6 +240,8 @@
             <input type="email" id="registerEmail" required placeholder="you@example.com" autocomplete="email" />
             <label data-i18n="modal_register_name_label">Họ tên</label>
             <input type="text" id="registerName" required placeholder="Nguyễn Văn A" autocomplete="name" />
+            <label data-i18n="modal_register_password_label">Mật khẩu</label>
+            <input type="password" id="registerPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" />
             <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_register_btn">Đăng ký</button>
           </form>
           <p class="modal-note"><span data-i18n="modal_register_has_account">Đã có tài khoản?</span> <a href="#" id="switchToLogin" data-i18n="modal_login_link">Đăng nhập ngay</a></p>

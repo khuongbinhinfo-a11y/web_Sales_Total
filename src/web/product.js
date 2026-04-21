@@ -170,9 +170,11 @@ switchToLogin.addEventListener("click", e=>{ e.preventDefault(); showLoginTab();
 loginForm.addEventListener("submit", async e=>{
   e.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
   if(!email){ loginError.textContent="Vui lòng nhập email hợp lệ"; return; }
+  if(!password || password.length < 8){ loginError.textContent="Mật khẩu tối thiểu 8 ký tự"; return; }
   try{
-    const res = await fetch("/api/auth/customer/login",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email}) });
+    const res = await fetch("/api/auth/customer/login",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email, password}) });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||"Lỗi đăng nhập"; return; }
     loginModal.classList.remove("show");
     await checkAuth();
@@ -183,9 +185,11 @@ registerForm.addEventListener("submit", async e=>{
   e.preventDefault();
   const email    = document.getElementById("registerEmail").value.trim();
   const fullName = document.getElementById("registerName").value.trim();
+  const password = document.getElementById("registerPassword").value;
   if(!email||!fullName){ loginError.textContent="Vui lòng điền đầy đủ thông tin"; return; }
+  if(!password || password.length < 8){ loginError.textContent="Mật khẩu tối thiểu 8 ký tự"; return; }
   try{
-    const res = await fetch("/api/auth/customer/login",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,fullName}) });
+    const res = await fetch("/api/auth/customer/register",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,fullName,password}) });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||"Lỗi đăng ký"; return; }
     loginModal.classList.remove("show");
     await checkAuth();

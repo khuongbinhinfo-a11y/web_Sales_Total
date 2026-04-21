@@ -74,16 +74,20 @@ const T = {
     modal_login_title:"Đăng nhập",
     modal_login_desc:"Nhập email để đăng nhập.",
     modal_login_email_label:"Email",
+    modal_login_password_label:"Mật khẩu",
     modal_login_btn:"Đăng nhập",
     modal_login_error_email:"Vui lòng nhập email hợp lệ",
+    modal_login_error_password:"Mật khẩu tối thiểu 8 ký tự",
     modal_login_error_db:"Không thể đăng nhập. Hãy bật PostgreSQL và thử lại.",
     modal_login_no_account:"Chưa có tài khoản?",
     modal_register_link:"Đăng ký ngay",
     modal_register_title:"Đăng ký",
     modal_register_desc:"Nhập email và họ tên để tạo tài khoản mới.",
     modal_register_name_label:"Họ tên",
+    modal_register_password_label:"Mật khẩu",
     modal_register_btn:"Đăng ký",
     modal_register_error_name:"Vui lòng nhập họ tên",
+    modal_register_error_password:"Mật khẩu tối thiểu 8 ký tự",
     modal_register_has_account:"Đã có tài khoản?",
     modal_login_link:"Đăng nhập ngay",
     nav_register:"Đăng ký",
@@ -142,16 +146,20 @@ const T = {
     modal_login_title:"Login",
     modal_login_desc:"Enter your email to login.",
     modal_login_email_label:"Email",
+    modal_login_password_label:"Password",
     modal_login_btn:"Login",
     modal_login_error_email:"Please enter a valid email",
+    modal_login_error_password:"Password must be at least 8 characters",
     modal_login_error_db:"Cannot login. Please start PostgreSQL and retry.",
     modal_login_no_account:"Don't have an account?",
     modal_register_link:"Register now",
     modal_register_title:"Register",
     modal_register_desc:"Enter email and name to create a new account.",
     modal_register_name_label:"Full name",
+    modal_register_password_label:"Password",
     modal_register_btn:"Register",
     modal_register_error_name:"Please enter your name",
+    modal_register_error_password:"Password must be at least 8 characters",
     modal_register_has_account:"Already have an account?",
     modal_login_link:"Login now",
     nav_register:"Register",
@@ -272,12 +280,14 @@ switchToLogin.addEventListener("click", (e)=>{ e.preventDefault(); showLoginTab(
 loginForm.addEventListener("submit", async (e)=>{
   e.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
   if(!email){ loginError.textContent = t("modal_login_error_email"); return; }
+  if(!password || password.length < 8){ loginError.textContent = t("modal_login_error_password"); return; }
   loginError.textContent = "";
   try {
     const res = await fetch("/api/auth/customer/login",{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, password })
     });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
     loginModal.classList.remove("show");
@@ -291,13 +301,15 @@ registerForm.addEventListener("submit", async (e)=>{
   e.preventDefault();
   const email = document.getElementById("registerEmail").value.trim();
   const fullName = document.getElementById("registerName").value.trim();
+  const password = document.getElementById("registerPassword").value;
   if(!email){ loginError.textContent = t("modal_login_error_email"); return; }
   if(!fullName){ loginError.textContent = t("modal_register_error_name"); return; }
+  if(!password || password.length < 8){ loginError.textContent = t("modal_register_error_password"); return; }
   loginError.textContent = "";
   try {
-    const res = await fetch("/api/auth/customer/login",{
+    const res = await fetch("/api/auth/customer/register",{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ email, fullName })
+      body: JSON.stringify({ email, fullName, password })
     });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
     loginModal.classList.remove("show");
