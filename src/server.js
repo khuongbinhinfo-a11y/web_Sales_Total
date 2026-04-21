@@ -77,6 +77,39 @@ function asyncHandler(fn) {
 
 let cachedTelegramBot = { username: "", fetchedAt: 0 };
 
+async function setupTelegramWebhook() {
+  if (!env.telegramBotToken) {
+    console.log("⚠️  Telegram bot token not configured, skipping webhook setup");
+    return;
+  }
+
+  try {
+    const botUsername = await getTelegramBotUsername();
+    if (!botUsername) {
+      console.log("⚠️  Could not fetch Telegram bot username, skipping webhook setup");
+      return;
+    }
+
+    const webhookUrl = `${env.appBaseUrl}/api/integrations/telegram/webhook`;
+    console.log(`📡 Setting up Telegram webhook: ${webhookUrl}`);
+
+    const response = await fetch(`https://api.telegram.org/bot${env.telegramBotToken}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: webhookUrl })
+    });
+
+    const result = await response.json();
+    if (result?.ok) {
+      console.log("✅ Telegram webhook set successfully");
+    } else {
+      console.error("❌ Failed to set Telegram webhook:", result?.description || "unknown error");
+    }
+  } catch (error) {
+    console.error("❌ Error setting Telegram webhook:", error.message);
+  }
+}
+
 async function getTelegramBotUsername() {
   if (!env.telegramBotToken) {
     return "";
@@ -1065,6 +1098,7 @@ app.use((error, req, res, next) => {
 });
 
 const host = "0.0.0.0";
-app.listen(env.port, host, () => {
+app.listen(env.port, host, async () => {
   console.log(`Ứng Dụng Thông Minh running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
+  await setupTelegramWebhook();
 });
