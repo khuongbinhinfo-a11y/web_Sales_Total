@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chi tiết sản phẩm – Ứng Dụng Thông Minh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./product.css" />
+  </head>
+  <body>
+
+    <!-- HEADER -->
+    <header class="header" id="top">
+      <div class="container header-inner">
+        <a class="logo" href="/">
+          <img class="logo-img" src="/logo.png" alt="Logo" />
+          <span class="logo-text">
+            <strong>Ứng Dụng Thông Minh</strong>
+            <small>Key bản quyền</small>
+          </span>
+        </a>
+        <nav class="header-nav" id="headerNav">
+          <a href="/#catalog">Sản phẩm</a>
+          <a href="#" id="navLoginBtn" class="nav-btn">Đăng nhập</a>
+          <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register">Đăng ký</a>
+          <div id="userMenu" class="user-menu is-hidden">
+            <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
+            <div class="user-dropdown" id="userDropdown">
+              <a href="/" id="dropMyProducts">Sản phẩm đã mua</a>
+              <a href="/portal">Tra cứu đơn</a>
+              <a href="#" id="dropLogout" class="dd-logout">Đăng xuất</a>
+            </div>
+          </div>
+          <button id="langToggle" class="lang-btn" type="button">VI / EN</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- BREADCRUMB -->
+      <div class="pd-breadcrumb container">
+        <a href="/">Trang chủ</a>
+        <span>›</span>
+        <a href="/#catalog">Sản phẩm</a>
+        <span>›</span>
+        <span id="pdBreadName">Đang tải...</span>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div id="pdLoading" class="pd-loading container">
+        <div class="pd-spinner"></div>
+        <p>Đang tải sản phẩm...</p>
+      </div>
+
+      <!-- NOT FOUND -->
+      <div id="pdNotFound" class="pd-not-found container is-hidden">
+        <div class="pd-nf-icon">🔍</div>
+        <h2>Không tìm thấy sản phẩm</h2>
+        <p>Sản phẩm không tồn tại hoặc đã bị xoá.</p>
+        <a href="/" class="btn btn-accent">← Về trang chủ</a>
+      </div>
+
+      <!-- PRODUCT DETAIL -->
+      <div id="pdContent" class="pd-content container is-hidden">
+
+        <!-- TOP SECTION: image + buy box -->
+        <div class="pd-top">
+          <div class="pd-gallery">
+            <div class="pd-main-img" id="pdMainImg"></div>
+          </div>
+          <div class="pd-buy-box">
+            <div class="pd-buy-badge" id="pdCatBadge"></div>
+            <h1 class="pd-title" id="pdTitle"></h1>
+            <p class="pd-cycle" id="pdCycle"></p>
+            <div class="pd-price-row">
+              <span class="pd-price" id="pdPrice"></span>
+            </div>
+            <div class="pd-highlights">
+              <div class="pd-hi"><span class="pd-hi-icon">⚡</span><span>Giao key tự động ngay sau thanh toán</span></div>
+              <div class="pd-hi"><span class="pd-hi-icon">🔒</span><span>Bảo hành đổi key nếu lỗi</span></div>
+              <div class="pd-hi"><span class="pd-hi-icon">💬</span><span>Hỗ trợ 24/7 qua Zalo</span></div>
+            </div>
+            <button class="btn btn-accent pd-buy-btn" id="pdBuyBtn">🛒 Mua ngay</button>
+            <p class="pd-note" id="pdBuyNote"></p>
+          </div>
+        </div>
+
+        <!-- TABS: Mô tả / Hướng dẫn / Đánh giá -->
+        <div class="pd-tabs">
+          <div class="pd-tab-bar">
+            <button class="pd-tab-btn active" data-tab="desc">📋 Mô tả sản phẩm</button>
+            <button class="pd-tab-btn" data-tab="guide">📖 Hướng dẫn sử dụng</button>
+            <button class="pd-tab-btn" data-tab="reviews">⭐ Đánh giá</button>
+          </div>
+
+          <!-- Tab: Mô tả -->
+          <div class="pd-tab-panel" id="tabDesc">
+            <div class="pd-desc-wrap" id="pdDesc">
+              <div class="pd-desc-placeholder">
+                <div class="pd-desc-icon" id="pdDescIcon"></div>
+                <h3 id="pdDescTitle"></h3>
+                <div class="pd-features" id="pdFeatureList"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Hướng dẫn -->
+          <div class="pd-tab-panel is-hidden" id="tabGuide">
+            <div class="pd-guide">
+              <h3 class="pd-guide-heading">🚀 Các bước kích hoạt</h3>
+              <ol class="pd-guide-steps" id="pdGuideSteps"></ol>
+              <div class="pd-guide-note">
+                <strong>💡 Lưu ý:</strong> Nếu gặp vấn đề khi kích hoạt, vui lòng liên hệ hỗ trợ qua Zalo hoặc inbox fanpage để được hỗ trợ nhanh nhất.
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Đánh giá -->
+          <div class="pd-tab-panel is-hidden" id="tabReviews">
+            <div class="pd-reviews">
+              <div class="pd-review-summary">
+                <div class="pd-review-score">4.9</div>
+                <div class="pd-review-stars">⭐⭐⭐⭐⭐</div>
+                <div class="pd-review-count">Dựa trên 10,000+ đánh giá</div>
+              </div>
+              <div class="pd-review-list">
+                <div class="pd-review-card">
+                  <div class="pd-review-header">
+                    <img class="pd-review-avatar" src="/products/image/avatar-dung-le.svg" alt="Dũng LÊ" />
+                    <div>
+                      <div class="pd-review-name">Dũng LÊ</div>
+                      <div class="pd-review-role">Chủ shop online</div>
+                    </div>
+                    <div class="pd-review-stars-sm">⭐⭐⭐⭐⭐</div>
+                  </div>
+                  <p class="pd-review-text">"Key giao rất nhanh, dùng thử ngay được, chất lượng tốt. Sẽ quay lại."</p>
+                </div>
+                <div class="pd-review-card">
+                  <div class="pd-review-header">
+                    <img class="pd-review-avatar" src="/products/image/avatar-nga-truong.svg" alt="Nga Trương" />
+                    <div>
+                      <div class="pd-review-name">Nga Trương</div>
+                      <div class="pd-review-role">Freelancer thiết kế</div>
+                    </div>
+                    <div class="pd-review-stars-sm">⭐⭐⭐⭐⭐</div>
+                  </div>
+                  <p class="pd-review-text">"Tư vấn tận tình, hỗ trợ 24/7. Rất uy tín. Giá cả hợp lý."</p>
+                </div>
+                <div class="pd-review-card">
+                  <div class="pd-review-header">
+                    <img class="pd-review-avatar" src="/products/image/avatar-tran-ngoc-hai.svg" alt="Trần Ngọc Hải" />
+                    <div>
+                      <div class="pd-review-name">Trần Ngọc Hải</div>
+                      <div class="pd-review-role">Nhân viên văn phòng</div>
+                    </div>
+                    <div class="pd-review-stars-sm">⭐⭐⭐⭐⭐</div>
+                  </div>
+                  <p class="pd-review-text">"Mua lần thứ 5 rồi. Luôn ổn định. Đặc biệt hỗ trợ nhanh."</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /pd-content -->
+    </main>
+
+    <!-- LOGIN MODAL (reuse from main) -->
+    <div id="loginModal" class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" id="loginModalClose">✕</button>
+        <div class="modal-tabs">
+          <button class="modal-tab active" id="tabLogin">Đăng nhập</button>
+          <button class="modal-tab" id="tabRegister">Đăng ký</button>
+        </div>
+        <div id="loginPane">
+          <h3 class="modal-title">Đăng nhập</h3>
+          <p class="modal-desc">Nhập email để đăng nhập.</p>
+          <form id="loginForm" class="modal-form">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required placeholder="you@example.com" />
+            <button type="submit" class="btn btn-accent" style="width:100%;margin-top:8px">Đăng nhập</button>
+          </form>
+          <p class="modal-switch">Chưa có tài khoản? <a href="#" id="switchToRegister">Đăng ký ngay</a></p>
+        </div>
+        <div id="registerPane" style="display:none">
+          <h3 class="modal-title">Đăng ký</h3>
+          <p class="modal-desc">Nhập email và họ tên để tạo tài khoản.</p>
+          <form id="registerForm" class="modal-form">
+            <label>Họ tên</label>
+            <input type="text" id="registerName" required placeholder="Nguyễn Văn A" />
+            <label>Email</label>
+            <input type="email" id="registerEmail" required placeholder="you@example.com" />
+            <button type="submit" class="btn btn-accent" style="width:100%;margin-top:8px">Đăng ký</button>
+          </form>
+          <p class="modal-switch">Đã có tài khoản? <a href="#" id="switchToLogin">Đăng nhập ngay</a></p>
+        </div>
+        <p id="loginError" class="form-error"></p>
+      </div>
+    </div>
+
+    <script src="./product.js"></script>
+  </body>
+</html>

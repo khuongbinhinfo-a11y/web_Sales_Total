@@ -447,24 +447,10 @@ function renderProducts(){
           <span class="p-card-price">${fmtVnd(p.price)}</span>
         </div>
       </div>
-      <button class="p-card-btn">🛒 ${t("card_buy")}</button>`;
+      <a class="p-card-btn" href="/product/${p.id}">👁 ${lang==="vi"?"Xem sản phẩm":"View product"}</a>`;
 
-    card.querySelector(".p-card-btn").addEventListener("click", async ()=>{
-      if(!allProducts._live){
-        alert(t("alert_preview"));
-        return;
-      }
-      if(!currentUser){
-        loginModal.classList.add("show");
-        return;
-      }
-      const res = await fetch("/api/orders",{
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ appId:p.appId, productId:p.id })
-      });
-      const d = await res.json();
-      if(!res.ok){ alert(d.message||t("error_create")); return; }
-      window.open(d.checkoutUrl,"_blank");
+    card.querySelector(".p-card-btn").addEventListener("click", (e)=>{
+      // navigation handled by <a href>
     });
 
     productList.appendChild(card);

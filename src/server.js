@@ -429,6 +429,10 @@ app.use(
   express.static(path.join(__dirname, "..", "products", "image"))
 );
 
+app.get("/product/:id", (req, res) => {
+  res.sendFile(path.join(webRoot, "product.html"));
+});
+
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return next();
