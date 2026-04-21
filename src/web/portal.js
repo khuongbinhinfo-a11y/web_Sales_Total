@@ -57,7 +57,7 @@ function renderPortal(d){
   if(d.keyDeliveries && d.keyDeliveries.length){
     kt.innerHTML = d.keyDeliveries.map(k => `
       <div style="margin-bottom:12px">
-        <p style="font-size:.82rem;color:var(--muted);margin:0 0 4px">Đơn: ${k.orderId} · ${fmtDate(k.deliveredAt)}</p>
+        <p style="font-size:.82rem;color:var(--muted);margin:0 0 4px">Đơn: ${k.orderCode || k.orderId} · ${fmtDate(k.deliveredAt)}</p>
         <div class="key-box">🔑 ${k.keyValue}</div>
       </div>`).join("");
   } else {
@@ -69,7 +69,7 @@ function renderPortal(d){
   if(d.orders && d.orders.length){
     ot.innerHTML = `<table class="data-table"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead><tbody>` +
       d.orders.map(o => `<tr>
-        <td style="font-size:.78rem;font-family:monospace">${o.id.slice(0,8)}…</td>
+        <td style="font-size:.78rem;font-family:monospace">${o.orderCode || `${o.id.slice(0,8)}…`}</td>
         <td>${o.productId||o.appId}</td>
         <td>${fmtVnd(o.amount)}</td>
         <td>${statusBadge(o.status)}</td>

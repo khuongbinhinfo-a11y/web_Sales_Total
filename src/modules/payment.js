@@ -1,5 +1,5 @@
 const { env } = require("../config/env");
-const { recordWebhookEvent, markOrderPaid } = require("./store");
+const { recordWebhookEvent, markOrderPaid, getOrderByCode } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
 
 function getPaymentProviderMode() {
@@ -73,7 +73,7 @@ async function sendTelegramMessage({ text, chatId }) {
 }
 
 function buildTelegramPaidMessage({ order, keyDelivery }) {
-  const orderId = order?.id || "(unknown)";
+  const orderId = order?.orderCode || order?.id || "(unknown)";
   const appId = order?.appId || "(unknown)";
   const customerId = order?.customerId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
@@ -133,8 +133,8 @@ function verifyInternalWebhookSignature(signature) {
 }
 
 function validatePaidWebhookPayload(payload) {
-  const { eventId, orderId, provider, providerTransactionId, status } = payload;
-  if (!eventId || !orderId || !provider || !providerTransactionId || status !== "paid") {
+  const { eventId, orderId, orderCode, provider, providerTransactionId, status } = payload;
+  if (!eventId || (!orderId && !orderCode) || !provider || !providerTransactionId || status !== "paid") {
     const error = new Error("Invalid webhook payload");
     error.statusCode = 400;
     throw error;
@@ -144,13 +144,27 @@ function validatePaidWebhookPayload(payload) {
 async function processPaidWebhook(payload) {
   validatePaidWebhookPayload(payload);
 
+  let resolvedOrderId = payload.orderId;
+  if (!resolvedOrderId && payload.orderCode) {
+    const foundOrder = await getOrderByCode(payload.orderCode);
+    if (!foundOrder) {
+      const error = new Error("Order khong ton tai");
+      error.statusCode = 404;
+      throw error;
+    }
+    resolvedOrderId = foundOrder.id;
+  }
+
   const duplication = await recordWebhookEvent({
     eventId: payload.eventId,
-    orderId: payload.orderId,
+    orderId: resolvedOrderId,
     provider: payload.provider,
     providerTransactionId: payload.providerTransactionId,
     status: payload.status,
-    payload
+    payload: {
+      ...payload,
+      orderId: resolvedOrderId
+    }
   });
 
   if (duplication.duplicated) {
@@ -158,10 +172,13 @@ async function processPaidWebhook(payload) {
   }
 
   const result = await markOrderPaid({
-    orderId: payload.orderId,
+    orderId: resolvedOrderId,
     provider: payload.provider,
     providerTransactionId: payload.providerTransactionId,
-    payload
+    payload: {
+      ...payload,
+      orderId: resolvedOrderId
+    }
   });
 
   const telegramNotification = await notifyPaidOrderToTelegram({
@@ -236,6 +253,15 @@ function verifySepayWebhookSignature(signature) {
   }
 }
 
+function normalizeSepayWebhookSignature(rawSignature) {
+  const value = String(rawSignature || "").trim();
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(/^(?:apikey|bearer)\s+/i, "").trim();
+}
+
 function extractOrderIdFromText(text) {
   if (!text || typeof text !== "string") {
     return null;
@@ -247,6 +273,19 @@ function extractOrderIdFromText(text) {
   }
 
   return uuidMatch[0];
+}
+
+function extractOrderCodeFromText(text) {
+  if (!text || typeof text !== "string") {
+    return null;
+  }
+
+  const codeMatch = text.toUpperCase().match(/\b(?:WST|ODR)-[A-Z0-9-]{6,}\b/);
+  if (!codeMatch) {
+    return null;
+  }
+
+  return codeMatch[0];
 }
 
 function parseSepayWebhook(payload, signature) {
@@ -274,8 +313,17 @@ function parseSepayWebhook(payload, signature) {
     extractOrderIdFromText(payload?.transferContent) ||
     extractOrderIdFromText(payload?.referenceCode);
 
-  if (!orderId) {
-    const error = new Error("Sepay event missing orderId");
+  const orderCode =
+    payload?.orderCode ||
+    payload?.order_code ||
+    payload?.metadata?.orderCode ||
+    extractOrderCodeFromText(payload?.content) ||
+    extractOrderCodeFromText(payload?.description) ||
+    extractOrderCodeFromText(payload?.transferContent) ||
+    extractOrderCodeFromText(payload?.referenceCode);
+
+  if (!orderId && !orderCode) {
+    const error = new Error("Sepay event missing order reference");
     error.statusCode = 400;
     throw error;
   }
@@ -288,11 +336,13 @@ function parseSepayWebhook(payload, signature) {
     payload?.id ||
     `sepay_tx_${Date.now()}`;
 
-  const eventId = payload?.eventId || payload?.event_id || payload?.id || `${providerTransactionId}_${orderId}`;
+  const orderRef = orderId || orderCode;
+  const eventId = payload?.eventId || payload?.event_id || payload?.id || `${providerTransactionId}_${orderRef}`;
 
   return {
     eventId,
     orderId,
+    orderCode,
     provider: "sepay",
     providerTransactionId,
     status: "paid",
@@ -303,7 +353,7 @@ function parseSepayWebhook(payload, signature) {
 
 function buildSepayCheckout(order) {
   const sepay = getSepayConfig();
-  const transferContent = `PAY ${order.id}`;
+  const transferContent = `PAY ${order.orderCode || order.id}`;
   const fallbackQrText = `bank=${sepay.bankCode}|account=${sepay.bankAccountNumber}|amount=${order.amount}|memo=${transferContent}`;
 
   let qrUrl = "";
@@ -387,6 +437,7 @@ module.exports = {
   parseStripeWebhook,
   parseSepayWebhook,
   verifySepayWebhookSignature,
+  normalizeSepayWebhookSignature,
   buildSepayCheckout,
   sendTelegramMessage,
   isTelegramNotifyEnabled,

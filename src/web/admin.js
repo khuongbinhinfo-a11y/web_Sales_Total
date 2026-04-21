@@ -86,7 +86,7 @@ function renderDashboard(d){
     ow.innerHTML = `<table class="data-table"><thead><tr>
       <th>Mã đơn</th><th>Khách hàng</th><th>App</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Ngày paid</th>
     </tr></thead><tbody>${d.latestOrders.map(o=>`<tr>
-      <td style="font-family:monospace;font-size:.78rem">${o.id.slice(0,8)}…</td>
+      <td style="font-family:monospace;font-size:.78rem">${o.orderCode || `${o.id.slice(0,8)}…`}</td>
       <td>${o.customerId}</td>
       <td>${o.appId}</td>
       <td style="font-weight:600">${fmtVnd(o.amount)}</td>

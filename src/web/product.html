@@ -124,35 +124,33 @@
 
     <!-- LOGIN MODAL (reuse from main) -->
     <div id="loginModal" class="modal-overlay">
-      <div class="modal-box">
+      <div class="modal-card">
         <button class="modal-close" id="loginModalClose">✕</button>
         <div class="modal-tabs">
           <button class="modal-tab active" id="tabLogin">Đăng nhập</button>
           <button class="modal-tab" id="tabRegister">Đăng ký</button>
         </div>
-        <div id="loginPane">
-          <h3 class="modal-title">Đăng nhập</h3>
-          <p class="modal-desc">Nhập email để đăng nhập.</p>
+        <div id="loginPane" class="modal-pane">
+          <p class="modal-sub">Nhập email để đăng nhập.</p>
           <form id="loginForm" class="modal-form">
             <label>Email</label>
             <input type="email" id="loginEmail" required placeholder="you@example.com" />
-            <button type="submit" class="btn btn-accent" style="width:100%;margin-top:8px">Đăng nhập</button>
+            <button type="submit" class="btn btn-accent modal-btn">Đăng nhập</button>
           </form>
-          <p class="modal-switch">Chưa có tài khoản? <a href="#" id="switchToRegister">Đăng ký ngay</a></p>
+          <p class="modal-note">Chưa có tài khoản? <a href="#" id="switchToRegister">Đăng ký ngay</a></p>
         </div>
-        <div id="registerPane" style="display:none">
-          <h3 class="modal-title">Đăng ký</h3>
-          <p class="modal-desc">Nhập email và họ tên để tạo tài khoản.</p>
+        <div id="registerPane" class="modal-pane" style="display:none">
+          <p class="modal-sub">Nhập email và họ tên để tạo tài khoản.</p>
           <form id="registerForm" class="modal-form">
             <label>Họ tên</label>
             <input type="text" id="registerName" required placeholder="Nguyễn Văn A" />
             <label>Email</label>
             <input type="email" id="registerEmail" required placeholder="you@example.com" />
-            <button type="submit" class="btn btn-accent" style="width:100%;margin-top:8px">Đăng ký</button>
+            <button type="submit" class="btn btn-accent modal-btn">Đăng ký</button>
           </form>
-          <p class="modal-switch">Đã có tài khoản? <a href="#" id="switchToLogin">Đăng nhập ngay</a></p>
+          <p class="modal-note">Đã có tài khoản? <a href="#" id="switchToLogin">Đăng nhập ngay</a></p>
         </div>
-        <p id="loginError" class="form-error"></p>
+        <p id="loginError" class="modal-error"></p>
       </div>
     </div>
 

@@ -1,8 +1,16 @@
+const crypto = require("crypto");
 const { pool } = require("../db/pool");
+
+function generateReadableOrderCode() {
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randomPart = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `WST-${timePart}-${randomPart}`;
+}
 
 function mapOrder(row) {
   return {
     id: row.id,
+    orderCode: row.order_code,
     customerId: row.customer_id,
     appId: row.app_id,
     productId: row.product_id,
@@ -37,6 +45,7 @@ function mapKeyDelivery(row) {
   return {
     id: row.id,
     orderId: row.order_id,
+    orderCode: row.order_code || null,
     productId: row.product_id,
     keyId: row.key_id,
     keyValue: row.key_value,
@@ -108,15 +117,31 @@ async function createOrder({ customerId, appId, productId }) {
   }
 
   const product = productResult.rows[0];
-  const orderResult = await pool.query(
-    `INSERT INTO orders(id, customer_id, app_id, product_id, amount, currency, status)
-     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending')
-     RETURNING id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
-    [customerId, appId, productId, product.price, product.currency]
-  );
+  let orderRow = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const orderCode = generateReadableOrderCode();
+    try {
+      const orderResult = await pool.query(
+        `INSERT INTO orders(id, order_code, customer_id, app_id, product_id, amount, currency, status)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending')
+         RETURNING id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
+        [orderCode, customerId, appId, productId, product.price, product.currency]
+      );
+      orderRow = orderResult.rows[0];
+      break;
+    } catch (error) {
+      const uniqueOrderCodeConflict =
+        error?.code === "23505" &&
+        (String(error?.constraint || "").includes("order_code") ||
+          String(error?.detail || "").includes("order_code"));
+      if (!uniqueOrderCodeConflict || attempt === 4) {
+        throw error;
+      }
+    }
+  }
 
   return {
-    order: mapOrder(orderResult.rows[0]),
+    order: mapOrder(orderRow),
     product: {
       id: product.id,
       appId: product.app_id,
@@ -131,7 +156,7 @@ async function createOrder({ customerId, appId, productId }) {
 
 async function getOrderById(orderId) {
   const result = await pool.query(
-    `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+    `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
      FROM orders
      WHERE id = $1::uuid`,
     [orderId]
@@ -144,12 +169,33 @@ async function getOrderById(orderId) {
   return mapOrder(result.rows[0]);
 }
 
+async function getOrderByCode(orderCode) {
+  const normalizedCode = String(orderCode || "").trim().toUpperCase();
+  if (!normalizedCode) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+     FROM orders
+     WHERE order_code = $1`,
+    [normalizedCode]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapOrder(result.rows[0]);
+}
+
 async function getOrderKeyDelivery(orderId) {
   const deliveryResult = await pool.query(
-    `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+    `SELECT d.id, d.order_id, o.order_code, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
             d.delivered_payload, d.delivered_at, k.key_value
      FROM order_key_deliveries d
      JOIN product_keys k ON k.id = d.key_id
+     JOIN orders o ON o.id = d.order_id
      WHERE d.order_id = $1::uuid`,
     [orderId]
   );
@@ -196,7 +242,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     await client.query("BEGIN");
 
     const orderResult = await client.query(
-      `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+      `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
        FROM orders
        WHERE id = $1::uuid
        FOR UPDATE`,
@@ -230,7 +276,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       `UPDATE orders
        SET status = 'paid', paid_at = NOW()
        WHERE id = $1::uuid
-       RETURNING id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
+       RETURNING id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
       [orderId]
     );
     const paidOrder = paidOrderResult.rows[0];
@@ -300,10 +346,11 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     );
 
     const deliveryResult = await client.query(
-      `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+      `SELECT d.id, d.order_id, o.order_code, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
               d.delivered_payload, d.delivered_at, k.key_value
        FROM order_key_deliveries d
        JOIN product_keys k ON k.id = d.key_id
+       JOIN orders o ON o.id = d.order_id
        WHERE d.order_id = $1::uuid`,
       [paidOrder.id]
     );
@@ -503,7 +550,7 @@ async function getCustomerSnapshot(customerId) {
   const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs, keyDeliveries] = await Promise.all([
     pool.query("SELECT id, email, full_name FROM customers WHERE id = $1", [customerId]),
     pool.query(
-      `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+      `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
        FROM orders WHERE customer_id = $1 ORDER BY created_at DESC`,
       [customerId]
     ),
@@ -533,10 +580,11 @@ async function getCustomerSnapshot(customerId) {
       [customerId]
     ),
     pool.query(
-      `SELECT d.id, d.order_id, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+      `SELECT d.id, d.order_id, o.order_code, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
               d.delivered_payload, d.delivered_at, k.key_value
        FROM order_key_deliveries d
        JOIN product_keys k ON k.id = d.key_id
+       JOIN orders o ON o.id = d.order_id
        WHERE d.delivered_to_customer = $1
        ORDER BY d.delivered_at DESC`,
       [customerId]
@@ -604,7 +652,7 @@ async function getAdminDashboard() {
          (SELECT COALESCE(SUM(amount), 0)::bigint FROM orders WHERE status = 'paid') AS total_revenue`
     ),
     pool.query(
-      `SELECT id, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+      `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
        FROM orders ORDER BY created_at DESC LIMIT 10`
     ),
     pool.query(
@@ -881,6 +929,7 @@ module.exports = {
   getPublicCatalog,
   createOrder,
   getOrderById,
+  getOrderByCode,
   getOrderDetailsById,
   markOrderPaid,
   consumeUsage,

@@ -29,6 +29,7 @@ const {
   confirmMockPayment,
   parseStripeWebhook,
   parseSepayWebhook,
+  normalizeSepayWebhookSignature,
   buildSepayCheckout,
   sendTelegramMessage,
   isTelegramNotifyEnabled,
@@ -89,18 +90,23 @@ app.use(express.json());
 app.post(
   "/api/payments/webhooks/sepay",
   asyncHandler(async (req, res) => {
-    const signature =
+    const signature = normalizeSepayWebhookSignature(
       req.header("x-sepay-signature") ||
       req.header("x-sepay-token") ||
-      req.header("authorization")?.replace(/^Bearer\s+/i, "");
+      req.header("authorization") ||
+      req.query.apiKey ||
+      req.query.apikey ||
+      req.body?.apiKey ||
+      req.body?.apikey
+    );
 
     const normalized = parseSepayWebhook(req.body, signature);
     if (!normalized) {
-      return res.json({ ok: true, ignored: true });
+      return res.status(200).json({ success: true, ok: true, ignored: true });
     }
 
     const result = await processPaidWebhook(normalized);
-    return res.json(result);
+    return res.status(200).json({ success: true, ...result });
   })
 );
 
@@ -585,6 +591,7 @@ app.get(
   }
 
   const { order } = orderDetails;
+  const orderRef = order.orderCode || order.id;
   const mockCheckoutEnabled = isMockPaymentMode();
   const sepayCheckoutEnabled = isSepayPaymentMode();
   const sepayCheckout = sepayCheckoutEnabled ? buildSepayCheckout(order) : null;
@@ -624,7 +631,8 @@ app.get(
           </div>
         </div>
         <h2 style="margin:0 0 4px;font-size:1.3rem;font-weight:800">Thanh toán đơn hàng</h2>
-        <p style="color:#64748b;font-size:.88rem;margin:0 0 16px">Order ID: <code style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:.82rem">${order.id}</code></p>
+        <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
+        <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
         ${sepayPanel}
         <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
