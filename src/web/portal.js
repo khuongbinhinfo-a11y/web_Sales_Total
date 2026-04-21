@@ -7,6 +7,67 @@ function statusBadge(s){
   return `<span class="status-badge ${map[s]||""}">${s}</span>`;
 }
 
+function renderTelegramLinkState(data){
+  const hintEl = document.getElementById("tgLinkHint");
+  const linkBtn = document.getElementById("tgLinkBtn");
+  if(!hintEl || !linkBtn) return;
+
+  if(!data || !data.startLink){
+    hintEl.textContent = "Chưa lấy được link Telegram.";
+    linkBtn.href = "#";
+    linkBtn.style.pointerEvents = "none";
+    linkBtn.style.opacity = ".6";
+    return;
+  }
+
+  linkBtn.href = data.startLink;
+  linkBtn.style.pointerEvents = "auto";
+  linkBtn.style.opacity = "1";
+
+  if(data.linked){
+    const tgName = data.telegramUsername ? `@${data.telegramUsername}` : "đã liên kết";
+    hintEl.textContent = `Đã liên kết: ${tgName}`;
+    hintEl.style.color = "var(--success)";
+  } else {
+    hintEl.textContent = "Chưa liên kết. Bấm nút và nhấn Start trong Telegram.";
+    hintEl.style.color = "var(--muted)";
+  }
+}
+
+async function loadTelegramLinkInfo(){
+  try {
+    const res = await fetch("/api/customer/telegram/link");
+    if(res.status===401){
+      renderTelegramLinkState(null);
+      return;
+    }
+    const data = await res.json();
+    renderTelegramLinkState(data);
+  } catch {
+    renderTelegramLinkState(null);
+  }
+}
+
+async function refreshTelegramLink(){
+  const hintEl = document.getElementById("tgLinkHint");
+  if(hintEl){
+    hintEl.textContent = "Đang làm mới link...";
+    hintEl.style.color = "var(--muted)";
+  }
+
+  try {
+    const res = await fetch("/api/customer/telegram/link/refresh", { method:"POST" });
+    if(res.status===401){
+      renderTelegramLinkState(null);
+      return;
+    }
+    const data = await res.json();
+    renderTelegramLinkState(data);
+  } catch {
+    renderTelegramLinkState(null);
+  }
+}
+
 async function loadPortal(cid){
   try {
     const res = await fetch(`/api/portal/${cid}`);
@@ -118,4 +179,6 @@ document.getElementById("loadPortal").addEventListener("click",()=>{
   loadPortal(document.getElementById("customerId").value);
 });
 document.getElementById("consumeUsage").addEventListener("click", consumeUsage);
+document.getElementById("tgRefreshBtn")?.addEventListener("click", refreshTelegramLink);
+loadTelegramLinkInfo();
 loadPortal("cus-demo");

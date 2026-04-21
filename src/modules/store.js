@@ -548,7 +548,7 @@ async function consumeUsage({ customerId, appId, featureKey, creditsToConsume, u
 
 async function getCustomerSnapshot(customerId) {
   const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs, keyDeliveries] = await Promise.all([
-    pool.query("SELECT id, email, full_name FROM customers WHERE id = $1", [customerId]),
+    pool.query("SELECT id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at FROM customers WHERE id = $1", [customerId]),
     pool.query(
       `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
        FROM orders WHERE customer_id = $1 ORDER BY created_at DESC`,
@@ -598,7 +598,10 @@ async function getCustomerSnapshot(customerId) {
         : {
             id: customer.rows[0].id,
             email: customer.rows[0].email,
-            fullName: customer.rows[0].full_name
+            fullName: customer.rows[0].full_name,
+            telegramChatId: customer.rows[0].telegram_chat_id || "",
+            telegramUsername: customer.rows[0].telegram_username || "",
+            telegramLinkedAt: customer.rows[0].telegram_linked_at || null
           },
     orders: orders.rows.map(mapOrder),
     subscriptions: subscriptions.rows.map((row) => ({
@@ -638,6 +641,173 @@ async function getCustomerSnapshot(customerId) {
     usageLogs: usageLogs.rows.map(mapUsageLog)
     ,
     keyDeliveries: keyDeliveries.rows.map(mapKeyDelivery)
+  };
+}
+
+function generateTelegramLinkToken(customerId) {
+  const randomPart = crypto.randomBytes(10).toString("hex");
+  return `tg_${customerId}_${randomPart}`;
+}
+
+async function getCustomerTelegramProfile(customerId) {
+  const result = await pool.query(
+    `SELECT id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at, telegram_link_token
+     FROM customers
+     WHERE id = $1`,
+    [customerId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    customerId: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    telegramChatId: row.telegram_chat_id || "",
+    telegramUsername: row.telegram_username || "",
+    telegramLinkedAt: row.telegram_linked_at || null,
+    telegramLinkToken: row.telegram_link_token || ""
+  };
+}
+
+async function ensureCustomerTelegramLinkToken(customerId) {
+  const current = await getCustomerTelegramProfile(customerId);
+  if (!current) {
+    return null;
+  }
+
+  if (current.telegramLinkToken) {
+    return current;
+  }
+
+  const nextToken = generateTelegramLinkToken(customerId);
+  const updated = await pool.query(
+    `UPDATE customers
+     SET telegram_link_token = $2
+     WHERE id = $1
+     RETURNING id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at, telegram_link_token`,
+    [customerId, nextToken]
+  );
+
+  const row = updated.rows[0];
+  return {
+    customerId: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    telegramChatId: row.telegram_chat_id || "",
+    telegramUsername: row.telegram_username || "",
+    telegramLinkedAt: row.telegram_linked_at || null,
+    telegramLinkToken: row.telegram_link_token || ""
+  };
+}
+
+async function refreshCustomerTelegramLinkToken(customerId) {
+  const nextToken = generateTelegramLinkToken(customerId);
+  const updated = await pool.query(
+    `UPDATE customers
+     SET telegram_link_token = $2
+     WHERE id = $1
+     RETURNING id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at, telegram_link_token`,
+    [customerId, nextToken]
+  );
+
+  if (updated.rowCount === 0) {
+    return null;
+  }
+
+  const row = updated.rows[0];
+  return {
+    customerId: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    telegramChatId: row.telegram_chat_id || "",
+    telegramUsername: row.telegram_username || "",
+    telegramLinkedAt: row.telegram_linked_at || null,
+    telegramLinkToken: row.telegram_link_token || ""
+  };
+}
+
+async function findCustomerByTelegramLinkToken(token) {
+  const normalized = String(token || "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `SELECT id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at, telegram_link_token
+     FROM customers
+     WHERE telegram_link_token = $1`,
+    [normalized]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    customerId: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    telegramChatId: row.telegram_chat_id || "",
+    telegramUsername: row.telegram_username || "",
+    telegramLinkedAt: row.telegram_linked_at || null,
+    telegramLinkToken: row.telegram_link_token || ""
+  };
+}
+
+async function linkCustomerTelegramChat({ customerId, chatId, username }) {
+  const safeChatId = String(chatId || "").trim();
+  if (!safeChatId) {
+    throw new Error("chatId is required");
+  }
+
+  const safeUsername = String(username || "").trim();
+  const updated = await pool.query(
+    `UPDATE customers
+     SET telegram_chat_id = $2,
+         telegram_username = $3,
+         telegram_linked_at = NOW(),
+         telegram_link_token = NULL
+     WHERE id = $1
+     RETURNING id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at`,
+    [customerId, safeChatId, safeUsername]
+  );
+
+  if (updated.rowCount === 0) {
+    return null;
+  }
+
+  const row = updated.rows[0];
+  return {
+    customerId: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    telegramChatId: row.telegram_chat_id || "",
+    telegramUsername: row.telegram_username || "",
+    telegramLinkedAt: row.telegram_linked_at || null
+  };
+}
+
+async function getCustomerTelegramByCustomerId(customerId) {
+  const result = await pool.query(
+    `SELECT telegram_chat_id, telegram_username, telegram_linked_at
+     FROM customers
+     WHERE id = $1`,
+    [customerId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    chatId: result.rows[0].telegram_chat_id || "",
+    username: result.rows[0].telegram_username || "",
+    linkedAt: result.rows[0].telegram_linked_at || null
   };
 }
 
@@ -1023,6 +1193,12 @@ module.exports = {
   createCustomerAccount,
   findCustomerByEmail,
   registerCustomerByEmail,
+  getCustomerTelegramProfile,
+  ensureCustomerTelegramLinkToken,
+  refreshCustomerTelegramLinkToken,
+  findCustomerByTelegramLinkToken,
+  linkCustomerTelegramChat,
+  getCustomerTelegramByCustomerId,
   listCustomers,
   findAdminByUsername,
   findAdminById,

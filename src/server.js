@@ -15,6 +15,11 @@ const {
   createCustomerAccount,
   findCustomerByEmail,
   registerCustomerByEmail,
+  getCustomerTelegramProfile,
+  ensureCustomerTelegramLinkToken,
+  refreshCustomerTelegramLinkToken,
+  findCustomerByTelegramLinkToken,
+  linkCustomerTelegramChat,
   listCustomers,
   findAdminByUsername,
   findAdminById,
@@ -70,6 +75,56 @@ function asyncHandler(fn) {
   };
 }
 
+let cachedTelegramBot = { username: "", fetchedAt: 0 };
+
+async function getTelegramBotUsername() {
+  if (!env.telegramBotToken) {
+    return "";
+  }
+
+  const now = Date.now();
+  if (cachedTelegramBot.username && now - cachedTelegramBot.fetchedAt < 10 * 60 * 1000) {
+    return cachedTelegramBot.username;
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${env.telegramBotToken}/getMe`);
+    const payload = await response.json();
+    if (!response.ok || !payload?.ok || !payload?.result?.username) {
+      return "";
+    }
+
+    cachedTelegramBot = {
+      username: String(payload.result.username || "").trim(),
+      fetchedAt: now
+    };
+    return cachedTelegramBot.username;
+  } catch {
+    return "";
+  }
+}
+
+function buildTelegramStartLink(botUsername, startToken) {
+  if (!botUsername || !startToken) {
+    return "";
+  }
+  return `https://t.me/${botUsername}?start=${encodeURIComponent(startToken)}`;
+}
+
+function extractStartTokenFromTelegramText(text) {
+  const normalized = String(text || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const startMatch = normalized.match(/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+(.+))?$/i);
+  if (!startMatch) {
+    return "";
+  }
+
+  return String(startMatch[1] || "").trim();
+}
+
 app.post(
   "/api/payments/webhooks/stripe",
   express.raw({ type: "application/json" }),
@@ -87,6 +142,107 @@ app.post(
 );
 
 app.use(express.json());
+
+app.post(
+  "/api/integrations/telegram/webhook",
+  asyncHandler(async (req, res) => {
+    const secretHeader = req.header("x-telegram-bot-api-secret-token") || "";
+    const expectedSecret = String(env.telegramWebhookSecret || "").trim();
+    if (expectedSecret && secretHeader !== expectedSecret) {
+      return res.status(401).json({ ok: false, message: "Invalid Telegram webhook secret" });
+    }
+
+    const message = req.body?.message || req.body?.edited_message;
+    const text = message?.text || "";
+    const chatId = message?.chat?.id;
+
+    if (!chatId || !text) {
+      return res.json({ ok: true, ignored: true });
+    }
+
+    const startToken = extractStartTokenFromTelegramText(text);
+    if (!startToken) {
+      return res.json({ ok: true, ignored: true });
+    }
+
+    const customer = await findCustomerByTelegramLinkToken(startToken);
+    if (!customer) {
+      await sendTelegramMessage({
+        chatId,
+        text: "Lien ket het han hoac khong hop le. Vui long vao website tao link moi."
+      });
+      return res.json({ ok: true, linked: false, reason: "invalid_token" });
+    }
+
+    const telegramUsername = String(message?.from?.username || "").trim();
+    const linked = await linkCustomerTelegramChat({
+      customerId: customer.customerId,
+      chatId: String(chatId),
+      username: telegramUsername
+    });
+
+    await sendTelegramMessage({
+      chatId,
+      text: `Da lien ket thanh cong voi tai khoan ${customer.email}. Don hang thanh cong se duoc bao tai day.`
+    });
+
+    return res.json({ ok: true, linked: Boolean(linked), customerId: customer.customerId });
+  })
+);
+
+app.get(
+  "/api/customer/telegram/link",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerFromSession(req);
+    if (!session) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const profile = await ensureCustomerTelegramLinkToken(session.customerId);
+    if (!profile) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const botUsername = await getTelegramBotUsername();
+    const startLink = buildTelegramStartLink(botUsername, profile.telegramLinkToken);
+
+    return res.json({
+      linked: Boolean(profile.telegramChatId),
+      telegramUsername: profile.telegramUsername,
+      telegramLinkedAt: profile.telegramLinkedAt,
+      botUsername,
+      startToken: profile.telegramLinkToken,
+      startLink
+    });
+  })
+);
+
+app.post(
+  "/api/customer/telegram/link/refresh",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerFromSession(req);
+    if (!session) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const profile = await refreshCustomerTelegramLinkToken(session.customerId);
+    if (!profile) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const botUsername = await getTelegramBotUsername();
+    const startLink = buildTelegramStartLink(botUsername, profile.telegramLinkToken);
+
+    return res.json({
+      linked: Boolean(profile.telegramChatId),
+      telegramUsername: profile.telegramUsername,
+      telegramLinkedAt: profile.telegramLinkedAt,
+      botUsername,
+      startToken: profile.telegramLinkToken,
+      startLink
+    });
+  })
+);
 
 app.post(
   "/api/payments/webhooks/sepay",
@@ -382,7 +538,7 @@ app.post(
   "/api/admin/notifications/telegram/test",
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
-    if (!isTelegramNotifyEnabled()) {
+    if (!env.telegramNotifyEnabled || !env.telegramBotToken || !env.telegramChatId) {
       return res.status(400).json({
         message: "Telegram chưa bật hoặc thiếu TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID",
         configured: false
@@ -690,6 +846,7 @@ app.get(
         <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
         <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
+        <p style="font-size:.82rem;color:#64748b">📲 Muốn nhận báo đơn qua Telegram: vào Portal và bấm <b>Liên kết Telegram</b>. Nếu chưa liên kết, xem key ở mục <b>Key đã nhận</b>.</p>
         ${sepayPanel}
         <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
           <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s">${mockCheckoutEnabled ? "✅ Xác nhận đã thanh toán" : "🔄 Tôi đã chuyển khoản, kiểm tra ngay"}</button>

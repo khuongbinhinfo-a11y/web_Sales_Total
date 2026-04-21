@@ -20,6 +20,7 @@ const env = {
   telegramNotifyEnabled: String(process.env.TELEGRAM_NOTIFY_ENABLED || "false").toLowerCase() === "true",
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+  telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
   telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
   sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || "dev-session-secret",
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",

@@ -1,5 +1,5 @@
 const { env } = require("../config/env");
-const { recordWebhookEvent, markOrderPaid, getOrderByCode } = require("./store");
+const { recordWebhookEvent, markOrderPaid, getOrderByCode, getCustomerTelegramByCustomerId } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
 
 function getPaymentProviderMode() {
@@ -19,7 +19,7 @@ function getSepayConfig() {
 }
 
 function isTelegramNotifyEnabled() {
-  return env.telegramNotifyEnabled && Boolean(env.telegramBotToken) && Boolean(env.telegramChatId);
+  return env.telegramNotifyEnabled && Boolean(env.telegramBotToken);
 }
 
 function maskKeyValue(keyValue) {
@@ -100,7 +100,18 @@ async function notifyPaidOrderToTelegram({ order, keyDelivery }) {
 
   try {
     const text = buildTelegramPaidMessage({ order, keyDelivery });
-    return await sendTelegramMessage({ text });
+    const customerTelegram = await getCustomerTelegramByCustomerId(order?.customerId);
+    const customerChatId = customerTelegram?.chatId ? String(customerTelegram.chatId) : "";
+
+    if (customerChatId) {
+      return await sendTelegramMessage({ text, chatId: customerChatId });
+    }
+
+    if (env.telegramChatId) {
+      return await sendTelegramMessage({ text, chatId: env.telegramChatId });
+    }
+
+    return { ok: false, skipped: true, reason: "missing_customer_and_admin_chat_id" };
   } catch (error) {
     return { ok: false, skipped: false, reason: error.message || "send_failed" };
   }
