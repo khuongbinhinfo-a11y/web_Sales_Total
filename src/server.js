@@ -638,41 +638,111 @@ app.get(
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
         ${sepayPanel}
         <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
-          <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s" ${mockCheckoutEnabled ? "" : "disabled"}>✅ Xác nhận đã thanh toán</button>
+          <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s">${mockCheckoutEnabled ? "✅ Xác nhận đã thanh toán" : "🔄 Tôi đã chuyển khoản, kiểm tra ngay"}</button>
           <a href="/" style="display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:12px;border:1.5px solid #e2e8f0;font-weight:600;font-size:.9rem;color:#0f172a">← Trang chủ</a>
         </div>
         <div id="result" style="margin-top:16px"></div>
       </div>
+      <div id="paidPopup" style="position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999">
+        <div style="max-width:460px;width:100%;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 20px 60px rgba(0,0,0,.22);padding:22px">
+          <h3 style="margin:0 0 8px;font-size:1.15rem;color:#166534">✅ Thanh toán thành công</h3>
+          <p id="paidPopupText" style="margin:0 0 14px;color:#0f172a;font-size:.92rem">Hệ thống đã xác nhận đơn hàng của bạn.</p>
+          <div id="paidPopupKey" style="display:none;margin:0 0 14px;padding:10px 12px;background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;font-family:monospace;color:#166534;font-weight:700"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+            <a href="/portal" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;background:#16a34a;color:#fff;font-weight:700">Xem sản phẩm đã mua</a>
+            <button id="paidPopupClose" style="min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:600;cursor:pointer">Đóng</button>
+          </div>
+        </div>
+      </div>
       <script>
         const orderId = '${order.id}';
+        const isMockMode = ${mockCheckoutEnabled ? "true" : "false"};
         const resultEl = document.getElementById('result');
+        const payBtn = document.getElementById('payNow');
+        const paidPopup = document.getElementById('paidPopup');
+        const paidPopupText = document.getElementById('paidPopupText');
+        const paidPopupKey = document.getElementById('paidPopupKey');
+        let paidPopupShown = false;
+
+        function showPaidPopup(keyVal) {
+          if (paidPopupShown) return;
+          paidPopupShown = true;
+          paidPopupText.textContent = keyVal
+            ? 'Đơn hàng đã xác nhận và key đã sẵn sàng.'
+            : 'Đơn hàng đã xác nhận, key đang được cấp. Bạn có thể mở Portal để xem ngay khi key xuất hiện.';
+          if (keyVal) {
+            paidPopupKey.style.display = 'block';
+            paidPopupKey.textContent = 'KEY: ' + keyVal;
+          } else {
+            paidPopupKey.style.display = 'none';
+            paidPopupKey.textContent = '';
+          }
+          paidPopup.style.display = 'flex';
+        }
+
+        document.getElementById('paidPopupClose').addEventListener('click', () => {
+          paidPopup.style.display = 'none';
+        });
+
+        paidPopup.addEventListener('click', (e) => {
+          if (e.target === paidPopup) {
+            paidPopup.style.display = 'none';
+          }
+        });
 
         async function refreshOrderStatus() {
-          const r = await fetch('/api/orders/' + orderId);
-          if (!r.ok) return;
-          const d = await r.json();
-          if (d.order && d.order.status === 'paid') {
-            const keyVal = d.keyDelivery && d.keyDelivery.keyValue;
-            resultEl.innerHTML = '<div style="background:#f0fdf4;border:1.5px dashed #86efac;border-radius:10px;padding:16px;margin-top:8px">'
-              + '<p style="margin:0 0 4px;font-weight:700;color:#166534">✅ Thanh toán thành công!</p>'
-              + (keyVal
-                  ? '<p style="margin:0;font-family:monospace;font-size:1rem;font-weight:700;color:#166534">🔑 KEY: ' + keyVal + '</p>'
-                  : '<p style="margin:0;color:#64748b;font-size:.88rem">🔑 Key đang được cấp, vui lòng đợi thêm...</p>')
-              + '</div>';
+          try {
+            const r = await fetch('/api/orders/' + orderId);
+            if (!r.ok) return false;
+            const d = await r.json();
+            if (d.order && d.order.status === 'paid') {
+              const keyVal = d.keyDelivery && d.keyDelivery.keyValue;
+              resultEl.innerHTML = '<div style="background:#f0fdf4;border:1.5px dashed #86efac;border-radius:10px;padding:16px;margin-top:8px">'
+                + '<p style="margin:0 0 4px;font-weight:700;color:#166534">✅ Thanh toán thành công!</p>'
+                + (keyVal
+                    ? '<p style="margin:0;font-family:monospace;font-size:1rem;font-weight:700;color:#166534">🔑 KEY: ' + keyVal + '</p>'
+                    : '<p style="margin:0;color:#64748b;font-size:.88rem">🔑 Key đang được cấp, vui lòng đợi thêm...</p>')
+                + '</div>';
+              payBtn.disabled = true;
+              payBtn.textContent = '✅ Đã xác nhận thanh toán';
+              payBtn.style.opacity = '.85';
+              showPaidPopup(keyVal);
+              return true;
+            }
+            return false;
+          } catch {
+            return false;
           }
         }
 
-        document.getElementById('payNow').addEventListener('click', async () => {
-          const btn = document.getElementById('payNow');
-          btn.disabled = true; btn.textContent = '⏳ Đang xử lý...';
+        payBtn.addEventListener('click', async () => {
+          if (!isMockMode) {
+            payBtn.disabled = true;
+            payBtn.textContent = '⏳ Đang kiểm tra trạng thái...';
+            const paid = await refreshOrderStatus();
+            if (!paid) {
+              resultEl.innerHTML = '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px;color:#1e3a8a;font-size:.88rem">'
+                + 'Hệ thống chưa nhận webhook thanh toán. Vui lòng chờ 5-15 giây rồi bấm kiểm tra lại.'
+                + '</div>';
+              payBtn.disabled = false;
+              payBtn.textContent = '🔄 Tôi đã chuyển khoản, kiểm tra ngay';
+            }
+            return;
+          }
+
+          payBtn.disabled = true;
+          payBtn.textContent = '⏳ Đang xử lý...';
           const r = await fetch('/api/payments/mock/confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId })
           });
           const d = await r.json();
-          refreshOrderStatus();
-          if(!d.ok) { btn.disabled = false; btn.textContent = '✅ Xác nhận đã thanh toán'; }
+          await refreshOrderStatus();
+          if(!d.ok) {
+            payBtn.disabled = false;
+            payBtn.textContent = '✅ Xác nhận đã thanh toán';
+          }
         });
 
         setInterval(refreshOrderStatus, 4000);
