@@ -1,0 +1,101 @@
+version: 1
+checklistId: cap01-desktop-main
+enforcement:
+  blockMerge: false
+  targetBranch: main
+  updatedAt: "2026-04-22"
+  owner: khuongbinhinfo
+context:
+  app: cap01-desktop
+  appId: app-study-12
+  environment: shared
+  sprint: "Sprint-19-20"
+
+definitionOfReady:
+  - id: contract-aligned
+    required: true
+    passed: true
+    evidence: "Da import OpenAPI v1.1.0 va map endpoint. Su dung GET /api/catalog, POST /api/orders, GET /api/orders/:id, POST /api/auth/customer/login, GET /api/auth/me, POST /api/auth/customer/logout."
+  - id: product-map-confirmed
+    required: true
+    passed: true
+    evidence: "WEB_TOTAL_PRODUCT_MAP_JSON da co day du 9 entries tu catalog (4 productId thuc + 5 null). App ID: app-study-12."
+  - id: desktop-auth-design
+    required: true
+    passed: partial
+    evidence: "Bridge session login/me/logout da implement o backend. Auth UI trong app chua co."
+  - id: device-policy-defined
+    required: true
+    passed: false
+    evidence: "Device binding va offline grace policy chua implement."
+  - id: dependencies-clear
+    required: true
+    passed: true
+    evidence: "Khong co blocker. WEB_TOTAL_BASE_URL chi can dien URL Web tong la ket noi duoc."
+
+definitionOfDone:
+  - id: catalog-order-checkout
+    required: true
+    passed: true
+    evidence: "Phase 1: WebSalesTotalService.ts goi catalog + tao order + tra checkoutUrl. PricingPage mo checkout tab."
+  - id: checkout-return-sync
+    required: true
+    passed: true
+    evidence: "Phase 2: Auto-refresh sau checkout qua window.focus/visibilitychange. syncPaidSubscription ghi vao SQLite."
+  - id: product-map-accurate
+    required: true
+    passed: true
+    evidence: "Phase 3: Map chinh xac productId theo catalog ngay 2026-04-22. Null-check + one_time cycle mapping."
+  - id: auth-bridge
+    required: true
+    passed: partial
+    evidence: "Backend bridge sersice va routes hoan chinh. Frontend helper webTotalBridge.ts co day du methods. Auth UI trong app chua xay dung."
+  - id: offline-mode-verified
+    required: false
+    passed: false
+    evidence: "Chua implement offline grace mode."
+  - id: session-persistent
+    required: false
+    passed: false
+    evidence: "Bridge session in-memory (mat khi restart backend). Can SQLite persistence cho production."
+  - id: device-binding
+    required: false
+    passed: false
+    evidence: "Chua implement."
+  - id: integration-checklist-critical
+    required: true
+    passed: partial
+    evidence: |
+      DONE: payment flow, checkout redirect, entitlement sync sau thanh toan, product map.
+      PENDING: auth UI, register/reset-password, device binding, offline mode, telemetry, secure storage.
+  - id: api-contract-check-passed
+    required: true
+    passed: unknown
+    evidence: "Chua chay npm run api:check. Can chay de verify."
+
+pendingWork:
+  - id: auth-ui
+    priority: P1
+    title: "Man hinh dang nhap Web tong trong app"
+    detail: "Dung loginWebTotalBridge(email, password) va setBridgeToken. Hien thi snapshot sau login."
+  - id: device-binding
+    priority: P2
+    title: "Desktop device binding khi kich hoat license"
+  - id: offline-grace
+    priority: P2
+    title: "Offline mode + re-verify cycle"
+  - id: session-persistence
+    priority: P2
+    title: "Luu bridge session vao SQLite thay vi Map<> in-memory"
+  - id: secure-storage
+    priority: P2
+    title: "Dung Windows Credential Manager cho bridge token thay vi localStorage"
+  - id: telemetry
+    priority: P3
+    title: "Gui appVersion + deviceId trong request header"
+  - id: topup-credit
+    priority: P3
+    title: "Tich hop goi Top-up 300 Credit (prod-study-topup)"
+  - id: register-reset
+    priority: P3
+    title: "Register / reset password qua OTP tu trong app"
