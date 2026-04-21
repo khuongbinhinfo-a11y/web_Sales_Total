@@ -77,15 +77,20 @@ main{
 
 .pd-top{
   display:grid;
-  grid-template-columns:1.2fr .8fr;
-  gap:28px;
+  grid-template-columns:minmax(0,1fr) 360px;
+  gap:24px;
   align-items:start;
   margin-bottom:38px;
 }
 
+.pd-left-stack{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
 .pd-gallery{
-  position:sticky;
-  top:84px;
+  position:static;
 }
 
 .pd-main-img{
@@ -108,6 +113,228 @@ main{
   object-fit:contain;
   padding:14px;
   background:#fff;
+}
+
+.pd-plan-zone{
+  padding:16px;
+  border-radius:20px;
+  border:1px solid rgba(90,128,183,.24);
+  background:linear-gradient(160deg,#cde8fb 0%,#b7def8 100%);
+  box-shadow:var(--pd-shadow-sm);
+}
+
+.pd-plan-toggle{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:14px;
+}
+
+.pd-plan-period-btn{
+  border:none;
+  border-radius:999px;
+  min-height:32px;
+  padding:0 14px;
+  font-size:.88rem;
+  font-weight:800;
+  color:#4f6482;
+  background:rgba(255,255,255,.68);
+  transition:.2s ease;
+}
+
+.pd-plan-period-btn.is-active{
+  color:#fff;
+  background:#1584ca;
+}
+
+.pd-plan-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+
+.pd-plan-card{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  border-radius:18px;
+  border:2px solid transparent;
+  background:#f8fbff;
+  padding:10px 10px 9px;
+  box-shadow:0 8px 18px rgba(18,52,96,.1);
+}
+
+.pd-plan-card[data-tier="free"]{ border-color:#707f92; }
+.pd-plan-card[data-tier="basic"]{ border-color:#7ba8ff; }
+.pd-plan-card[data-tier="standard"]{ border-color:#f19800; background:#fffaf1; }
+.pd-plan-card[data-tier="premium"]{ border-color:#8a61ff; }
+
+.pd-plan-top-tag{
+  display:inline-flex;
+  align-self:flex-start;
+  border-radius:999px;
+  background:#0ea35f;
+  color:#fff;
+  font-size:.72rem;
+  font-weight:800;
+  min-height:24px;
+  padding:0 9px;
+  margin-bottom:6px;
+  align-items:center;
+}
+
+.pd-plan-tier{
+  margin:0;
+  font-size:1.56rem;
+  text-align:center;
+}
+
+.pd-plan-name{
+  margin:0;
+  font-size:1.28rem;
+  font-weight:800;
+  text-align:center;
+  color:#25486f;
+}
+
+.pd-plan-price{
+  margin:2px 0 0;
+  text-align:center;
+  font-size:2.08rem;
+  font-weight:900;
+  color:#0f4c7a;
+  letter-spacing:-.03em;
+  line-height:1.1;
+}
+
+.pd-plan-unit{
+  margin:2px 0 0;
+  text-align:center;
+  font-size:.8rem;
+  font-weight:700;
+  color:#4f6b86;
+}
+
+.pd-plan-save{
+  margin:4px 0 8px;
+  text-align:center;
+  color:#00a66a;
+  min-height:18px;
+  font-size:.8rem;
+  font-weight:800;
+}
+
+.pd-plan-features{
+  margin:0;
+  padding:0;
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  font-size:.83rem;
+  color:#2a4968;
+  line-height:1.3;
+  max-height:220px;
+  overflow:auto;
+  padding-right:2px;
+}
+
+.pd-plan-features li::before{
+  content:"✓";
+  margin-right:6px;
+  font-weight:900;
+  color:#3f6bff;
+}
+
+.pd-plan-features li{
+  word-break:break-word;
+}
+
+.pd-plan-actions{
+  margin-top:auto;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-top:8px;
+}
+
+.pd-plan-buy,
+.pd-plan-activate{
+  border:none;
+  border-radius:999px;
+  min-height:30px;
+  padding:0 10px;
+  font-size:.84rem;
+  font-weight:800;
+}
+
+.pd-plan-buy{ background:#2f67e7; color:#fff; }
+.pd-plan-activate{ background:#edf1fb; color:#2c60d7; }
+
+.pd-plan-card[data-tier="standard"] .pd-plan-buy{ background:#dc8200; }
+.pd-plan-card[data-tier="standard"] .pd-plan-activate{ color:#dc8200; }
+.pd-plan-card[data-tier="premium"] .pd-plan-buy{ background:#8446f0; }
+.pd-plan-card[data-tier="premium"] .pd-plan-activate{ color:#8446f0; }
+
+.pd-plan-card.is-current .pd-plan-buy{ background:#9ea9b9; }
+
+.pd-plan-compare-btn{
+  display:block;
+  margin:14px auto 0;
+  border:none;
+  border-radius:999px;
+  min-height:42px;
+  padding:0 24px;
+  font-size:.95rem;
+  font-weight:800;
+  color:#0a6ab4;
+  background:#eaf5ff;
+  box-shadow:0 8px 22px rgba(15,78,128,.17);
+}
+
+.pd-plan-compare{
+  margin-top:12px;
+  border-radius:14px;
+  overflow:auto;
+  border:1px solid rgba(124,109,216,.2);
+  background:rgba(255,255,255,.7);
+}
+
+.pd-plan-table{
+  width:100%;
+  min-width:640px;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:.84rem;
+}
+
+.pd-plan-table th,
+.pd-plan-table td{
+  padding:5px 8px;
+  border-bottom:1px solid rgba(109,129,156,.24);
+  text-align:center;
+  color:#2d4d68;
+}
+
+.pd-plan-table th:first-child,
+.pd-plan-table td:first-child{
+  text-align:left;
+  font-weight:700;
+  color:#2f4d67;
+}
+
+.pd-plan-table thead th{
+  font-size:.9rem;
+  color:#1f4f83;
+  background:rgba(255,255,255,.82);
+}
+
+.pd-plan-tick{ color:#0c9f65; font-weight:900; }
+.pd-plan-miss{ color:#b4bfcb; }
+
+.pd-plan-table tbody tr:last-child td{
+  border-bottom:none;
 }
 
 .pd-buy-box{
@@ -451,11 +678,15 @@ main{
   .pd-top{grid-template-columns:1fr;gap:20px}
   .pd-gallery{position:static}
   .pd-buy-box{position:static}
+  .pd-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
 @media(max-width:768px){
   .pd-content{padding-bottom:56px}
   .pd-features{grid-template-columns:1fr}
+  .pd-plan-zone{padding:10px}
+  .pd-plan-grid{grid-template-columns:1fr}
+  .pd-plan-card{min-height:auto}
   .pd-tab-bar{display:flex;width:100%}
   .pd-tab-btn{flex:1;padding:10px 8px;font-size:.81rem;text-align:center}
   .pd-title{font-size:1.38rem}

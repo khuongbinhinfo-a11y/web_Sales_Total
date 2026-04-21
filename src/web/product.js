@@ -242,6 +242,101 @@ const productContent = {
 let lang = localStorage.getItem("wst_lang") || "vi";
 let currentUser = null;
 let currentProduct = null;
+let catalogProducts = [];
+let selectedPlanPeriod = "month";
+
+const planBlueprintByApp = {
+  hoctap: {
+    periodLabels: { month: "Tháng", year: "Năm", lifetime: "Trọn đời" },
+    tiers: [
+      {
+        key: "free",
+        icon: "🌱",
+        name: "Miễn phí",
+        tag: "Đang dùng",
+        saveByPeriod: { month: "", year: "", lifetime: "" },
+        features: [
+          "1 môn học (Toán)",
+          "1 lớp",
+          "1 hồ sơ học sinh",
+          "Bài học + Luyện tập cơ bản",
+          "Mini-Game ghép cặp",
+          "6 giao diện miễn phí"
+        ]
+      },
+      {
+        key: "basic",
+        icon: "📚",
+        name: "Cơ bản",
+        saveByPeriod: { month: "", year: "Tiết kiệm 32%", lifetime: "" },
+        features: [
+          "3 môn học",
+          "2 lớp",
+          "2 hồ sơ học sinh",
+          "Thử thách hàng ngày",
+          "Phòng trí nhớ",
+          "Giọng đọc tiếng Việt",
+          "Không quảng cáo"
+        ]
+      },
+      {
+        key: "standard",
+        icon: "⭐",
+        name: "Tiêu chuẩn",
+        tag: "Phổ biến nhất",
+        saveByPeriod: { month: "Tiết kiệm 35%", year: "Tiết kiệm 35%", lifetime: "" },
+        features: [
+          "Tất cả 5 môn học",
+          "Tất cả 5 lớp",
+          "3 hồ sơ học sinh",
+          "Ôn tập thông minh AI",
+          "Thi đấu Bot & PvP",
+          "Cửa hàng Avatar",
+          "Bảng điều khiển phụ huynh",
+          "Chế độ ngoại tuyến",
+          "Xuất dữ liệu backup",
+          "Không quảng cáo"
+        ]
+      },
+      {
+        key: "premium",
+        icon: "👑",
+        name: "Cao cấp",
+        saveByPeriod: { month: "Tiết kiệm 33%", year: "Tiết kiệm 33%", lifetime: "" },
+        features: [
+          "Mọi tính năng Tiêu chuẩn",
+          "5 hồ sơ học sinh",
+          "Hỗ trợ ưu tiên 24/7",
+          "Cập nhật nội dung sớm",
+          "Badge & Theme độc quyền",
+          "Báo cáo tiến bộ chi tiết",
+          "Tùy chỉnh giáo trình"
+        ]
+      }
+    ],
+    prices: {
+      month: { free: 0, basic: 2000, standard: 89000, premium: 149000 },
+      year: { free: 0, basic: 399000, standard: 699000, premium: 1190000 },
+      lifetime: { free: 0, basic: 699000, standard: 1299000, premium: 1990000 }
+    },
+    compareRows: [
+      { label: "Số môn học", values: { free: "1", basic: "3", standard: "Tất cả", premium: "Tất cả" } },
+      { label: "Số lớp", values: { free: "1", basic: "2", standard: "Tất cả", premium: "Tất cả" } },
+      { label: "Hồ sơ học sinh", values: { free: "1", basic: "2", standard: "3", premium: "5" } },
+      { label: "Thử thách hằng ngày", values: { free: false, basic: true, standard: true, premium: true } },
+      { label: "Thi đấu", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Cửa hàng Avatar", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Ôn tập thông minh", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Phòng trí nhớ", values: { free: false, basic: true, standard: true, premium: true } },
+      { label: "Bảng phụ huynh", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Ngoại tuyến", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Giọng đọc TTS", values: { free: false, basic: true, standard: true, premium: true } },
+      { label: "Xuất dữ liệu", values: { free: false, basic: false, standard: true, premium: true } },
+      { label: "Không quảng cáo", values: { free: false, basic: true, standard: true, premium: true } },
+      { label: "Hỗ trợ ưu tiên", values: { free: false, basic: false, standard: false, premium: true } }
+    ]
+  }
+};
 
 function fmtVnd(v){
   return new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(v);
@@ -291,6 +386,215 @@ function renderLongDescription(content, productName) {
     : "";
 
   return `<div class="pd-long-desc">${media}${highlightsBlock}${sections}</div>`;
+}
+
+function getPlanBlueprint(product) {
+  const app = normalizeText(product?.appId);
+  if (app.includes("hoc") || app.includes("study")) {
+    return planBlueprintByApp.hoctap;
+  }
+  return null;
+}
+
+function periodFromCycle(cycle) {
+  if (cycle === "monthly") return "month";
+  if (cycle === "yearly") return "year";
+  return "lifetime";
+}
+
+function cycleFromPeriod(period) {
+  if (period === "month") return "monthly";
+  if (period === "year") return "yearly";
+  return "one_time";
+}
+
+function formatPlanPrice(value) {
+  if (!value) return "Miễn phí";
+  return `${Number(value).toLocaleString("vi-VN")}đ`;
+}
+
+function pickPlanTargets(appId, period, fallbackProduct) {
+  const cycle = cycleFromPeriod(period);
+  const pool = catalogProducts
+    .filter((item) => !isInternalTestProduct(item))
+    .filter((item) => String(item.appId || "").toLowerCase() === String(appId || "").toLowerCase())
+    .filter((item) => item.cycle === cycle)
+    .sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+
+  const targets = { free: null, basic: null, standard: null, premium: null };
+  if (!pool.length) {
+    if (fallbackProduct && fallbackProduct.cycle === cycle) {
+      targets.standard = fallbackProduct;
+    }
+    return targets;
+  }
+
+  if (pool.length === 1) {
+    targets.standard = pool[0];
+    return targets;
+  }
+
+  const mid = pool[Math.floor((pool.length - 1) / 2)];
+  targets.basic = pool[0];
+  targets.standard = mid;
+  targets.premium = pool[pool.length - 1];
+
+  if (fallbackProduct && fallbackProduct.cycle === cycle) {
+    targets.standard = fallbackProduct;
+  }
+  return targets;
+}
+
+function renderPlanCompare(blueprint) {
+  const compare = document.getElementById("pdPlanCompare");
+  const rows = (blueprint?.compareRows || []).map((row) => {
+    const cells = ["free", "basic", "standard", "premium"].map((tier) => {
+      const value = row.values?.[tier];
+      if (typeof value === "boolean") {
+        return value ? '<td class="pd-plan-tick">✓</td>' : '<td class="pd-plan-miss">✕</td>';
+      }
+      return `<td>${escapeHtml(value)}</td>`;
+    }).join("");
+
+    return `<tr><td>${escapeHtml(row.label)}</td>${cells}</tr>`;
+  }).join("");
+
+  compare.innerHTML = `
+    <table class="pd-plan-table">
+      <thead>
+        <tr>
+          <th>Tính năng</th>
+          <th>🌱 Miễn phí</th>
+          <th>📚 Cơ bản</th>
+          <th>⭐ Tiêu chuẩn</th>
+          <th>👑 Cao cấp</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function startCheckoutForProduct(product) {
+  if (!product) {
+    alert("Gói này chưa mở bán ở chu kỳ bạn chọn.");
+    return;
+  }
+
+  if (!currentUser) {
+    showLoginTab();
+    loginModal.classList.add("show");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appId: product.appId, productId: product.id })
+    });
+    const d = await res.json();
+    if (!res.ok) {
+      alert(d.message || "Không tạo được đơn hàng");
+      return;
+    }
+    window.open(d.checkoutUrl, "_blank");
+  } catch {
+    alert("Preview mode: API/DB chưa sẵn sàng.");
+  }
+}
+
+function renderPlanZone(product) {
+  const zone = document.getElementById("pdPlanZone");
+  const toggle = document.getElementById("pdPlanToggle");
+  const grid = document.getElementById("pdPlanGrid");
+  const compare = document.getElementById("pdPlanCompare");
+  const compareBtn = document.getElementById("pdCompareToggle");
+  const blueprint = getPlanBlueprint(product);
+
+  if (!zone || !toggle || !grid || !compare || !compareBtn) {
+    return;
+  }
+
+  if (!blueprint) {
+    zone.classList.add("is-hidden");
+    return;
+  }
+
+  zone.classList.remove("is-hidden");
+  selectedPlanPeriod = periodFromCycle(product.cycle);
+
+  const periods = ["month", "year", "lifetime"];
+  toggle.innerHTML = periods.map((period) => `
+    <button class="pd-plan-period-btn ${selectedPlanPeriod === period ? "is-active" : ""}" data-period="${period}" type="button">
+      ${blueprint.periodLabels[period]}
+    </button>`).join("");
+
+  renderPlanCompare(blueprint);
+
+  function paintPlanCards() {
+    const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
+    const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+    grid.innerHTML = blueprint.tiers.map((tier) => {
+      const price = Number(prices?.[tier.key] || 0);
+      const saveText = String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
+      const features = (tier.features || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+      const targetProduct = targets[tier.key];
+      const isCurrent = targetProduct && currentProduct && targetProduct.id === currentProduct.id;
+      const buyLabel = tier.key === "free" ? "Đang dùng" : (isCurrent ? "Thanh toán QR" : "Thanh toán QR");
+      const unit = selectedPlanPeriod === "month" ? "/tháng" : selectedPlanPeriod === "year" ? "/năm" : "(1 lần)";
+
+      return `
+        <article class="pd-plan-card ${isCurrent ? "is-current" : ""}" data-tier="${tier.key}">
+          ${tier.tag ? `<span class="pd-plan-top-tag">${escapeHtml(tier.tag)}</span>` : ""}
+          <p class="pd-plan-tier">${tier.icon}</p>
+          <h3 class="pd-plan-name">${escapeHtml(tier.name)}</h3>
+          <p class="pd-plan-price">${formatPlanPrice(price)}</p>
+          <p class="pd-plan-unit">${unit}</p>
+          <p class="pd-plan-save">${escapeHtml(saveText)}</p>
+          <ul class="pd-plan-features">${features}</ul>
+          <div class="pd-plan-actions">
+            <button class="pd-plan-buy" type="button" data-target-id="${targetProduct?.id || ""}" ${tier.key === "free" ? "disabled" : ""}>${buyLabel}</button>
+            <button class="pd-plan-activate" type="button">Nhập mã kích hoạt</button>
+          </div>
+        </article>`;
+    }).join("");
+
+    grid.querySelectorAll(".pd-plan-buy").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const targetId = button.dataset.targetId;
+        const target = catalogProducts.find((item) => item.id === targetId) || (currentProduct?.id === targetId ? currentProduct : null);
+        await startCheckoutForProduct(target);
+      });
+    });
+
+    grid.querySelectorAll(".pd-plan-activate").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!currentUser) {
+          showLoginTab();
+          loginModal.classList.add("show");
+          return;
+        }
+        window.location.href = "/portal";
+      });
+    });
+  }
+
+  paintPlanCards();
+
+  toggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedPlanPeriod = button.dataset.period;
+      toggle.querySelectorAll(".pd-plan-period-btn").forEach((btn) => btn.classList.remove("is-active"));
+      button.classList.add("is-active");
+      paintPlanCards();
+    });
+  });
+
+  compareBtn.onclick = () => {
+    const opening = compare.classList.contains("is-hidden");
+    compare.classList.toggle("is-hidden");
+    compareBtn.textContent = opening ? "Ẩn bảng so sánh chi tiết" : "Mở bảng so sánh chi tiết";
+  };
 }
 
 /* ── Tab switching ── */
@@ -409,23 +713,7 @@ function updateBuyBtn(){
 
 document.getElementById("pdBuyBtn").addEventListener("click", async ()=>{
   if(!currentProduct) return;
-  if(!currentUser){
-    showLoginTab();
-    loginModal.classList.add("show");
-    return;
-  }
-  // check if live
-  try{
-    const res = await fetch("/api/orders",{
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ appId:currentProduct.appId, productId:currentProduct.id })
-    });
-    const d = await res.json();
-    if(!res.ok){ alert(d.message||"Không tạo được đơn hàng"); return; }
-    window.open(d.checkoutUrl,"_blank");
-  } catch {
-    alert("Preview mode: API/DB chưa sẵn sàng.");
-  }
+  await startCheckoutForProduct(currentProduct);
 });
 
 /* ── Load product ── */
@@ -437,12 +725,16 @@ async function loadProduct(productId){
     if(res.ok){
       const data = await res.json();
       const list = Array.isArray(data.products) ? data.products : [];
+      catalogProducts = list.filter((item) => !isInternalTestProduct(item));
       product = list.find(p=>p.id===productId);
     }
   } catch{}
 
   // fallback
-  if(!product) product = fallbackProducts.find(p=>p.id===productId);
+  if(!catalogProducts.length){
+    catalogProducts = fallbackProducts.filter((item) => !isInternalTestProduct(item));
+  }
+  if(!product) product = catalogProducts.find(p=>p.id===productId);
 
   if(product && isInternalTestProduct(product)){
     product = null;
@@ -478,6 +770,7 @@ function renderProduct(p){
   document.getElementById("pdCycle").textContent = `Loại: ${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}`;
   document.getElementById("pdPrice").textContent = fmtVnd(p.price);
   updateBuyBtn();
+  renderPlanZone(p);
 
   // content from productContent map
   const content = productContent[p.id] || {
