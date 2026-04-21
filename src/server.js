@@ -846,7 +846,11 @@ app.get(
         <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
         <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
-        <p style="font-size:.82rem;color:#64748b">📲 Muốn nhận báo đơn qua Telegram: vào Portal và bấm <b>Liên kết Telegram</b>. Nếu chưa liên kết, xem key ở mục <b>Key đã nhận</b>.</p>
+        <p style="font-size:.82rem;color:#64748b">📲 Muốn nhận báo đơn qua Telegram: bấm nút bên dưới. Nếu chưa liên kết, xem key ở mục <b>Key đã nhận</b>.</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px">
+          <a id="telegramQuickLink" href="/portal" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border-radius:10px;background:#0ea5e9;color:#fff;font-size:.84rem;font-weight:700;text-decoration:none">📲 Liên kết Telegram</a>
+          <span id="telegramQuickHint" style="font-size:.8rem;color:#64748b">Đang tạo link...</span>
+        </div>
         ${sepayPanel}
         <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
           <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s">${mockCheckoutEnabled ? "✅ Xác nhận đã thanh toán" : "🔄 Tôi đã chuyển khoản, kiểm tra ngay"}</button>
@@ -870,10 +874,40 @@ app.get(
         const isMockMode = ${mockCheckoutEnabled ? "true" : "false"};
         const resultEl = document.getElementById('result');
         const payBtn = document.getElementById('payNow');
+        const telegramQuickLink = document.getElementById('telegramQuickLink');
+        const telegramQuickHint = document.getElementById('telegramQuickHint');
         const paidPopup = document.getElementById('paidPopup');
         const paidPopupText = document.getElementById('paidPopupText');
         const paidPopupKey = document.getElementById('paidPopupKey');
         let paidPopupShown = false;
+
+        async function setupTelegramQuickLink() {
+          try {
+            const r = await fetch('/api/customer/telegram/link');
+            if (r.status === 401) {
+              telegramQuickLink.href = '/portal/login';
+              telegramQuickHint.textContent = 'Đăng nhập để liên kết Telegram';
+              return;
+            }
+
+            if (!r.ok) {
+              telegramQuickLink.href = '/portal';
+              telegramQuickHint.textContent = 'Mở Portal để liên kết Telegram';
+              return;
+            }
+
+            const data = await r.json();
+            telegramQuickLink.href = data.startLink || '/portal';
+            telegramQuickLink.target = data.startLink ? '_blank' : '_self';
+            telegramQuickLink.rel = data.startLink ? 'noopener' : '';
+            telegramQuickHint.textContent = data.linked
+              ? 'Đã liên kết Telegram'
+              : 'Bấm nút rồi nhấn Start trong Telegram';
+          } catch {
+            telegramQuickLink.href = '/portal';
+            telegramQuickHint.textContent = 'Mở Portal để liên kết Telegram';
+          }
+        }
 
         function showPaidPopup(keyVal) {
           if (paidPopupShown) return;
@@ -957,6 +991,7 @@ app.get(
         });
 
         setInterval(refreshOrderStatus, 4000);
+        setupTelegramQuickLink();
         refreshOrderStatus();
       </script>
     </body>
