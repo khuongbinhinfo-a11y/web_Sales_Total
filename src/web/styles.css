@@ -43,7 +43,7 @@ button{font-family:inherit;cursor:pointer}
 @keyframes headerGradient{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 .header-inner{display:flex;align-items:center;gap:10px;min-height:84px}
 .logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.logo-img{height:75.6px;width:auto;object-fit:contain}
+.logo-img{height:151.2px;width:auto;object-fit:contain}
 .logo-text{display:flex;flex-direction:column}
 .logo-text strong{font-size:1.05rem;font-weight:800;letter-spacing:-.02em}
 .logo-text small{font-size:.72rem;color:var(--muted);font-weight:500}
@@ -214,7 +214,7 @@ button{font-family:inherit;cursor:pointer}
 .page-header{background:#fff;border-bottom:1px solid var(--line);padding:0 0}
 .page-header .container{display:flex;align-items:center;min-height:84px;gap:10px}
 .page-header .logo{display:flex;align-items:center;gap:10px}
-.page-header .logo-img{height:75.6px;width:auto;object-fit:contain}
+.page-header .logo-img{height:151.2px;width:auto;object-fit:contain}
 .page-header .logo-text strong{font-size:.98rem;font-weight:800}
 .page-header .logo-text small{font-size:.7rem;color:var(--muted)}
 .page-header-nav{margin-left:auto;display:flex;align-items:center;gap:8px}
@@ -356,7 +356,7 @@ button{font-family:inherit;cursor:pointer}
 /* ═══════════════════ MOBILE ═══════════════════ */
 @media(max-width:768px){
   .header-inner{min-height:70px}
-  .logo-img{height:63px}
+  .logo-img{height:126px}
   .page-header .container{min-height:70px}
   .mobile-menu-btn{display:block}
   .header-search{display:none}

@@ -32,6 +32,12 @@ function normalizeText(value) {
     .trim();
 }
 
+function isInternalTestProduct(product) {
+  const id = normalizeText(product?.id);
+  const name = normalizeText(product?.name);
+  return id === "prod test 2k" || id === "demo test2k" || /(test\s*2k|sepay\s*test|internal\s*test)/.test(name);
+}
+
 function resolveProductImage(product) {
   const name = normalizeText(product?.name);
   const appId = normalizeText(product?.appId);
@@ -342,6 +348,10 @@ async function loadProduct(productId){
 
   // fallback
   if(!product) product = fallbackProducts.find(p=>p.id===productId);
+
+  if(product && isInternalTestProduct(product)){
+    product = null;
+  }
 
   if(!product){
     document.getElementById("pdLoading").classList.add("is-hidden");

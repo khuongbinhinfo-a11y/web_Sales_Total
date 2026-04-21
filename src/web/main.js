@@ -61,6 +61,12 @@ function normalizeText(value) {
     .trim();
 }
 
+function isInternalTestProduct(product) {
+  const id = normalizeText(product?.id);
+  const name = normalizeText(product?.name);
+  return id === "prod test 2k" || id === "demo test2k" || /(test\s*2k|sepay\s*test|internal\s*test)/.test(name);
+}
+
 function resolveProductImage(product) {
   const name = normalizeText(product?.name);
   const appId = normalizeText(product?.appId);
@@ -835,10 +841,11 @@ async function loadCatalog(){
     if(!res.ok) throw new Error(res.status);
     const data = await res.json();
     const products = Array.isArray(data.products) ? data.products : [];
-    if(!products.length){ allProducts = fallbackProducts; showNotice(t("notice_empty")); }
-    else { allProducts = products; allProducts._live = true; showNotice(""); }
+    const publicProducts = products.filter(p => !isInternalTestProduct(p));
+    if(!publicProducts.length){ allProducts = fallbackProducts.filter(p => !isInternalTestProduct(p)); showNotice(t("notice_empty")); }
+    else { allProducts = publicProducts; allProducts._live = true; showNotice(""); }
   } catch(e){
-    allProducts = fallbackProducts;
+    allProducts = fallbackProducts.filter(p => !isInternalTestProduct(p));
     showNotice(t("notice_fallback"));
     console.warn("Catalog fallback",e);
   }

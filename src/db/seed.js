@@ -8,7 +8,7 @@ async function seed() {
     await client.query(
       `INSERT INTO apps(id, name, slug, status, description)
        VALUES
-         ('app-study-12', 'Hoc Tap Lop 12', 'hoc-tap-lop-12', 'active', 'Nen tang luyen de thi THPT va AI tro giang cho hoc sinh lop 12.'),
+         ('app-study-12', 'Phan mem hoc tap khoi cap 01', 'phan-mem-hoc-tap-khoi-cap-01', 'active', 'Nen tang hoc tap thong minh cho hoc sinh tieu hoc khoi cap 01.'),
          ('app-ai-writing', 'AI Writing Coach', 'ai-writing-coach', 'coming_soon', 'Cong cu viet va sua bai theo ngu canh hoc tap va cong viec.')
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
@@ -20,7 +20,7 @@ async function seed() {
     await client.query(
       `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active)
        VALUES
-         ('prod-test-2k', 'app-study-12', 'Goi Test 2K', 'one_time', 2000, 'VND', 1, TRUE),
+         ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE),
          ('prod-study-month', 'app-study-12', 'Goi Thang', 'monthly', 99000, 'VND', 120, TRUE),
          ('prod-study-year', 'app-study-12', 'Goi Nam', 'yearly', 890000, 'VND', 1800, TRUE),
          ('prod-study-topup', 'app-study-12', 'Top-up 300 Credit', 'one_time', 149000, 'VND', 300, TRUE)
