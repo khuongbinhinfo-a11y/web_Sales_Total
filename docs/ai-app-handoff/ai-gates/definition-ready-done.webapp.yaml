@@ -1,0 +1,49 @@
+version: 1
+checklistId: webapp-main
+enforcement:
+  blockMerge: true
+  targetBranch: main
+  updatedAt: "2026-04-21"
+  owner: webapp-team
+context:
+  app: webapp
+  environment: shared
+  sprint: "current"
+definitionOfReady:
+  - id: contract-aligned
+    required: true
+    passed: true
+    evidence: "Webapp screens mapped to OpenAPI v1.1.0"
+  - id: route-guard-ready
+    required: true
+    passed: true
+    evidence: "Route guard and auth state handling documented"
+  - id: checkout-flow-ready
+    required: true
+    passed: true
+    evidence: "Redirect to central checkout and post-pay refresh ready"
+  - id: dependencies-clear
+    required: true
+    passed: true
+    evidence: "No unresolved blocker for webapp release"
+definitionOfDone:
+  - id: api-contract-check-passed
+    required: true
+    passed: true
+    evidence: "npm run api:check pass"
+  - id: ai-gate-passed
+    required: true
+    passed: true
+    evidence: "npm run ai:gate -- --app webapp pass"
+  - id: integration-checklist-critical
+    required: true
+    passed: true
+    evidence: "Webapp critical checklist completed"
+  - id: post-pay-refresh-verified
+    required: true
+    passed: true
+    evidence: "Entitlement refresh after checkout verified"
+  - id: changelog-updated
+    required: true
+    passed: true
+    evidence: "docs/api-changelog.md updated"

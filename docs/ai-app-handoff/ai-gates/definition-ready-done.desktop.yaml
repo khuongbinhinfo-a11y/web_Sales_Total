@@ -1,0 +1,49 @@
+version: 1
+checklistId: desktop-main
+enforcement:
+  blockMerge: true
+  targetBranch: main
+  updatedAt: "2026-04-21"
+  owner: desktop-team
+context:
+  app: desktop
+  environment: shared
+  sprint: "current"
+definitionOfReady:
+  - id: contract-aligned
+    required: true
+    passed: true
+    evidence: "Desktop app mapped with OpenAPI + Postman endpoints"
+  - id: desktop-auth-design
+    required: true
+    passed: true
+    evidence: "Login flow with central auth and secure token storage defined"
+  - id: device-policy-defined
+    required: true
+    passed: true
+    evidence: "Device binding and offline grace policy documented"
+  - id: dependencies-clear
+    required: true
+    passed: true
+    evidence: "No unresolved blocker for desktop release"
+definitionOfDone:
+  - id: api-contract-check-passed
+    required: true
+    passed: true
+    evidence: "npm run api:check pass"
+  - id: ai-gate-passed
+    required: true
+    passed: true
+    evidence: "npm run ai:gate -- --app desktop pass"
+  - id: integration-checklist-critical
+    required: true
+    passed: true
+    evidence: "Desktop critical checklist completed"
+  - id: offline-mode-verified
+    required: true
+    passed: true
+    evidence: "Offline mode + re-verify cycle tested"
+  - id: changelog-updated
+    required: true
+    passed: true
+    evidence: "docs/api-changelog.md updated"

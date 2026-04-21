@@ -167,7 +167,6 @@ gcloud run deploy web-sales-total \
   - Staging: [docs/openapi/environments/staging.postman_environment.json](docs/openapi/environments/staging.postman_environment.json)
   - Production: [docs/openapi/environments/prod.postman_environment.json](docs/openapi/environments/prod.postman_environment.json)
 - Ke hoach dong bo cho AI cua cac app: [docs/ai-app-sync-plan-v1.md](docs/ai-app-sync-plan-v1.md)
-- Bo ho so ban giao 1 folder cho AI-app: [docs/ai-app-handoff/INDEX.md](docs/ai-app-handoff/INDEX.md)
 
 ## API contract CI
 - Script kiem tra local: `npm run api:check`
