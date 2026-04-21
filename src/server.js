@@ -405,6 +405,7 @@ app.get(
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
     const current = getSepayRuntimeSettings();
+    const effectiveWebhookUrl = current.webhookUrl || `${env.appBaseUrl}/api/payments/webhooks/sepay`;
     return res.json({
       paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(current.webhookSecret),
@@ -415,7 +416,7 @@ app.get(
         accountName: current.accountName || env.sepayAccountName,
         qrTemplateUrl: current.qrTemplateUrl || env.sepayQrTemplateUrl
       },
-      webhookUrl: `${env.appBaseUrl}/api/payments/webhooks/sepay`
+      webhookUrl: effectiveWebhookUrl
     });
   })
 );
@@ -426,6 +427,7 @@ app.put(
   asyncHandler(async (req, res) => {
     const {
       paymentProviderMode,
+      webhookUrl,
       webhookSecret,
       bankCode,
       bankAccountNumber,
@@ -438,8 +440,14 @@ app.put(
       return res.status(400).json({ message: "paymentProviderMode chỉ nhận mock | sepay | stripe" });
     }
 
+    const safeWebhookUrl = String(webhookUrl || "").trim();
+    if (safeWebhookUrl && !/^https?:\/\//i.test(safeWebhookUrl)) {
+      return res.status(400).json({ message: "Webhook URL phải bắt đầu bằng http:// hoặc https://" });
+    }
+
     const next = updateSepayRuntimeSettings({
       paymentProviderMode: safeMode || "",
+      webhookUrl: safeWebhookUrl,
       webhookSecret: String(webhookSecret || "").trim(),
       bankCode: String(bankCode || "").trim(),
       bankAccountNumber: String(bankAccountNumber || "").trim(),
@@ -452,7 +460,7 @@ app.put(
       message: "Đã lưu cấu hình Sepay runtime",
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(next.sepay?.webhookSecret),
-      webhookUrl: `${env.appBaseUrl}/api/payments/webhooks/sepay`
+      webhookUrl: next.sepay?.webhookUrl || `${env.appBaseUrl}/api/payments/webhooks/sepay`
     });
   })
 );

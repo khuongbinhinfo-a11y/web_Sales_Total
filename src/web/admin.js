@@ -364,6 +364,7 @@ function bindSepayForm(){
 
     const payload = {
       paymentProviderMode: document.getElementById("sepayMode").value,
+      webhookUrl: document.getElementById("sepayWebhookUrl").value.trim(),
       bankCode: document.getElementById("sepayBankCode").value.trim(),
       bankAccountNumber: document.getElementById("sepayAccount").value.trim(),
       accountName: document.getElementById("sepayAccountName").value.trim(),

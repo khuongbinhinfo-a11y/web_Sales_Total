@@ -42,6 +42,7 @@ function getSepayRuntimeSettings() {
   return {
     paymentProviderMode: all.paymentProviderMode || "",
     webhookSecret: sepay.webhookSecret || "",
+    webhookUrl: sepay.webhookUrl || "",
     bankCode: sepay.bankCode || "",
     bankAccountNumber: sepay.bankAccountNumber || "",
     accountName: sepay.accountName || "",
@@ -72,6 +73,7 @@ function updateSepayRuntimeSettings(input) {
     sepay: {
       ...currentSepay,
       webhookSecret: nextWebhookSecret,
+      webhookUrl: typeof input.webhookUrl === "string" ? input.webhookUrl.trim() : (currentSepay.webhookUrl || ""),
       bankCode: input.bankCode || "",
       bankAccountNumber: input.bankAccountNumber || "",
       accountName: input.accountName || "",
