@@ -2,13 +2,71 @@
 
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
-  { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1, image:"/products/image/quet-data-gg-map.png" },
-  { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1, image:"/products/image/hoc-cap-01.png" },
-  { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1, image:"/products/image/hoc-cap-12.png" },
-  { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3, image:"/products/image/quet-data-gg-map.png" },
-  { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2, image:"/products/image/Screenshot%202026-04-20%20203856.png" },
-  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2, image:"/products/image/Screenshot%202026-04-20%20204104.png" }
+  { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
+  { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1 },
+  { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1 },
+  { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3 },
+  { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
+  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 }
 ];
+
+function imagePathByName(fileName) {
+  return `/products/image/${encodeURIComponent(fileName)}`;
+}
+
+const productImageLibrary = {
+  study01: imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
+  study12: imagePathByName("phần mềm học tập khối cấp 12.jpeg"),
+  map: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
+  mapAlt: imagePathByName("phần mềm quét data KH_1.jpeg"),
+  video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật-2.jpeg"),
+  bds: imagePathByName("Quản_lý_website_BDS-2.jpeg")
+};
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function resolveProductImage(product) {
+  const name = normalizeText(product?.name);
+  const appId = normalizeText(product?.appId);
+  const hint = `${name} ${appId}`;
+
+  const isStudy = /(hoc|study|cap|lop)/.test(hint);
+  if (/(cap 01|cap 1|lop 1|study 01|study 1|khoi 01|khoi 1)/.test(hint)) {
+    return productImageLibrary.study01;
+  }
+  if (/(cap 12|lop 12|study 12|khoi 12)/.test(hint)) {
+    return productImageLibrary.study12;
+  }
+  if (/(map|ggmap|quet data|scan data|data kh)/.test(hint)) {
+    return productImageLibrary.map;
+  }
+  if (/(video|dong bo|nhan vat|lip sync)/.test(hint)) {
+    return productImageLibrary.video;
+  }
+  if (/(bat dong san|bds|website)/.test(hint)) {
+    return productImageLibrary.bds;
+  }
+
+  if (isStudy || /study/.test(appId)) {
+    return productImageLibrary.study12;
+  }
+  if (/(lam viec|work)/.test(hint) || /lamviec/.test(appId)) {
+    return productImageLibrary.mapAlt;
+  }
+
+  if (product?.image) {
+    return product.image;
+  }
+
+  return "";
+}
 
 /* ── product catalog content (features + guide per product) ── */
 const productContent = {
@@ -291,8 +349,9 @@ function renderProduct(p){
 
   // main image
   const imgEl = document.getElementById("pdMainImg");
-  if(p.image){
-    imgEl.innerHTML = `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover">`;
+  const resolvedImage = resolveProductImage(p);
+  if(resolvedImage){
+    imgEl.innerHTML = `<img src="${resolvedImage}" alt="${p.name}">`;
   } else {
     const icons = {hoctap:"📚",lamviec:"💼"};
     imgEl.textContent = icons[(p.appId||"").toLowerCase()] || "📦";
