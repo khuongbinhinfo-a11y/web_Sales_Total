@@ -236,7 +236,7 @@ function getStripeClient() {
   return new Stripe(env.stripeSecretKey);
 }
 
-function verifySepayWebhookSignature(signature) {
+function verifySepayWebhookSignature(payload, signature) {
   if (!isSepayPaymentMode()) {
     const error = new Error("Sepay webhook endpoint is disabled");
     error.statusCode = 404;
@@ -246,12 +246,20 @@ function verifySepayWebhookSignature(signature) {
   const sepay = getSepayConfig();
 
   if (!sepay.webhookSecret) {
+    if (matchesConfiguredSepayAccount(payload)) {
+      return;
+    }
+
     const error = new Error("Missing SEPAY_WEBHOOK_SECRET");
     error.statusCode = 500;
     throw error;
   }
 
   if (!signature) {
+    if (matchesConfiguredSepayAccount(payload)) {
+      return;
+    }
+
     const error = new Error("Missing Sepay signature");
     error.statusCode = 401;
     throw error;
@@ -271,6 +279,32 @@ function normalizeSepayWebhookSignature(rawSignature) {
   }
 
   return value.replace(/^(?:apikey|bearer)\s+/i, "").trim();
+}
+
+function normalizeDigits(value) {
+  return String(value || "").replace(/\D+/g, "").trim();
+}
+
+function matchesConfiguredSepayAccount(payload) {
+  const configuredAccount = normalizeDigits(getSepayConfig().bankAccountNumber);
+  if (!configuredAccount) {
+    return false;
+  }
+
+  const payloadAccounts = [
+    payload?.accountNumber,
+    payload?.account,
+    payload?.bankAccount,
+    payload?.bank_account,
+    payload?.receiverAccount,
+    payload?.receiver_account,
+    payload?.toAccountNumber,
+    payload?.to_account_number,
+    payload?.subAccount,
+    payload?.sub_account
+  ].map(normalizeDigits);
+
+  return payloadAccounts.includes(configuredAccount);
 }
 
 function extractOrderIdFromText(text) {
@@ -307,7 +341,7 @@ function extractOrderCodeFromText(text) {
 }
 
 function parseSepayWebhook(payload, signature) {
-  verifySepayWebhookSignature(signature);
+  verifySepayWebhookSignature(payload, signature);
 
   const rawStatus = String(payload?.status || payload?.transactionStatus || "").toLowerCase();
   const paidStatuses = new Set(["paid", "success", "completed"]);
