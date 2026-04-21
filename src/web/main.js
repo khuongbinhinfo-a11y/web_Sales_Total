@@ -265,6 +265,7 @@ let activeCat = "all";
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
 let pendingOpenPurchasedAfterAuth = false;
 let googleAuthInitialized = false;
+let googleAuthInitAttempts = 0;
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
@@ -442,6 +443,19 @@ async function initGoogleAuth(){
   }
 }
 
+function ensureGoogleAuthInit() {
+  if (googleAuthInitialized) {
+    return;
+  }
+
+  googleAuthInitAttempts += 1;
+  initGoogleAuth().finally(() => {
+    if (!googleAuthInitialized && googleAuthInitAttempts < 20) {
+      setTimeout(ensureGoogleAuthInit, 300);
+    }
+  });
+}
+
 /* ═══════════════ LOGIN MODAL ═══════════════ */
 const navRegisterBtn   = document.getElementById("navRegisterBtn");
 const tabLogin         = document.getElementById("tabLogin");
@@ -455,8 +469,8 @@ const switchToLogin    = document.getElementById("switchToLogin");
 function showLoginTab(){ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginPane.style.display=""; registerPane.style.display="none"; loginError.textContent=""; }
 function showRegisterTab(){ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerPane.style.display=""; loginPane.style.display="none"; loginError.textContent=""; }
 
-navLoginBtn.addEventListener("click", (e)=>{ e.preventDefault(); showLoginTab(); loginModal.classList.add("show"); });
-navRegisterBtn.addEventListener("click", (e)=>{ e.preventDefault(); showRegisterTab(); loginModal.classList.add("show"); });
+navLoginBtn.addEventListener("click", (e)=>{ e.preventDefault(); showLoginTab(); loginModal.classList.add("show"); ensureGoogleAuthInit(); });
+navRegisterBtn.addEventListener("click", (e)=>{ e.preventDefault(); showRegisterTab(); loginModal.classList.add("show"); ensureGoogleAuthInit(); });
 loginModalClose.addEventListener("click", ()=> loginModal.classList.remove("show"));
 loginModal.addEventListener("click", (e)=>{ if(e.target===loginModal) loginModal.classList.remove("show"); });
 tabLogin.addEventListener("click", showLoginTab);
@@ -827,4 +841,4 @@ langToggle.addEventListener("click", ()=>{
 applyLang();
 loadCatalog();
 checkAuth();
-setTimeout(initGoogleAuth, 50);
+setTimeout(ensureGoogleAuthInit, 50);

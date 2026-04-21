@@ -1,4 +1,6 @@
 const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
 
 // Load environment variables once at process startup.
 dotenv.config();
@@ -25,6 +27,48 @@ function resolveSessionCookieDomain(appBaseUrl) {
   }
 }
 
+function loadGoogleClientIdFromOAuthFile() {
+  const explicitFile = String(process.env.GOOGLE_OAUTH_CLIENT_FILE || "").trim();
+  const rootDir = process.cwd();
+  const candidates = [];
+
+  if (explicitFile) {
+    candidates.push(path.isAbsolute(explicitFile) ? explicitFile : path.join(rootDir, explicitFile));
+  }
+
+  try {
+    const autoDetected = fs
+      .readdirSync(rootDir)
+      .filter((name) => /^client_secret_.*\.json$/i.test(name))
+      .map((name) => path.join(rootDir, name));
+    candidates.push(...autoDetected);
+  } catch {
+    // ignore
+  }
+
+  for (const filePath of candidates) {
+    try {
+      if (!fs.existsSync(filePath)) {
+        continue;
+      }
+      const raw = fs.readFileSync(filePath, "utf8");
+      const json = JSON.parse(raw);
+      const clientId =
+        String(json?.web?.client_id || "").trim() ||
+        String(json?.installed?.client_id || "").trim();
+      if (clientId) {
+        return clientId;
+      }
+    } catch {
+      // skip invalid file
+    }
+  }
+
+  return "";
+}
+
+const resolvedGoogleClientId = String(process.env.GOOGLE_CLIENT_ID || "").trim() || loadGoogleClientIdFromOAuthFile();
+
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 3900,
@@ -44,7 +88,7 @@ const env = {
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
   telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
   telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
-  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  googleClientId: resolvedGoogleClientId,
   smtpHost: process.env.SMTP_HOST || "",
   smtpPort: Number(process.env.SMTP_PORT) || 0,
   smtpUser: process.env.SMTP_USER || "",
