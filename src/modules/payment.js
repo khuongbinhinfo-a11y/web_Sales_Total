@@ -291,12 +291,19 @@ function extractOrderCodeFromText(text) {
     return null;
   }
 
-  const codeMatch = text.toUpperCase().match(/\b(?:WST|ODR)-[A-Z0-9-]{6,}\b/);
-  if (!codeMatch) {
+  const normalized = text.toUpperCase();
+  const dashedCodeMatch = normalized.match(/\b(?:WST|ODR)-[A-Z0-9-]{6,}\b/);
+  if (dashedCodeMatch) {
+    return dashedCodeMatch[0];
+  }
+
+  // Backward compatibility: accept compact format without dash, e.g. WSTMO87L7TW03CC.
+  const compactCodeMatch = normalized.match(/\b(?:WST|ODR)[A-Z0-9]{8,}\b/);
+  if (!compactCodeMatch) {
     return null;
   }
 
-  return codeMatch[0];
+  return compactCodeMatch[0];
 }
 
 function parseSepayWebhook(payload, signature) {

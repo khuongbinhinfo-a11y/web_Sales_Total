@@ -46,6 +46,7 @@ const env = {
   telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
   sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || "dev-session-secret",
   sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
+  customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
   adminAccessKey: process.env.ADMIN_ACCESS_KEY || "admin-demo"
 };

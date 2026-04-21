@@ -278,7 +278,7 @@ app.post(
 );
 
 app.post(
-  "/api/payments/webhooks/sepay",
+  ["/api/payments/webhooks/sepay", "/api/webhooks/sepay"],
   asyncHandler(async (req, res) => {
     const signature = normalizeSepayWebhookSignature(
       req.header("x-sepay-signature") ||
@@ -594,7 +594,7 @@ app.get(
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
     const current = getSepayRuntimeSettings();
-    const effectiveWebhookUrl = current.webhookUrl || `${env.appBaseUrl}/api/payments/webhooks/sepay`;
+    const effectiveWebhookUrl = current.webhookUrl || `${env.appBaseUrl}/api/webhooks/sepay`;
     return res.json({
       paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(current.webhookSecret),
@@ -649,7 +649,7 @@ app.put(
       message: "Đã lưu cấu hình Sepay runtime",
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(next.sepay?.webhookSecret),
-      webhookUrl: next.sepay?.webhookUrl || `${env.appBaseUrl}/api/payments/webhooks/sepay`
+      webhookUrl: next.sepay?.webhookUrl || `${env.appBaseUrl}/api/webhooks/sepay`
     });
   })
 );
@@ -766,6 +766,8 @@ app.get(
   asyncHandler(async (req, res) => {
     const session = getCustomerFromSession(req);
     if (!session) return res.status(401).json({ message: "Not logged in" });
+    const refreshedToken = createCustomerSessionToken(session.customerId, session.email || "");
+    setAuthCookie(res, "wst_customer_session", refreshedToken);
     const snapshot = await getCustomerSnapshot(session.customerId);
     return res.json(snapshot);
   })

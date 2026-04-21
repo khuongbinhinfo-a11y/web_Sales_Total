@@ -83,7 +83,10 @@ function parseCookies(req) {
 function setAuthCookie(res, name, token) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
   const domainFlag = env.sessionCookieDomain ? ` Domain=${env.sessionCookieDomain};` : "";
-  res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200;${domainFlag}${secureFlag}`);
+  const maxAgeSeconds = name === "wst_customer_session"
+    ? env.customerSessionDays * 24 * 60 * 60
+    : 12 * 60 * 60;
+  res.setHeader("Set-Cookie", `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`);
 }
 
 function clearAuthCookie(res, name) {
@@ -93,7 +96,8 @@ function clearAuthCookie(res, name) {
 }
 
 function createCustomerSessionToken(customerId, email) {
-  const payload = { scope: "customer", customerId, email, exp: Date.now() + 12 * 60 * 60 * 1000 };
+  const ttlMs = env.customerSessionDays * 24 * 60 * 60 * 1000;
+  const payload = { scope: "customer", customerId, email, exp: Date.now() + ttlMs };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   const signature = signValue(encodedPayload);
   return `${encodedPayload}.${signature}`;

@@ -34,7 +34,7 @@ const fallbackProducts = [
 
 /* ── category icon map ── */
 const catIcons = {
-  hoctap:"📚", lamviec:"💼", default:"📦"
+  hoctap:"", lamviec:"", default:""
 };
 
 /* ── fixed category list ── */
@@ -57,7 +57,7 @@ const T = {
     trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
     cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
     cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
-    products_title:"🔥 Sản phẩm bán chạy",
+    products_title:"Sản phẩm bán chạy",
     how_title:"Hướng dẫn mua hàng", how_sub:"Chỉ 3 bước đơn giản để nhận key tự động",
     step1_t:"Chọn sản phẩm", step1_d:"Duyệt danh mục, chọn gói phù hợp và bấm Mua ngay.",
     step2_t:"Thanh toán", step2_d:"Quét QR tự động, nhanh chóng.",
@@ -129,7 +129,7 @@ const T = {
     trust_products:"Products", trust_orders:"Orders delivered", trust_rating:"Rating", trust_support:"Support",
     cat_title:"Product categories", cat_sub:"Choose a category or browse all products below", cat_all:"All",
     cat_hoctap:"Study", cat_lamviec:"Work",
-    products_title:"🔥 Best sellers",
+    products_title:"Best sellers",
     how_title:"How to buy", how_sub:"Just 3 simple steps to get your key",
     step1_t:"Choose product", step1_d:"Browse categories, pick the right plan and click Buy now.",
     step2_t:"Make payment", step2_d:"Scan QR code automatically, fast and easy.",
@@ -192,6 +192,7 @@ let lang = localStorage.getItem("wst_lang") || "vi";
 let allProducts = [];
 let activeCat = "all";
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
+let pendingOpenPurchasedAfterAuth = false;
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
@@ -224,6 +225,30 @@ function iconFor(appId){
 
 function catLabel(appId){ const k="cat_"+(appId||"").toLowerCase(); return t(k); }
 
+function softwareIntro(product){
+  const raw = String(product?.shortDescription || product?.description || "").trim();
+  if (raw) {
+    return raw.length > 120 ? `${raw.slice(0, 117)}...` : raw;
+  }
+
+  const app = String(product?.appId || "").toLowerCase();
+  if (app.includes("hoc") || app.includes("study")) {
+    return lang === "vi"
+      ? "Bộ công cụ hỗ trợ học tập, tăng tốc ghi nhớ và tối ưu hiệu suất ôn luyện mỗi ngày."
+      : "A focused learning toolkit to improve retention and daily study performance.";
+  }
+
+  if (app.includes("viec") || app.includes("work")) {
+    return lang === "vi"
+      ? "Giải pháp giúp tự động hóa tác vụ lặp lại, tiết kiệm thời gian và làm việc chuyên nghiệp hơn."
+      : "A workflow solution that automates repetitive tasks and improves professional output.";
+  }
+
+  return lang === "vi"
+    ? "Phiên bản bản quyền ổn định, kích hoạt nhanh, phù hợp triển khai sử dụng ngay."
+    : "A stable licensed version with quick activation, ready for immediate use.";
+}
+
 /* ═══════════════ AUTH STATE ═══════════════ */
 function setLoggedIn(snapshot){
   currentUser = snapshot;
@@ -253,6 +278,26 @@ async function checkAuth(){
     if(data.customer) setLoggedIn(data);
     else setLoggedOut();
   } catch { setLoggedOut(); }
+}
+
+async function finalizeAuthFlow(){
+  await checkAuth();
+  if(!currentUser){
+    // Retry once for slow cookie propagation in some browsers/proxies.
+    await new Promise((resolve)=>setTimeout(resolve, 150));
+    await checkAuth();
+  }
+
+  if(currentUser){
+    loginModal.classList.remove("show");
+    if(pendingOpenPurchasedAfterAuth){
+      pendingOpenPurchasedAfterAuth = false;
+      openPurchasedDrawer();
+    }
+    return;
+  }
+
+  loginError.textContent = t("modal_login_error_db");
 }
 
 /* ═══════════════ LOGIN MODAL ═══════════════ */
@@ -290,8 +335,7 @@ loginForm.addEventListener("submit", async (e)=>{
       body: JSON.stringify({ email, password })
     });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
-    loginModal.classList.remove("show");
-    await checkAuth();
+    await finalizeAuthFlow();
   } catch {
     loginError.textContent = t("modal_login_error_db");
   }
@@ -312,8 +356,7 @@ registerForm.addEventListener("submit", async (e)=>{
       body: JSON.stringify({ email, fullName, password })
     });
     if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
-    loginModal.classList.remove("show");
-    await checkAuth();
+    await finalizeAuthFlow();
   } catch {
     loginError.textContent = t("modal_login_error_db");
   }
@@ -331,7 +374,7 @@ dropLogout.addEventListener("click", async (e)=>{
 
 /* ═══════════════ PURCHASED PRODUCTS DRAWER ═══════════════ */
 function openPurchasedDrawer(e){ if(e) e.preventDefault(); purchasedDrawer.classList.add("show"); renderPurchased(); }
-navMyProducts.addEventListener("click", (e)=>{ if(!currentUser){ e.preventDefault(); loginModal.classList.add("show"); return; } openPurchasedDrawer(e); });
+navMyProducts.addEventListener("click", (e)=>{ if(!currentUser){ e.preventDefault(); pendingOpenPurchasedAfterAuth = true; showLoginTab(); loginModal.classList.add("show"); return; } openPurchasedDrawer(e); });
 dropMyProducts.addEventListener("click", (e)=>{ userDropdown.classList.remove("show"); openPurchasedDrawer(e); });
 purchasedClose.addEventListener("click", ()=> purchasedDrawer.classList.remove("show"));
 purchasedDrawer.addEventListener("click", (e)=>{ if(e.target===purchasedDrawer) purchasedDrawer.classList.remove("show"); });
@@ -425,7 +468,7 @@ function showNotice(msg){ document.getElementById("catalogNotice").textContent =
 function buildTabs(){
   catTabs.innerHTML = `<button class="cat-tab ${activeCat==="all"?"active":""}" data-cat="all">${t("cat_all")}</button>`;
   fixedCategories.forEach(key => {
-    catTabs.innerHTML += `<button class="cat-tab ${activeCat===key?"active":""}" data-cat="${key}">${iconFor(key)} ${t("cat_"+key)}</button>`;
+    catTabs.innerHTML += `<button class="cat-tab ${activeCat===key?"active":""}" data-cat="${key}">${t("cat_"+key)}</button>`;
   });
   catTabs.querySelectorAll(".cat-tab").forEach(btn => {
     btn.addEventListener("click", ()=>{ activeCat=btn.dataset.cat; renderProducts(); buildTabs(); });
@@ -443,10 +486,14 @@ function renderProducts(){
   productList.innerHTML = "";
   filtered.forEach(p => {
     const isFeat = p.cycle === "yearly";
-    const icon   = iconFor(p.appId);
+    const intro = softwareIntro(p);
     const visual = p.image
       ? `<img class="p-card-img-photo" src="${p.image}" alt="${p.name}">`
-      : icon;
+      : `<div class="p-card-img-fallback">
+          <span class="p-card-img-kicker">${catLabel(p.appId)}</span>
+          <strong>${p.name}</strong>
+          <p>${intro}</p>
+        </div>`;
     const card   = document.createElement("article");
     card.className = "p-card";
     card.innerHTML = `
@@ -455,12 +502,13 @@ function renderProducts(){
       <div class="p-card-body">
         <span class="p-card-cat">${catLabel(p.appId)}</span>
         <h3 class="p-card-name">${p.name}</h3>
+        <p class="p-card-intro">${intro}</p>
         <p class="p-card-meta">${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}</p>
         <div class="p-card-price-row">
           <span class="p-card-price">${fmtVnd(p.price)}</span>
         </div>
       </div>
-      <a class="p-card-btn" href="/product/${p.id}">👁 ${lang==="vi"?"Xem sản phẩm":"View product"}</a>`;
+      <a class="p-card-btn" href="/product/${p.id}">${lang==="vi"?"Xem sản phẩm":"View product"}</a>`;
 
     card.querySelector(".p-card-btn").addEventListener("click", (e)=>{
       // navigation handled by <a href>
