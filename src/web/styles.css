@@ -41,7 +41,7 @@ button{font-family:inherit;cursor:pointer}
 .header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(243,238,255,.97),rgba(237,228,255,.95));backdrop-filter:blur(16px);border-bottom:none;box-shadow:0 1px 0 rgba(124,109,216,.1)}
 .header::after{content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a594f9,#c4b5fc,#a594f9);background-size:200% 100%;animation:headerGradient 6s linear infinite}
 @keyframes headerGradient{0%{background-position:0% 50%}100%{background-position:200% 50%}}
-.header-inner{display:flex;align-items:center;gap:10px;min-height:84px}
+.header-inner{display:flex;align-items:center;gap:10px;min-height:80px}
 .logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .logo-img{height:151.2px;width:auto;object-fit:contain}
 .logo-text{display:flex;flex-direction:column}
@@ -212,7 +212,7 @@ button{font-family:inherit;cursor:pointer}
 /* ═══════════════════ PORTAL & ADMIN SHARED ═══════════════════ */
 .page-shell{min-height:100vh;display:flex;flex-direction:column}
 .page-header{background:#fff;border-bottom:1px solid var(--line);padding:0 0}
-.page-header .container{display:flex;align-items:center;min-height:84px;gap:10px}
+.page-header .container{display:flex;align-items:center;min-height:80px;gap:10px}
 .page-header .logo{display:flex;align-items:center;gap:10px}
 .page-header .logo-img{height:151.2px;width:auto;object-fit:contain}
 .page-header .logo-text strong{font-size:.98rem;font-weight:800}
@@ -355,9 +355,9 @@ button{font-family:inherit;cursor:pointer}
 
 /* ═══════════════════ MOBILE ═══════════════════ */
 @media(max-width:768px){
-  .header-inner{min-height:70px}
+  .header-inner{min-height:67px}
   .logo-img{height:126px}
-  .page-header .container{min-height:70px}
+  .page-header .container{min-height:67px}
   .mobile-menu-btn{display:block}
   .header-search{display:none}
   .header-nav{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
