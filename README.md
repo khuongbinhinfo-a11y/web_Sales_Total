@@ -173,6 +173,11 @@ gcloud run deploy web-sales-total \
 
 ## AI merge gate (Definition of Ready/Done)
 - Checklist may doc duoc: [docs/ai-gates/definition-ready-done.yaml](docs/ai-gates/definition-ready-done.yaml)
+- Checklist theo app:
+  - Desktop: [docs/ai-gates/definition-ready-done.desktop.yaml](docs/ai-gates/definition-ready-done.desktop.yaml)
+  - Webapp: [docs/ai-gates/definition-ready-done.webapp.yaml](docs/ai-gates/definition-ready-done.webapp.yaml)
+  - Admin: [docs/ai-gates/definition-ready-done.admin.yaml](docs/ai-gates/definition-ready-done.admin.yaml)
 - Script kiem tra local: `npm run ai:gate`
 - CI workflow: [.github/workflows/ai-readiness-gate.yml](.github/workflows/ai-readiness-gate.yml)
 - Neu `enforcement.blockMerge=true` va con item required chua `passed: true`, CI se fail de chan merge.
+- Huong dan quan ly gate: [docs/ai-gates/README.md](docs/ai-gates/README.md)

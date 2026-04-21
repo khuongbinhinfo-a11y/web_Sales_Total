@@ -1,0 +1,49 @@
+version: 1
+checklistId: admin-main
+enforcement:
+  blockMerge: true
+  targetBranch: main
+  updatedAt: "2026-04-21"
+  owner: admin-team
+context:
+  app: admin
+  environment: shared
+  sprint: "current"
+definitionOfReady:
+  - id: contract-aligned
+    required: true
+    passed: true
+    evidence: "Admin endpoints and permission model mapped"
+  - id: permission-review
+    required: true
+    passed: true
+    evidence: "Role/permission impact reviewed"
+  - id: observability-ready
+    required: true
+    passed: true
+    evidence: "Admin audit + notifications flow prepared"
+  - id: dependencies-clear
+    required: true
+    passed: true
+    evidence: "No unresolved blocker for admin release"
+definitionOfDone:
+  - id: api-contract-check-passed
+    required: true
+    passed: true
+    evidence: "npm run api:check pass"
+  - id: ai-gate-passed
+    required: true
+    passed: true
+    evidence: "npm run ai:gate -- --app admin pass"
+  - id: integration-checklist-critical
+    required: true
+    passed: true
+    evidence: "Admin critical checklist completed"
+  - id: permission-tests-passed
+    required: true
+    passed: true
+    evidence: "Permission tests for admin roles passed"
+  - id: changelog-updated
+    required: true
+    passed: true
+    evidence: "docs/api-changelog.md updated"

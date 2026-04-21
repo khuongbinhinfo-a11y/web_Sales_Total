@@ -63,6 +63,38 @@ Impact: all
 Owner: platform-core
 Impact: all
 
+## 2026-04-21 | v1.5.0 | App-specific AI gates + branch-aware selection
+Owner: platform-core
+Impact: all
+
+### Added
+- Tachd checklist theo app:
+  - docs/ai-gates/definition-ready-done.desktop.yaml
+  - docs/ai-gates/definition-ready-done.webapp.yaml
+  - docs/ai-gates/definition-ready-done.admin.yaml
+- Tai lieu van hanh gate:
+  - docs/ai-gates/README.md
+
+### Changed
+- validate-ready-done script ho tro chon checklist theo:
+  - --app / APP_NAME
+  - BRANCH_NAME (tu ten branch/PR)
+  - fallback default checklist neu khong match
+- Workflow ai-readiness-gate truyen BRANCH_NAME vao script gate.
+
+### Deprecated
+- Chua co.
+
+### Removed
+- Chua co.
+
+### Fixed
+- Giam nguy co check sai checklist khi nhieu app cung phat trien song song.
+
+### Action required
+- Dat ten branch ro app context (desktop/webapp/admin) de auto-match checklist.
+- Neu app moi, them file definition-ready-done.<app>.yaml tuong ung.
+
 ### Added
 - Them checklist YAML de AI agent doc may va quyet dinh gate:
   - docs/ai-gates/definition-ready-done.yaml
