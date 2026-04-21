@@ -20,3 +20,12 @@
 {"level":"info","time":"2026-04-21T03:59:43Z","message":"ICMP proxy will use fe80::d997:1d52:282a:68a7 in zone Bluetooth Network Connection as source for IPv6"}
 {"level":"info","time":"2026-04-21T03:59:43Z","message":"Starting metrics server on 127.0.0.1:20242/metrics"}
 {"level":"info","event":0,"connection":"12391833-d966-433b-ba4a-a9321b406939","connIndex":0,"location":"sgn04","ip":"198.41.192.7","protocol":"quic","time":"2026-04-21T03:59:43Z","message":"Registered tunnel connection"}
+{"level":"info","time":"2026-04-21T07:28:43Z","message":"Initiating graceful shutdown due to signal terminated ..."}
+{"level":"error","event":0,"ip":"198.41.192.7","connIndex":0,"error":"context canceled","time":"2026-04-21T07:28:43Z","message":"failed to run the datagram handler"}
+{"level":"error","event":0,"ip":"198.41.192.7","connIndex":0,"error":"accept stream listener encountered a failure while serving","time":"2026-04-21T07:28:43Z","message":"failed to serve tunnel connection"}
+{"level":"error","event":0,"ip":"198.41.192.7","connIndex":0,"error":"accept stream listener encountered a failure while serving","time":"2026-04-21T07:28:43Z","message":"Serve tunnel error"}
+{"level":"info","event":0,"ip":"198.41.192.7","connIndex":0,"time":"2026-04-21T07:28:43Z","message":"Retrying connection in up to 1s"}
+{"level":"error","connIndex":0,"time":"2026-04-21T07:28:43Z","message":"Connection terminated"}
+{"level":"error","time":"2026-04-21T07:28:43Z","message":"no more connections active and exiting"}
+{"level":"info","time":"2026-04-21T07:28:43Z","message":"Tunnel server stopped"}
+{"level":"info","time":"2026-04-21T07:28:43Z","message":"Metrics server stopped"}
