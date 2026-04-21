@@ -21,7 +21,7 @@ async function seed() {
       `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active)
        VALUES
          ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE),
-         ('prod-study-month', 'app-study-12', 'Goi Thang', 'monthly', 99000, 'VND', 120, TRUE),
+         ('prod-study-month', 'app-study-12', 'PHAN MEM HOC TAP CHO HOC SINH KHOI CAP 01', 'monthly', 99000, 'VND', 120, TRUE),
          ('prod-study-year', 'app-study-12', 'Goi Nam', 'yearly', 890000, 'VND', 1800, TRUE),
          ('prod-study-topup', 'app-study-12', 'Top-up 300 Credit', 'one_time', 149000, 'VND', 300, TRUE)
        ON CONFLICT (id) DO UPDATE SET

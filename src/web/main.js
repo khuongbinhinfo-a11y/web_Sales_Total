@@ -32,7 +32,7 @@ const dropLogout       = document.getElementById("dropLogout");
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
-  { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1 },
+  { id:"demo-hoc01", appId:"hoctap",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:49000,  credits:1 },
   { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",        cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
@@ -45,6 +45,7 @@ function imagePathByName(fileName) {
 
 const productImageLibrary = {
   study01: imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
+  study01Alt: imagePathByName("phần mềm học tập khối cấp 01_2.jpeg"),
   study12: imagePathByName("phần mềm học tập khối cấp 12.jpeg"),
   map: imagePathByName("Phần mềm quét data KH-GGmap.jpeg"),
   mapAlt: imagePathByName("phần mềm quét data KH_1.jpeg"),
@@ -73,6 +74,9 @@ function resolveProductImage(product) {
   const productId = normalizeText(product?.id);
   const hint = `${name} ${appId} ${productId}`;
 
+  if (/(prod study month)/.test(productId)) {
+    return productImageLibrary.study01Alt;
+  }
   const isStudy = /(hoc|study|cap|lop)/.test(hint);
   if (/(goi test 2k|test 2k|prod test 2k|demo test2k)/.test(hint)) {
     return productImageLibrary.study01;

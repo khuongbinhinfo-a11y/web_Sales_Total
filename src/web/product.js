@@ -3,7 +3,7 @@
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
-  { id:"demo-hoc01", appId:"hoctap",  name:"Khóa học cấp 01",              cycle:"one_time", price:49000,  credits:1 },
+  { id:"demo-hoc01", appId:"hoctap",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:49000,  credits:1 },
   { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
@@ -16,6 +16,7 @@ function imagePathByName(fileName) {
 
 const productImageLibrary = {
   study01: imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
+  study01Alt: imagePathByName("phần mềm học tập khối cấp 01_2.jpeg"),
   study12: imagePathByName("phần mềm học tập khối cấp 12.jpeg"),
   map: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   mapAlt: imagePathByName("phần mềm quét data KH_1.jpeg"),
@@ -44,6 +45,9 @@ function resolveProductImage(product) {
   const productId = normalizeText(product?.id);
   const hint = `${name} ${appId} ${productId}`;
 
+  if (/(prod study month)/.test(productId)) {
+    return productImageLibrary.study01Alt;
+  }
   const isStudy = /(hoc|study|cap|lop)/.test(hint);
   if (/(goi test 2k|test 2k|prod test 2k|demo test2k)/.test(hint)) {
     return productImageLibrary.study01;
@@ -80,6 +84,23 @@ function resolveProductImage(product) {
 
 /* ── product catalog content (features + guide per product) ── */
 const productContent = {
+  "prod-study-month": {
+    desc: "Học Hứng Khởi là ứng dụng học tập cho học sinh tiểu học, giúp con học theo lộ trình rõ ràng, luyện tập ngắn và phụ huynh theo dõi tiến bộ dễ dàng mỗi ngày.",
+    icon: "📚",
+    features: [
+      { icon:"🧭", title:"Lộ trình học rõ ràng", detail:"Học theo bài, không học lan man, dễ duy trì thói quen." },
+      { icon:"⚡", title:"Luyện tập ngắn hiệu quả", detail:"Buổi học ngắn, dễ bắt đầu, có phản hồi kết quả ngay." },
+      { icon:"👨‍👩‍👧", title:"Phụ huynh theo dõi dễ", detail:"Xem số bài đã học, điểm trung bình và bài cần ôn lại nhanh." },
+      { icon:"🎯", title:"Tăng hứng thú học tập", detail:"Có thử thách, mini-game, XP và cấp độ để tạo động lực mỗi ngày." },
+    ],
+    guide: [
+      { title:"Bước 1: Mở ứng dụng", detail:"Vào Trang chủ để xem nhanh tiến bộ học tập và các lối tắt học." },
+      { title:"Bước 2: Chọn môn và bài", detail:"Bấm Môn học, chọn lớp hiện tại, sau đó mở bài học cần học." },
+      { title:"Bước 3: Luyện tập sau bài", detail:"Làm bài luyện ngắn để củng cố kiến thức và nhận phản hồi ngay." },
+      { title:"Bước 4: Xem kết quả", detail:"Theo dõi số câu đúng/sai, điểm đạt được và gợi ý phần cần ôn lại." },
+      { title:"Bước 5: Phụ huynh theo dõi", detail:"Vào khu vực phụ huynh để xem tóm tắt tiến bộ, đặt PIN và giới hạn thời gian học nếu cần." },
+    ]
+  },
   "demo-test2k": {
     desc: "Gói test 2.000 VND để kiểm tra nhanh luồng thanh toán tự động, webhook và giao key.",
     icon: "🧪",
