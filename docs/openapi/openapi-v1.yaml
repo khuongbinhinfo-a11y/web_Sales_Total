@@ -1,0 +1,1012 @@
+openapi: 3.0.3
+info:
+  title: Web Sales Total API
+  version: 1.0.0
+  description: |
+    API contract v1 cho he thong web tong.
+    Dung de tich hop webapp, desktop app va admin tools.
+servers:
+  - url: http://localhost:3900
+    description: Local
+  - url: https://your-domain.example.com
+    description: Production (replace)
+tags:
+  - name: Health
+  - name: Catalog
+  - name: Auth
+  - name: Orders
+  - name: Payments
+  - name: Telegram
+  - name: Portal
+  - name: Usage
+  - name: Admin
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/catalog:
+    get:
+      tags: [Catalog]
+      summary: Get public catalog
+      responses:
+        "200":
+          description: Catalog payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogResponse"
+
+  /api/orders:
+    post:
+      tags: [Orders]
+      summary: Create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/checkout:
+    post:
+      tags: [Orders]
+      summary: Create order (legacy alias)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponse"
+
+  /api/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order details
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetailsResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/orders/{orderId}/mark-paid:
+    post:
+      tags: [Payments]
+      summary: Mark order as paid (mock/admin helper)
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/payments/mock/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm payment in mock mode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId]
+              properties:
+                orderId:
+                  type: string
+      responses:
+        "200":
+          description: Payment processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        "400":
+          description: Missing orderId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/payments/webhooks:
+    post:
+      tags: [Payments]
+      summary: Internal payment webhook
+      parameters:
+        - in: header
+          name: x-webhook-signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        "200":
+          description: Webhook accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/payments/webhooks/stripe:
+    post:
+      tags: [Payments]
+      summary: Stripe webhook adapter
+      parameters:
+        - in: header
+          name: stripe-signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        "200":
+          description: Event accepted/ignored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/payments/webhooks/sepay:
+    post:
+      tags: [Payments]
+      summary: Sepay webhook
+      parameters:
+        - in: header
+          name: x-sepay-signature
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: x-sepay-token
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: authorization
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        "200":
+          description: Event accepted/ignored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/auth/customer/login:
+    post:
+      tags: [Auth]
+      summary: Customer login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: Login success (set cookie wst_customer_session)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: "#/components/schemas/Customer"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/customer/register/send-code:
+    post:
+      tags: [Auth]
+      summary: Send signup OTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessage"
+        "503":
+          description: OTP not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/customer/register:
+    post:
+      tags: [Auth]
+      summary: Register customer with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, code]
+              properties:
+                email:
+                  type: string
+                  format: email
+                fullName:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Registered (existing customer updated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "201":
+          description: Registered (new customer)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "409":
+          description: Account already has password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/customer/password-reset/send-code:
+    post:
+      tags: [Auth]
+      summary: Send password reset OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Reset code sent (or noop)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessage"
+
+  /api/auth/customer/password-reset/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, newPassword]
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessage"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/google/config:
+    get:
+      tags: [Auth]
+      summary: Get Google auth config
+      responses:
+        "200":
+          description: Google config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  clientId:
+                    type: string
+
+  /api/auth/customer/google:
+    post:
+      tags: [Auth]
+      summary: Login/register with Google credential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential]
+              properties:
+                credential:
+                  type: string
+      responses:
+        "200":
+          description: Auth success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: "#/components/schemas/Customer"
+                  created:
+                    type: boolean
+                  provider:
+                    type: string
+                    example: google
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current customer snapshot
+      security:
+        - customerCookieAuth: []
+      responses:
+        "200":
+          description: Snapshot payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/customer/logout:
+    post:
+      tags: [Auth]
+      summary: Customer logout
+      responses:
+        "200":
+          description: Logout success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/customer/telegram/link:
+    get:
+      tags: [Telegram]
+      summary: Get telegram linking payload for current customer
+      security:
+        - customerCookieAuth: []
+      responses:
+        "200":
+          description: Telegram link info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  linked:
+                    type: boolean
+                  telegramUsername:
+                    type: string
+                    nullable: true
+                  telegramLinkedAt:
+                    type: string
+                    nullable: true
+                  botUsername:
+                    type: string
+                  startToken:
+                    type: string
+                  startLink:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/customer/telegram/link/refresh:
+    post:
+      tags: [Telegram]
+      summary: Refresh telegram start token
+      security:
+        - customerCookieAuth: []
+      responses:
+        "200":
+          description: Telegram link info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/portal/{customerId}:
+    get:
+      tags: [Portal]
+      summary: Get customer snapshot by customerId
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: customerId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Snapshot payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/customers/{customerId}/snapshot:
+    get:
+      tags: [Admin]
+      summary: Get customer snapshot (admin)
+      security:
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: customerId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Snapshot payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/usage/consume:
+    post:
+      tags: [Usage]
+      summary: Consume usage credits
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumeUsageRequest"
+      responses:
+        "200":
+          description: Usage consumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        "402":
+          description: Usage rejected (insufficient credits)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get admin dashboard
+      security:
+        - adminCookieAuth: []
+      responses:
+        "200":
+          description: Dashboard payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/admin/me:
+    get:
+      tags: [Admin]
+      summary: Get current admin
+      security:
+        - adminCookieAuth: []
+      responses:
+        "200":
+          description: Admin profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    $ref: "#/components/schemas/AdminUser"
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List customers (admin)
+      security:
+        - adminCookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Customer"
+    post:
+      tags: [Admin]
+      summary: Create customer account (admin)
+      security:
+        - adminCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                fullName:
+                  type: string
+      responses:
+        "200":
+          description: Existing account returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        "201":
+          description: New account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/admin/admin-users:
+    get:
+      tags: [Admin]
+      summary: List admin users
+      security:
+        - adminCookieAuth: []
+      responses:
+        "200":
+          description: Admin list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminUser"
+    post:
+      tags: [Admin]
+      summary: Create admin user
+      security:
+        - adminCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password, role]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                role:
+                  type: string
+                  enum: [owner, manager, support]
+      responses:
+        "201":
+          description: Admin created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    $ref: "#/components/schemas/AdminUser"
+
+  /api/admin/admin-users/{adminId}:
+    patch:
+      tags: [Admin]
+      summary: Update admin role/status
+      security:
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: adminId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role, isActive]
+              properties:
+                role:
+                  type: string
+                  enum: [owner, manager, support]
+                isActive:
+                  type: boolean
+      responses:
+        "200":
+          description: Admin updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    $ref: "#/components/schemas/AdminUser"
+
+  /api/admin/notifications/telegram/test:
+    post:
+      tags: [Admin]
+      summary: Send test telegram notification
+      security:
+        - adminCookieAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Test sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+  /api/admin/integrations/sepay:
+    get:
+      tags: [Admin]
+      summary: Get Sepay runtime config
+      security:
+        - adminCookieAuth: []
+      responses:
+        "200":
+          description: Sepay config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+    put:
+      tags: [Admin]
+      summary: Update Sepay runtime config
+      security:
+        - adminCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentProviderMode:
+                  type: string
+                  enum: [mock, sepay, stripe]
+                webhookUrl:
+                  type: string
+                webhookSecret:
+                  type: string
+                bankCode:
+                  type: string
+                bankAccountNumber:
+                  type: string
+                accountName:
+                  type: string
+                qrTemplateUrl:
+                  type: string
+      responses:
+        "200":
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+
+components:
+  securitySchemes:
+    customerCookieAuth:
+      type: apiKey
+      in: cookie
+      name: wst_customer_session
+    portalCookieAuth:
+      type: apiKey
+      in: cookie
+      name: wst_portal_session
+    adminCookieAuth:
+      type: apiKey
+      in: cookie
+      name: wst_admin_session
+
+  schemas:
+    GenericObject:
+      type: object
+      additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    OkMessage:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        environment:
+          type: string
+        paymentProviderMode:
+          type: string
+        database:
+          type: string
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: boolean
+
+    CatalogResponse:
+      type: object
+      additionalProperties: true
+      example:
+        apps:
+          - id: hoctap
+            name: Hoc tap
+        products:
+          - id: prod-study-month
+            appId: hoctap
+            name: Goi hoc theo thang
+            cycle: monthly
+            price: 99000
+
+    CreateOrderRequest:
+      type: object
+      required: [appId, productId]
+      properties:
+        customerId:
+          type: string
+          description: Optional when customer session exists
+        appId:
+          type: string
+        productId:
+          type: string
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        order:
+          $ref: "#/components/schemas/GenericObject"
+        product:
+          $ref: "#/components/schemas/GenericObject"
+        checkoutUrl:
+          type: string
+          example: /pay/ord_123
+
+    OrderDetailsResponse:
+      type: object
+      properties:
+        order:
+          $ref: "#/components/schemas/GenericObject"
+        product:
+          $ref: "#/components/schemas/GenericObject"
+        customer:
+          $ref: "#/components/schemas/GenericObject"
+
+    RegisterResponse:
+      type: object
+      properties:
+        customer:
+          $ref: "#/components/schemas/Customer"
+        created:
+          type: boolean
+        passwordSet:
+          type: boolean
+
+    ConsumeUsageRequest:
+      type: object
+      required: [appId, featureKey, creditsToConsume]
+      properties:
+        customerId:
+          type: string
+          default: cus-demo
+        appId:
+          type: string
+        featureKey:
+          type: string
+        creditsToConsume:
+          type: number
+        units:
+          type: integer
+          default: 1
+        requestId:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true

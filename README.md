@@ -149,3 +149,10 @@ gcloud run deploy web-sales-total \
 - Auth hien tai la muc toi thieu (chua RBAC/chua user management)
 - Stripe adapter webhook co san, checkout provider that chua hoan tat
 - Chua co recurring billing automation theo nha cung cap thanh toan
+
+## Tai lieu dieu phoi da app
+- Chuan dong bo he thong (web tong, desktop app, webapp): [docs/platform-standard-v1.md](docs/platform-standard-v1.md)
+- Checklist tich hop cho moi app: [docs/integration-checklist.md](docs/integration-checklist.md)
+- Lich su thay doi API: [docs/api-changelog.md](docs/api-changelog.md)
+- Mau ticket onboard app moi (Jira/Trello): [docs/templates/app-onboarding-ticket-template.md](docs/templates/app-onboarding-ticket-template.md)
+- API contract OpenAPI v1: [docs/openapi/openapi-v1.yaml](docs/openapi/openapi-v1.yaml)
