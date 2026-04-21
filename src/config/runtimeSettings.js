@@ -51,12 +51,27 @@ function getSepayRuntimeSettings() {
 
 function updateSepayRuntimeSettings(input) {
   const all = readRuntimeSettings();
+  const currentSepay = all.sepay || {};
+  const nextWebhookSecret = (() => {
+    const rawValue = input.webhookSecret;
+    if (typeof rawValue !== "string") {
+      return currentSepay.webhookSecret || "";
+    }
+
+    const normalized = rawValue.trim();
+    if (!normalized || normalized === "********") {
+      return currentSepay.webhookSecret || "";
+    }
+
+    return normalized;
+  })();
+
   const next = {
     ...all,
     paymentProviderMode: input.paymentProviderMode || all.paymentProviderMode || "",
     sepay: {
-      ...(all.sepay || {}),
-      webhookSecret: input.webhookSecret || "",
+      ...currentSepay,
+      webhookSecret: nextWebhookSecret,
       bankCode: input.bankCode || "",
       bankAccountNumber: input.bankAccountNumber || "",
       accountName: input.accountName || "",

@@ -7,6 +7,18 @@ function badge(s){
   return `<span class="status-badge ${m[s]||""}">${s}</span>`;
 }
 let meAdmin = null;
+let sepaySecretConfigured = false;
+
+function isPublicWebhookUrl(url){
+  const value = String(url || "").trim().toLowerCase();
+  if(!value) return false;
+  return !(
+    value.includes("localhost") ||
+    value.includes("127.0.0.1") ||
+    value.includes("0.0.0.0") ||
+    value.includes("::1")
+  );
+}
 
 async function loadAdmin(){
   try {
@@ -319,11 +331,21 @@ async function loadSepayConfig(){
     const data = await res.json();
     modeEl.value = data.paymentProviderMode || "mock";
     document.getElementById("sepayWebhookUrl").value = data.webhookUrl || "";
+    sepaySecretConfigured = Boolean(data.secretConfigured);
     document.getElementById("sepaySecret").value = "";
+    document.getElementById("sepaySecret").placeholder = sepaySecretConfigured
+      ? "Đã lưu secret, bỏ trống nếu không đổi"
+      : "Nhập token webhook từ Sepay";
     document.getElementById("sepayBankCode").value = data.sepay?.bankCode || "";
     document.getElementById("sepayAccount").value = data.sepay?.bankAccountNumber || "";
     document.getElementById("sepayAccountName").value = data.sepay?.accountName || "";
     document.getElementById("sepayQrTemplate").value = data.sepay?.qrTemplateUrl || "";
+
+    const msg = document.getElementById("sepayConfigMsg");
+    if(msg && data.webhookUrl && !isPublicWebhookUrl(data.webhookUrl)){
+      msg.textContent = "Webhook URL đang là localhost/private. Sepay bên ngoài sẽ không gọi được URL này. Cần APP_BASE_URL là domain public hoặc URL tunnel.";
+      msg.style.color = "var(--danger)";
+    }
   } catch(err){
     const msg = document.getElementById("sepayConfigMsg");
     if(msg){ msg.textContent = "Lỗi tải cấu hình Sepay: " + err.message; msg.style.color = "var(--danger)"; }
@@ -342,12 +364,15 @@ function bindSepayForm(){
 
     const payload = {
       paymentProviderMode: document.getElementById("sepayMode").value,
-      webhookSecret: document.getElementById("sepaySecret").value.trim(),
       bankCode: document.getElementById("sepayBankCode").value.trim(),
       bankAccountNumber: document.getElementById("sepayAccount").value.trim(),
       accountName: document.getElementById("sepayAccountName").value.trim(),
       qrTemplateUrl: document.getElementById("sepayQrTemplate").value.trim()
     };
+    const nextSecret = document.getElementById("sepaySecret").value.trim();
+    if(nextSecret){
+      payload.webhookSecret = nextSecret;
+    }
 
     try {
       const res = await fetch("/api/admin/integrations/sepay", {
@@ -366,7 +391,15 @@ function bindSepayForm(){
       if(data.webhookUrl){
         document.getElementById("sepayWebhookUrl").value = data.webhookUrl;
       }
+      sepaySecretConfigured = Boolean(data.secretConfigured);
       document.getElementById("sepaySecret").value = "";
+      document.getElementById("sepaySecret").placeholder = sepaySecretConfigured
+        ? "Đã lưu secret, bỏ trống nếu không đổi"
+        : "Nhập token webhook từ Sepay";
+      if(data.webhookUrl && !isPublicWebhookUrl(data.webhookUrl)){
+        msg.textContent = "Đã lưu cấu hình, nhưng Webhook URL vẫn là localhost/private nên Sepay chưa gọi được từ bên ngoài.";
+        msg.style.color = "var(--danger)";
+      }
     } catch(err){
       msg.textContent = "Lỗi kết nối: " + err.message;
       msg.style.color = "var(--danger)";

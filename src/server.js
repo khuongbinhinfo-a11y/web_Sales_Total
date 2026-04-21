@@ -406,6 +406,7 @@ app.get(
     const current = getSepayRuntimeSettings();
     return res.json({
       paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
+      secretConfigured: Boolean(current.webhookSecret),
       sepay: {
         webhookSecret: current.webhookSecret ? "********" : "",
         bankCode: current.bankCode || env.sepayBankCode,
@@ -449,6 +450,7 @@ app.put(
       ok: true,
       message: "Đã lưu cấu hình Sepay runtime",
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
+      secretConfigured: Boolean(next.sepay?.webhookSecret),
       webhookUrl: `${env.appBaseUrl}/api/payments/webhooks/sepay`
     });
   })
