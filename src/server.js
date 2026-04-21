@@ -846,7 +846,7 @@ app.get(
         <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
         <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
-        <p style="font-size:.82rem;color:#64748b">📲 Muốn nhận báo đơn qua Telegram: bấm nút bên dưới. Nếu chưa liên kết, xem key ở mục <b>Key đã nhận</b>.</p>
+        <p style="font-size:.82rem;color:#64748b">📲 Nhận báo đơn qua Telegram: bấm nút bên dưới. Chưa liên kết thì xem trong <b>Sản phẩm đã mua</b>.</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px">
           <a id="telegramQuickLink" href="/portal" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border-radius:10px;background:#0ea5e9;color:#fff;font-size:.84rem;font-weight:700;text-decoration:none">📲 Liên kết Telegram</a>
           <span id="telegramQuickHint" style="font-size:.8rem;color:#64748b">Đang tạo link...</span>
