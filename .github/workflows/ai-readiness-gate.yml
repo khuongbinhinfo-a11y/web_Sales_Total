@@ -1,0 +1,37 @@
+name: AI Readiness Gate
+
+on:
+  pull_request:
+    paths:
+      - docs/ai-gates/**
+      - scripts/validate-ready-done.mjs
+      - package.json
+      - package-lock.json
+      - .github/workflows/ai-readiness-gate.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/ai-gates/**
+      - scripts/validate-ready-done.mjs
+      - package.json
+      - package-lock.json
+      - .github/workflows/ai-readiness-gate.yml
+
+jobs:
+  readiness-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Definition of Ready/Done gate
+        run: npm run ai:gate

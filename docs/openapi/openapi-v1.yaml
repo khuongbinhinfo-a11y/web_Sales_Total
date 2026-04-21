@@ -1,10 +1,11 @@
 openapi: 3.0.3
 info:
   title: Web Sales Total API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     API contract v1 cho he thong web tong.
     Dung de tich hop webapp, desktop app va admin tools.
+    Ban 1.1.0 bo sung schema chi tiet cho order, customer snapshot/entitlement va dashboard KPI.
 servers:
   - url: http://localhost:3900
     description: Local
@@ -473,7 +474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GenericObject"
+                $ref: "#/components/schemas/CustomerSnapshotResponse"
         "401":
           description: Not logged in
           content:
@@ -564,7 +565,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GenericObject"
+                $ref: "#/components/schemas/CustomerSnapshotResponse"
 
   /api/customers/{customerId}/snapshot:
     get:
@@ -584,7 +585,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GenericObject"
+                $ref: "#/components/schemas/CustomerSnapshotResponse"
 
   /api/usage/consume:
     post:
@@ -625,7 +626,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GenericObject"
+                $ref: "#/components/schemas/AdminDashboardResponse"
 
   /api/admin/me:
     get:
@@ -962,9 +963,9 @@ components:
       type: object
       properties:
         order:
-          $ref: "#/components/schemas/GenericObject"
+          $ref: "#/components/schemas/Order"
         product:
-          $ref: "#/components/schemas/GenericObject"
+          $ref: "#/components/schemas/Product"
         checkoutUrl:
           type: string
           example: /pay/ord_123
@@ -973,11 +974,271 @@ components:
       type: object
       properties:
         order:
-          $ref: "#/components/schemas/GenericObject"
+          $ref: "#/components/schemas/Order"
         product:
-          $ref: "#/components/schemas/GenericObject"
+          $ref: "#/components/schemas/Product"
         customer:
-          $ref: "#/components/schemas/GenericObject"
+          $ref: "#/components/schemas/Customer"
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        orderCode:
+          type: string
+        customerId:
+          type: string
+        appId:
+          type: string
+        productId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          example: VND
+        status:
+          type: string
+          example: pending
+        paymentStatus:
+          type: string
+          example: unpaid
+        createdAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        appId:
+          type: string
+        name:
+          type: string
+        cycle:
+          type: string
+          enum: [one_time, monthly, yearly, lifetime]
+        credits:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+          example: VND
+        isActive:
+          type: boolean
+
+    Entitlement:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        appId:
+          type: string
+        productId:
+          type: string
+        plan:
+          type: string
+          enum: [monthly, yearly, lifetime, one_time]
+        status:
+          type: string
+          enum: [active, expired, suspended, revoked, pending]
+        startsAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        autoRenew:
+          type: boolean
+          nullable: true
+        sourceOrderId:
+          type: string
+          nullable: true
+
+    Wallet:
+      type: object
+      properties:
+        customerId:
+          type: string
+        balance:
+          type: number
+        totalGranted:
+          type: number
+          nullable: true
+        totalConsumed:
+          type: number
+          nullable: true
+
+    LedgerItem:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        appId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          example: credit_grant
+        amount:
+          type: number
+        balanceAfter:
+          type: number
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomerSnapshotResponse:
+      type: object
+      properties:
+        customer:
+          $ref: "#/components/schemas/Customer"
+        entitlements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entitlement"
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entitlement"
+        wallet:
+          $ref: "#/components/schemas/Wallet"
+        ledger:
+          type: array
+          items:
+            $ref: "#/components/schemas/LedgerItem"
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+      example:
+        customer:
+          id: cus-demo
+          email: user@example.com
+          fullName: Nguyen Van A
+        entitlements:
+          - id: ent_001
+            customerId: cus-demo
+            appId: hoctap
+            productId: prod-study-month
+            plan: monthly
+            status: active
+            startsAt: 2026-04-01T00:00:00.000Z
+            expiresAt: 2026-05-01T00:00:00.000Z
+            autoRenew: false
+            sourceOrderId: ord_001
+        subscriptions: []
+        wallet:
+          customerId: cus-demo
+          balance: 5
+        ledger: []
+        orders: []
+
+    DashboardKpi:
+      type: object
+      properties:
+        totalApps:
+          type: integer
+        totalCustomers:
+          type: integer
+        paidOrders:
+          type: integer
+        pendingOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        totalCreditBalance:
+          type: number
+        totalWallets:
+          type: integer
+        customersWithWallet:
+          type: integer
+
+    DashboardOrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+        orderCode:
+          type: string
+        customerId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    DashboardTransactionItem:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        type:
+          type: string
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    DashboardWalletItem:
+      type: object
+      properties:
+        customerId:
+          type: string
+        email:
+          type: string
+          nullable: true
+        balance:
+          type: number
+
+    AdminDashboardResponse:
+      type: object
+      properties:
+        degraded:
+          type: boolean
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        kpi:
+          $ref: "#/components/schemas/DashboardKpi"
+        latestOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardOrderItem"
+        latestTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardTransactionItem"
+        activeSubscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entitlement"
+        topWallets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardWalletItem"
 
     RegisterResponse:
       type: object

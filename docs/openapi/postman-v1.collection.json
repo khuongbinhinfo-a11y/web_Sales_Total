@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "Web Sales Total API v1",
+    "_postman_id": "d7ee7f2f-6d85-4ea9-bd3d-0f1db74f5e67",
+    "description": "Postman collection generated from OpenAPI v1 for immediate integration testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3900" },
+    { "key": "email", "value": "demo@example.com" },
+    { "key": "password", "value": "12345678" },
+    { "key": "fullName", "value": "Demo User" },
+    { "key": "code", "value": "123456" },
+    { "key": "newPassword", "value": "12345678" },
+    { "key": "googleCredential", "value": "replace-with-google-id-token" },
+    { "key": "appId", "value": "hoctap" },
+    { "key": "productId", "value": "prod-study-month" },
+    { "key": "orderId", "value": "ord_replace_me" },
+    { "key": "customerId", "value": "cus-demo" },
+    { "key": "adminId", "value": "adm_replace_me" },
+    { "key": "adminRole", "value": "support" },
+    { "key": "adminIsActive", "value": "true" },
+    { "key": "paymentProviderMode", "value": "mock" },
+    { "key": "webhookUrl", "value": "https://example.com/api/webhooks/sepay" },
+    { "key": "webhookSignature", "value": "demo-signature" },
+    { "key": "sepaySignature", "value": "demo-sepay-signature" }
+  ],
+  "item": [
+    {
+      "name": "Health & Catalog",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        },
+        {
+          "name": "GET /api/catalog",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/catalog"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth Customer",
+      "item": [
+        {
+          "name": "POST /api/auth/customer/login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/login"
+          }
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/customer/logout"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/register/send-code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/register/send-code"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"fullName\": \"{{fullName}}\",\n  \"password\": \"{{password}}\",\n  \"code\": \"{{code}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/register"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/password-reset/send-code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/password-reset/send-code"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/password-reset/confirm",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/password-reset/confirm"
+          }
+        },
+        {
+          "name": "GET /api/auth/google/config",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/google/config"
+          }
+        },
+        {
+          "name": "POST /api/auth/customer/google",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential\": \"{{googleCredential}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/customer/google"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders & Payments",
+      "item": [
+        {
+          "name": "POST /api/orders",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appId\": \"{{appId}}\",\n  \"productId\": \"{{productId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var data = pm.response.json();",
+                  "  if (data.order && data.order.id) pm.collectionVariables.set('orderId', data.order.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/checkout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appId\": \"{{appId}}\",\n  \"productId\": \"{{productId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/checkout"
+          }
+        },
+        {
+          "name": "GET /api/orders/{orderId}",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "POST /api/orders/{orderId}/mark-paid",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/mark-paid"
+          }
+        },
+        {
+          "name": "POST /api/payments/mock/confirm",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/mock/confirm"
+          }
+        },
+        {
+          "name": "POST /api/payments/webhooks",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-webhook-signature", "value": "{{webhookSignature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"amount\": 99000,\n  \"provider\": \"internal\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/webhooks"
+          }
+        },
+        {
+          "name": "POST /api/payments/webhooks/stripe",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "stripe-signature", "value": "replace-with-stripe-signature" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test\",\n  \"type\": \"checkout.session.completed\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/webhooks/stripe"
+          }
+        },
+        {
+          "name": "POST /api/payments/webhooks/sepay",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-sepay-signature", "value": "{{sepaySignature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"transferAmount\": 99000\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/webhooks/sepay"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Telegram",
+      "item": [
+        {
+          "name": "GET /api/customer/telegram/link",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customer/telegram/link"
+          }
+        },
+        {
+          "name": "POST /api/customer/telegram/link/refresh",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/customer/telegram/link/refresh"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Snapshot & Usage",
+      "item": [
+        {
+          "name": "GET /api/portal/{customerId}",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/portal/{{customerId}}"
+          }
+        },
+        {
+          "name": "GET /api/customers/{customerId}/snapshot",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customers/{{customerId}}/snapshot"
+          }
+        },
+        {
+          "name": "POST /api/usage/consume",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"appId\": \"{{appId}}\",\n  \"featureKey\": \"lesson.open\",\n  \"creditsToConsume\": 1,\n  \"units\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/usage/consume"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /api/admin/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/me"
+          }
+        },
+        {
+          "name": "GET /api/admin/dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          }
+        },
+        {
+          "name": "GET /api/admin/users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/users?limit=50"
+          }
+        },
+        {
+          "name": "POST /api/admin/users",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new-user@example.com\",\n  \"fullName\": \"New User\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users"
+          }
+        },
+        {
+          "name": "GET /api/admin/admin-users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/admin-users"
+          }
+        },
+        {
+          "name": "POST /api/admin/admin-users",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"support01\",\n  \"email\": \"support01@example.com\",\n  \"password\": \"12345678\",\n  \"role\": \"support\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/admin-users"
+          }
+        },
+        {
+          "name": "PATCH /api/admin/admin-users/{adminId}",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"{{adminRole}}\",\n  \"isActive\": {{adminIsActive}}\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/admin-users/{{adminId}}"
+          }
+        },
+        {
+          "name": "POST /api/admin/notifications/telegram/test",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Test telegram from Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/notifications/telegram/test"
+          }
+        },
+        {
+          "name": "GET /api/admin/integrations/sepay",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/integrations/sepay"
+          }
+        },
+        {
+          "name": "PUT /api/admin/integrations/sepay",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentProviderMode\": \"{{paymentProviderMode}}\",\n  \"webhookUrl\": \"{{webhookUrl}}\",\n  \"webhookSecret\": \"replace-with-secret\",\n  \"bankCode\": \"970422\",\n  \"bankAccountNumber\": \"0123456789\",\n  \"accountName\": \"TEST ACCOUNT\",\n  \"qrTemplateUrl\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/integrations/sepay"
+          }
+        }
+      ]
+    }
+  ]
+}

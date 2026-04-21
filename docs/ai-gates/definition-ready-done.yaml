@@ -1,0 +1,49 @@
+version: 1
+checklistId: platform-core-main
+enforcement:
+  blockMerge: true
+  targetBranch: main
+  updatedAt: "2026-04-21"
+  owner: platform-core
+context:
+  app: platform-core
+  environment: shared
+  sprint: "current"
+definitionOfReady:
+  - id: contract-aligned
+    required: true
+    passed: true
+    evidence: "OpenAPI v1.1.0 va Postman parity 34/34"
+  - id: ticket-created
+    required: true
+    passed: true
+    evidence: "Su dung template docs/templates/app-onboarding-ticket-template.md"
+  - id: dependencies-clear
+    required: true
+    passed: true
+    evidence: "Khong con blocker critical"
+  - id: security-baseline
+    required: true
+    passed: true
+    evidence: "Khong hardcode secret, su dung env variables"
+definitionOfDone:
+  - id: api-contract-check-passed
+    required: true
+    passed: true
+    evidence: "npm run api:check pass"
+  - id: integration-checklist-critical
+    required: true
+    passed: true
+    evidence: "Tat ca muc Critical trong integration checklist da pass"
+  - id: changelog-updated
+    required: true
+    passed: true
+    evidence: "docs/api-changelog.md da cap nhat"
+  - id: rollback-plan-defined
+    required: true
+    passed: true
+    evidence: "Ticket co rollback plan"
+  - id: docs-synced
+    required: true
+    passed: true
+    evidence: "README va tai lieu lien quan da duoc dong bo"

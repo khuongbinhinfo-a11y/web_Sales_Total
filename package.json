@@ -9,6 +9,8 @@
     "db:migrate": "node src/db/migrate.js",
     "db:seed": "node src/db/seed.js",
     "db:setup": "npm run db:migrate && npm run db:seed",
+    "api:check": "node scripts/validate-api-contracts.mjs",
+    "ai:gate": "node scripts/validate-ready-done.mjs",
     "test": "echo \"No automated tests yet\""
   },
   "keywords": [],
@@ -28,6 +30,8 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "js-yaml": "^4.1.1",
     "nodemon": "^3.1.14"
   }
 }

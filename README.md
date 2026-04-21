@@ -156,3 +156,23 @@ gcloud run deploy web-sales-total \
 - Lich su thay doi API: [docs/api-changelog.md](docs/api-changelog.md)
 - Mau ticket onboard app moi (Jira/Trello): [docs/templates/app-onboarding-ticket-template.md](docs/templates/app-onboarding-ticket-template.md)
 - API contract OpenAPI v1: [docs/openapi/openapi-v1.yaml](docs/openapi/openapi-v1.yaml)
+- Postman Collection v1 (import test ngay): [docs/openapi/postman-v1.collection.json](docs/openapi/postman-v1.collection.json)
+- Postman environments:
+  - Local: [docs/openapi/environments/local.postman_environment.json](docs/openapi/environments/local.postman_environment.json)
+  - Staging: [docs/openapi/environments/staging.postman_environment.json](docs/openapi/environments/staging.postman_environment.json)
+  - Production: [docs/openapi/environments/prod.postman_environment.json](docs/openapi/environments/prod.postman_environment.json)
+- Ke hoach dong bo cho AI cua cac app: [docs/ai-app-sync-plan-v1.md](docs/ai-app-sync-plan-v1.md)
+
+## API contract CI
+- Script kiem tra local: `npm run api:check`
+- CI workflow: [.github/workflows/api-contract.yml](.github/workflows/api-contract.yml)
+- Script se kiem tra:
+  - OpenAPI YAML hop le (parser validation)
+  - Postman collection khong chua endpoint la ngoai OpenAPI
+  - Postman collection co day du endpoint trong yeu (order/snapshot/entitlement/dashboard)
+
+## AI merge gate (Definition of Ready/Done)
+- Checklist may doc duoc: [docs/ai-gates/definition-ready-done.yaml](docs/ai-gates/definition-ready-done.yaml)
+- Script kiem tra local: `npm run ai:gate`
+- CI workflow: [.github/workflows/ai-readiness-gate.yml](.github/workflows/ai-readiness-gate.yml)
+- Neu `enforcement.blockMerge=true` va con item required chua `passed: true`, CI se fail de chan merge.

@@ -1,0 +1,37 @@
+name: API Contract Check
+
+on:
+  pull_request:
+    paths:
+      - docs/openapi/**
+      - scripts/validate-api-contracts.mjs
+      - package.json
+      - package-lock.json
+      - .github/workflows/api-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/openapi/**
+      - scripts/validate-api-contracts.mjs
+      - package.json
+      - package-lock.json
+      - .github/workflows/api-contract.yml
+
+jobs:
+  validate-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate OpenAPI and Postman drift
+        run: npm run api:check
