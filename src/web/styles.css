@@ -126,6 +126,8 @@ button{font-family:inherit;cursor:pointer}
 .banner-card-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:4px}
 .banner-card-title{font-size:.93rem;font-weight:800;text-shadow:0 1px 6px rgba(0,0,0,.5);line-height:1.35}
 .banner-card-sub{font-size:.74rem;font-weight:600;opacity:.88;color:#c4b5fd;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.banner-card-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0;opacity:.55;mix-blend-mode:luminosity}
+.banner-card-shine{position:absolute;top:-24px;right:-18px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(196,181,253,.38),transparent 68%);z-index:1;pointer-events:none}
 
 /* ═══════════════════ SECTIONS ═══════════════════ */
 .section-head{margin-bottom:32px}
@@ -137,9 +139,9 @@ button{font-family:inherit;cursor:pointer}
 
 /* ═══════════════════ CATEGORY TABS ═══════════════════ */
 .cat-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.cat-tab{padding:9px 22px;border-radius:999px;border:1px solid #d8dce5;background:#fff;font-size:.86rem;font-weight:700;color:#4a5568;letter-spacing:.01em;transition:all var(--transition)}
-.cat-tab:hover{border-color:#94a3b8;color:#1e293b;background:#f8fafc;transform:translateY(-1px)}
-.cat-tab.active{background:#0f172a;color:#fff;border-color:#0f172a;box-shadow:0 8px 20px rgba(15,23,42,.18)}
+.cat-tab{padding:9px 22px;border-radius:999px;border:1.5px solid rgba(124,58,237,.22);background:rgba(245,243,255,.7);font-size:.86rem;font-weight:700;color:#5b21b6;letter-spacing:.01em;transition:all var(--transition)}
+.cat-tab:hover{border-color:#7c3aed;color:#4c1d95;background:rgba(237,233,254,.9);transform:translateY(-1px)}
+.cat-tab.active{background:linear-gradient(135deg,#4c1d95 0%,#7c3aed 100%);color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(109,40,217,.28)}
 
 /* ═══════════════════ PRODUCT GRID ═══════════════════ */
 .product-grid{display:grid;grid-template-columns:1fr;gap:16px}
@@ -212,7 +214,7 @@ button{font-family:inherit;cursor:pointer}
 .page-header{background:#fff;border-bottom:1px solid var(--line);padding:0 0}
 .page-header .container{display:flex;align-items:center;min-height:60px;gap:16px}
 .page-header .logo{display:flex;align-items:center;gap:10px}
-.page-header .logo-img{height:56px;width:auto;object-fit:contain}
+.page-header .logo-img{height:72px;width:auto;object-fit:contain}
 .page-header .logo-text strong{font-size:.98rem;font-weight:800}
 .page-header .logo-text small{font-size:.7rem;color:var(--muted)}
 .page-header-nav{margin-left:auto;display:flex;align-items:center;gap:8px}

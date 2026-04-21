@@ -749,7 +749,7 @@ function renderProducts(){
 }
 
 /* ── banner carousel ── */
-/* "Trăng tím" (moonlit purple) fallback gradients — elegant deep violet/silver */
+/* "Trăng tím" — dark violet gradients khi không có ảnh */
 const moonPurpleGradients = [
   "linear-gradient(135deg,#1e1b4b 0%,#4c1d95 100%)",
   "linear-gradient(135deg,#2d1b69 0%,#7c3aed 100%)",
@@ -758,15 +758,24 @@ const moonPurpleGradients = [
   "linear-gradient(135deg,#0f172a 0%,#4f46e5 100%)",
   "linear-gradient(135deg,#1e0936 0%,#7c2d87 100%)"
 ];
+/* Tất cả ảnh có trong thư mục — dùng theo vòng để banner luôn có ảnh */
+const bannerImagePool = [
+  imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
+  imagePathByName("phần mềm học tập khối cấp 12.jpeg"),
+  imagePathByName("Phần mềm quét data KH-GGmap.jpeg"),
+  imagePathByName("Phần mềm tạo video đồng bộ nhân vật.jpeg"),
+  imagePathByName("Quản_lý_website_BDS.jpeg"),
+  imagePathByName("phần mềm quét data KH_1.jpeg")
+];
 function renderBanner(){
   const track = document.getElementById("bannerTrack");
   if(!track || !allProducts.length) return;
   const items = allProducts.map((p,i)=>{
     const fallbackBg = moonPurpleGradients[i % moonPurpleGradients.length];
-    const bgStyle = p.image
-      ? `background-image:url("${p.image}");background-size:cover;background-position:center top`
-      : `background:${fallbackBg}`;
-    return `<a class="banner-card" href="/product/${encodeURIComponent(p.id)}" style="${bgStyle}">
+    const imgSrc = p.image || bannerImagePool[i % bannerImagePool.length];
+    return `<a class="banner-card" href="/product/${encodeURIComponent(p.id)}" style="background:${fallbackBg}">
+      <img class="banner-card-bg" src="${imgSrc}" alt="" loading="lazy">
+      <div class="banner-card-shine"></div>
       <div class="banner-card-content">
         <div class="banner-card-title">${p.name}</div>
         <div class="banner-card-sub">${fmtVnd(p.price)} · ${fmtCycle(p.cycle)}</div>
