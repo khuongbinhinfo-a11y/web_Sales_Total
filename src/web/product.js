@@ -87,6 +87,45 @@ const productContent = {
   "prod-study-month": {
     desc: "Học Hứng Khởi là ứng dụng học tập cho học sinh tiểu học, giúp con học theo lộ trình rõ ràng, luyện tập ngắn và phụ huynh theo dõi tiến bộ dễ dàng mỗi ngày.",
     icon: "📚",
+    descImage: productImageLibrary.study01,
+    longDescription: {
+      highlights: [
+        "Bám sát chương trình phổ thông bậc tiểu học theo hướng dễ hiểu, dễ học, dễ nhớ.",
+        "Thiết kế phù hợp học sinh nhỏ tuổi với nội dung ngắn gọn và lộ trình học rõ ràng.",
+        "Giúp phụ huynh theo dõi kết quả học tập hàng ngày mà không cần thao tác phức tạp.",
+      ],
+      sections: [
+        {
+          heading: "Tổng quan sản phẩm",
+          paragraphs: [
+            "Học Hứng Khởi là giải pháp học tập dành cho học sinh khối cấp 01, tập trung vào việc xây nền tảng kiến thức sớm và tạo thói quen học đều đặn mỗi ngày.",
+            "Nội dung được trình bày theo từng chủ đề ngắn, có luyện tập ngay sau bài học để học sinh ghi nhớ tốt hơn thay vì học dồn.",
+          ]
+        },
+        {
+          heading: "Điểm nổi bật",
+          paragraphs: [
+            "Sản phẩm kết hợp bài giảng, phần luyện tập và các thử thách nhỏ nhằm tăng hứng thú học tập cho trẻ.",
+            "Mỗi buổi học được chia thành các bước đơn giản để học sinh tự học được, đồng thời phụ huynh vẫn dễ theo dõi tiến độ.",
+          ]
+        },
+        {
+          heading: "Lợi ích cho phụ huynh và học sinh",
+          paragraphs: [
+            "Học sinh có lộ trình học mạch lạc, biết mình đang học gì và cần ôn lại phần nào.",
+            "Phụ huynh xem được tóm tắt kết quả theo ngày/tuần, phát hiện sớm phần kiến thức con còn yếu để hỗ trợ đúng lúc.",
+            "Cách tổ chức bài học ngắn giúp giảm áp lực, phù hợp với quỹ thời gian của gia đình có con nhỏ.",
+          ]
+        },
+        {
+          heading: "Phù hợp sử dụng",
+          paragraphs: [
+            "Phù hợp cho gia đình muốn con học đều tại nhà, giáo viên cần công cụ học bổ trợ, và học sinh cần môi trường học tập có định hướng rõ ràng.",
+            "Sản phẩm vận hành trực quan, thao tác đơn giản, có thể bắt đầu học nhanh mà không cần cài đặt phức tạp.",
+          ]
+        }
+      ]
+    },
     features: [
       { icon:"🧭", title:"Lộ trình học rõ ràng", detail:"Học theo bài, không học lan man, dễ duy trì thói quen." },
       { icon:"⚡", title:"Luyện tập ngắn hiệu quả", detail:"Buổi học ngắn, dễ bắt đầu, có phản hồi kết quả ngay." },
@@ -217,6 +256,41 @@ function softwareCode(appId) {
   const raw = String(appId || "").trim();
   if (!raw) return "APP-UNKNOWN";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderLongDescription(content, productName) {
+  if (!content?.longDescription) return "";
+
+  const highlights = (content.longDescription.highlights || []).map(item =>
+    `<li>${escapeHtml(item)}</li>`
+  ).join("");
+
+  const sections = (content.longDescription.sections || []).map(section => {
+    const heading = section?.heading ? `<h4>${escapeHtml(section.heading)}</h4>` : "";
+    const paragraphs = (section?.paragraphs || []).map(paragraph =>
+      `<p>${escapeHtml(paragraph)}</p>`
+    ).join("");
+    return `<section class="pd-long-section">${heading}${paragraphs}</section>`;
+  }).join("");
+
+  const media = content.descImage
+    ? `<figure class="pd-desc-media"><img src="${content.descImage}" alt="Mô tả ${escapeHtml(productName)}"></figure>`
+    : "";
+
+  const highlightsBlock = highlights
+    ? `<div class="pd-desc-highlights"><h4>Giá trị cốt lõi</h4><ul>${highlights}</ul></div>`
+    : "";
+
+  return `<div class="pd-long-desc">${media}${highlightsBlock}${sections}</div>`;
 }
 
 /* ── Tab switching ── */
@@ -425,12 +499,13 @@ function renderProduct(p){
   // desc tab
   document.getElementById("pdDescIcon").textContent = content.icon;
   document.getElementById("pdDescTitle").textContent = p.name;
-  document.getElementById("pdFeatureList").innerHTML = content.features.map(f=>
+  const featureHtml = content.features.map(f=>
     `<div class="pd-feature">
       <div class="pd-feature-icon">${f.icon}</div>
       <div class="pd-feature-text"><strong>${f.title}</strong><span>${f.detail}</span></div>
     </div>`
   ).join("");
+  document.getElementById("pdFeatureList").innerHTML = `${renderLongDescription(content, p.name)}${featureHtml}`;
 
   // guide tab
   document.getElementById("pdGuideSteps").innerHTML = content.guide.map(s=>

@@ -280,6 +280,67 @@ main{
   gap:12px;
 }
 
+.pd-long-desc{
+  grid-column:1/-1;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  margin-bottom:2px;
+}
+
+.pd-desc-media{
+  margin:0;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--pd-line);
+  background:#fff;
+}
+
+.pd-desc-media img{
+  display:block;
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:contain;
+  background:#fff;
+  padding:10px;
+}
+
+.pd-desc-highlights,
+.pd-long-section{
+  padding:14px;
+  border-radius:12px;
+  border:1px solid var(--pd-line);
+  background:#fff;
+}
+
+.pd-desc-highlights h4,
+.pd-long-section h4{
+  margin:0 0 8px;
+  font-size:.98rem;
+  font-weight:800;
+  color:var(--ink);
+}
+
+.pd-desc-highlights ul{
+  margin:0;
+  padding-left:18px;
+  display:grid;
+  gap:6px;
+}
+
+.pd-desc-highlights li,
+.pd-long-section p{
+  margin:0;
+  font-size:.86rem;
+  line-height:1.6;
+  color:var(--muted);
+}
+
+.pd-long-section{
+  display:grid;
+  gap:8px;
+}
+
 .pd-feature{
   display:flex;
   align-items:flex-start;
