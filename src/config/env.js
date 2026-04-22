@@ -74,6 +74,8 @@ function loadGoogleOAuthClientFromFile() {
 const oauthClient = loadGoogleOAuthClientFromFile();
 const resolvedGoogleClientId = String(process.env.GOOGLE_CLIENT_ID || "").trim() || oauthClient.clientId;
 const resolvedGoogleClientSecret = String(process.env.GOOGLE_CLIENT_SECRET || "").trim() || oauthClient.clientSecret;
+const hasGoogleRefreshTokenAlias = !String(process.env.GOOGLE_REFRESH_TOKEN || "").trim() && Boolean(String(process.env.GOOGLE_REFRESH_TOKE || "").trim());
+const resolvedGoogleRefreshToken = String(process.env.GOOGLE_REFRESH_TOKEN || process.env.GOOGLE_REFRESH_TOKE || "").trim();
 
 function toBool(value, fallback = false) {
   if (value === undefined || value === null || value === "") {
@@ -126,7 +128,7 @@ const env = {
   gmailIncludeKey: String(process.env.GMAIL_INCLUDE_KEY || "false").toLowerCase() === "true",
   googleClientId: resolvedGoogleClientId,
   googleClientSecret: resolvedGoogleClientSecret,
-  googleRefreshToken: String(process.env.GOOGLE_REFRESH_TOKEN || "").trim(),
+  googleRefreshToken: resolvedGoogleRefreshToken,
   smtpHost: process.env.SMTP_HOST || "",
   smtpPort: Number(process.env.SMTP_PORT) || 0,
   smtpUser: process.env.SMTP_USER || "",
@@ -153,6 +155,10 @@ const env = {
 
 if (!env.databaseUrl) {
   throw new Error("Missing DATABASE_URL. Copy .env.example to .env and set DATABASE_URL.");
+}
+
+if (hasGoogleRefreshTokenAlias) {
+  console.warn("[env] GOOGLE_REFRESH_TOKE is deprecated. Rename it to GOOGLE_REFRESH_TOKEN.");
 }
 
 if (env.nodeEnv === "production") {
