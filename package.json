@@ -2,7 +2,7 @@
   "name": "web_sales_total",
   "version": "1.0.0",
   "description": "SaaS commerce MVP for selling software plans, top-ups, and usage-based credits.",
-  "main": "src/server.js",
+  "main": "api/index.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
