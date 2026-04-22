@@ -27,6 +27,35 @@ function resolveSessionCookieDomain(appBaseUrl) {
   }
 }
 
+function resolvePublicAppBaseUrl(appBaseUrl) {
+  const explicit = String(process.env.APP_PUBLIC_BASE_URL || "").trim();
+  const candidate = explicit || String(appBaseUrl || "").trim();
+  const primaryProductionUrl = "https://ungdungthongminh.shop";
+
+  if (!candidate) {
+    return primaryProductionUrl;
+  }
+
+  try {
+    const parsed = new URL(candidate);
+    const hostname = String(parsed.hostname || "").trim().toLowerCase();
+    const isPrivateHost = !hostname || hostname === "localhost" || isIpAddress(hostname);
+    const isVercelHost = hostname.endsWith(".vercel.app");
+
+    if (explicit) {
+      return `${parsed.protocol}//${parsed.host}`;
+    }
+
+    if (process.env.NODE_ENV === "production" && (isPrivateHost || isVercelHost)) {
+      return primaryProductionUrl;
+    }
+
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return explicit || candidate || primaryProductionUrl;
+  }
+}
+
 function loadGoogleOAuthClientFromFile() {
   const explicitFile = String(process.env.GOOGLE_OAUTH_CLIENT_FILE || "").trim();
   const rootDir = process.cwd();
@@ -107,6 +136,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 3900,
   appBaseUrl: process.env.APP_BASE_URL || "http://localhost:3900",
+  publicAppBaseUrl: resolvePublicAppBaseUrl(process.env.APP_BASE_URL || "http://localhost:3900"),
   databaseUrl: process.env.DATABASE_URL,
   webhookSignatureSecret: process.env.WEBHOOK_SIGNATURE_SECRET || "demo-signature",
   paymentProviderMode: process.env.PAYMENT_PROVIDER_MODE || "mock",

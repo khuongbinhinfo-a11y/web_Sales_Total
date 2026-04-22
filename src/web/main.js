@@ -424,7 +424,7 @@ function buildStorefrontProducts(products) {
 /* ═══════════════ AUTH STATE ═══════════════ */
 function setLoggedIn(snapshot){
   currentUser = snapshot;
-  navLoginBtn.classList.remove("is-hidden");
+  navLoginBtn.classList.add("is-hidden");
   navRegisterBtn.classList.add("is-hidden");
   userMenu.classList.remove("is-hidden");
   userEmail.textContent = snapshot.customer?.email || "user";

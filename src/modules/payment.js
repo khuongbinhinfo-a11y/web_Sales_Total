@@ -110,6 +110,7 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
   const customerId = order?.customerId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
+  const portalUrl = `${env.publicAppBaseUrl || env.appBaseUrl}/portal`;
 
   const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
   const keyText = env.telegramIncludeKey ? keyValue : maskKeyValue(keyValue);
@@ -121,7 +122,7 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
     `• App: <code>${appId}</code>`,
     `• Số tiền: <b>${amount} ${currency}</b>`,
     `• Key: <code>${keyText}</code>`,
-    `• Portal: ${env.appBaseUrl}/portal`
+    `• Portal: ${portalUrl}`
   ].join("\n");
 }
 
@@ -134,7 +135,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
 
   const keyValue = keyDelivery?.keyValue || "(chua cap key)";
   const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
-  const portalUrl = `${env.appBaseUrl}/portal`;
+  const portalUrl = `${env.publicAppBaseUrl || env.appBaseUrl}/portal`;
 
   const subject = `[WST] Thanh toan thanh cong - ${orderId}`;
   const text = [
