@@ -3,10 +3,10 @@
 function parseArgs(argv) {
   const options = {
     localBaseUrl: "http://localhost:3900",
-    liveBaseUrl: "https://websalestotal.vercel.app",
+    liveBaseUrl: "https://ungdungthongminh.shop",
     appId: "app-study-12",
     customerId: "cus-demo",
-    apiKey: process.env.AI_APP_SHARED_KEY || "",
+    apiKey: process.env.AI_APP_SHARED_KEY || process.env.WEB_TOTAL_AI_APP_KEY || "",
     includeLive: true
   };
 
@@ -106,7 +106,7 @@ async function checkAiAppEndpoints(baseUrl, options) {
   if (!options.apiKey) {
     return {
       skipped: true,
-      reason: "Missing AI_APP_SHARED_KEY (set env or pass --api-key)"
+      reason: "Missing shared key (set AI_APP_SHARED_KEY or WEB_TOTAL_AI_APP_KEY, or pass --api-key)"
     };
   }
 
