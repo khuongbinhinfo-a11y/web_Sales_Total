@@ -118,6 +118,17 @@ function requireAiAppKey(req, res, next) {
   return next();
 }
 
+function maskConfiguredSecret(secret) {
+  const value = String(secret || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (value.length <= 8) {
+    return "********";
+  }
+  return `${value.slice(0, 4)}********${value.slice(-4)}`;
+}
+
 const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
 const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
 
@@ -1110,6 +1121,43 @@ app.put(
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(next.sepay?.webhookSecret),
       webhookUrl: resolveSepayWebhookUrl(next.sepay?.webhookUrl, env.appBaseUrl)
+    });
+  })
+);
+
+app.get(
+  "/api/admin/integrations/ai-app",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const configuredKey = String(env.aiAppSharedKey || "").trim();
+    return res.json({
+      configured: Boolean(configuredKey),
+      maskedKey: maskConfiguredSecret(configuredKey),
+      keyLength: configuredKey.length,
+      authHeaderName: "x-ai-app-key",
+      productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl,
+      endpoints: {
+        listLicenses: "/api/ai-app/customers/:customerId/licenses?appId=app-study-12",
+        verifyLicense: "/api/ai-app/licenses/verify"
+      }
+    });
+  })
+);
+
+app.post(
+  "/api/admin/integrations/ai-app/reveal",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const configuredKey = String(env.aiAppSharedKey || "").trim();
+    if (!configuredKey) {
+      return res.status(404).json({ message: "AI app shared secret chưa được cấu hình trên server" });
+    }
+
+    return res.json({
+      ok: true,
+      sharedSecret: configuredKey,
+      authHeaderName: "x-ai-app-key",
+      productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl
     });
   })
 );

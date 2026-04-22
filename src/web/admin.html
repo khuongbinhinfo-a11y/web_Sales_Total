@@ -34,6 +34,7 @@
         <a href="#section-wallets"><span class="icon">💰</span> Số dư credit</a>
         <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
         <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
+        <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
         <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
@@ -174,6 +175,31 @@
               <button type="submit" class="btn btn-accent" style="min-height:40px;width:200px">Lưu cấu hình Sepay</button>
               <p id="sepayConfigMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
             </form>
+          </div>
+        </section>
+
+        <section id="section-aiapp-secret" class="admin-section">
+          <h3>🔐 Shared Secret cho AI-app</h3>
+          <div class="info-card">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Trạng thái secret production</label>
+                <input id="aiAppMaskedSecret" readonly placeholder="Đang tải..." style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f7f7f7;font-size:.85rem" />
+              </div>
+              <button id="aiAppRevealBtn" type="button" class="btn btn-accent" style="min-height:40px;width:220px">Hiện shared secret</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;margin-bottom:10px">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Header AI-app phải gửi</label>
+                <input id="aiAppHeaderName" readonly style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f7f7f7;font-size:.85rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Production base URL</label>
+                <input id="aiAppBaseUrl" readonly style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f7f7f7;font-size:.85rem" />
+              </div>
+            </div>
+            <p style="font-size:.82rem;color:var(--muted);margin:0 0 8px">Dùng mục này để lấy đúng shared secret đang chạy trên Web tổng production rồi chuyển cho AI-app qua kênh secure.</p>
+            <p id="aiAppSecretMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
           </div>
         </section>
 

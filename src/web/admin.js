@@ -10,6 +10,7 @@ let meAdmin = null;
 let sepaySecretConfigured = false;
 let currentGateApp = "desktop";
 let currentGateData = null;
+let aiAppSecretConfigured = false;
 
 function escapeHtml(value){
   return String(value || "")
@@ -489,6 +490,67 @@ function bindSepayForm(){
   });
 }
 
+async function loadAiAppSecretStatus(){
+  const maskedEl = document.getElementById("aiAppMaskedSecret");
+  const headerEl = document.getElementById("aiAppHeaderName");
+  const baseUrlEl = document.getElementById("aiAppBaseUrl");
+  const msg = document.getElementById("aiAppSecretMsg");
+  if(!maskedEl || !headerEl || !baseUrlEl || !msg) return;
+
+  try {
+    const res = await fetch("/api/admin/integrations/ai-app");
+    if(res.status===401){ window.location.href = "/admin/login"; return; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      msg.textContent = data.message || "Không tải được trạng thái AI-app secret";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+
+    aiAppSecretConfigured = Boolean(data.configured);
+    maskedEl.value = data.maskedKey || "Chưa cấu hình trên production";
+    headerEl.value = data.authHeaderName || "x-ai-app-key";
+    baseUrlEl.value = data.productionBaseUrl || "";
+    msg.textContent = data.configured
+      ? `Secret đang có trên production (${data.keyLength || 0} ký tự). Bấm 'Hiện shared secret' để lấy bản đầy đủ.`
+      : "Production chưa có AI-app shared secret.";
+    msg.style.color = data.configured ? "var(--success)" : "var(--danger)";
+  } catch(err){
+    msg.textContent = "Lỗi tải trạng thái AI-app secret: " + err.message;
+    msg.style.color = "var(--danger)";
+  }
+}
+
+function bindAiAppSecretControls(){
+  const revealBtn = document.getElementById("aiAppRevealBtn");
+  const maskedEl = document.getElementById("aiAppMaskedSecret");
+  const msg = document.getElementById("aiAppSecretMsg");
+  if(!revealBtn || !maskedEl || !msg) return;
+
+  revealBtn.addEventListener("click", async ()=>{
+    msg.textContent = "Đang lấy shared secret...";
+    msg.style.color = "var(--muted)";
+
+    try {
+      const res = await fetch("/api/admin/integrations/ai-app/reveal", { method:"POST" });
+      if(res.status===401){ window.location.href = "/admin/login"; return; }
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        msg.textContent = data.message || "Không lấy được shared secret";
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      maskedEl.value = data.sharedSecret || "";
+      msg.textContent = "Đã hiện shared secret thật. Sao chép và gửi cho AI-app qua kênh secure, rồi yêu cầu họ set WEB_TOTAL_AI_APP_KEY ngay.";
+      msg.style.color = "var(--success)";
+    } catch(err){
+      msg.textContent = "Lỗi kết nối: " + err.message;
+      msg.style.color = "var(--danger)";
+    }
+  });
+}
+
 function gateRowHtml(item, section){
   const required = item.required ? "required" : "optional";
   return `<tr data-gate-section="${section}" data-gate-id="${escapeHtml(item.id)}">
@@ -672,8 +734,10 @@ document.getElementById("lookupBtn").addEventListener("click",()=>{
 bindCreateAdminForm();
 bindChangeMyAdminPasswordForm();
 bindSepayForm();
+bindAiAppSecretControls();
 bindAiGateControls();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();
+  loadAiAppSecretStatus();
 });
