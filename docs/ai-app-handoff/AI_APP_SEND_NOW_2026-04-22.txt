@@ -7,11 +7,12 @@ Trang thai san sang hien tai:
 - Da co cache local + offline grace
 - Da co backend proxy de gui key phia server, khong lo ra frontend
 
-Con 2 viec de bat production that:
-1. Web tong can dat WEB_TOTAL_AI_APP_KEY that tren production
-2. AI-app can xac nhan endpoint production /api/ai-app/* dang tra dung contract verify:
+Trang thai production da chot xong ben Web tong:
+1. Web tong da dat AI_APP_SHARED_KEY that tren production
+2. Endpoint production /api/ai-app/* da tra dung contract verify:
    - features[]
    - grace { allowed, graceDays, offlineUntil }
+3. AI-app chi con viec nhan key qua kenh secure, set WEB_TOTAL_AI_APP_KEY ben minh va goi that vao production
 
 Contract Web tong da san sang cho AI-app:
 - GET /api/ai-app/customers/:customerId/licenses
@@ -26,4 +27,4 @@ App/product map dang dung:
 - premium yearly: prod-study-premium-year
 - premium lifetime: prod-study-premium-lifetime
 
-Noi ngan gon: phia app da khoa xong. Ben minh chi con noi production tu AIT de chay that 100%.
+Noi ngan gon: phia Web tong da xong production that. Phia AI-app khong con blocker ben Web tong; viec con lai la set env WEB_TOTAL_AI_APP_KEY va goi that vao production.

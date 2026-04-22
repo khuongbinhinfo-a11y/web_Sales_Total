@@ -38,6 +38,7 @@ const fallbackProducts = [
   { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
   { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:999000,  credits:9990 },
   { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1599000,  credits:15990 },
+  { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",        cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly",  price:300000, credits:2 }
@@ -342,6 +343,12 @@ function softwareIntro(product){
   }
 
   const app = String(product?.appId || "").toLowerCase();
+  const name = normalizeText(product?.name);
+  if (/(cap 12|lop 12|khoi 12)/.test(name)) {
+    return lang === "vi"
+      ? "Bộ phần mềm học tập khối cấp 12 giá test 2.000 VND để kiểm tra nhanh card sản phẩm và luồng thanh toán."
+      : "A grade-12 learning software card priced at 2,000 VND for quick storefront and payment-flow testing.";
+  }
   if (app.includes("hoc") || app.includes("study")) {
     return lang === "vi"
       ? "Bộ công cụ hỗ trợ học tập, tăng tốc ghi nhớ và tối ưu hiệu suất ôn luyện mỗi ngày."
