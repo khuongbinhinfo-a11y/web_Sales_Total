@@ -23,10 +23,10 @@
 | standard   | monthly     | prod-study-month             | 89,000    |
 | standard   | yearly      | prod-study-year              | 599,000   |
 | standard   | lifetime    | prod-study-standard-lifetime | 999,000   |
+| premium    | monthly     | prod-study-premium-month     | 119,000   |
+| premium    | yearly      | prod-study-premium-year      | 899,000   |
 | premium    | lifetime    | prod-study-premium-lifetime  | 1,599,000 |
 | basic      | *           | null (mien phi)              | 0         |
-| premium    | monthly     | null (chua co)               | -         |
-| premium    | yearly      | null (chua co)               | -         |
 
 Top-up credit: prod-study-topup (149,000 VND / 300 credit) — chua tich hop.
 
@@ -53,6 +53,7 @@ Top-up credit: prod-study-topup (149,000 VND / 300 credit) — chua tich hop.
 - [x] DEFAULT_APP_ID cap nhat thanh app-study-12.
 - [x] cycle "lifetime" map sang "one_time" trong catalog lookup (catalogCyclesFor).
 - [x] Null entry check: neu null -> bao loi thay vi fallback sai catalog.
+- [x] Premium monthly/yearly da duoc cap productId (prod-study-premium-month, prod-study-premium-year).
 - [x] backend/.env da cap nhat day du.
 
 ## 5. Con lai chua lam (Peding)

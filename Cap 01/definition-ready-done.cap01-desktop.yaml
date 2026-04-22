@@ -19,7 +19,7 @@ definitionOfReady:
   - id: product-map-confirmed
     required: true
     passed: true
-    evidence: "WEB_TOTAL_PRODUCT_MAP_JSON da co day du 9 entries tu catalog (4 productId thuc + 5 null). App ID: app-study-12."
+    evidence: "WEB_TOTAL_PRODUCT_MAP_JSON da co day du 9 entries tu catalog (6 productId thuc + 3 null). App ID: app-study-12."
   - id: desktop-auth-design
     required: true
     passed: partial
@@ -45,7 +45,7 @@ definitionOfDone:
   - id: product-map-accurate
     required: true
     passed: true
-    evidence: "Phase 3: Map chinh xac productId theo catalog ngay 2026-04-22. Null-check + one_time cycle mapping."
+    evidence: "Phase 3: Map chinh xac productId theo catalog ngay 2026-04-22. Premium month/year/lifetime da day du. Null-check + one_time cycle mapping."
   - id: auth-bridge
     required: true
     passed: partial
