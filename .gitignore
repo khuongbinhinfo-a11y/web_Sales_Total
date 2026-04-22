@@ -2,3 +2,5 @@ node_modules/
 backups/
 *.zip
 .env
+.vercel
+.env*.local

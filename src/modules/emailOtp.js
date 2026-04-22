@@ -10,6 +10,10 @@ const MAX_ATTEMPTS = 5;
 
 let cachedTransporter = null;
 
+function hasSmtpTransportConfig() {
+  return Boolean(env.smtpHost && env.smtpPort && env.smtpUser && env.smtpPass && env.smtpFrom);
+}
+
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -26,10 +30,7 @@ function generateOtpCode() {
 }
 
 function isEmailOtpConfigured() {
-  return Boolean(
-    (env.smtpHost && env.smtpPort && env.smtpUser && env.smtpPass && env.smtpFrom)
-    || isGmailNotifyEnabled()
-  );
+  return Boolean(hasSmtpTransportConfig() || isGmailNotifyEnabled());
 }
 
 function getTransporter() {
@@ -37,7 +38,9 @@ function getTransporter() {
     return cachedTransporter;
   }
 
-  if (!isEmailOtpConfigured()) {
+  // Only create SMTP transporter when full SMTP config is available.
+  // If only Gmail OAuth is configured, return null so sendOtpEmail uses Gmail API.
+  if (!hasSmtpTransportConfig()) {
     return null;
   }
 
