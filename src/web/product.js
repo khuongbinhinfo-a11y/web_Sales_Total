@@ -43,6 +43,23 @@ function isInternalTestProduct(product) {
   return id === "prod test 2k" || id === "demo test2k" || /(test\s*2k|sepay\s*test|internal\s*test)/.test(name);
 }
 
+function isStudyCap01Family(product) {
+  const id = normalizeText(product?.id);
+  const name = normalizeText(product?.name);
+  const appId = normalizeText(product?.appId);
+  return (
+    appId === "app study 12" ||
+    /phan mem hoc tap cho hoc sinh khoi cap 01|khoi cap 01|prod study/.test(`${id} ${name}`)
+  );
+}
+
+function canonicalProductName(product) {
+  if (isStudyCap01Family(product)) {
+    return "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học";
+  }
+  return String(product?.name || "").trim();
+}
+
 function resolveProductImage(product) {
   const name = normalizeText(product?.name);
   const appId = normalizeText(product?.appId);
@@ -882,14 +899,16 @@ async function loadProduct(productId){
 }
 
 function renderProduct(p){
-  document.title = `${p.name} – Ứng Dụng Thông Minh`;
-  document.getElementById("pdBreadName").textContent = p.name;
+  const productName = canonicalProductName(p);
+
+  document.title = `${productName} – Ứng Dụng Thông Minh`;
+  document.getElementById("pdBreadName").textContent = productName;
 
   // main image
   const imgEl = document.getElementById("pdMainImg");
   const resolvedImage = resolveProductImage(p);
   if(resolvedImage){
-    imgEl.innerHTML = `<img src="${resolvedImage}" alt="${p.name}">`;
+    imgEl.innerHTML = `<img src="${resolvedImage}" alt="${productName}">`;
   } else {
     const icons = {hoctap:"📚",lamviec:"💼"};
     imgEl.textContent = icons[(p.appId||"").toLowerCase()] || "📦";
@@ -897,7 +916,7 @@ function renderProduct(p){
 
   // buy box
   document.getElementById("pdCatBadge").textContent = softwareCode(p.appId);
-  document.getElementById("pdTitle").textContent = p.name;
+  document.getElementById("pdTitle").textContent = productName;
   document.getElementById("pdCycle").textContent = `Loại: ${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}`;
   document.getElementById("pdPrice").textContent = fmtVnd(p.price);
   updateBuyBtn();
@@ -905,7 +924,7 @@ function renderProduct(p){
 
   // content from productContent map
   const content = productContent[p.id] || {
-    desc: `${p.name} — Sản phẩm phần mềm chất lượng cao, giao key tự động sau thanh toán.`,
+    desc: `${productName} — Sản phẩm phần mềm chất lượng cao, giao key tự động sau thanh toán.`,
     icon: "📦",
     features: [
       { icon:"⚡", title:"Tự động giao key", detail:"Nhận key ngay sau thanh toán" },
@@ -927,14 +946,14 @@ function renderProduct(p){
 
   // desc tab
   document.getElementById("pdDescIcon").textContent = content.icon;
-  document.getElementById("pdDescTitle").textContent = p.name;
+  document.getElementById("pdDescTitle").textContent = productName;
   const featureHtml = content.features.map(f=>
     `<div class="pd-feature">
       <div class="pd-feature-icon">${f.icon}</div>
       <div class="pd-feature-text"><strong>${f.title}</strong><span>${f.detail}</span></div>
     </div>`
   ).join("");
-  document.getElementById("pdFeatureList").innerHTML = `${renderLongDescription(content, p.name)}${featureHtml}`;
+  document.getElementById("pdFeatureList").innerHTML = `${renderLongDescription(content, productName)}${featureHtml}`;
 
   // guide tab
   document.getElementById("pdGuideSteps").innerHTML = content.guide.map(s=>

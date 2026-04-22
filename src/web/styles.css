@@ -133,15 +133,27 @@ pointer-events:none;z-index:0}
 .hero-logo-board{animation-delay:.24s}
 @keyframes heroFadeUp{to{opacity:1;transform:translateY(0)}}
 
-/* ═══════════════════ BANNER CAROUSEL — Trăng Tím ═══════════════════ */
-.banner-carousel{overflow:hidden;padding:32px 0;background:linear-gradient(180deg,#110827 0%,#1d0f4a 40%,#2b1466 60%,#110827 100%);border-top:1px solid rgba(167,139,250,.12);border-bottom:1px solid rgba(167,139,250,.12);position:relative}
-.banner-carousel::before,.banner-carousel::after{content:"";position:absolute;top:0;bottom:0;width:100px;z-index:2;pointer-events:none}
-.banner-carousel::before{left:0;background:linear-gradient(to right,#110827,transparent)}
-.banner-carousel::after{right:0;background:linear-gradient(to left,#110827,transparent)}
+/* ═══════════════════ BANNER CAROUSEL — Premium Glow ═══════════════════ */
+.banner-carousel{
+  overflow:hidden;
+  padding:32px 0;
+  position:relative;
+  border-top:1px solid rgba(193,174,255,.22);
+  border-bottom:1px solid rgba(193,174,255,.18);
+  background:
+    radial-gradient(1200px 220px at 50% 50%, rgba(162,132,255,.2) 0%, rgba(162,132,255,0) 64%),
+    radial-gradient(620px 180px at 12% 16%, rgba(132,170,255,.14) 0%, rgba(132,170,255,0) 70%),
+    radial-gradient(560px 180px at 88% 22%, rgba(255,156,184,.12) 0%, rgba(255,156,184,0) 72%),
+    linear-gradient(180deg, #21174a 0%, #2b1f63 46%, #241a54 100%);
+  box-shadow: inset 0 16px 36px rgba(255,255,255,.03), inset 0 -18px 34px rgba(0,0,0,.28);
+}
+.banner-carousel::before,.banner-carousel::after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.banner-carousel::before{left:0;background:linear-gradient(to right,rgba(18,11,45,.96),rgba(18,11,45,0))}
+.banner-carousel::after{right:0;background:linear-gradient(to left,rgba(18,11,45,.96),rgba(18,11,45,0))}
 .banner-track{display:flex;gap:20px;width:max-content;transition:transform .8s cubic-bezier(.4,0,.2,1)}
-.banner-card{flex-shrink:0;width:280px;height:170px;border-radius:18px;overflow:hidden;position:relative;display:flex;align-items:flex-end;padding:16px 18px;color:#fff;font-weight:700;font-size:.92rem;box-shadow:0 4px 24px rgba(0,0,0,.45),0 0 0 1px rgba(167,139,250,.18);transition:transform .3s ease,box-shadow .3s ease;cursor:pointer;text-decoration:none;border:1px solid rgba(196,181,253,.15)}
-.banner-card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 12px 40px rgba(124,58,237,.45),0 0 0 1.5px rgba(196,181,253,.4)}
-.banner-card::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,4,24,.45) 0%,rgba(14,8,40,.18) 52%,rgba(14,8,40,.06) 100%);z-index:1}
+.banner-card{flex-shrink:0;width:280px;height:170px;border-radius:18px;overflow:hidden;position:relative;display:flex;align-items:flex-end;padding:16px 18px;color:#fff;font-weight:700;font-size:.92rem;box-shadow:0 8px 28px rgba(8,6,22,.45),0 0 0 1px rgba(215,201,255,.2);transition:transform .3s ease,box-shadow .3s ease;cursor:pointer;text-decoration:none;border:1px solid rgba(221,212,255,.2)}
+.banner-card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 16px 44px rgba(117,82,240,.48),0 0 0 1.5px rgba(220,206,255,.48)}
+.banner-card::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(9,6,30,.52) 0%,rgba(15,10,42,.2) 52%,rgba(15,10,42,.06) 100%);z-index:1}
 .banner-card::after{content:"";position:absolute;top:10px;right:10px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(196,181,253,.18),transparent 70%);pointer-events:none;z-index:0}
 .banner-card-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:4px}
 .banner-card-title{font-size:.93rem;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.42);line-height:1.35}

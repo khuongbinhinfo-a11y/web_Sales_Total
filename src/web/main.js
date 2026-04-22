@@ -366,6 +366,13 @@ function isStudyCap01Family(product) {
   );
 }
 
+function canonicalProductName(product) {
+  if (isStudyCap01Family(product)) {
+    return "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học";
+  }
+  return String(product?.name || "").trim();
+}
+
 function pickStudyCap01Representative(products) {
   const preferredIds = [
     "prod-study-month",
@@ -775,21 +782,23 @@ function buildTabs(){
 function renderProducts(){
   const q = (searchInput.value||"").toLowerCase();
   const filtered = allProducts.filter(p => {
+    const displayName = canonicalProductName(p).toLowerCase();
     const matchCat = activeCat==="all" || (p.appId||"").toLowerCase()===activeCat;
-    const matchQ   = !q || p.name.toLowerCase().includes(q) || (p.appId||"").toLowerCase().includes(q);
+    const matchQ   = !q || p.name.toLowerCase().includes(q) || displayName.includes(q) || (p.appId||"").toLowerCase().includes(q);
     return matchCat && matchQ;
   });
 
   productList.innerHTML = "";
   filtered.forEach(p => {
+    const productName = canonicalProductName(p);
     const isFeat = p.cycle === "yearly";
     const intro = softwareIntro(p);
     const resolvedImage = resolveProductImage(p);
     const visual = resolvedImage
-      ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${p.name}">`
+      ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${productName}">`
       : `<div class="p-card-img-fallback">
           <span class="p-card-img-kicker">${softwareCode(p.appId)}</span>
-          <strong>${p.name}</strong>
+          <strong>${productName}</strong>
           <p>${intro}</p>
         </div>`;
     const card   = document.createElement("article");
@@ -799,7 +808,7 @@ function renderProducts(){
       <div class="p-card-img">${visual}</div>
       <div class="p-card-body">
         <span class="p-card-cat">${softwareCode(p.appId)}</span>
-        <h3 class="p-card-name">${p.name}</h3>
+        <h3 class="p-card-name">${productName}</h3>
         <p class="p-card-intro">${intro}</p>
         <p class="p-card-meta">${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}</p>
         <div class="p-card-price-row">
@@ -839,13 +848,14 @@ function renderBanner(){
   const track = document.getElementById("bannerTrack");
   if(!track || !allProducts.length) return;
   const items = allProducts.map((p,i)=>{
+    const productName = canonicalProductName(p);
     const fallbackBg = moonPurpleGradients[i % moonPurpleGradients.length];
     const imgSrc = p.image || bannerImagePool[i % bannerImagePool.length];
     return `<a class="banner-card" href="/product/${encodeURIComponent(p.id)}" style="background:${fallbackBg}">
       <img class="banner-card-bg" src="${imgSrc}" alt="" loading="lazy">
       <div class="banner-card-shine"></div>
       <div class="banner-card-content">
-        <div class="banner-card-title">${p.name}</div>
+        <div class="banner-card-title">${productName}</div>
         <div class="banner-card-sub">${fmtVnd(p.price)} · ${fmtCycle(p.cycle)}</div>
       </div>
     </a>`;
