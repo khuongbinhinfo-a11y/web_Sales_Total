@@ -1242,6 +1242,30 @@ async function findCustomerByEmail(email) {
   };
 }
 
+async function findCustomerById(customerId) {
+  const normalizedCustomerId = String(customerId || "").trim();
+  if (!normalizedCustomerId) {
+    return null;
+  }
+
+  const result = await pool.query(
+    "SELECT id, email, full_name, password_hash FROM customers WHERE id = $1",
+    [normalizedCustomerId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    passwordHash: row.password_hash || ""
+  };
+}
+
 async function registerCustomerByEmail(email, fullName, passwordHash) {
   const normalizedEmail = email.trim().toLowerCase();
   const existing = await pool.query(
@@ -1767,6 +1791,7 @@ module.exports = {
   getAdminDashboard,
   findOrCreateCustomerByEmail,
   createCustomerAccount,
+  findCustomerById,
   findCustomerByEmail,
   registerCustomerByEmail,
   updateCustomerPasswordByEmail,

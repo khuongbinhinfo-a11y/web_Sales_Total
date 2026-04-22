@@ -1,5 +1,5 @@
 const { env } = require("../config/env");
-const { recordWebhookEvent, markOrderPaid, getOrderByCode } = require("./store");
+const { recordWebhookEvent, markOrderPaid, getOrderByCode, findCustomerById } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
 const { pool } = require("../db/pool");
 
@@ -52,6 +52,19 @@ function resolveGmailRecipients() {
 
   const sender = resolveGmailSender();
   return sender ? [sender] : [];
+}
+
+async function resolvePaidOrderRecipients(order) {
+  const customerId = String(order?.customerId || "").trim();
+  if (customerId) {
+    const customer = await findCustomerById(customerId);
+    const customerEmail = String(customer?.email || "").trim();
+    if (customerEmail) {
+      return [customerEmail];
+    }
+  }
+
+  return resolveGmailRecipients();
 }
 
 function maskKeyValue(keyValue) {
@@ -357,7 +370,7 @@ async function hasRecentPaidOrderEmailSent(orderId) {
 }
 
 async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, idempotencyKey }) {
-  const recipients = resolveGmailRecipients();
+  const recipients = await resolvePaidOrderRecipients(order);
 
   const attempt = await createEmailNotificationAttempt({
     eventType: EMAIL_EVENT_PAID_ORDER_SUCCESS,
