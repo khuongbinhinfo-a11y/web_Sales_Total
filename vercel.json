@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": [
+        "src/**",
+        "products/image/**",
+        "docs/ai-gates/**",
+        "runtime-settings.json"
+      ],
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
+}

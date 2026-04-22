@@ -85,6 +85,7 @@ const {
 const app = express();
 const webRoot = path.join(__dirname, "web");
 const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
+let prepareServerPromise;
 
 app.disable("x-powered-by");
 app.use(cors());
@@ -1885,21 +1886,53 @@ app.use((error, req, res, next) => {
     message = "Cơ sở dữ liệu chưa cập nhật schema đăng nhập. Vui lòng chạy migrate và thử lại.";
   }
 
+  if (errorCode === "MISSING_DATABASE_URL") {
+    finalStatusCode = 503;
+    message = "Hệ thống chưa cấu hình kết nối cơ sở dữ liệu.";
+  }
+
   if (statusCode >= 500) {
     console.error(error);
   }
   res.status(finalStatusCode).json({ message });
 });
 
-const host = "0.0.0.0";
-app.listen(env.port, host, async () => {
-  console.log(`Ứng Dụng Thông Minh running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
-  try {
-    await ensureCustomerAuthSchema();
-    await ensureEmailOtpSchema();
-    await ensureAdminLoginSecuritySchema();
-    console.log("✅ Customer auth schema ready");
-  } catch (error) {
-    console.error("⚠️ Could not auto-ensure customer auth schema:", error.message);
+async function prepareServer() {
+  if (!prepareServerPromise) {
+    prepareServerPromise = (async () => {
+      if (!env.databaseUrl) {
+        console.warn("⚠️ Skipping schema bootstrap because DATABASE_URL is not configured.");
+        return;
+      }
+
+      try {
+        await ensureCustomerAuthSchema();
+        await ensureEmailOtpSchema();
+        await ensureAdminLoginSecuritySchema();
+        console.log("✅ Customer auth schema ready");
+      } catch (error) {
+        console.error("⚠️ Could not auto-ensure customer auth schema:", error.message);
+      }
+    })();
   }
-});
+
+  return prepareServerPromise;
+}
+
+async function startServer() {
+  await prepareServer();
+  const host = "0.0.0.0";
+  app.listen(env.port, host, () => {
+    console.log(`Ứng Dụng Thông Minh running at ${env.appBaseUrl} (mode=${env.nodeEnv})`);
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  app,
+  prepareServer,
+  startServer
+};

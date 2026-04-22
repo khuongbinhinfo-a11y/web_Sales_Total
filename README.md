@@ -185,6 +185,21 @@ gcloud run deploy web-sales-total \
 
 3. Cloud Run se cap `PORT`, app da su dung `process.env.PORT`.
 
+## Deploy Vercel (serverless)
+Repo nay can them adapter cho Vercel vi backend goc duoc viet theo Express monolith.
+
+Files lien quan:
+- `api/index.js`: entrypoint serverless cho Vercel
+- `vercel.json`: rewrite toan bo route vao Express app
+
+Bien moi truong toi thieu tren Vercel:
+- `DATABASE_URL`
+- `SESSION_SIGNING_SECRET`
+- `NODE_ENV=production`
+- `APP_BASE_URL=https://<your-vercel-domain>`
+
+Neu thieu `DATABASE_URL`, Vercel function se van boot duoc nhung cac route can DB se tra loi 503 thay vi crash luc khoi dong.
+
 ## Pham vi MVP hien tai
 - Auth hien tai la muc toi thieu (chua RBAC/chua user management)
 - Stripe adapter webhook co san, checkout provider that chua hoan tat

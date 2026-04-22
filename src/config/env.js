@@ -154,7 +154,7 @@ const env = {
 };
 
 if (!env.databaseUrl) {
-  throw new Error("Missing DATABASE_URL. Copy .env.example to .env and set DATABASE_URL.");
+  console.warn("[env] DATABASE_URL is missing. Database-backed routes will return errors until it is configured.");
 }
 
 if (hasGoogleRefreshTokenAlias) {
