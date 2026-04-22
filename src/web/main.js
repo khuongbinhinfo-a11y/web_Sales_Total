@@ -32,8 +32,12 @@ const dropLogout       = document.getElementById("dropLogout");
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
-  { id:"demo-hoc01", appId:"hoctap",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:49000,  credits:1 },
-  { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1 },
+  { id:"prod-study-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:89000,  credits:120 },
+  { id:"prod-study-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:599000,  credits:1800 },
+  { id:"prod-study-premium-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:119000,  credits:240 },
+  { id:"prod-study-premium-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:899000,  credits:3600 },
+  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:999000,  credits:9990 },
+  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:1599000,  credits:15990 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",        cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly",  price:300000, credits:2 }
@@ -129,10 +133,15 @@ const T = {
     nav_products:"Sản phẩm", nav_lookup:"Tra cứu đơn", nav_login:"Đăng nhập", nav_admin:"Admin",
     nav_my_products:"Sản phẩm đã mua", nav_balance:"Số dư", nav_logout:"Đăng xuất",
     hero_badge:"✨ Ứng dụng học tập & làm việc",
-    hero_line1:"Phần mềm giúp bạn học tốt hơn", hero_line2:"và làm việc hiệu quả hơn",
-    hero_sub:"Bộ ứng dụng bản quyền dành cho học sinh, sinh viên và nhân viên văn phòng. Kích hoạt ngay — dùng được ngay.",
+    hero_line1:"Ứng Dụng Thông Minh", hero_line2:"",
+    hero_sub:"Gọn, nhanh, dùng được ngay.",
     hero_guide:"Hướng dẫn sử dụng",
-    hc_auto:"Key tự động 24/7", hc_sepay:"Thanh toán linh hoạt", hc_safe:"Bảo hành uy tín",
+    hero_logo_key:"Kích hoạt nhanh",
+    hero_logo_app:"Học tập gọn",
+    hero_logo_pro:"Bản quyền rõ",
+    hero_logo_web_tile:"Web",
+    hero_logo_web:"Thiết kế web chuyên nghiệp",
+    hero_logo_web_sub:"Nhanh chóng",
     trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
     cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
     cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
@@ -204,10 +213,15 @@ const T = {
     nav_products:"Products", nav_lookup:"Order lookup", nav_login:"Login", nav_admin:"Admin",
     nav_my_products:"My Products", nav_balance:"Balance", nav_logout:"Logout",
     hero_badge:"✨ Apps for study & work",
-    hero_line1:"Software to help you learn better", hero_line2:"and work more efficiently",
-    hero_sub:"Licensed apps for students and office workers. Activate instantly — start using right away.",
+    hero_line1:"Smart Applications", hero_line2:"",
+    hero_sub:"Clean, fast, ready to use.",
     hero_guide:"How to use",
-    hc_auto:"24/7 auto delivery", hc_sepay:"Flexible payment", hc_safe:"Reliable warranty",
+    hero_logo_key:"Fast activation",
+    hero_logo_app:"Lean study flow",
+    hero_logo_pro:"Clear licensing",
+    hero_logo_web_tile:"Web",
+    hero_logo_web:"Professional web design",
+    hero_logo_web_sub:"Fast delivery",
     trust_products:"Products", trust_orders:"Orders delivered", trust_rating:"Rating", trust_support:"Support",
     cat_title:"Product categories", cat_sub:"Choose a category or browse all products below", cat_all:"All",
     cat_hoctap:"Study", cat_lamviec:"Work",
@@ -340,6 +354,40 @@ function softwareIntro(product){
   return lang === "vi"
     ? "Phiên bản bản quyền ổn định, kích hoạt nhanh, phù hợp triển khai sử dụng ngay."
     : "A stable licensed version with quick activation, ready for immediate use.";
+}
+
+function isStudyCap01Family(product) {
+  const id = normalizeText(product?.id);
+  const name = normalizeText(product?.name);
+  const appId = normalizeText(product?.appId);
+  return (
+    appId === "app study 12" ||
+    /phan mem hoc tap cho hoc sinh khoi cap 01|khoi cap 01|prod study/.test(`${id} ${name}`)
+  );
+}
+
+function pickStudyCap01Representative(products) {
+  const preferredIds = [
+    "prod-study-month",
+    "prod-study-year",
+    "prod-study-standard-lifetime",
+    "prod-study-premium-month",
+    "prod-study-premium-year",
+    "prod-study-premium-lifetime"
+  ];
+  for (const id of preferredIds) {
+    const found = products.find((item) => item.id === id);
+    if (found) return found;
+  }
+  return products[0] || null;
+}
+
+function buildStorefrontProducts(products) {
+  const list = Array.isArray(products) ? products.slice() : [];
+  const studyFamily = list.filter(isStudyCap01Family);
+  const others = list.filter((item) => !isStudyCap01Family(item));
+  const representative = pickStudyCap01Representative(studyFamily);
+  return representative ? [representative, ...others] : others;
 }
 
 /* ═══════════════ AUTH STATE ═══════════════ */
@@ -854,6 +902,7 @@ async function loadCatalog(){
     console.warn("Catalog fallback",e);
   }
   allProducts = allProducts.map(p => ({ ...p, image: resolveProductImage(p) }));
+  allProducts = buildStorefrontProducts(allProducts);
   buildTabs();
   renderProducts();
   renderBanner();

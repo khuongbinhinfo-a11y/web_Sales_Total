@@ -292,9 +292,23 @@ async function commitChecklistToGithub({ app, message, branch }) {
 
 let cachedTelegramBot = { username: "", fetchedAt: 0 };
 
+function canRegisterTelegramWebhook(baseUrl) {
+  try {
+    const parsed = new URL(String(baseUrl || "").trim());
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 async function setupTelegramWebhook() {
   if (!env.telegramBotToken) {
     console.log("⚠️  Telegram bot token not configured, skipping webhook setup");
+    return;
+  }
+
+  if (!canRegisterTelegramWebhook(env.appBaseUrl)) {
+    console.log(`⚠️  Skipping Telegram webhook setup for non-HTTPS APP_BASE_URL: ${env.appBaseUrl}`);
     return;
   }
 

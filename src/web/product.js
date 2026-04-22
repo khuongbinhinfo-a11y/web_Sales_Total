@@ -3,8 +3,12 @@
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
-  { id:"demo-hoc01", appId:"hoctap",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:49000,  credits:1 },
-  { id:"demo-hoc12", appId:"hoctap",  name:"Khóa học lớp 12",              cycle:"one_time", price:79000,  credits:1 },
+  { id:"prod-study-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:89000,  credits:120 },
+  { id:"prod-study-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:599000,  credits:1800 },
+  { id:"prod-study-premium-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:119000,  credits:240 },
+  { id:"prod-study-premium-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:899000,  credits:3600 },
+  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:999000,  credits:9990 },
+  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:1599000,  credits:15990 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 }
@@ -612,7 +616,8 @@ function renderPlanZone(product) {
   function paintPlanCards() {
     const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
-    if (!targets[selectedPlanTier]) {
+    const tierExists = blueprint.tiers.some((tier) => tier.key === selectedPlanTier);
+    if (!tierExists) {
       selectedPlanTier = targets.standard ? "standard" : "free";
     }
 

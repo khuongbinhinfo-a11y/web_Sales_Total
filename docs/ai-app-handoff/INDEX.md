@@ -10,7 +10,9 @@ Thu muc nay da gom san cac file can thiet de ban giao cho AI-app.
   3. `environments/*.postman_environment.json`
   4. `integration-checklist.md`
   5. `ai-app-sync-plan-v1.md`
-  6. `ai-gates/definition-ready-done.<app>.yaml`
+  6. `multi-app-license-position-note.md`
+  7. `app-license-minimum-schema-api.md`
+  8. `ai-gates/definition-ready-done.<app>.yaml`
 
 ## 2) File theo muc dich
 - Contract API:
@@ -23,6 +25,8 @@ Thu muc nay da gom san cac file can thiet de ban giao cho AI-app.
 - Checklist va van hanh:
   - `integration-checklist.md`
   - `ai-app-sync-plan-v1.md`
+  - `multi-app-license-position-note.md` (ban tom tat de chot huong account + entitlement + license)
+  - `app-license-minimum-schema-api.md` (schema DB + API toi thieu de AIapp/Web tong tham chieu)
   - `app-onboarding-ticket-template.md`
   - `WEB_TOTAL_PRODUCT_MAP_JSON.json` (map productId de AI-app noi checkout)
 - Gate theo app:
