@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const yaml = require("js-yaml");
 const { OAuth2Client } = require("google-auth-library");
-const { env } = require("./config/env");
+const { env, startupConfigIssues } = require("./config/env");
 const { pool } = require("./db/pool");
 const { getSepayRuntimeSettings, updateSepayRuntimeSettings } = require("./config/runtimeSettings");
 
@@ -451,19 +451,24 @@ app.post(
 app.get(
   "/api/health",
   asyncHandler(async (req, res) => {
+    const healthBase = {
+      environment: env.nodeEnv,
+      paymentProviderMode: env.paymentProviderMode,
+      configuration: startupConfigIssues.length > 0 ? "invalid" : "ok",
+      configIssues: startupConfigIssues
+    };
+
     try {
       await pool.query("SELECT 1");
       return res.json({
         ok: true,
-        environment: env.nodeEnv,
-        paymentProviderMode: env.paymentProviderMode,
+        ...healthBase,
         database: "connected"
       });
     } catch (error) {
       return res.status(503).json({
         ok: false,
-        environment: env.nodeEnv,
-        paymentProviderMode: env.paymentProviderMode,
+        ...healthBase,
         database: "disconnected",
         message: error.message
       });

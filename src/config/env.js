@@ -153,6 +153,30 @@ const env = {
   githubRepoBranch: process.env.GITHUB_REPO_BRANCH || "main"
 };
 
+function getStartupConfigIssues() {
+  const issues = [];
+
+  if (env.nodeEnv === "production") {
+    if (!env.sessionSigningSecret || env.sessionSigningSecret === "dev-session-secret") {
+      issues.push("SESSION_SIGNING_SECRET must be set to a strong secret in production.");
+    }
+
+    if (env.adminOwnerKeyLoginEnabled) {
+      if (!env.adminAccessKey) {
+        issues.push("ADMIN_ACCESS_KEY is required when ADMIN_OWNER_KEY_LOGIN_ENABLED=true.");
+      } else if (env.adminAccessKey.length < 16) {
+        issues.push("ADMIN_ACCESS_KEY must be at least 16 characters in production.");
+      } else if (env.adminAccessKey.toLowerCase() === "admin-demo") {
+        issues.push("ADMIN_ACCESS_KEY cannot use demo defaults in production.");
+      }
+    }
+  }
+
+  return issues;
+}
+
+const startupConfigIssues = getStartupConfigIssues();
+
 if (!env.databaseUrl) {
   console.warn("[env] DATABASE_URL is missing. Database-backed routes will return errors until it is configured.");
 }
@@ -161,22 +185,12 @@ if (hasGoogleRefreshTokenAlias) {
   console.warn("[env] GOOGLE_REFRESH_TOKE is deprecated. Rename it to GOOGLE_REFRESH_TOKEN.");
 }
 
-if (env.nodeEnv === "production") {
-  if (!env.sessionSigningSecret || env.sessionSigningSecret === "dev-session-secret") {
-    throw new Error("SESSION_SIGNING_SECRET must be set to a strong secret in production.");
-  }
-
-  if (env.adminOwnerKeyLoginEnabled) {
-    if (!env.adminAccessKey) {
-      throw new Error("ADMIN_ACCESS_KEY is required when ADMIN_OWNER_KEY_LOGIN_ENABLED=true.");
-    }
-    if (env.adminAccessKey.length < 16) {
-      throw new Error("ADMIN_ACCESS_KEY must be at least 16 characters in production.");
-    }
-    if (env.adminAccessKey.toLowerCase() === "admin-demo") {
-      throw new Error("ADMIN_ACCESS_KEY cannot use demo defaults in production.");
-    }
-  }
+for (const issue of startupConfigIssues) {
+  console.error(`[env] ${issue}`);
 }
 
-module.exports = { env };
+module.exports = {
+  env,
+  getStartupConfigIssues,
+  startupConfigIssues
+};
