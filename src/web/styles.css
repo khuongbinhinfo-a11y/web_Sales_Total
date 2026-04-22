@@ -334,9 +334,10 @@ pointer-events:none;z-index:0}
 .modal-note a{color:var(--primary);font-weight:600;text-decoration:none}
 .modal-note a:hover{text-decoration:underline}
 .modal-error{text-align:center;font-size:.85rem;color:var(--danger);font-weight:600;margin:10px 0 0;min-height:20px}
-.google-auth-wrap{margin-top:12px;text-align:center}
+.google-auth-wrap{margin-top:12px;text-align:center;position:relative;z-index:2;pointer-events:auto}
 .google-auth-label{margin:0 0 8px;font-size:.78rem;color:var(--muted)}
-.google-auth-wrap > div{display:flex;justify-content:center}
+.google-auth-wrap > div{display:flex;justify-content:center;position:relative;z-index:2;pointer-events:auto;min-height:44px}
+.google-auth-wrap iframe{pointer-events:auto!important}
 .modal-tabs{display:flex;gap:0;margin:-32px -32px 20px;border-bottom:2px solid var(--line);overflow:hidden;border-radius:var(--radius) var(--radius) 0 0}
 .modal-tab{flex:1;padding:14px 0;font-size:.95rem;font-weight:700;background:var(--surface-2);border:none;cursor:pointer;color:var(--muted);transition:all var(--transition)}
 .modal-tab.active{background:#fff;color:var(--primary);box-shadow:inset 0 -2px 0 var(--primary)}

@@ -3,7 +3,7 @@ Email: khuongbinh.info@gmail.com
 Username: owner_khuongbinh
 Role: owner
 Trạng thái: active
-Mật khẩu tạm: <set-in-admin-panel>
+Mật khẩu tạm: <set-via-production-bootstrap>
 
 -----------------
 
@@ -11,3 +11,5 @@ Gmail Auto rep :
 Email: khuongbinh.info@gmail.com
 GG client ID: <set-via-env>
 Client secret: <set-via-env>
+GOOGLE_REFRESH_TOKE: <set-via-env>
+

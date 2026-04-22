@@ -293,6 +293,7 @@ let activeCat = "all";
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
 let pendingOpenPurchasedAfterAuth = false;
 let googleAuthInitialized = false;
+let googleAuthClientId = "";
 let googleAuthInitAttempts = 0;
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
@@ -466,6 +467,33 @@ async function handleGoogleCredential(credential){
   }
 }
 
+function renderGoogleAuthButtons() {
+  if (!googleAuthClientId || !window.google?.accounts?.id) {
+    return;
+  }
+
+  if (!(googleLoginWrap && googleRegisterWrap && googleLoginBtn && googleRegisterBtn)) {
+    return;
+  }
+
+  googleLoginWrap.style.display = "block";
+  googleRegisterWrap.style.display = "block";
+  googleLoginBtn.innerHTML = "";
+  googleRegisterBtn.innerHTML = "";
+
+  const buttonOptions = {
+    type: "standard",
+    theme: "outline",
+    size: "large",
+    text: "continue_with",
+    shape: "pill",
+    width: 320
+  };
+
+  window.google.accounts.id.renderButton(googleLoginBtn, buttonOptions);
+  window.google.accounts.id.renderButton(googleRegisterBtn, buttonOptions);
+}
+
 async function initGoogleAuth(){
   if (googleAuthInitialized) return;
 
@@ -479,12 +507,14 @@ async function initGoogleAuth(){
       return;
     }
 
+    googleAuthClientId = String(config.clientId || "").trim();
+
     if (!window.google?.accounts?.id) {
       return;
     }
 
     window.google.accounts.id.initialize({
-      client_id: config.clientId,
+      client_id: googleAuthClientId,
       callback: (response) => {
         if (!response?.credential) {
           loginError.textContent = t("modal_google_failed");
@@ -494,25 +524,8 @@ async function initGoogleAuth(){
       }
     });
 
-    if (googleLoginWrap && googleRegisterWrap && googleLoginBtn && googleRegisterBtn) {
-      googleLoginWrap.style.display = "block";
-      googleRegisterWrap.style.display = "block";
-      googleLoginBtn.innerHTML = "";
-      googleRegisterBtn.innerHTML = "";
-
-      const buttonOptions = {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        text: "continue_with",
-        shape: "pill",
-        width: 320
-      };
-
-      window.google.accounts.id.renderButton(googleLoginBtn, buttonOptions);
-      window.google.accounts.id.renderButton(googleRegisterBtn, buttonOptions);
-      googleAuthInitialized = true;
-    }
+    renderGoogleAuthButtons();
+    googleAuthInitialized = true;
   } catch {
     // Keep email/password auth available even if Google script fails.
   }
@@ -520,6 +533,7 @@ async function initGoogleAuth(){
 
 function ensureGoogleAuthInit() {
   if (googleAuthInitialized) {
+    renderGoogleAuthButtons();
     return;
   }
 

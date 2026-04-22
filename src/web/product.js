@@ -168,7 +168,7 @@ const productContent = {
       { icon:"⚡", title:"Test nhanh", detail:"Giá nhỏ để chạy thử checkout" },
       { icon:"🔔", title:"Test webhook", detail:"Xác minh callback Sepay về hệ thống" },
       { icon:"🔑", title:"Test giao key", detail:"Kiểm tra cấp key tự động sau paid" },
-      { icon:"📈", title:"Test vận hành", detail:"Đối soát dashboard và Telegram" },
+      { icon:"📈", title:"Test vận hành", detail:"Đối soát dashboard và email thông báo" },
     ],
     guide: [
       { title:"Mua gói test", detail:"Chọn gói test 2K và tạo đơn hàng." },

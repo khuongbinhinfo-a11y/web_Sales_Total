@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { env } = require("../config/env");
 const { pool } = require("../db/pool");
+const { sendGmailMessage, isGmailNotifyEnabled } = require("./payment");
 
 const OTP_TTL_MINUTES = 10;
 const OTP_LENGTH = 6;
@@ -25,7 +26,10 @@ function generateOtpCode() {
 }
 
 function isEmailOtpConfigured() {
-  return Boolean(env.smtpHost && env.smtpPort && env.smtpUser && env.smtpPass && env.smtpFrom);
+  return Boolean(
+    (env.smtpHost && env.smtpPort && env.smtpUser && env.smtpPass && env.smtpFrom)
+    || isGmailNotifyEnabled()
+  );
 }
 
 function getTransporter() {
@@ -77,16 +81,49 @@ async function ensureEmailOtpSchema() {
 }
 
 function subjectByPurpose(purpose) {
+  if (String(purpose || "").startsWith("admin_login:")) {
+    return "Ma xac minh dang nhap quan tri";
+  }
   return purpose === "reset_password"
     ? "Ma xac minh dat lai mat khau"
     : "Ma xac minh dang ky tai khoan";
 }
 
 function bodyByPurpose({ purpose, code }) {
+  if (String(purpose || "").startsWith("admin_login:")) {
+    return `Ma OTP dang nhap quan tri cua ban la: ${code}. Ma co hieu luc trong ${OTP_TTL_MINUTES} phut.`;
+  }
   if (purpose === "reset_password") {
     return `Ma dat lai mat khau cua ban la: ${code}. Ma co hieu luc trong ${OTP_TTL_MINUTES} phut.`;
   }
   return `Ma xac minh dang ky cua ban la: ${code}. Ma co hieu luc trong ${OTP_TTL_MINUTES} phut.`;
+}
+
+async function sendOtpEmail({ to, subject, text }) {
+  const transporter = getTransporter();
+  if (transporter) {
+    await transporter.sendMail({
+      from: env.smtpFrom,
+      to,
+      subject,
+      text
+    });
+    return;
+  }
+
+  const html = `<p>${text}</p>`;
+  const result = await sendGmailMessage({
+    subject,
+    text,
+    html,
+    to: [to]
+  });
+
+  if (!result.ok) {
+    const err = new Error(`Gmail OTP send failed: ${result.reason || "unknown"}`);
+    err.statusCode = 502;
+    throw err;
+  }
 }
 
 async function issueAndSendOtp({ email, purpose }) {
@@ -123,12 +160,12 @@ async function issueAndSendOtp({ email, purpose }) {
     [normalizedEmail, normalizedPurpose, codeHash, MAX_ATTEMPTS, OTP_TTL_MINUTES]
   );
 
-  const transporter = getTransporter();
-  await transporter.sendMail({
-    from: env.smtpFrom,
+  const subject = subjectByPurpose(normalizedPurpose);
+  const text = bodyByPurpose({ purpose: normalizedPurpose, code });
+  await sendOtpEmail({
     to: normalizedEmail,
-    subject: subjectByPurpose(normalizedPurpose),
-    text: bodyByPurpose({ purpose: normalizedPurpose, code })
+    subject,
+    text
   });
 
   return { ok: true, expiresInMinutes: OTP_TTL_MINUTES };
