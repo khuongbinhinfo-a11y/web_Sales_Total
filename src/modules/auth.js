@@ -483,7 +483,8 @@ function adminLoginPage() {
       .msg.info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
       .msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
       .msg.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
-      .readonly{background:#f8fafc;color:#475569}
+      .hintbox{width:100%;padding:10px 12px;border:1px solid #c8d2dd;border-radius:8px;margin:8px 0;background:#f8fafc;color:#475569;font-size:14px;line-height:1.4}
+      .hintbox strong{color:#0f172a}
       hr{border:0;border-top:1px solid #e2e8f0;margin:16px 0}
     </style>
   </head>
@@ -496,7 +497,7 @@ function adminLoginPage() {
         <label>Password</label>
         <input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="••••••••" required />
         <label>Email nhan OTP</label>
-        <input type="text" id="adminOtpEmailHint" class="readonly" value="OTP se gui vao email da dang ky cua tai khoan admin" readonly />
+        <div id="adminOtpEmailHint" class="hintbox">Day la email da dang ky cua tai khoan admin. Khong nhap o day.</div>
         <label>OTP email (bat buoc cho owner/manager)</label>
         <input type="text" id="adminOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
         <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
@@ -535,9 +536,9 @@ function adminLoginPage() {
 
       function updateOtpDestination(text) {
         const match = String(text || "").match(/[A-Za-z0-9._%+-]+\*+[^\s]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
-        otpEmailHint.value = match
+        otpEmailHint.textContent = match
           ? "OTP se gui toi: " + match[0]
-          : "OTP se gui vao email da dang ky cua tai khoan admin";
+          : "Day la email da dang ky cua tai khoan admin. Khong nhap o day.";
       }
 
       function setMessage(type, text) {
