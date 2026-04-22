@@ -444,7 +444,7 @@ function setLoggedOut(){
 
 async function checkAuth(){
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await fetch("/api/auth/me", { credentials: "same-origin" });
     if(!res.ok) { setLoggedOut(); return; }
     const data = await res.json();
     if(data.customer) setLoggedIn(data);
@@ -452,7 +452,33 @@ async function checkAuth(){
   } catch { setLoggedOut(); }
 }
 
-async function finalizeAuthFlow(){
+function seedAuthState(snapshot){
+  if(!snapshot?.customer) return false;
+  setLoggedIn({
+    customer: snapshot.customer,
+    wallets: Array.isArray(snapshot.wallets) ? snapshot.wallets : [],
+    subscriptions: Array.isArray(snapshot.subscriptions) ? snapshot.subscriptions : [],
+    orders: Array.isArray(snapshot.orders) ? snapshot.orders : [],
+    keyDeliveries: Array.isArray(snapshot.keyDeliveries) ? snapshot.keyDeliveries : []
+  });
+  return true;
+}
+
+async function finalizeAuthFlow(snapshot){
+  if(seedAuthState(snapshot)){
+    loginModal.classList.remove("show");
+    if(pendingOpenPurchasedAfterAuth){
+      pendingOpenPurchasedAfterAuth = false;
+      openPurchasedDrawer();
+    }
+
+    // Refresh from the server in the background after the session cookie lands.
+    setTimeout(() => {
+      checkAuth().catch(() => {});
+    }, 250);
+    return;
+  }
+
   await checkAuth();
   if(!currentUser){
     // Retry once for slow cookie propagation in some browsers/proxies.
@@ -476,6 +502,7 @@ async function handleGoogleCredential(credential){
   try {
     const res = await fetch("/api/auth/customer/google", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ credential })
     });
@@ -484,7 +511,7 @@ async function handleGoogleCredential(credential){
       loginError.textContent = data.message || t("modal_google_failed");
       return;
     }
-    await finalizeAuthFlow();
+    await finalizeAuthFlow(data);
   } catch {
     loginError.textContent = t("modal_google_failed");
   }
@@ -632,11 +659,11 @@ loginForm.addEventListener("submit", async (e)=>{
   loginError.textContent = "";
   try {
     const res = await fetch("/api/auth/customer/login",{
-      method:"POST", headers:{"Content-Type":"application/json"},
+      method:"POST", credentials: "same-origin", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ email, password })
     });
     if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
-    await finalizeAuthFlow();
+    await finalizeAuthFlow(await res.json());
   } catch {
     loginError.textContent = t("modal_auth_error_network");
   }
@@ -655,11 +682,11 @@ registerForm.addEventListener("submit", async (e)=>{
   loginError.textContent = "";
   try {
     const res = await fetch("/api/auth/customer/register",{
-      method:"POST", headers:{"Content-Type":"application/json"},
+      method:"POST", credentials: "same-origin", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ email, fullName, password, code })
     });
     if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
-    await finalizeAuthFlow();
+    await finalizeAuthFlow(await res.json());
   } catch {
     loginError.textContent = t("modal_auth_error_network");
   }
