@@ -103,6 +103,20 @@ function bodyByPurpose({ purpose, code }) {
 }
 
 async function sendOtpEmail({ to, subject, text }) {
+  const html = `<p>${text}</p>`;
+  if (isGmailNotifyEnabled()) {
+    const result = await sendGmailMessage({
+      subject,
+      text,
+      html,
+      to: [to]
+    });
+
+    if (result.ok) {
+      return;
+    }
+  }
+
   const transporter = getTransporter();
   if (transporter) {
     await transporter.sendMail({
@@ -114,19 +128,9 @@ async function sendOtpEmail({ to, subject, text }) {
     return;
   }
 
-  const html = `<p>${text}</p>`;
-  const result = await sendGmailMessage({
-    subject,
-    text,
-    html,
-    to: [to]
-  });
-
-  if (!result.ok) {
-    const err = new Error(`Gmail OTP send failed: ${result.reason || "unknown"}`);
-    err.statusCode = 502;
-    throw err;
-  }
+  const err = new Error("OTP email delivery is not available");
+  err.statusCode = 502;
+  throw err;
 }
 
 async function issueAndSendOtp({ email, purpose }) {

@@ -478,24 +478,82 @@ function adminLoginPage() {
       input{width:100%;padding:10px;border:1px solid #c8d2dd;border-radius:8px;margin:8px 0}
       button{border:0;background:#8b3d00;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
       .tip{font-size:12px;color:#64748b;margin:8px 0 0}
+      .msg{font-size:13px;margin:12px 0 0;padding:10px 12px;border-radius:8px;display:none}
+      .msg.show{display:block}
+      .msg.info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+      .msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+      .msg.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
       hr{border:0;border-top:1px solid #e2e8f0;margin:16px 0}
     </style>
   </head>
   <body>
     <div class="card">
       <h2>Admin Login</h2>
-      <form method="post" action="/auth/admin/login">
+      <form id="adminLoginForm" method="post" action="/auth/admin/login">
         <label>Username</label>
-        <input type="text" name="username" autocomplete="username" placeholder="manager01" required />
+        <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01" required />
         <label>Password</label>
-        <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
+        <input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="••••••••" required />
         <label>OTP email (bat buoc cho owner/manager)</label>
-        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
+        <input type="text" id="adminOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
         <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
         <div class="tip">Buoc 2: nhap OTP roi bam Login lai de vao trang admin.</div>
-        <button type="submit">Login Admin</button>
+        <button id="adminLoginBtn" type="submit">Login Admin</button>
+        <div id="adminLoginMsg" class="msg info"></div>
       </form>
     </div>
+    <script>
+      const form = document.getElementById("adminLoginForm");
+      const msg = document.getElementById("adminLoginMsg");
+      const submitBtn = document.getElementById("adminLoginBtn");
+
+      function setMessage(type, text) {
+        msg.className = "msg show " + type;
+        msg.textContent = text;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        submitBtn.disabled = true;
+        setMessage("info", "Dang xu ly dang nhap admin...");
+
+        const body = new URLSearchParams({
+          username: document.getElementById("adminUsername").value,
+          password: document.getElementById("adminPassword").value,
+          otp: document.getElementById("adminOtp").value
+        });
+
+        try {
+          const response = await fetch("/auth/admin/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+              "Accept": "text/plain"
+            },
+            body: body.toString(),
+            redirect: "follow"
+          });
+
+          const text = (await response.text()).trim();
+          if (response.ok) {
+            window.location.href = "/admin";
+            return;
+          }
+
+          if (response.status === 202) {
+            setMessage("success", text || "OTP da duoc gui vao email admin. Nhap OTP roi bam Login lai.");
+            document.getElementById("adminOtp").focus();
+            return;
+          }
+
+          setMessage("error", text || "Dang nhap admin that bai.");
+        } catch (error) {
+          setMessage("error", "Loi ket noi: " + error.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>`;
 }
