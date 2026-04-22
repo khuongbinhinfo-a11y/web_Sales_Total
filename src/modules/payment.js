@@ -1,5 +1,5 @@
 const { env } = require("../config/env");
-const { recordWebhookEvent, markOrderPaid, getOrderByCode, getCustomerTelegramByCustomerId } = require("./store");
+const { recordWebhookEvent, markOrderPaid, getOrderByCode } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
 
 function getPaymentProviderMode() {
@@ -20,6 +20,34 @@ function getSepayConfig() {
 
 function isTelegramNotifyEnabled() {
   return env.telegramNotifyEnabled && Boolean(env.telegramBotToken);
+}
+
+function isGmailNotifyEnabled() {
+  return (
+    env.gmailNotifyEnabled &&
+    Boolean(env.googleClientId) &&
+    Boolean(env.googleClientSecret) &&
+    Boolean(env.googleRefreshToken) &&
+    Boolean(resolveGmailSender())
+  );
+}
+
+function resolveGmailSender() {
+  return String(env.gmailNotifyFrom || env.smtpFrom || "").trim();
+}
+
+function resolveGmailRecipients() {
+  const recipients = String(env.gmailNotifyTo || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (recipients.length > 0) {
+    return recipients;
+  }
+
+  const sender = resolveGmailSender();
+  return sender ? [sender] : [];
 }
 
 function maskKeyValue(keyValue) {
@@ -93,6 +121,171 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
   ].join("\n");
 }
 
+function buildGmailPaidOrderMessage({ order, keyDelivery }) {
+  const orderId = order?.orderCode || order?.id || "(unknown)";
+  const appId = order?.appId || "(unknown)";
+  const customerId = order?.customerId || "(unknown)";
+  const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
+  const currency = order?.currency || "VND";
+
+  const keyValue = keyDelivery?.keyValue || "(chua cap key)";
+  const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
+  const portalUrl = `${env.appBaseUrl}/portal`;
+
+  const subject = `[WST] Thanh toan thanh cong - ${orderId}`;
+  const text = [
+    "Thanh toan thanh cong",
+    `Order: ${orderId}`,
+    `Customer: ${customerId}`,
+    `App: ${appId}`,
+    `So tien: ${amount} ${currency}`,
+    `Key: ${keyText}`,
+    `Portal: ${portalUrl}`
+  ].join("\n");
+
+  const html = [
+    "<h3>Thanh toan thanh cong</h3>",
+    `<p><b>Order:</b> <code>${orderId}</code></p>`,
+    `<p><b>Customer:</b> <code>${customerId}</code></p>`,
+    `<p><b>App:</b> <code>${appId}</code></p>`,
+    `<p><b>So tien:</b> <b>${amount} ${currency}</b></p>`,
+    `<p><b>Key:</b> <code>${keyText}</code></p>`,
+    `<p><b>Portal:</b> <a href="${portalUrl}">${portalUrl}</a></p>`
+  ].join("");
+
+  return { subject, text, html };
+}
+
+function toBase64Url(value) {
+  return Buffer.from(value, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+async function getGoogleAccessTokenByRefreshToken() {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.googleClientId,
+      client_secret: env.googleClientSecret,
+      refresh_token: env.googleRefreshToken,
+      grant_type: "refresh_token"
+    })
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.access_token) {
+    const reason = payload?.error_description || payload?.error || `http_${response.status}`;
+    throw new Error(`oauth_token_failed:${reason}`);
+  }
+
+  return payload.access_token;
+}
+
+async function sendGmailMessage({ subject, text, html, to }) {
+  if (!isGmailNotifyEnabled()) {
+    return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config" };
+  }
+
+  const sender = resolveGmailSender();
+  if (!sender) {
+    return { ok: false, skipped: true, reason: "missing_from_email" };
+  }
+
+  const recipients = Array.isArray(to)
+    ? to.map((item) => String(item || "").trim()).filter(Boolean)
+    : String(to || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+  if (!recipients.length) {
+    return { ok: false, skipped: true, reason: "missing_recipient" };
+  }
+
+  const accessToken = await getGoogleAccessTokenByRefreshToken();
+  const boundary = `wst_${Date.now().toString(16)}`;
+  const rawEmail = [
+    `From: ${sender}`,
+    `To: ${recipients.join(", ")}`,
+    `Subject: ${subject}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary=\"${boundary}\"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "",
+    text,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/html; charset=UTF-8",
+    "",
+    html,
+    "",
+    `--${boundary}--`
+  ].join("\r\n");
+
+  const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ raw: toBase64Url(rawEmail) })
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.id) {
+    const reason = payload?.error?.message || `http_${response.status}`;
+    return {
+      ok: false,
+      skipped: false,
+      reason
+    };
+  }
+
+  return {
+    ok: true,
+    skipped: false,
+    messageId: payload.id,
+    threadId: payload.threadId || null,
+    recipients
+  };
+}
+
+async function notifyPaidOrderByGmail({ order, keyDelivery }) {
+  if (!isGmailNotifyEnabled()) {
+    return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config" };
+  }
+
+  const recipients = resolveGmailRecipients();
+  if (!recipients.length) {
+    return { ok: false, skipped: true, reason: "missing_recipient" };
+  }
+
+  try {
+    const message = buildGmailPaidOrderMessage({ order, keyDelivery });
+    return await sendGmailMessage({ ...message, to: recipients });
+  } catch (error) {
+    return { ok: false, skipped: false, reason: error.message || "send_failed" };
+  }
+}
+
 async function notifyPaidOrderToTelegram({ order, keyDelivery }) {
   if (!isTelegramNotifyEnabled()) {
     return { ok: false, skipped: true, reason: "telegram_disabled" };
@@ -100,18 +293,11 @@ async function notifyPaidOrderToTelegram({ order, keyDelivery }) {
 
   try {
     const text = buildTelegramPaidMessage({ order, keyDelivery });
-    const customerTelegram = await getCustomerTelegramByCustomerId(order?.customerId);
-    const customerChatId = customerTelegram?.chatId ? String(customerTelegram.chatId) : "";
-
-    if (customerChatId) {
-      return await sendTelegramMessage({ text, chatId: customerChatId });
+    if (!env.telegramChatId) {
+      return { ok: false, skipped: true, reason: "missing_admin_chat_id" };
     }
 
-    if (env.telegramChatId) {
-      return await sendTelegramMessage({ text, chatId: env.telegramChatId });
-    }
-
-    return { ok: false, skipped: true, reason: "missing_customer_and_admin_chat_id" };
+    return await sendTelegramMessage({ text, chatId: env.telegramChatId });
   } catch (error) {
     return { ok: false, skipped: false, reason: error.message || "send_failed" };
   }
@@ -192,7 +378,7 @@ async function processPaidWebhook(payload) {
     }
   });
 
-  const telegramNotification = await notifyPaidOrderToTelegram({
+  const gmailNotification = await notifyPaidOrderByGmail({
     order: result.order,
     keyDelivery: result.keyDelivery || null
   });
@@ -202,7 +388,8 @@ async function processPaidWebhook(payload) {
     idempotent: result.idempotent,
     order: result.order,
     keyDelivery: result.keyDelivery || null,
-    telegramNotification
+    appLicense: result.appLicense || null,
+    gmailNotification
   };
 }
 
@@ -491,6 +678,8 @@ module.exports = {
   verifySepayWebhookSignature,
   normalizeSepayWebhookSignature,
   buildSepayCheckout,
+  sendGmailMessage,
+  isGmailNotifyEnabled,
   sendTelegramMessage,
   isTelegramNotifyEnabled,
   isMockPaymentMode,

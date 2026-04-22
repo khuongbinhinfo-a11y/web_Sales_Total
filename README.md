@@ -89,6 +89,30 @@ npm run dev
 - `npm run db:migrate`: apply SQL migrations
 - `npm run db:seed`: seed du lieu mau
 - `npm run db:setup`: migrate + seed
+- `npm run gmail:auth-url`: tao link OAuth lay authorization code cho Gmail API
+- `npm run gmail:exchange-token -- --code <AUTH_CODE> --redirect-uri <REDIRECT_URI>`: doi code thanh refresh token
+
+## Lay GOOGLE_REFRESH_TOKEN nhanh (Gmail API)
+1. Dat bien toi thieu trong `.env`:
+```env
+GOOGLE_CLIENT_ID=<client_id>
+GOOGLE_CLIENT_SECRET=<client_secret>
+GOOGLE_REDIRECT_URI=<1 redirect URI da khai bao trong OAuth client>
+```
+2. Tao link xin quyen:
+```bash
+npm run gmail:auth-url
+```
+3. Mo link, dang nhap Google, cap quyen Gmail send.
+4. Lay `code` tu callback URL roi doi token:
+```bash
+npm run gmail:exchange-token -- --code <AUTH_CODE> --redirect-uri <REDIRECT_URI>
+```
+5. Copy `GOOGLE_REFRESH_TOKEN` in ra terminal vao `.env`.
+
+Luu y:
+- Neu token doi xong ma khong co `refresh_token`, vao Google Account -> Security -> Third-party access, thu revoke app roi cap quyen lai.
+- Redirect URI phai khop chinh xac voi danh sach redirect da khai bao trong OAuth client.
 
 ## API chinh
 - `GET /api/health`

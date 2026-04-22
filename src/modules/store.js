@@ -56,6 +56,135 @@ function mapKeyDelivery(row) {
   };
 }
 
+function mapAppLicense(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    appId: row.app_id,
+    productId: row.product_id,
+    orderId: row.order_id,
+    planCode: row.plan_code,
+    billingCycle: row.billing_cycle,
+    licenseKey: row.license_key,
+    status: row.status,
+    activatedAt: row.activated_at,
+    expiresAt: row.expires_at,
+    deviceId: row.device_id,
+    deviceName: row.device_name,
+    lastVerifiedAt: row.last_verified_at,
+    metadata: row.metadata,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function generateReadableLicenseKey() {
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randomPart = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `WSTL-${timePart}-${randomPart}`;
+}
+
+function computeLicenseExpiry(cycle) {
+  if (cycle === "monthly") {
+    const endAt = new Date();
+    endAt.setMonth(endAt.getMonth() + 1);
+    return endAt;
+  }
+
+  if (cycle === "yearly") {
+    const endAt = new Date();
+    endAt.setFullYear(endAt.getFullYear() + 1);
+    return endAt;
+  }
+
+  return null;
+}
+
+async function getOrderAppLicense(orderId) {
+  const result = await pool.query(
+    `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+            status, activated_at, expires_at, device_id, device_name, last_verified_at,
+            metadata, created_at, updated_at
+     FROM app_licenses
+     WHERE order_id = $1::uuid`,
+    [orderId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
+}
+
+async function issueAppLicenseForOrder({ client, order, product }) {
+  const existedResult = await client.query(
+    `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+            status, activated_at, expires_at, device_id, device_name, last_verified_at,
+            metadata, created_at, updated_at
+     FROM app_licenses
+     WHERE order_id = $1::uuid`,
+    [order.id]
+  );
+
+  if (existedResult.rowCount > 0) {
+    return mapAppLicense(existedResult.rows[0]);
+  }
+
+  const expiresAt = computeLicenseExpiry(product.cycle);
+  const metadata = {
+    source: "auto_after_paid",
+    orderCode: order.order_code,
+    cycle: product.cycle
+  };
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const licenseKey = generateReadableLicenseKey();
+    try {
+      const inserted = await client.query(
+        `INSERT INTO app_licenses(
+           id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle,
+           license_key, status, expires_at, metadata
+         )
+         VALUES (
+           gen_random_uuid(), $1, $2, $3, $4::uuid, $5, $6,
+           $7, 'inactive', $8, $9::jsonb
+         )
+         RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+                   status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                   metadata, created_at, updated_at`,
+        [
+          order.customer_id,
+          order.app_id,
+          order.product_id,
+          order.id,
+          product.id,
+          product.cycle,
+          licenseKey,
+          expiresAt ? expiresAt.toISOString() : null,
+          JSON.stringify(metadata)
+        ]
+      );
+
+      return mapAppLicense(inserted.rows[0]);
+    } catch (error) {
+      const uniqueLicenseKeyConflict =
+        error?.code === "23505" &&
+        (String(error?.constraint || "").includes("license_key") ||
+          String(error?.detail || "").includes("license_key"));
+      if (!uniqueLicenseKeyConflict || attempt === 4) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error("Khong the tao app license");
+}
+
 function computePeriod(cycle) {
   const startAt = new Date();
   const endAt = new Date(startAt);
@@ -259,8 +388,14 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     const orderRow = orderResult.rows[0];
     if (orderRow.status === "paid") {
       const existingDelivery = await getOrderKeyDelivery(orderId);
+      const existingLicense = await getOrderAppLicense(orderId);
       await client.query("COMMIT");
-      return { order: mapOrder(orderRow), keyDelivery: existingDelivery, idempotent: true };
+      return {
+        order: mapOrder(orderRow),
+        keyDelivery: existingDelivery,
+        appLicense: existingLicense,
+        idempotent: true
+      };
     }
 
     const txResult = await client.query(
@@ -272,8 +407,9 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     );
 
     if (txResult.rowCount === 0) {
+      const existingLicense = await getOrderAppLicense(orderId);
       await client.query("COMMIT");
-      return { order: mapOrder(orderRow), idempotent: true };
+      return { order: mapOrder(orderRow), appLicense: existingLicense, idempotent: true };
     }
 
     const paidOrderResult = await client.query(
@@ -295,6 +431,12 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       throw new Error("Khong tim thay product cho order");
     }
     const product = productResult.rows[0];
+
+    const appLicense = await issueAppLicenseForOrder({
+      client,
+      order: paidOrder,
+      product
+    });
 
     if (product.cycle !== "one_time") {
       const { startAt, endAt } = computePeriod(product.cycle);
@@ -410,13 +552,139 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     }
 
     await client.query("COMMIT");
-    return { order: mapOrder(paidOrder), keyDelivery, idempotent: false };
+    return { order: mapOrder(paidOrder), keyDelivery, appLicense, idempotent: false };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
+}
+
+async function listCustomerLicenses({ customerId, appId }) {
+  const params = [customerId];
+  let whereSql = "WHERE customer_id = $1";
+
+  if (appId) {
+    params.push(appId);
+    whereSql += ` AND app_id = $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+            status, activated_at, expires_at, device_id, device_name, last_verified_at,
+            metadata, created_at, updated_at
+     FROM app_licenses
+     ${whereSql}
+     ORDER BY created_at DESC`,
+    params
+  );
+
+  return result.rows.map(mapAppLicense);
+}
+
+async function activateCustomerLicense({ licenseId, customerId, deviceId, deviceName }) {
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET status = 'active',
+         activated_at = COALESCE(activated_at, NOW()),
+         last_verified_at = NOW(),
+         device_id = COALESCE($3, device_id),
+         device_name = COALESCE($4, device_name),
+         updated_at = NOW()
+     WHERE id = $1::uuid AND customer_id = $2
+       AND (expires_at IS NULL OR expires_at > NOW())
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               metadata, created_at, updated_at`,
+    [licenseId, customerId, deviceId || null, deviceName || null]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
+}
+
+async function verifyCustomerLicense({ licenseId, customerId, deviceId, deviceName }) {
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET status = CASE WHEN status = 'inactive' THEN 'active' ELSE status END,
+         activated_at = CASE WHEN activated_at IS NULL THEN NOW() ELSE activated_at END,
+         last_verified_at = NOW(),
+         device_id = COALESCE($3, device_id),
+         device_name = COALESCE($4, device_name),
+         updated_at = NOW()
+     WHERE id = $1::uuid AND customer_id = $2
+       AND status <> 'revoked'
+       AND (expires_at IS NULL OR expires_at > NOW())
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               metadata, created_at, updated_at`,
+    [licenseId, customerId, deviceId || null, deviceName || null]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
+}
+
+async function deactivateCustomerLicense({ licenseId, customerId }) {
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET status = 'inactive',
+         device_id = NULL,
+         device_name = NULL,
+         updated_at = NOW()
+     WHERE id = $1::uuid AND customer_id = $2 AND status <> 'revoked'
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               metadata, created_at, updated_at`,
+    [licenseId, customerId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
+}
+
+async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, deviceName }) {
+  const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
+  if (!normalizedLicenseKey) {
+    return null;
+  }
+
+  const customerFilterSql = customerId ? " AND customer_id = $5" : "";
+
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET status = CASE WHEN status = 'inactive' THEN 'active' ELSE status END,
+         activated_at = CASE WHEN activated_at IS NULL THEN NOW() ELSE activated_at END,
+         last_verified_at = NOW(),
+         device_id = COALESCE($3, device_id),
+         device_name = COALESCE($4, device_name),
+         updated_at = NOW()
+     WHERE license_key = $1 AND app_id = $2${customerFilterSql}
+       AND status <> 'revoked'
+       AND (expires_at IS NULL OR expires_at > NOW())
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               metadata, created_at, updated_at`,
+    customerId
+      ? [normalizedLicenseKey, appId, deviceId || null, deviceName || null, customerId]
+      : [normalizedLicenseKey, appId, deviceId || null, deviceName || null]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
 }
 
 async function consumeUsage({ customerId, appId, featureKey, creditsToConsume, units, requestId, metadata }) {
@@ -551,7 +819,7 @@ async function consumeUsage({ customerId, appId, featureKey, creditsToConsume, u
 }
 
 async function getCustomerSnapshot(customerId) {
-  const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs, keyDeliveries] = await Promise.all([
+  const [customer, orders, subscriptions, entitlements, wallets, ledger, usageLogs, keyDeliveries, licenses] = await Promise.all([
     pool.query("SELECT id, email, full_name, telegram_chat_id, telegram_username, telegram_linked_at FROM customers WHERE id = $1", [customerId]),
     pool.query(
       `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
@@ -591,6 +859,15 @@ async function getCustomerSnapshot(customerId) {
        JOIN orders o ON o.id = d.order_id
        WHERE d.delivered_to_customer = $1
        ORDER BY d.delivered_at DESC`,
+      [customerId]
+    ),
+    pool.query(
+      `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+              status, activated_at, expires_at, device_id, device_name, last_verified_at,
+              metadata, created_at, updated_at
+       FROM app_licenses
+       WHERE customer_id = $1
+       ORDER BY created_at DESC`,
       [customerId]
     )
   ]);
@@ -644,7 +921,8 @@ async function getCustomerSnapshot(customerId) {
     })),
     usageLogs: usageLogs.rows.map(mapUsageLog)
     ,
-    keyDeliveries: keyDeliveries.rows.map(mapKeyDelivery)
+    keyDeliveries: keyDeliveries.rows.map(mapKeyDelivery),
+    licenses: licenses.rows.map(mapAppLicense)
   };
 }
 
@@ -1452,6 +1730,12 @@ module.exports = {
   recordWebhookEvent,
   getOrderKeyDelivery,
   getCustomerSnapshot,
+  getOrderAppLicense,
+  listCustomerLicenses,
+  activateCustomerLicense,
+  verifyCustomerLicense,
+  deactivateCustomerLicense,
+  verifyAppLicenseByKey,
   getAdminDashboard,
   findOrCreateCustomerByEmail,
   createCustomerAccount,

@@ -14,6 +14,11 @@ const {
   getOrderDetailsById,
   consumeUsage,
   getCustomerSnapshot,
+  listCustomerLicenses,
+  activateCustomerLicense,
+  verifyCustomerLicense,
+  deactivateCustomerLicense,
+  verifyAppLicenseByKey,
   getAdminDashboard,
   createCustomerAccount,
   findCustomerByEmail,
@@ -47,8 +52,9 @@ const {
   parseSepayWebhook,
   normalizeSepayWebhookSignature,
   buildSepayCheckout,
+  sendGmailMessage,
+  isGmailNotifyEnabled,
   sendTelegramMessage,
-  isTelegramNotifyEnabled,
   isMockPaymentMode,
   isSepayPaymentMode
 } = require("./modules/payment");
@@ -100,6 +106,20 @@ function getRequestIp(req) {
   const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
   const socketIp = String(req?.socket?.remoteAddress || "").trim();
   return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
+}
+
+function requireAiAppKey(req, res, next) {
+  const configuredKey = String(env.aiAppSharedKey || "").trim();
+  if (!configuredKey) {
+    return res.status(503).json({ message: "AI app integration key is not configured" });
+  }
+
+  const incomingKey = String(req.header("x-ai-app-key") || "").trim();
+  if (!incomingKey || incomingKey !== configuredKey) {
+    return res.status(401).json({ message: "Invalid AI app key" });
+  }
+
+  return next();
 }
 
 const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
@@ -719,6 +739,176 @@ app.get(
 );
 
 app.get(
+  "/api/customer/licenses",
+  requirePortalOrAdmin,
+  asyncHandler(async (req, res) => {
+    const portalSession = getCustomerFromSession(req);
+    const admin = getAdminFromSession(req);
+
+    const requestedCustomerId = String(req.query.customerId || "").trim();
+    const customerId = portalSession
+      ? portalSession.customerId
+      : admin
+        ? requestedCustomerId
+        : "";
+
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const appId = String(req.query.appId || "").trim() || undefined;
+    const licenses = await listCustomerLicenses({ customerId, appId });
+    return res.json({ customerId, appId: appId || null, licenses });
+  })
+);
+
+app.post(
+  "/api/licenses/:licenseId/activate",
+  requirePortalOrAdmin,
+  asyncHandler(async (req, res) => {
+    const portalSession = getCustomerFromSession(req);
+    const admin = getAdminFromSession(req);
+    const requestedCustomerId = String(req.body?.customerId || "").trim();
+
+    const customerId = portalSession
+      ? portalSession.customerId
+      : admin
+        ? requestedCustomerId
+        : "";
+
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+    const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const license = await activateCustomerLicense({
+      licenseId: req.params.licenseId,
+      customerId,
+      deviceId,
+      deviceName
+    });
+
+    if (!license) {
+      return res.status(404).json({ message: "License not found or not activeable" });
+    }
+
+    return res.json({ ok: true, license });
+  })
+);
+
+app.post(
+  "/api/licenses/:licenseId/verify",
+  requirePortalOrAdmin,
+  asyncHandler(async (req, res) => {
+    const portalSession = getCustomerFromSession(req);
+    const admin = getAdminFromSession(req);
+    const requestedCustomerId = String(req.body?.customerId || "").trim();
+
+    const customerId = portalSession
+      ? portalSession.customerId
+      : admin
+        ? requestedCustomerId
+        : "";
+
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+    const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const license = await verifyCustomerLicense({
+      licenseId: req.params.licenseId,
+      customerId,
+      deviceId,
+      deviceName
+    });
+
+    if (!license) {
+      return res.status(404).json({ message: "License not found, revoked or expired" });
+    }
+
+    return res.json({ ok: true, license });
+  })
+);
+
+app.post(
+  "/api/licenses/:licenseId/deactivate",
+  requirePortalOrAdmin,
+  asyncHandler(async (req, res) => {
+    const portalSession = getCustomerFromSession(req);
+    const admin = getAdminFromSession(req);
+    const requestedCustomerId = String(req.body?.customerId || "").trim();
+
+    const customerId = portalSession
+      ? portalSession.customerId
+      : admin
+        ? requestedCustomerId
+        : "";
+
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const license = await deactivateCustomerLicense({
+      licenseId: req.params.licenseId,
+      customerId
+    });
+
+    if (!license) {
+      return res.status(404).json({ message: "License not found or already revoked" });
+    }
+
+    return res.json({ ok: true, license });
+  })
+);
+
+app.get(
+  "/api/ai-app/customers/:customerId/licenses",
+  requireAiAppKey,
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.params.customerId || "").trim();
+    const appId = String(req.query.appId || "").trim() || undefined;
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required" });
+    }
+
+    const licenses = await listCustomerLicenses({ customerId, appId });
+    return res.json({ customerId, appId: appId || null, licenses });
+  })
+);
+
+app.post(
+  "/api/ai-app/licenses/verify",
+  requireAiAppKey,
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim() || null;
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+    const deviceName = String(req.body?.deviceName || "").trim() || null;
+
+    if (!appId || !licenseKey) {
+      return res.status(400).json({ message: "appId and licenseKey are required" });
+    }
+
+    const license = await verifyAppLicenseByKey({
+      appId,
+      licenseKey,
+      customerId,
+      deviceId,
+      deviceName
+    });
+
+    if (!license) {
+      return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
+    }
+
+    return res.json({ ok: true, license });
+  })
+);
+
+app.get(
   "/api/admin/dashboard",
   requireAdminPermission("dashboard:read"),
   asyncHandler(async (req, res) => {
@@ -928,21 +1118,26 @@ app.post(
 );
 
 app.post(
-  "/api/admin/notifications/telegram/test",
+  "/api/admin/notifications/gmail/test",
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
-    if (!env.telegramNotifyEnabled || !env.telegramBotToken || !env.telegramChatId) {
+    if (!isGmailNotifyEnabled()) {
       return res.status(400).json({
-        message: "Telegram chưa bật hoặc thiếu TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID",
+        message: "Gmail chưa bật hoặc thiếu cấu hình OAuth (GMAIL_NOTIFY_ENABLED/GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GOOGLE_REFRESH_TOKEN/GMAIL_NOTIFY_FROM)",
         configured: false
       });
     }
 
     const actor = getAdminFromSession(req);
-    const text = req.body?.text || `🧪 Test Telegram từ Admin: ${actor?.username || "unknown"} @ ${new Date().toISOString()}`;
-    const result = await sendTelegramMessage({ text });
+    const now = new Date().toISOString();
+    const to = req.body?.to || env.gmailNotifyTo || env.gmailNotifyFrom;
+    const subject = req.body?.subject || `[WST] Test Gmail notify @ ${now}`;
+    const text = req.body?.text || `Test Gmail từ Admin: ${actor?.username || "unknown"} @ ${now}`;
+    const html = req.body?.html || `<p>${text}</p>`;
+
+    const result = await sendGmailMessage({ subject, text, html, to });
     if (!result.ok) {
-      return res.status(502).json({ message: "Gửi Telegram thất bại", result });
+      return res.status(502).json({ message: "Gửi Gmail thất bại", result });
     }
 
     return res.json({ ok: true, result });

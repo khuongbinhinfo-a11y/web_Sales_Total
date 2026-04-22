@@ -11,6 +11,8 @@
     "db:setup": "npm run db:migrate && npm run db:seed",
     "api:check": "node scripts/validate-api-contracts.mjs",
     "ai:gate": "node scripts/validate-ready-done.mjs",
+    "gmail:auth-url": "node scripts/gmail-oauth-helper.js auth-url",
+    "gmail:exchange-token": "node scripts/gmail-oauth-helper.js exchange",
     "test": "echo \"No automated tests yet\""
   },
   "keywords": [],

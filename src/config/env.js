@@ -27,7 +27,7 @@ function resolveSessionCookieDomain(appBaseUrl) {
   }
 }
 
-function loadGoogleClientIdFromOAuthFile() {
+function loadGoogleOAuthClientFromFile() {
   const explicitFile = String(process.env.GOOGLE_OAUTH_CLIENT_FILE || "").trim();
   const rootDir = process.cwd();
   const candidates = [];
@@ -56,18 +56,24 @@ function loadGoogleClientIdFromOAuthFile() {
       const clientId =
         String(json?.web?.client_id || "").trim() ||
         String(json?.installed?.client_id || "").trim();
-      if (clientId) {
-        return clientId;
+      const clientSecret =
+        String(json?.web?.client_secret || "").trim() ||
+        String(json?.installed?.client_secret || "").trim();
+
+      if (clientId || clientSecret) {
+        return { clientId, clientSecret };
       }
     } catch {
       // skip invalid file
     }
   }
 
-  return "";
+  return { clientId: "", clientSecret: "" };
 }
 
-const resolvedGoogleClientId = String(process.env.GOOGLE_CLIENT_ID || "").trim() || loadGoogleClientIdFromOAuthFile();
+const oauthClient = loadGoogleOAuthClientFromFile();
+const resolvedGoogleClientId = String(process.env.GOOGLE_CLIENT_ID || "").trim() || oauthClient.clientId;
+const resolvedGoogleClientSecret = String(process.env.GOOGLE_CLIENT_SECRET || "").trim() || oauthClient.clientSecret;
 
 function toBool(value, fallback = false) {
   if (value === undefined || value === null || value === "") {
@@ -114,7 +120,13 @@ const env = {
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
   telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
   telegramIncludeKey: String(process.env.TELEGRAM_INCLUDE_KEY || "false").toLowerCase() === "true",
+  gmailNotifyEnabled: String(process.env.GMAIL_NOTIFY_ENABLED || "false").toLowerCase() === "true",
+  gmailNotifyFrom: String(process.env.GMAIL_NOTIFY_FROM || process.env.SMTP_FROM || "").trim(),
+  gmailNotifyTo: String(process.env.GMAIL_NOTIFY_TO || "").trim(),
+  gmailIncludeKey: String(process.env.GMAIL_INCLUDE_KEY || "false").toLowerCase() === "true",
   googleClientId: resolvedGoogleClientId,
+  googleClientSecret: resolvedGoogleClientSecret,
+  googleRefreshToken: String(process.env.GOOGLE_REFRESH_TOKEN || "").trim(),
   smtpHost: process.env.SMTP_HOST || "",
   smtpPort: Number(process.env.SMTP_PORT) || 0,
   smtpUser: process.env.SMTP_USER || "",
@@ -124,6 +136,7 @@ const env = {
   sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
   customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
+  aiAppSharedKey: String(process.env.AI_APP_SHARED_KEY || "").trim(),
   adminAccessKey: String(process.env.ADMIN_ACCESS_KEY || "").trim(),
   adminOwnerKeyLoginEnabled: toBool(process.env.ADMIN_OWNER_KEY_LOGIN_ENABLED, false),
   adminLoginWindowMs: toPositiveInt(process.env.ADMIN_LOGIN_WINDOW_MS, 15 * 60 * 1000),
