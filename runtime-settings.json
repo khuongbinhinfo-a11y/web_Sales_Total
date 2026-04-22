@@ -6,6 +6,6 @@
     "bankAccountNumber": "49312517",
     "accountName": "KHUONG VAN BINH",
     "qrTemplateUrl": "https://img.vietqr.io/image/{bank}-{account}-compact2.png?amount={amount}&addInfo={memo}&accountName=KHUONG%20VAN%20BINH",
-    "webhookUrl": "https://ungdungthongminh.shop/api/webhooks/sepay"
+    "webhookUrl": "https://www.ungdungthongminh.shop/api/payments/webhooks/sepay"
   }
 }

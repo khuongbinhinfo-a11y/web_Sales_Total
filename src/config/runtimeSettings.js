@@ -3,6 +3,31 @@ const path = require("path");
 
 const settingsFile = path.join(__dirname, "..", "..", "runtime-settings.json");
 
+function resolveSepayWebhookUrl(explicitUrl = "", appBaseUrl = "") {
+  const fallbackBaseUrl = String(appBaseUrl || "").trim();
+  const rawUrl = String(explicitUrl || "").trim() || `${fallbackBaseUrl}/api/payments/webhooks/sepay`;
+
+  if (!rawUrl) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+
+    if (parsed.hostname === "ungdungthongminh.shop") {
+      parsed.hostname = "www.ungdungthongminh.shop";
+    }
+
+    if (parsed.pathname === "/api/webhooks/sepay") {
+      parsed.pathname = "/api/payments/webhooks/sepay";
+    }
+
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
 function ensureSettingsFile() {
   if (!fs.existsSync(settingsFile)) {
     const initial = {
@@ -42,7 +67,7 @@ function getSepayRuntimeSettings() {
   return {
     paymentProviderMode: all.paymentProviderMode || "",
     webhookSecret: sepay.webhookSecret || "",
-    webhookUrl: sepay.webhookUrl || "",
+    webhookUrl: resolveSepayWebhookUrl(sepay.webhookUrl || ""),
     bankCode: sepay.bankCode || "",
     bankAccountNumber: sepay.bankAccountNumber || "",
     accountName: sepay.accountName || "",
@@ -73,7 +98,9 @@ function updateSepayRuntimeSettings(input) {
     sepay: {
       ...currentSepay,
       webhookSecret: nextWebhookSecret,
-      webhookUrl: typeof input.webhookUrl === "string" ? input.webhookUrl.trim() : (currentSepay.webhookUrl || ""),
+      webhookUrl: resolveSepayWebhookUrl(
+        typeof input.webhookUrl === "string" ? input.webhookUrl.trim() : (currentSepay.webhookUrl || "")
+      ),
       bankCode: input.bankCode || "",
       bankAccountNumber: input.bankAccountNumber || "",
       accountName: input.accountName || "",
@@ -88,5 +115,6 @@ module.exports = {
   readRuntimeSettings,
   writeRuntimeSettings,
   getSepayRuntimeSettings,
-  updateSepayRuntimeSettings
+  updateSepayRuntimeSettings,
+  resolveSepayWebhookUrl
 };

@@ -7,7 +7,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { env, startupConfigIssues } = require("./config/env");
 const { runMigrations } = require("./db/migrate");
 const { pool } = require("./db/pool");
-const { getSepayRuntimeSettings, updateSepayRuntimeSettings } = require("./config/runtimeSettings");
+const { getSepayRuntimeSettings, updateSepayRuntimeSettings, resolveSepayWebhookUrl } = require("./config/runtimeSettings");
 
 const {
   getPublicCatalog,
@@ -1054,7 +1054,7 @@ app.get(
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
     const current = getSepayRuntimeSettings();
-    const effectiveWebhookUrl = current.webhookUrl || `${env.appBaseUrl}/api/webhooks/sepay`;
+    const effectiveWebhookUrl = resolveSepayWebhookUrl(current.webhookUrl, env.appBaseUrl);
     return res.json({
       paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(current.webhookSecret),
@@ -1109,7 +1109,7 @@ app.put(
       message: "Đã lưu cấu hình Sepay runtime",
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
       secretConfigured: Boolean(next.sepay?.webhookSecret),
-      webhookUrl: next.sepay?.webhookUrl || `${env.appBaseUrl}/api/webhooks/sepay`
+      webhookUrl: resolveSepayWebhookUrl(next.sepay?.webhookUrl, env.appBaseUrl)
     });
   })
 );
