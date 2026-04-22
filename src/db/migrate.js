@@ -2,8 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const { pool } = require("./pool");
 
-async function runMigrations() {
+async function runMigrations(options = {}) {
+  const { closePool = true } = options;
   const client = await pool.connect();
+  let transactionStarted = false;
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -25,22 +27,34 @@ async function runMigrations() {
       }
 
       const sql = fs.readFileSync(path.join(migrationDir, file), "utf8");
+      transactionStarted = true;
       await client.query("BEGIN");
       await client.query(sql);
       await client.query("INSERT INTO schema_migrations(version) VALUES ($1)", [file]);
       await client.query("COMMIT");
+      transactionStarted = false;
       console.log(`Applied migration: ${file}`);
     }
 
     console.log("Migrations completed.");
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (transactionStarted) {
+      await client.query("ROLLBACK");
+    }
     console.error("Migration failed:", error.message);
-    process.exitCode = 1;
+    throw error;
   } finally {
     client.release();
-    await pool.end();
+    if (closePool) {
+      await pool.end();
+    }
   }
 }
 
-runMigrations();
+module.exports = { runMigrations };
+
+if (require.main === module) {
+  runMigrations().catch(() => {
+    process.exitCode = 1;
+  });
+}

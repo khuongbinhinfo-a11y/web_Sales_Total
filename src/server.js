@@ -5,6 +5,7 @@ const cors = require("cors");
 const yaml = require("js-yaml");
 const { OAuth2Client } = require("google-auth-library");
 const { env, startupConfigIssues } = require("./config/env");
+const { runMigrations } = require("./db/migrate");
 const { pool } = require("./db/pool");
 const { getSepayRuntimeSettings, updateSepayRuntimeSettings } = require("./config/runtimeSettings");
 
@@ -1870,6 +1871,8 @@ async function prepareServer() {
         console.warn("⚠️ Skipping schema bootstrap because DATABASE_URL is not configured.");
         return;
       }
+
+      await runMigrations({ closePool: false });
 
       try {
         await ensureCustomerAuthSchema();
