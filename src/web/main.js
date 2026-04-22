@@ -541,8 +541,21 @@ const registerForm     = document.getElementById("registerForm");
 const switchToRegister = document.getElementById("switchToRegister");
 const switchToLogin    = document.getElementById("switchToLogin");
 
-function showLoginTab(){ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginPane.style.display=""; registerPane.style.display="none"; loginError.textContent=""; }
-function showRegisterTab(){ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerPane.style.display=""; loginPane.style.display="none"; loginError.textContent=""; }
+function clearInvalidEmailAutofill(input) {
+  if (!input) return;
+  const value = String(input.value || "").trim();
+  if (value && !value.includes("@")) {
+    input.value = "";
+  }
+}
+
+function resetAuthInputsForUserForms() {
+  clearInvalidEmailAutofill(document.getElementById("loginEmail"));
+  clearInvalidEmailAutofill(document.getElementById("registerEmail"));
+}
+
+function showLoginTab(){ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginPane.style.display=""; registerPane.style.display="none"; loginError.textContent=""; resetAuthInputsForUserForms(); }
+function showRegisterTab(){ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerPane.style.display=""; loginPane.style.display="none"; loginError.textContent=""; resetAuthInputsForUserForms(); }
 
 navLoginBtn.addEventListener("click", (e)=>{ e.preventDefault(); showLoginTab(); loginModal.classList.add("show"); ensureGoogleAuthInit(); });
 navRegisterBtn.addEventListener("click", (e)=>{ e.preventDefault(); showRegisterTab(); loginModal.classList.add("show"); ensureGoogleAuthInit(); });
