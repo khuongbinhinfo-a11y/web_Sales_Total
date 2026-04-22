@@ -512,12 +512,31 @@ function adminLoginPage() {
       const submitBtn = document.getElementById("adminLoginBtn");
       const otpEmailHint = document.getElementById("adminOtpEmailHint");
 
+      function getCanonicalAdminOrigin() {
+        const hostname = String(window.location.hostname || "").toLowerCase();
+        if (hostname === "ungdungthongminh.shop") {
+          return "https://www.ungdungthongminh.shop";
+        }
+        return window.location.origin;
+      }
+
+      function buildAdminUrl(path) {
+        const value = String(path || "").trim();
+        if (!value) {
+          return getCanonicalAdminOrigin() + "/admin";
+        }
+        if (/^https?:\/\//i.test(value)) {
+          return value;
+        }
+        return getCanonicalAdminOrigin() + (value.startsWith("/") ? value : "/" + value);
+      }
+
       function getAdminLoginEndpoints() {
         const pathname = window.location.pathname || "";
-        if (pathname.startsWith("/api/")) {
-          return ["/api/auth/admin/login", "/auth/admin/login"];
-        }
-        return ["/auth/admin/login", "/api/auth/admin/login"];
+        const endpoints = pathname.startsWith("/api/")
+          ? [buildAdminUrl("/api/auth/admin/login"), buildAdminUrl("/auth/admin/login")]
+          : [buildAdminUrl("/auth/admin/login"), buildAdminUrl("/api/auth/admin/login")];
+        return [...new Set(endpoints)];
       }
 
       function normalizeResponseText(text) {
@@ -610,12 +629,12 @@ function adminLoginPage() {
           }
 
           if (response.ok && payload?.redirectTo) {
-            window.location.href = payload.redirectTo;
+            window.location.href = buildAdminUrl(payload.redirectTo);
             return;
           }
 
           if (response.ok) {
-            window.location.href = "/admin";
+            window.location.href = buildAdminUrl("/admin");
             return;
           }
 
