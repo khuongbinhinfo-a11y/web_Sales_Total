@@ -11,8 +11,8 @@
   "apps": [
     {
       "id": "app-study-12",
-      "name": "Phan mem hoc tap khoi cap 01",
-      "slug": "phan-mem-hoc-tap-khoi-cap-01",
+      "name": "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học",
+      "slug": "phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc",
       "status": "active"
     },
     {
@@ -26,7 +26,7 @@
     {
       "id": "prod-study-month",
       "appId": "app-study-12",
-      "name": "PHAN MEM HOC TAP CHO HOC SINH KHOI CAP 01",
+      "name": "Gói Tiêu Chuẩn Tháng",
       "cycle": "monthly",
       "price": 89000,
       "currency": "VND",
