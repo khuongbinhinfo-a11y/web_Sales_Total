@@ -34,6 +34,7 @@ const {
   listAdminUsers,
   countActiveOwners,
   updateAdminUserById,
+  updateAdminPasswordById,
   getAdminLoginBlockState,
   registerAdminLoginFailureGuard,
   clearAdminLoginFailureGuard,
@@ -807,6 +808,44 @@ app.get(
       return res.status(401).json({ message: "Unauthorized" });
     }
     return res.json({ admin });
+  })
+);
+
+app.post(
+  "/api/admin/me/password",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    if (!adminSession?.id) {
+      return res.status(400).json({ message: "Phiên đăng nhập hiện tại không hỗ trợ đổi mật khẩu" });
+    }
+
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+    if (!currentPassword) {
+      return res.status(400).json({ message: "Vui lòng nhập mật khẩu hiện tại" });
+    }
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu mới tối thiểu 8 ký tự" });
+    }
+    if (newPassword === currentPassword) {
+      return res.status(400).json({ message: "Mật khẩu mới phải khác mật khẩu hiện tại" });
+    }
+
+    const admin = await findAdminById(adminSession.id);
+    if (!admin || !admin.isActive) {
+      return res.status(404).json({ message: "Không tìm thấy tài khoản admin hiện tại" });
+    }
+    if (!verifyPassword(currentPassword, admin.passwordHash)) {
+      return res.status(401).json({ message: "Mật khẩu hiện tại không đúng" });
+    }
+
+    await updateAdminPasswordById({
+      adminId: admin.id,
+      passwordHash: hashPassword(newPassword)
+    });
+
+    return res.json({ ok: true, message: "Đã cập nhật mật khẩu admin" });
   })
 );
 

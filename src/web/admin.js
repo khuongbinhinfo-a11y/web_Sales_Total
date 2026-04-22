@@ -180,7 +180,22 @@ async function loadMe(){
     if(!res.ok){ return; }
     const d = await res.json();
     meAdmin = d.admin || null;
+    renderAdminMeSummary();
   } catch {}
+}
+
+function renderAdminMeSummary(){
+  const host = document.getElementById("adminMeSummary");
+  if(!host) return;
+  if(!meAdmin){
+    host.textContent = "Không đọc được thông tin tài khoản admin hiện tại.";
+    return;
+  }
+
+  const username = escapeHtml(meAdmin.username || "admin");
+  const role = escapeHtml(meAdmin.role || "support");
+  const otpRequired = meAdmin.role === "owner" || meAdmin.role === "manager";
+  host.innerHTML = `Tài khoản hiện tại: <b>${username}</b> · role: <b>${role}</b> · OTP khi đăng nhập: <b>${otpRequired ? "bật" : "tắt"}</b>`;
 }
 
 function adminActionBadge(a){
@@ -314,6 +329,58 @@ function bindCreateAdminForm(){
       msg.textContent = `Đã tạo sub-admin: ${p.admin?.username || username}`;
       msg.style.color = "var(--success)";
       await loadAdminUsers();
+    } catch(err){
+      msg.textContent = "Lỗi kết nối: " + err.message;
+      msg.style.color = "var(--danger)";
+    }
+  });
+}
+
+function bindChangeMyAdminPasswordForm(){
+  const form = document.getElementById("changeMyAdminPasswordForm");
+  const msg = document.getElementById("changeAdminPasswordMsg");
+  if(!form || !msg) return;
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const currentPassword = document.getElementById("currentAdminPassword")?.value || "";
+    const newPassword = document.getElementById("nextAdminPassword")?.value || "";
+
+    if(currentPassword.length < 8){
+      msg.textContent = "Mật khẩu hiện tại tối thiểu 8 ký tự";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+    if(newPassword.length < 8){
+      msg.textContent = "Mật khẩu mới tối thiểu 8 ký tự";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+    if(currentPassword === newPassword){
+      msg.textContent = "Mật khẩu mới phải khác mật khẩu hiện tại";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+
+    msg.textContent = "Đang cập nhật mật khẩu...";
+    msg.style.color = "var(--muted)";
+
+    try {
+      const res = await fetch("/api/admin/me/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const payload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        msg.textContent = payload.message || "Không đổi được mật khẩu";
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      form.reset();
+      msg.textContent = payload.message || "Đã cập nhật mật khẩu admin";
+      msg.style.color = "var(--success)";
     } catch(err){
       msg.textContent = "Lỗi kết nối: " + err.message;
       msg.style.color = "var(--danger)";
@@ -603,6 +670,7 @@ document.getElementById("lookupBtn").addEventListener("click",()=>{
 });
 
 bindCreateAdminForm();
+bindChangeMyAdminPasswordForm();
 bindSepayForm();
 bindAiGateControls();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{

@@ -166,7 +166,8 @@ const T = {
     modal_login_btn:"Đăng nhập",
     modal_login_error_email:"Vui lòng nhập email hợp lệ",
     modal_login_error_password:"Mật khẩu tối thiểu 8 ký tự",
-    modal_login_error_db:"Không thể đăng nhập. Hãy bật PostgreSQL và thử lại.",
+    modal_login_error_db:"Không thể đăng nhập. Vui lòng thử lại.",
+    modal_auth_error_network:"Không kết nối được máy chủ. Vui lòng thử lại.",
     modal_login_no_account:"Chưa có tài khoản?",
     modal_register_link:"Đăng ký ngay",
     modal_register_title:"Đăng ký",
@@ -246,7 +247,8 @@ const T = {
     modal_login_btn:"Login",
     modal_login_error_email:"Please enter a valid email",
     modal_login_error_password:"Password must be at least 8 characters",
-    modal_login_error_db:"Cannot login. Please start PostgreSQL and retry.",
+    modal_login_error_db:"Cannot login. Please try again.",
+    modal_auth_error_network:"Cannot reach the server. Please try again.",
     modal_login_no_account:"Don't have an account?",
     modal_register_link:"Register now",
     modal_register_title:"Register",
@@ -568,6 +570,26 @@ function resetAuthInputsForUserForms() {
   clearInvalidEmailAutofill(document.getElementById("registerEmail"));
 }
 
+async function readApiErrorMessage(response, fallbackKey = "modal_login_error_db") {
+  try {
+    const payload = await response.json();
+    if (payload && typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message.trim();
+    }
+  } catch {
+    try {
+      const text = await response.text();
+      if (text && text.trim()) {
+        return text.trim();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return t(fallbackKey);
+}
+
 function showLoginTab(){ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginPane.style.display=""; registerPane.style.display="none"; loginError.textContent=""; resetAuthInputsForUserForms(); }
 function showRegisterTab(){ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerPane.style.display=""; loginPane.style.display="none"; loginError.textContent=""; resetAuthInputsForUserForms(); }
 
@@ -592,10 +614,10 @@ loginForm.addEventListener("submit", async (e)=>{
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ email, password })
     });
-    if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
+    if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
     await finalizeAuthFlow();
   } catch {
-    loginError.textContent = t("modal_login_error_db");
+    loginError.textContent = t("modal_auth_error_network");
   }
 });
 
@@ -615,10 +637,10 @@ registerForm.addEventListener("submit", async (e)=>{
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ email, fullName, password, code })
     });
-    if(!res.ok){ const d=await res.json(); loginError.textContent=d.message||t("modal_login_error_db"); return; }
+    if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
     await finalizeAuthFlow();
   } catch {
-    loginError.textContent = t("modal_login_error_db");
+    loginError.textContent = t("modal_auth_error_network");
   }
 });
 

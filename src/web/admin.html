@@ -80,6 +80,27 @@
           <h3>🛡️ Quản lý phân quyền admin</h3>
 
           <div class="info-card" style="margin-bottom:12px">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:8px">OTP đăng nhập admin chỉ áp dụng cho role <b>owner</b> và <b>manager</b>. Nếu tài khoản hiện tại là <b>support</b> thì sẽ không có bước OTP.</p>
+            <p id="adminMeSummary" style="font-size:.82rem;color:var(--muted);margin:0">Đang tải thông tin tài khoản hiện tại...</p>
+          </div>
+
+          <div class="info-card" style="margin-bottom:12px">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Đổi mật khẩu cho tài khoản admin đang đăng nhập.</p>
+            <form id="changeMyAdminPasswordForm" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu hiện tại</label>
+                <input id="currentAdminPassword" type="password" required minlength="8" placeholder="Nhập mật khẩu hiện tại" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu mới</label>
+                <input id="nextAdminPassword" type="password" required minlength="8" placeholder="Tối thiểu 8 ký tự" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <button type="submit" class="btn btn-outline" style="min-height:38px;font-size:.85rem">Đổi mật khẩu</button>
+            </form>
+            <p id="changeAdminPasswordMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div class="info-card" style="margin-bottom:12px">
             <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Tạo tài khoản sub-admin và phân quyền theo role.</p>
             <form id="createAdminForm" style="display:grid;grid-template-columns:1fr 1fr 1fr 140px auto;gap:8px;align-items:end">
               <div>

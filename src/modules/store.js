@@ -1719,6 +1719,34 @@ async function updateAdminUserById({ adminId, role, permissions, isActive }) {
   };
 }
 
+async function updateAdminPasswordById({ adminId, passwordHash }) {
+  const result = await pool.query(
+    `UPDATE admin_users
+     SET password_hash = $2,
+         updated_at = NOW()
+     WHERE id = $1::uuid
+     RETURNING id, username, email, role, permissions, is_active, created_by, created_at, last_login_at`,
+    [adminId, passwordHash]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions,
+    isActive: row.is_active,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at
+  };
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -1761,5 +1789,6 @@ module.exports = {
   createAdminUser,
   listAdminUsers,
   countActiveOwners,
-  updateAdminUserById
+  updateAdminUserById,
+  updateAdminPasswordById
 };
