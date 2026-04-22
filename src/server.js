@@ -145,6 +145,30 @@ function maskEmailAddress(email) {
   return `${localPart.slice(0, 2)}***${localPart.slice(-1)}@${domainPart}`;
 }
 
+function prefersJsonResponse(req) {
+  const accept = String(req?.headers?.accept || "").toLowerCase();
+  const requestedWith = String(req?.headers?.["x-requested-with"] || "").toLowerCase();
+  return requestedWith === "fetch" || requestedWith === "xmlhttprequest" || accept.includes("application/json");
+}
+
+function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = "", requiresOtp = false, maskedEmail = "" }) {
+  if (prefersJsonResponse(req)) {
+    return res.status(status).json({
+      ok: status >= 200 && status < 300 && !requiresOtp,
+      message,
+      redirectTo: redirectTo || null,
+      requiresOtp,
+      maskedEmail: maskedEmail || null
+    });
+  }
+
+  if (redirectTo) {
+    return res.redirect(redirectTo);
+  }
+
+  return res.status(status).send(message);
+}
+
 const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
 const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
 
@@ -1452,7 +1476,10 @@ app.post(
         requiresOtp: false,
         otpVerified: false
       });
-      return res.status(400).send("Owner key login has been removed. Please use username/password and OTP.");
+      return respondAdminLogin(req, res, {
+        status: 400,
+        message: "Owner key login has been removed. Please use username/password and OTP."
+      });
     }
 
     if (!username || !password) {
@@ -1473,7 +1500,10 @@ app.post(
         requiresOtp: false,
         otpVerified: false
       });
-      return res.status(401).send("Invalid admin credentials");
+      return respondAdminLogin(req, res, {
+        status: 401,
+        message: "Invalid admin credentials"
+      });
     }
 
     const admin = await findAdminByUsername(safeUsername);
@@ -1497,7 +1527,10 @@ app.post(
         requiresOtp: false,
         otpVerified: false
       });
-      return res.status(401).send("Invalid admin credentials");
+      return respondAdminLogin(req, res, {
+        status: 401,
+        message: "Invalid admin credentials"
+      });
     }
 
     const ok = verifyPassword(password, admin.passwordHash);
@@ -1521,7 +1554,10 @@ app.post(
         requiresOtp: isOtpRequiredForAdminRole(admin.role),
         otpVerified: false
       });
-      return res.status(401).send("Invalid admin credentials");
+      return respondAdminLogin(req, res, {
+        status: 401,
+        message: "Invalid admin credentials"
+      });
     }
 
     const requiresOtp = isOtpRequiredForAdminRole(admin.role);
@@ -1547,7 +1583,10 @@ app.post(
           requiresOtp: true,
           otpVerified: false
         });
-        return res.status(503).send("OTP email is not configured");
+        return respondAdminLogin(req, res, {
+          status: 503,
+          message: "OTP email is not configured"
+        });
       }
 
       const otpPurpose = `admin_login:${admin.id}`;
@@ -1577,9 +1616,14 @@ app.post(
           otpVerified: false
         });
         const maskedEmail = maskEmailAddress(admin.email);
-        return res.status(202).send(maskedEmail
-          ? `OTP sent to admin email ${maskedEmail}. Please submit OTP to continue login.`
-          : "OTP sent to admin email. Please submit OTP to continue login.");
+        return respondAdminLogin(req, res, {
+          status: 202,
+          message: maskedEmail
+            ? `OTP sent to admin email ${maskedEmail}. Please submit OTP to continue login.`
+            : "OTP sent to admin email. Please submit OTP to continue login.",
+          requiresOtp: true,
+          maskedEmail
+        });
       }
 
       if (!challengeMatched) {
@@ -1603,9 +1647,14 @@ app.post(
           otpVerified: false
         });
         const maskedEmail = maskEmailAddress(admin.email);
-        return res.status(401).send(maskedEmail
-          ? `OTP session expired. A new OTP has been sent to ${maskedEmail}.`
-          : "OTP session expired. A new OTP has been sent.");
+        return respondAdminLogin(req, res, {
+          status: 401,
+          message: maskedEmail
+            ? `OTP session expired. A new OTP has been sent to ${maskedEmail}.`
+            : "OTP session expired. A new OTP has been sent.",
+          requiresOtp: true,
+          maskedEmail
+        });
       }
 
       const verify = await verifyOtpCode({ email: admin.email, purpose: otpPurpose, code: otp });
@@ -1629,7 +1678,12 @@ app.post(
           requiresOtp: true,
           otpVerified: false
         });
-        return res.status(401).send(verify.message || "Invalid OTP");
+        return respondAdminLogin(req, res, {
+          status: 401,
+          message: verify.message || "Invalid OTP",
+          requiresOtp: true,
+          maskedEmail: maskEmailAddress(admin.email)
+        });
       }
 
       otpVerified = true;
@@ -1660,7 +1714,11 @@ app.post(
       otpVerified
     });
 
-    return res.redirect("/admin");
+    return respondAdminLogin(req, res, {
+      status: 200,
+      message: "Admin login success",
+      redirectTo: "/admin"
+    });
   })
 );
 

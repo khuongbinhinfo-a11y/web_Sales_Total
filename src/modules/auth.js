@@ -534,10 +534,25 @@ function adminLoginPage() {
         }
       }
 
-      function updateOtpDestination(text) {
+      function parseResponsePayload(text) {
+        const value = String(text || "").trim();
+        if (!value) {
+          return null;
+        }
+
+        try {
+          return JSON.parse(value);
+        } catch {
+          return null;
+        }
+      }
+
+      function updateOtpDestination(text, maskedEmail) {
+        const direct = String(maskedEmail || "").trim();
         const match = String(text || "").match(/[A-Za-z0-9._%+-]+\*+[^\s]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
-        otpEmailHint.textContent = match
-          ? "OTP se gui toi: " + match[0]
+        const destination = direct || (match ? match[0] : "");
+        otpEmailHint.textContent = destination
+          ? "OTP se gui toi: " + destination
           : "Day la email da dang ky cua tai khoan admin. Khong nhap o day.";
       }
 
@@ -560,18 +575,22 @@ function adminLoginPage() {
         try {
           let response = null;
           let text = "";
+          let payload = null;
           for (const endpoint of getAdminLoginEndpoints()) {
             response = await fetch(endpoint, {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-                "Accept": "text/plain, application/json"
+                "Accept": "application/json, text/plain",
+                "X-Requested-With": "fetch"
               },
               body: body.toString(),
-              redirect: "manual"
+              redirect: "follow"
             });
 
-            text = normalizeResponseText(await response.text());
+            const rawText = await response.text();
+            payload = parseResponsePayload(rawText);
+            text = payload?.message || normalizeResponseText(rawText);
             if (response.status !== 404) {
               break;
             }
@@ -582,7 +601,7 @@ function adminLoginPage() {
             return;
           }
 
-          updateOtpDestination(text);
+          updateOtpDestination(text, payload?.maskedEmail);
 
           if (response.status === 202) {
             setMessage("success", text || "OTP da duoc gui vao email admin. Nhap OTP roi bam Login lai.");
@@ -590,8 +609,8 @@ function adminLoginPage() {
             return;
           }
 
-          if (response.status >= 300 && response.status < 400) {
-            window.location.href = "/admin";
+          if (response.ok && payload?.redirectTo) {
+            window.location.href = payload.redirectTo;
             return;
           }
 
