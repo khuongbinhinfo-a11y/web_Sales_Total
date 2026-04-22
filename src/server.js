@@ -1690,7 +1690,7 @@ app.get(
           paidPopupShown = true;
           paidPopupText.textContent = keyVal
             ? 'Đơn hàng đã xác nhận và key đã sẵn sàng.'
-            : 'Đơn hàng đã xác nhận, key đang được cấp. Bạn có thể mở Portal để xem ngay khi key xuất hiện.';
+            : 'Đơn hàng đã xác nhận, key đang được cấp. Hệ thống sẽ tiếp tục xử lý và cập nhật cho đơn hàng này.';
           if (keyVal) {
             paidPopupKey.style.display = 'block';
             paidPopupKey.textContent = 'KEY: ' + keyVal;

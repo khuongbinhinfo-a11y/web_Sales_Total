@@ -123,7 +123,6 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
   const customerId = order?.customerId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
-  const portalUrl = `${env.publicAppBaseUrl || env.appBaseUrl}/portal`;
 
   const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
   const keyText = env.telegramIncludeKey ? keyValue : maskKeyValue(keyValue);
@@ -134,8 +133,7 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
     `• Customer: <code>${customerId}</code>`,
     `• App: <code>${appId}</code>`,
     `• Số tiền: <b>${amount} ${currency}</b>`,
-    `• Key: <code>${keyText}</code>`,
-    `• Portal: ${portalUrl}`
+    `• Key: <code>${keyText}</code>`
   ].join("\n");
 }
 
@@ -148,7 +146,6 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
 
   const keyValue = keyDelivery?.keyValue || "(chua cap key)";
   const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
-  const portalUrl = `${env.publicAppBaseUrl || env.appBaseUrl}/portal`;
 
   const subject = `[WST] Thanh toan thanh cong - ${orderId}`;
   const text = [
@@ -157,8 +154,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
     `Customer: ${customerId}`,
     `App: ${appId}`,
     `So tien: ${amount} ${currency}`,
-    `Key: ${keyText}`,
-    `Portal: ${portalUrl}`
+    `Key: ${keyText}`
   ].join("\n");
 
   const html = [
@@ -167,8 +163,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
     `<p><b>Customer:</b> <code>${customerId}</code></p>`,
     `<p><b>App:</b> <code>${appId}</code></p>`,
     `<p><b>So tien:</b> <b>${amount} ${currency}</b></p>`,
-    `<p><b>Key:</b> <code>${keyText}</code></p>`,
-    `<p><b>Portal:</b> <a href="${portalUrl}">${portalUrl}</a></p>`
+    `<p><b>Key:</b> <code>${keyText}</code></p>`
   ].join("");
 
   return { subject, text, html };
