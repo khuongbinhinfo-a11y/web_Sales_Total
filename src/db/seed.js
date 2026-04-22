@@ -9,6 +9,7 @@ async function seed() {
       `INSERT INTO apps(id, name, slug, status, description)
        VALUES
          ('app-study-12', 'Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học', 'phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc', 'active', 'Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc.'),
+         ('lamviec', 'Phần mềm làm việc', 'phan-mem-lam-viec', 'active', 'Bo cong cu phan mem phuc vu cong viec va tu dong hoa quy trinh.'),
          ('app-cap12', 'Phần mềm học tập khối cấp 12', 'phan-mem-hoc-tap-khoi-cap-12', 'active', 'San pham hoc tap khoi cap 12 gia test de kiem tra card va thanh toan.'),
          ('app-ai-writing', 'AI Writing Coach', 'ai-writing-coach', 'coming_soon', 'Cong cu viet va sua bai theo ngu canh hoc tap va cong viec.')
        ON CONFLICT (id) DO UPDATE SET
@@ -22,6 +23,7 @@ async function seed() {
       `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active)
        VALUES
          ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE),
+         ('demo-map', 'lamviec', 'Phần Mềm Quét Data Khách Hàng Trên Google Map', 'one_time', 499000, 'VND', 3, TRUE),
          ('demo-hoc12', 'app-cap12', 'Phần mềm học tập khối cấp 12', 'one_time', 2000, 'VND', 1, TRUE),
          ('prod-study-month', 'app-study-12', 'Goi Thang Tieu Chuan', 'monthly', 89000, 'VND', 120, TRUE),
          ('prod-study-year', 'app-study-12', 'Goi Nam Tieu Chuan', 'yearly', 599000, 'VND', 1800, TRUE),
@@ -59,6 +61,8 @@ async function seed() {
        VALUES
          (gen_random_uuid(), 'prod-test-2k', 'WST-TEST-2K-0001', 'available'),
          (gen_random_uuid(), 'prod-test-2k', 'WST-TEST-2K-0002', 'available'),
+         (gen_random_uuid(), 'demo-map', 'WST-MAP-0001', 'available'),
+         (gen_random_uuid(), 'demo-map', 'WST-MAP-0002', 'available'),
          (gen_random_uuid(), 'demo-hoc12', 'WST-HOC12-TEST-0001', 'available'),
          (gen_random_uuid(), 'demo-hoc12', 'WST-HOC12-TEST-0002', 'available'),
          (gen_random_uuid(), 'prod-study-month', 'WST-MONTH-0001-ABCD', 'available'),

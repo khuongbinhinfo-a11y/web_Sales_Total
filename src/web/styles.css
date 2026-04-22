@@ -73,7 +73,7 @@ button{font-family:inherit;cursor:pointer}
 .user-dropdown .dd-logout:hover{background:#fef2f2}
 
 /* ═══════════════════ HERO ═══════════════════ */
-.hero{position:relative;isolation:isolate;overflow:hidden;padding:100px 0 80px;background:linear-gradient(180deg,#fefdfb 0%,#fbf9fe 48%,#fffbf6 100%)}
+.hero{position:relative;isolation:isolate;overflow:hidden;padding:64px 0 80px;background:linear-gradient(180deg,#fefdfb 0%,#fbf9fe 48%,#fffbf6 100%)}
 .hero::before{content:"";position:absolute;inset:0;background:
   linear-gradient(122deg,rgba(255,255,255,.86) 18%,rgba(255,255,255,.34) 52%,rgba(255,245,236,.28) 100%),
   linear-gradient(to right,rgba(255,252,248,.98) 0%,rgba(252,251,249,.82) 42%,rgba(252,251,249,.34) 100%),
@@ -413,7 +413,7 @@ pointer-events:none;z-index:0}
   .hero-inner{grid-template-columns:1fr;gap:28px}
   .hero-visual{display:block}
   .hero-orb{display:none}
-  .hero{padding:56px 0 40px}
+  .hero{padding:40px 0 40px}
   .hero-badge{margin-bottom:14px}
   .hero h1{margin:0 0 16px;max-width:100%}
   .hero-title-image{width:min(420px,100%)}
