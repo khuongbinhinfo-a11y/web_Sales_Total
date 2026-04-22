@@ -16,10 +16,13 @@ function resolveSessionCookieDomain(appBaseUrl) {
   }
 
   try {
-    const parsed = new URL(appBaseUrl || "");
-    const hostname = String(parsed.hostname || "").trim().toLowerCase();
+    const parsed = new URL(process.env.APP_PUBLIC_BASE_URL || appBaseUrl || "");
+    let hostname = String(parsed.hostname || "").trim().toLowerCase();
     if (!hostname || hostname === "localhost" || isIpAddress(hostname)) {
       return "";
+    }
+    if (hostname.startsWith("www.")) {
+      hostname = hostname.slice(4);
     }
     return hostname.startsWith(".") ? hostname : `.${hostname}`;
   } catch {

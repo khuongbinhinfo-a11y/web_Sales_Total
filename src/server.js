@@ -151,14 +151,15 @@ function prefersJsonResponse(req) {
   return requestedWith === "fetch" || requestedWith === "xmlhttprequest" || accept.includes("application/json");
 }
 
-function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = "", requiresOtp = false, maskedEmail = "" }) {
+function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = "", requiresOtp = false, maskedEmail = "", otpResent = false }) {
   if (prefersJsonResponse(req)) {
     return res.status(status).json({
       ok: status >= 200 && status < 300 && !requiresOtp,
       message,
       redirectTo: redirectTo || null,
       requiresOtp,
-      maskedEmail: maskedEmail || null
+      maskedEmail: maskedEmail || null,
+      otpResent
     });
   }
 
@@ -1648,12 +1649,13 @@ app.post(
         });
         const maskedEmail = maskEmailAddress(admin.email);
         return respondAdminLogin(req, res, {
-          status: 401,
+          status: 202,
           message: maskedEmail
             ? `OTP session expired. A new OTP has been sent to ${maskedEmail}.`
             : "OTP session expired. A new OTP has been sent.",
           requiresOtp: true,
-          maskedEmail
+          maskedEmail,
+          otpResent: true
         });
       }
 
@@ -1729,6 +1731,7 @@ app.post("/auth/portal/logout", (req, res) => {
 
 app.post("/auth/admin/logout", (req, res) => {
   clearAuthCookie(res, "wst_admin_session", req);
+  clearAuthCookie(res, "wst_admin_otp_challenge", req);
   res.redirect("/admin/login");
 });
 

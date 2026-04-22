@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { env } = require("../config/env");
+const { findAdminById } = require("./store");
 
 const adminLoginAttempts = new Map();
 
@@ -180,6 +181,17 @@ function resolveCookieDomain(req) {
   return matchesRoot || matchesSubdomain ? configured : "";
 }
 
+function appendSetCookieHeader(res, cookieValue) {
+  const existing = res.getHeader("Set-Cookie");
+  if (!existing) {
+    res.setHeader("Set-Cookie", cookieValue);
+    return;
+  }
+
+  const nextCookies = Array.isArray(existing) ? [...existing, cookieValue] : [String(existing), cookieValue];
+  res.setHeader("Set-Cookie", nextCookies);
+}
+
 function setAuthCookie(res, name, token, req) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
   const resolvedDomain = resolveCookieDomain(req);
@@ -190,29 +202,16 @@ function setAuthCookie(res, name, token, req) {
       ? Math.max(60, Math.floor(env.adminOtpTtlMs / 1000))
       : 12 * 60 * 60;
   const newCookie = `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`;
-  const existing = res.getHeader("Set-Cookie");
-  if (!existing) {
-    res.setHeader("Set-Cookie", newCookie);
-    return;
-  }
-
-  const nextCookies = Array.isArray(existing) ? [...existing, newCookie] : [String(existing), newCookie];
-  res.setHeader("Set-Cookie", nextCookies);
+  appendSetCookieHeader(res, newCookie);
 }
 
 function clearAuthCookie(res, name, req) {
   const secureFlag = env.nodeEnv === "production" ? " Secure;" : "";
   const resolvedDomain = resolveCookieDomain(req);
-  const domainFlag = resolvedDomain ? ` Domain=${resolvedDomain};` : "";
-  const newCookie = `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${domainFlag}${secureFlag}`;
-  const existing = res.getHeader("Set-Cookie");
-  if (!existing) {
-    res.setHeader("Set-Cookie", newCookie);
-    return;
+  appendSetCookieHeader(res, `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;${secureFlag}`);
+  if (resolvedDomain) {
+    appendSetCookieHeader(res, `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Domain=${resolvedDomain};${secureFlag}`);
   }
-
-  const nextCookies = Array.isArray(existing) ? [...existing, newCookie] : [String(existing), newCookie];
-  res.setHeader("Set-Cookie", nextCookies);
 }
 
 function createCustomerSessionToken(customerId, email) {
@@ -227,16 +226,34 @@ function getPermissionsByRole(role) {
   return ADMIN_ROLE_PERMISSIONS[role] || [];
 }
 
+function normalizeAdminPermissions(adminProfile) {
+  const role = String(adminProfile?.role || "support").trim().toLowerCase() || "support";
+  const configuredPermissions = Array.isArray(adminProfile?.permissions)
+    ? adminProfile.permissions
+        .map((permission) => String(permission || "").trim())
+        .filter(Boolean)
+    : [];
+  return configuredPermissions.length > 0 ? [...new Set(configuredPermissions)] : getPermissionsByRole(role);
+}
+
+function buildAdminSession(adminProfile) {
+  const role = String(adminProfile?.role || "support").trim().toLowerCase() || "support";
+  return {
+    id: adminProfile?.id || null,
+    username: adminProfile?.username || "admin",
+    role,
+    permissions: normalizeAdminPermissions({ ...adminProfile, role })
+  };
+}
+
 function createAdminSessionToken(adminProfile) {
-  const role = adminProfile.role || "support";
+  const session = buildAdminSession(adminProfile);
   const payload = {
     scope: "admin",
-    adminUserId: adminProfile.id || null,
-    username: adminProfile.username || "admin",
-    role,
-    permissions: Array.isArray(adminProfile.permissions) && adminProfile.permissions.length > 0
-      ? adminProfile.permissions
-      : getPermissionsByRole(role),
+    adminUserId: session.id,
+    username: session.username,
+    role: session.role,
+    permissions: session.permissions,
     exp: Date.now() + 12 * 60 * 60 * 1000
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
@@ -290,9 +307,17 @@ function getCustomerFromSession(req) {
 }
 
 function getAdminFromSession(req) {
+  if (req?.adminSession) {
+    return req.adminSession;
+  }
+
   const cookies = parseCookies(req);
   const payload = decodeSessionToken(cookies.wst_admin_session);
   if (!payload || payload.scope !== "admin") {
+    return null;
+  }
+
+  if (!payload.adminUserId) {
     return null;
   }
 
@@ -303,12 +328,65 @@ function getAdminFromSession(req) {
     return null;
   }
 
-  return {
+  return buildAdminSession({
     id: payload.adminUserId || null,
     username: payload.username || "admin",
     role: payload.role || "support",
     permissions: Array.isArray(payload.permissions) ? payload.permissions : []
-  };
+  });
+}
+
+function arePermissionSetsEqual(left, right) {
+  const normalizedLeft = [...new Set((Array.isArray(left) ? left : []).map((item) => String(item || "").trim()).filter(Boolean))].sort();
+  const normalizedRight = [...new Set((Array.isArray(right) ? right : []).map((item) => String(item || "").trim()).filter(Boolean))].sort();
+  if (normalizedLeft.length !== normalizedRight.length) {
+    return false;
+  }
+
+  return normalizedLeft.every((value, index) => value === normalizedRight[index]);
+}
+
+function isSameAdminSession(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  return left.id === right.id
+    && left.username === right.username
+    && left.role === right.role
+    && arePermissionSetsEqual(left.permissions, right.permissions);
+}
+
+async function syncAdminSessionFromRequest(req, res) {
+  const currentSession = getAdminFromSession(req);
+  if (!currentSession?.id) {
+    if (parseCookies(req).wst_admin_session) {
+      clearAuthCookie(res, "wst_admin_session", req);
+    }
+    return null;
+  }
+
+  const admin = await findAdminById(currentSession.id);
+  if (!admin || !admin.isActive) {
+    clearAuthCookie(res, "wst_admin_session", req);
+    return null;
+  }
+
+  const syncedSession = buildAdminSession(admin);
+  req.adminSession = syncedSession;
+
+  if (!isSameAdminSession(currentSession, syncedSession)) {
+    setAuthCookie(res, "wst_admin_session", createAdminSessionToken(admin), req);
+  }
+
+  return syncedSession;
+}
+
+function handleAdminUnauthorized(req, res) {
+  if (wantsHtml(req)) {
+    return res.redirect("/admin/login");
+  }
+  return res.status(401).json({ message: "Unauthorized" });
 }
 
 function hasAdminPermission(adminSession, permission) {
@@ -319,13 +397,10 @@ function hasAdminPermission(adminSession, permission) {
 }
 
 function requireAdminPermission(permission) {
-  return (req, res, next) => {
-    const adminSession = getAdminFromSession(req);
+  return async (req, res, next) => {
+    const adminSession = await syncAdminSessionFromRequest(req, res);
     if (!adminSession) {
-      if (wantsHtml(req)) {
-        return res.redirect("/admin/login");
-      }
-      return res.status(401).json({ message: "Unauthorized" });
+      return handleAdminUnauthorized(req, res);
     }
 
     if (!hasAdminPermission(adminSession, permission)) {
@@ -392,8 +467,24 @@ function requireAuth(scope, loginPath) {
   };
 }
 
-function requirePortalOrAdmin(req, res, next) {
-  if (isPortalAuthenticated(req) || isAdminAuthenticated(req)) {
+async function requireAdminAuth(req, res, next) {
+  const adminSession = await syncAdminSessionFromRequest(req, res);
+  if (!adminSession) {
+    return handleAdminUnauthorized(req, res);
+  }
+
+  req.adminSession = adminSession;
+  return next();
+}
+
+async function requirePortalOrAdmin(req, res, next) {
+  if (isPortalAuthenticated(req)) {
+    return next();
+  }
+
+  const adminSession = await syncAdminSessionFromRequest(req, res);
+  if (adminSession) {
+    req.adminSession = adminSession;
     return next();
   }
 
@@ -511,24 +602,30 @@ function adminLoginPage() {
       const msg = document.getElementById("adminLoginMsg");
       const submitBtn = document.getElementById("adminLoginBtn");
       const otpEmailHint = document.getElementById("adminOtpEmailHint");
+      const configuredPublicBaseUrl = ${JSON.stringify(String(env.publicAppBaseUrl || env.appBaseUrl || "").trim())};
 
-      function getCanonicalAdminOrigin() {
-        const hostname = String(window.location.hostname || "").toLowerCase();
-        if (hostname === "ungdungthongminh.shop") {
-          return "https://www.ungdungthongminh.shop";
+      function getAdminOrigin() {
+        const candidate = String(configuredPublicBaseUrl || "").trim();
+        if (!candidate) {
+          return window.location.origin;
         }
-        return window.location.origin;
+
+        try {
+          return new URL(candidate, window.location.origin).origin;
+        } catch {
+          return window.location.origin;
+        }
       }
 
       function buildAdminUrl(path) {
         const value = String(path || "").trim();
         if (!value) {
-          return getCanonicalAdminOrigin() + "/admin";
+          return getAdminOrigin() + "/admin";
         }
         if (/^https?:\/\//i.test(value)) {
           return value;
         }
-        return getCanonicalAdminOrigin() + (value.startsWith("/") ? value : "/" + value);
+        return getAdminOrigin() + (value.startsWith("/") ? value : "/" + value);
       }
 
       function getAdminLoginEndpoints() {
@@ -652,7 +749,7 @@ function adminLoginPage() {
 
 module.exports = {
   requirePortalAuth: requireAuth("portal", "/portal/login"),
-  requireAdminAuth: requireAuth("admin", "/admin/login"),
+  requireAdminAuth,
   requirePortalOrAdmin,
   handlePortalLogin,
   handleAdminLogin,
