@@ -40,6 +40,26 @@ function resolveGmailSender() {
   return String(env.gmailNotifyFrom || env.smtpFrom || "").trim();
 }
 
+function mergeUniqueRecipients(...groups) {
+  const seen = new Set();
+  const merged = [];
+
+  groups.flat().forEach((value) => {
+    const email = String(value || "").trim();
+    if (!email) {
+      return;
+    }
+    const key = email.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    merged.push(email);
+  });
+
+  return merged;
+}
+
 function resolveGmailRecipients() {
   const recipients = String(env.gmailNotifyTo || "")
     .split(",")
@@ -55,16 +75,17 @@ function resolveGmailRecipients() {
 }
 
 async function resolvePaidOrderRecipients(order) {
+  const adminRecipients = resolveGmailRecipients();
   const customerId = String(order?.customerId || "").trim();
   if (customerId) {
     const customer = await findCustomerById(customerId);
     const customerEmail = String(customer?.email || "").trim();
     if (customerEmail) {
-      return [customerEmail];
+      return mergeUniqueRecipients([customerEmail], adminRecipients);
     }
   }
 
-  return resolveGmailRecipients();
+  return adminRecipients;
 }
 
 function maskKeyValue(keyValue) {
@@ -143,6 +164,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
   const customerId = order?.customerId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
+  const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
 
   const keyValue = keyDelivery?.keyValue || "(chua cap key)";
   const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
@@ -154,7 +176,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
     `Customer: ${customerId}`,
     `App: ${appId}`,
     `So tien: ${amount} ${currency}`,
-    `Key: ${keyText}`
+    `Key: ${keyText}`,
+    `Website: ${websiteUrl}`
   ].join("\n");
 
   const html = [
@@ -163,7 +186,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery }) {
     `<p><b>Customer:</b> <code>${customerId}</code></p>`,
     `<p><b>App:</b> <code>${appId}</code></p>`,
     `<p><b>So tien:</b> <b>${amount} ${currency}</b></p>`,
-    `<p><b>Key:</b> <code>${keyText}</code></p>`
+    `<p><b>Key:</b> <code>${keyText}</code></p>`,
+    `<p><b>Website:</b> <a href="${websiteUrl}">${websiteUrl}</a></p>`
   ].join("");
 
   return { subject, text, html };
