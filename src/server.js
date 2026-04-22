@@ -129,6 +129,22 @@ function maskConfiguredSecret(secret) {
   return `${value.slice(0, 4)}********${value.slice(-4)}`;
 }
 
+function maskEmailAddress(email) {
+  const value = String(email || "").trim().toLowerCase();
+  const atIndex = value.indexOf("@");
+  if (!value || atIndex <= 0 || atIndex === value.length - 1) {
+    return "";
+  }
+
+  const localPart = value.slice(0, atIndex);
+  const domainPart = value.slice(atIndex + 1);
+  if (localPart.length <= 2) {
+    return `${localPart[0] || "*"}***@${domainPart}`;
+  }
+
+  return `${localPart.slice(0, 2)}***${localPart.slice(-1)}@${domainPart}`;
+}
+
 const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
 const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
 
@@ -1560,7 +1576,10 @@ app.post(
           requiresOtp: true,
           otpVerified: false
         });
-        return res.status(202).send("OTP sent to admin email. Please submit OTP to continue login.");
+        const maskedEmail = maskEmailAddress(admin.email);
+        return res.status(202).send(maskedEmail
+          ? `OTP sent to admin email ${maskedEmail}. Please submit OTP to continue login.`
+          : "OTP sent to admin email. Please submit OTP to continue login.");
       }
 
       if (!challengeMatched) {
@@ -1583,7 +1602,10 @@ app.post(
           requiresOtp: true,
           otpVerified: false
         });
-        return res.status(401).send("OTP session expired. A new OTP has been sent.");
+        const maskedEmail = maskEmailAddress(admin.email);
+        return res.status(401).send(maskedEmail
+          ? `OTP session expired. A new OTP has been sent to ${maskedEmail}.`
+          : "OTP session expired. A new OTP has been sent.");
       }
 
       const verify = await verifyOtpCode({ email: admin.email, purpose: otpPurpose, code: otp });

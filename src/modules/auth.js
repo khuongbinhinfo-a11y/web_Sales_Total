@@ -483,6 +483,7 @@ function adminLoginPage() {
       .msg.info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
       .msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
       .msg.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+      .readonly{background:#f8fafc;color:#475569}
       hr{border:0;border-top:1px solid #e2e8f0;margin:16px 0}
     </style>
   </head>
@@ -494,6 +495,8 @@ function adminLoginPage() {
         <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01" required />
         <label>Password</label>
         <input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="••••••••" required />
+        <label>Email nhan OTP</label>
+        <input type="text" id="adminOtpEmailHint" class="readonly" value="OTP se gui vao email da dang ky cua tai khoan admin" readonly />
         <label>OTP email (bat buoc cho owner/manager)</label>
         <input type="text" id="adminOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
         <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
@@ -506,6 +509,36 @@ function adminLoginPage() {
       const form = document.getElementById("adminLoginForm");
       const msg = document.getElementById("adminLoginMsg");
       const submitBtn = document.getElementById("adminLoginBtn");
+      const otpEmailHint = document.getElementById("adminOtpEmailHint");
+
+      function getAdminLoginEndpoints() {
+        const pathname = window.location.pathname || "";
+        if (pathname.startsWith("/api/")) {
+          return ["/api/auth/admin/login", "/auth/admin/login"];
+        }
+        return ["/auth/admin/login", "/api/auth/admin/login"];
+      }
+
+      function normalizeResponseText(text) {
+        const value = String(text || "").trim();
+        if (!value) {
+          return "";
+        }
+
+        try {
+          const parsed = JSON.parse(value);
+          return String(parsed.message || value);
+        } catch {
+          return value;
+        }
+      }
+
+      function updateOtpDestination(text) {
+        const match = String(text || "").match(/[A-Za-z0-9._%+-]+\*+[^\s]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+        otpEmailHint.value = match
+          ? "OTP se gui toi: " + match[0]
+          : "OTP se gui vao email da dang ky cua tai khoan admin";
+      }
 
       function setMessage(type, text) {
         msg.className = "msg show " + type;
@@ -524,25 +557,45 @@ function adminLoginPage() {
         });
 
         try {
-          const response = await fetch("/auth/admin/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-              "Accept": "text/plain"
-            },
-            body: body.toString(),
-            redirect: "follow"
-          });
+          let response = null;
+          let text = "";
+          for (const endpoint of getAdminLoginEndpoints()) {
+            response = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "Accept": "text/plain, application/json"
+              },
+              body: body.toString(),
+              redirect: "manual"
+            });
 
-          const text = (await response.text()).trim();
-          if (response.ok) {
-            window.location.href = "/admin";
+            text = normalizeResponseText(await response.text());
+            if (response.status !== 404) {
+              break;
+            }
+          }
+
+          if (!response) {
+            setMessage("error", "Khong the ket noi toi endpoint dang nhap admin.");
             return;
           }
+
+          updateOtpDestination(text);
 
           if (response.status === 202) {
             setMessage("success", text || "OTP da duoc gui vao email admin. Nhap OTP roi bam Login lai.");
             document.getElementById("adminOtp").focus();
+            return;
+          }
+
+          if (response.status >= 300 && response.status < 400) {
+            window.location.href = "/admin";
+            return;
+          }
+
+          if (response.ok) {
+            window.location.href = "/admin";
             return;
           }
 
