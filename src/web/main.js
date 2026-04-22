@@ -3,6 +3,7 @@ const productList = document.getElementById("productList");
 const langToggle  = document.getElementById("langToggle");
 const catTabs     = document.getElementById("catTabs");
 const searchInput = document.getElementById("searchInput");
+const catalogNotice = document.getElementById("catalogNotice");
 
 /* ── DOM refs: auth & drawer ── */
 const navLoginBtn      = document.getElementById("navLoginBtn");
@@ -159,6 +160,12 @@ const T = {
     error_create:"Không tạo được đơn hàng",
     notice_fallback:"Đang hiển thị dữ liệu demo — API/DB chưa sẵn sàng.",
     notice_empty:"Catalog đang trống, hãy seed dữ liệu.",
+    notice_preview_title:"Đang chạy ở chế độ preview",
+    notice_preview_detail:"Vẫn hiển thị danh sách sản phẩm demo để trang chủ không bị trắng. Muốn tạo đơn thật trên Vercel, hãy cấu hình DATABASE_URL.",
+    notice_db_down_detail:"API đang chạy nhưng cơ sở dữ liệu chưa kết nối. Trang chủ đang dùng dữ liệu demo tạm thời.",
+    notice_live_title:"Kết nối catalog thành công",
+    notice_live_detail:"Dữ liệu sản phẩm đang lấy trực tiếp từ API live.",
+    notice_search_empty:"Không có sản phẩm phù hợp với bộ lọc hiện tại.",
     alert_preview:"Preview mode: API/DB chưa sẵn sàng. Vui lòng bật PostgreSQL để tạo đơn thật.",
     modal_login_title:"Đăng nhập",
     modal_login_desc:"Nhập email để đăng nhập.",
@@ -240,6 +247,12 @@ const T = {
     error_create:"Unable to create order",
     notice_fallback:"Showing demo data — API/DB not ready.",
     notice_empty:"Catalog is empty, please seed data.",
+    notice_preview_title:"Running in preview mode",
+    notice_preview_detail:"Demo products are shown so the homepage still renders. Configure DATABASE_URL on Vercel to create real orders.",
+    notice_db_down_detail:"The API is up but the database is not connected. The homepage is temporarily using demo data.",
+    notice_live_title:"Catalog connection is live",
+    notice_live_detail:"Product data is being loaded from the live API.",
+    notice_search_empty:"No products match the current filter.",
     alert_preview:"Preview mode: API/DB not ready. Please start PostgreSQL to create real orders.",
     modal_login_title:"Login",
     modal_login_desc:"Enter your email to login.",
@@ -298,6 +311,7 @@ let pendingOpenPurchasedAfterAuth = false;
 let googleAuthInitialized = false;
 let googleAuthClientId = "";
 let googleAuthInitAttempts = 0;
+let catalogMode = "loading";
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
@@ -823,7 +837,44 @@ function renderPurchased(){
 }
 
 /* ═══════════════ RENDER CATALOG ═══════════════ */
-function showNotice(msg){ document.getElementById("catalogNotice").textContent = msg; }
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function showNotice(message, options = {}) {
+  if (!catalogNotice) return;
+
+  const tone = options.tone || "muted";
+  const title = options.title ? `<strong class="catalog-notice-title">${escapeHtml(options.title)}</strong>` : "";
+  const detail = options.detail ? `<span class="catalog-notice-detail">${escapeHtml(options.detail)}</span>` : "";
+  const badgeText = tone === "success"
+    ? (lang === "vi" ? "LIVE" : "LIVE")
+    : (lang === "vi" ? "PREVIEW" : "PREVIEW");
+
+  catalogNotice.className = `catalog-notice${message ? " is-visible" : ""}${tone ? ` is-${tone}` : ""}`;
+  catalogNotice.innerHTML = message
+    ? `<span class="catalog-notice-badge">${badgeText}</span><div class="catalog-notice-copy">${title}<span class="catalog-notice-message">${escapeHtml(message)}</span>${detail}</div>`
+    : "";
+}
+
+async function getApiHealthHint() {
+  try {
+    const res = await fetch("/api/health");
+    const payload = await res.json().catch(() => ({}));
+    return {
+      ok: res.ok,
+      database: String(payload?.database || "").toLowerCase(),
+      message: String(payload?.message || "").trim()
+    };
+  } catch {
+    return null;
+  }
+}
 
 function buildTabs(){
   catTabs.innerHTML = `<button class="cat-tab ${activeCat==="all"?"active":""}" data-cat="all">${t("cat_all")}</button>`;
@@ -845,6 +896,11 @@ function renderProducts(){
   });
 
   productList.innerHTML = "";
+  if (!filtered.length) {
+    productList.innerHTML = `<article class="catalog-empty-card"><strong>${t("notice_search_empty")}</strong><p>${t("notice_fallback")}</p></article>`;
+    return;
+  }
+
   filtered.forEach(p => {
     const productName = canonicalProductName(p);
     const isFeat = p.cycle === "yearly";
@@ -960,11 +1016,35 @@ async function loadCatalog(){
     const data = await res.json();
     const products = Array.isArray(data.products) ? data.products : [];
     const publicProducts = products.filter(p => !isInternalTestProduct(p));
-    if(!publicProducts.length){ allProducts = fallbackProducts.filter(p => !isInternalTestProduct(p)); showNotice(t("notice_empty")); }
-    else { allProducts = publicProducts; allProducts._live = true; showNotice(""); }
+    if(!publicProducts.length){
+      catalogMode = "fallback";
+      allProducts = fallbackProducts.filter(p => !isInternalTestProduct(p));
+      showNotice(t("notice_empty"), {
+        tone: "warning",
+        title: t("notice_preview_title"),
+        detail: t("notice_preview_detail")
+      });
+    }
+    else {
+      catalogMode = "live";
+      allProducts = publicProducts;
+      allProducts._live = true;
+      showNotice(t("notice_live_detail"), {
+        tone: "success",
+        title: t("notice_live_title")
+      });
+    }
   } catch(e){
+    const health = await getApiHealthHint();
+    catalogMode = "fallback";
     allProducts = fallbackProducts.filter(p => !isInternalTestProduct(p));
-    showNotice(t("notice_fallback"));
+    showNotice(t("notice_fallback"), {
+      tone: "warning",
+      title: t("notice_preview_title"),
+      detail: health?.database === "disconnected" || /database/i.test(health?.message || "")
+        ? t("notice_db_down_detail")
+        : t("notice_preview_detail")
+    });
     console.warn("Catalog fallback",e);
   }
   allProducts = allProducts.map(p => ({ ...p, image: resolveProductImage(p) }));

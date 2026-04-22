@@ -198,7 +198,18 @@ pointer-events:none;z-index:0}
 .p-card-btn:hover{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff}
 .p-badge{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:800;color:#fff;background:#f97316;z-index:2}
 
-.catalog-notice{text-align:center;color:var(--muted);font-size:.88rem;padding:12px 0}
+.catalog-notice{display:none;align-items:flex-start;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;border:1px solid transparent;font-size:.9rem;line-height:1.55;background:#fff}
+.catalog-notice.is-visible{display:flex}
+.catalog-notice.is-warning{background:linear-gradient(135deg,#fffaf1,#fff5eb);border-color:#f3d2bb;color:#8a4b28;box-shadow:0 10px 24px rgba(232,132,90,.08)}
+.catalog-notice.is-success{background:linear-gradient(135deg,#eefbf4,#f6fffb);border-color:#b8e4cb;color:#1f6b4b;box-shadow:0 10px 24px rgba(91,185,140,.08)}
+.catalog-notice-badge{display:inline-flex;align-items:center;justify-content:center;min-width:74px;padding:7px 12px;border-radius:999px;font-size:.72rem;font-weight:900;letter-spacing:.08em;background:rgba(255,255,255,.78);border:1px solid currentColor}
+.catalog-notice-copy{display:flex;flex-direction:column;gap:2px}
+.catalog-notice-title{font-size:.86rem;font-weight:900;letter-spacing:.02em}
+.catalog-notice-message{font-weight:700}
+.catalog-notice-detail{color:inherit;opacity:.9}
+.catalog-empty-card{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:36px 24px;border-radius:18px;border:1px dashed #d6d3d1;background:linear-gradient(135deg,#fff,#faf7f4);color:#6b7280;text-align:center}
+.catalog-empty-card strong{font-size:1rem;color:#1f2937}
+.catalog-empty-card p{margin:0;max-width:52ch}
 
 /* ═══════════════════ HOW SECTION ═══════════════════ */
 .how-section{padding:72px 0;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(245,238,255,.6))}
@@ -416,6 +427,7 @@ pointer-events:none;z-index:0}
   .banner-card{width:220px;height:130px}
   .banner-carousel{padding:16px 0}
   .product-grid{grid-template-columns:1fr;gap:12px}
+  .catalog-notice{flex-direction:column;align-items:flex-start}
   .p-card{grid-template-columns:1fr;min-height:auto}
   .p-card-img{min-height:138px}
   .p-card-body{padding:14px 14px 12px}

@@ -198,6 +198,8 @@ Bien moi truong toi thieu tren Vercel:
 - `NODE_ENV=production`
 - `APP_BASE_URL=https://<your-vercel-domain>`
 
+Checklist copy nhanh: [docs/vercel-env-checklist.md](docs/vercel-env-checklist.md)
+
 Neu thieu `DATABASE_URL`, Vercel function se van boot duoc nhung cac route can DB se tra loi 503 thay vi crash luc khoi dong.
 
 ## Pham vi MVP hien tai
