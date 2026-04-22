@@ -1,6 +1,10 @@
 const { env } = require("../config/env");
 const { recordWebhookEvent, markOrderPaid, getOrderByCode } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
+const { pool } = require("../db/pool");
+
+const EMAIL_EVENT_PAID_ORDER_SUCCESS = "paid_order_success";
+const PAID_ORDER_EMAIL_RESEND_WINDOW_MINUTES = 10;
 
 function getPaymentProviderMode() {
   const runtime = readRuntimeSettings();
@@ -269,6 +273,89 @@ async function sendGmailMessage({ subject, text, html, to }) {
 }
 
 async function notifyPaidOrderByGmail({ order, keyDelivery }) {
+  const orderId = order?.id || null;
+  const idempotencyKey = `paid_order_success:${orderId || "unknown"}:${Date.now()}`;
+
+  return notifyPaidOrderByGmailWithPolicy({
+    order,
+    keyDelivery,
+    orderId,
+    idempotencyKey
+  });
+}
+
+async function createEmailNotificationAttempt({
+  eventType,
+  orderId,
+  idempotencyKey,
+  provider,
+  recipient,
+  payload
+}) {
+  const result = await pool.query(
+    `INSERT INTO email_notification_events(event_type, order_id, idempotency_key, provider, recipient, payload)
+     VALUES ($1, $2::uuid, $3, $4, $5, $6::jsonb)
+     ON CONFLICT (idempotency_key) DO NOTHING
+     RETURNING id`,
+    [
+      eventType,
+      orderId || null,
+      idempotencyKey,
+      provider,
+      recipient || "",
+      JSON.stringify(payload || {})
+    ]
+  );
+
+  return {
+    duplicated: result.rowCount === 0,
+    notificationEventId: result.rows[0]?.id || null
+  };
+}
+
+async function updateEmailNotificationAttempt({ notificationEventId, status, reason, providerMessageId, payload }) {
+  if (!notificationEventId) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE email_notification_events
+     SET status = $2,
+         reason = $3,
+         provider_message_id = $4,
+         payload = COALESCE($5::jsonb, payload),
+         updated_at = NOW()
+     WHERE id = $1::uuid`,
+    [
+      notificationEventId,
+      status,
+      reason || null,
+      providerMessageId || null,
+      payload ? JSON.stringify(payload) : null
+    ]
+  );
+}
+
+async function hasRecentPaidOrderEmailSent(orderId) {
+  if (!orderId) {
+    return false;
+  }
+
+  const result = await pool.query(
+    `SELECT 1
+     FROM email_notification_events
+     WHERE order_id = $1::uuid
+       AND event_type = $2
+       AND status = 'sent'
+       AND created_at >= NOW() - ($3::int * INTERVAL '1 minute')
+     LIMIT 1`,
+    [orderId, EMAIL_EVENT_PAID_ORDER_SUCCESS, PAID_ORDER_EMAIL_RESEND_WINDOW_MINUTES]
+  );
+
+  return result.rowCount > 0;
+}
+
+async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, idempotencyKey }) {
   if (!isGmailNotifyEnabled()) {
     return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config" };
   }
@@ -278,11 +365,80 @@ async function notifyPaidOrderByGmail({ order, keyDelivery }) {
     return { ok: false, skipped: true, reason: "missing_recipient" };
   }
 
+  const attempt = await createEmailNotificationAttempt({
+    eventType: EMAIL_EVENT_PAID_ORDER_SUCCESS,
+    orderId,
+    idempotencyKey,
+    provider: "gmail",
+    recipient: recipients.join(","),
+    payload: {
+      orderId,
+      orderCode: order?.orderCode || null,
+      appId: order?.appId || null,
+      customerId: order?.customerId || null
+    }
+  });
+
+  if (attempt.duplicated) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "duplicate_idempotency_key",
+      notificationEventId: null
+    };
+  }
+
+  const recentSent = await hasRecentPaidOrderEmailSent(orderId);
+  if (recentSent) {
+    await updateEmailNotificationAttempt({
+      notificationEventId: attempt.notificationEventId,
+      status: "skipped",
+      reason: `suppressed_within_${PAID_ORDER_EMAIL_RESEND_WINDOW_MINUTES}m_window`
+    });
+    return {
+      ok: false,
+      skipped: true,
+      reason: `suppressed_within_${PAID_ORDER_EMAIL_RESEND_WINDOW_MINUTES}m_window`,
+      notificationEventId: attempt.notificationEventId
+    };
+  }
+
   try {
     const message = buildGmailPaidOrderMessage({ order, keyDelivery });
-    return await sendGmailMessage({ ...message, to: recipients });
+    const sendResult = await sendGmailMessage({ ...message, to: recipients });
+
+    if (sendResult.ok) {
+      await updateEmailNotificationAttempt({
+        notificationEventId: attempt.notificationEventId,
+        status: "sent",
+        providerMessageId: sendResult.messageId || null,
+        payload: { sendResult }
+      });
+    } else {
+      await updateEmailNotificationAttempt({
+        notificationEventId: attempt.notificationEventId,
+        status: sendResult.skipped ? "skipped" : "failed",
+        reason: sendResult.reason || null,
+        payload: { sendResult }
+      });
+    }
+
+    return {
+      ...sendResult,
+      notificationEventId: attempt.notificationEventId
+    };
   } catch (error) {
-    return { ok: false, skipped: false, reason: error.message || "send_failed" };
+    await updateEmailNotificationAttempt({
+      notificationEventId: attempt.notificationEventId,
+      status: "failed",
+      reason: error.message || "send_failed"
+    });
+    return {
+      ok: false,
+      skipped: false,
+      reason: error.message || "send_failed",
+      notificationEventId: attempt.notificationEventId
+    };
   }
 }
 
@@ -378,9 +534,11 @@ async function processPaidWebhook(payload) {
     }
   });
 
-  const gmailNotification = await notifyPaidOrderByGmail({
+  const gmailNotification = await notifyPaidOrderByGmailWithPolicy({
     order: result.order,
-    keyDelivery: result.keyDelivery || null
+    keyDelivery: result.keyDelivery || null,
+    orderId: resolvedOrderId,
+    idempotencyKey: `paid_order_success:${payload.eventId}:${resolvedOrderId}`
   });
 
   return {

@@ -318,6 +318,84 @@ Nhu vay da du de desktop app:
 - reseller/gift
 - dashboard support theo app/device
 
+## 10. Contract da chot giua AIT va AIA (v1)
+
+Muc nay la ban chot de 2 ben code dong bo, khong tu suy dien.
+
+### 10.1 Phan vai ro rang
+
+- AIT la nguon su that duy nhat cho license + plan + feature policy.
+- AIA chi consume API va gate UX theo du lieu tra ve.
+- AIA khong duoc tu map cung plan -> feature neu server da tra ve features.
+
+### 10.2 Quyet dinh feature theo plan
+
+- Quyet dinh cuoi cung thuoc AIT.
+- Response verify/list can co `features` (array) hoac `featureFlags` (object).
+- AIA uu tien doc `features`; neu vang thi fallback sang map noi bo tam thoi.
+
+Vi du payload de AIA gate:
+
+```json
+{
+  "ok": true,
+  "license": {
+    "id": "lic_123",
+    "appId": "app_cap01",
+    "planCode": "premium",
+    "status": "active",
+    "expiresAt": "2027-04-22T08:00:00.000Z",
+    "lastVerifiedAt": "2026-04-22T08:30:00.000Z"
+  },
+  "features": [
+    "lesson.basic",
+    "lesson.premium",
+    "ai.voice",
+    "ai.writing"
+  ]
+}
+```
+
+### 10.3 Timing phia AIA
+
+Luong bat buoc sau login:
+
+1. login account trung tam
+2. goi API list/verify license
+3. luu cache local ngan han
+4. gate UI theo `features` + `license.status`
+
+### 10.4 Offline grace mode
+
+- Grace khuyen nghi: 3-7 ngay.
+- Co so tinh grace: `lastVerifiedAt` + `graceDays`.
+- Neu qua grace, AIA downgrade ve basic/read-only (khong can khoa trang app).
+
+Vi du block grace:
+
+```json
+{
+  "grace": {
+    "allowed": true,
+    "graceDays": 7,
+    "offlineUntil": "2026-04-29T08:30:00.000Z"
+  }
+}
+```
+
+### 10.5 API toi thieu de chay production
+
+- `GET /api/ai-app/customers/:customerId/licenses?appId=...`
+- `POST /api/ai-app/licenses/verify`
+- `POST /api/licenses/:licenseId/activate` (human/admin flow)
+- `POST /api/licenses/:licenseId/deactivate` (human/admin flow)
+
+### 10.6 Nguyen tac tuong thich
+
+- Them field moi trong response: chi add, khong doi nghia field cu.
+- Doi nghia field quan trong: tang version contract va cap nhat changelog.
+- AIA can co fallback an toan khi field moi chua co tren moi truong cu.
+
 ## 10. Ket luan
 
 Schema va API toi thieu tren du de bat dau huong `account + entitlement + app-license` ma khong can lam he thong qua nang ngay tu dau.

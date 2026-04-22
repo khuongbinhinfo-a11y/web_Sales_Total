@@ -1,7 +1,7 @@
 # [APP-ONBOARD][cap01-desktop] Integrate app voi Platform Standard v1
 
 ## 1. Metadata
-- App name: Phan mem hoc tap khoi Cap 01 (HHK)
+- App name: Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học
 - App ID: app-study-12
 - App type: desktop (Electron + Vite/React + Express backend)
 - Team owner: khuongbinhinfo

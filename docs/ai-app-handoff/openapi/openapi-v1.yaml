@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
   title: Web Sales Total API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     API contract v1 cho he thong web tong.
     Dung de tich hop webapp, desktop app va admin tools.
-    Ban 1.1.0 bo sung schema chi tiet cho order, customer snapshot/entitlement va dashboard KPI.
+    Ban 1.2.0 bo sung contract license API cho AIA (features + grace) de gate tinh nang dong bo.
 servers:
   - url: http://localhost:3900
     description: Local
@@ -19,6 +19,7 @@ tags:
   - name: Payments
   - name: Telegram
   - name: Portal
+  - name: AI App
   - name: Usage
   - name: Admin
 paths:
@@ -587,6 +588,167 @@ paths:
               schema:
                 $ref: "#/components/schemas/CustomerSnapshotResponse"
 
+  /api/customer/licenses:
+    get:
+      tags: [Portal]
+      summary: List customer licenses (portal/admin)
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: query
+          name: customerId
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: appId
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Licenses list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerLicensesResponse"
+
+  /api/licenses/{licenseId}/activate:
+    post:
+      tags: [Portal]
+      summary: Activate a license by id
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: licenseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LicenseDeviceRequest"
+      responses:
+        "200":
+          description: Activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseMutationResponse"
+
+  /api/licenses/{licenseId}/verify:
+    post:
+      tags: [Portal]
+      summary: Verify a license by id
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: licenseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LicenseDeviceRequest"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseMutationResponse"
+
+  /api/licenses/{licenseId}/deactivate:
+    post:
+      tags: [Portal]
+      summary: Deactivate a license by id
+      security:
+        - portalCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: licenseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId:
+                  type: string
+      responses:
+        "200":
+          description: Deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseMutationResponse"
+
+  /api/ai-app/customers/{customerId}/licenses:
+    get:
+      tags: [AI App]
+      summary: List customer licenses for AI app integration
+      security:
+        - aiAppKeyAuth: []
+      parameters:
+        - in: path
+          name: customerId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: appId
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI-app license list with features and grace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAppCustomerLicensesResponse"
+
+  /api/ai-app/licenses/verify:
+    post:
+      tags: [AI App]
+      summary: Verify license by license key for AI app
+      security:
+        - aiAppKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiAppVerifyLicenseRequest"
+      responses:
+        "200":
+          description: Verified with feature-gating payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAppVerifyLicenseResponse"
+        "404":
+          description: License invalid/expired/revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/usage/consume:
     post:
       tags: [Usage]
@@ -876,6 +1038,10 @@ components:
       type: apiKey
       in: cookie
       name: wst_admin_session
+    aiAppKeyAuth:
+      type: apiKey
+      in: header
+      name: x-ai-app-key
 
   schemas:
     GenericObject:
@@ -1211,6 +1377,155 @@ components:
           nullable: true
         balance:
           type: number
+
+    LicenseGrace:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        graceDays:
+          type: integer
+        offlineUntil:
+          type: string
+          format: date-time
+
+    AppLicense:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        appId:
+          type: string
+        productId:
+          type: string
+        orderId:
+          type: string
+          nullable: true
+        planCode:
+          type: string
+          nullable: true
+        billingCycle:
+          type: string
+          nullable: true
+        licenseKey:
+          type: string
+        status:
+          type: string
+          enum: [inactive, active, suspended, expired, revoked]
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        deviceId:
+          type: string
+          nullable: true
+        deviceName:
+          type: string
+          nullable: true
+        lastVerifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AiAppLicense:
+      allOf:
+        - $ref: "#/components/schemas/AppLicense"
+        - type: object
+          properties:
+            features:
+              type: array
+              items:
+                type: string
+            grace:
+              $ref: "#/components/schemas/LicenseGrace"
+
+    CustomerLicensesResponse:
+      type: object
+      properties:
+        customerId:
+          type: string
+        appId:
+          type: string
+          nullable: true
+        licenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppLicense"
+
+    AiAppCustomerLicensesResponse:
+      type: object
+      properties:
+        customerId:
+          type: string
+        appId:
+          type: string
+          nullable: true
+        licenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiAppLicense"
+
+    LicenseDeviceRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+        deviceId:
+          type: string
+        deviceName:
+          type: string
+
+    LicenseMutationResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        license:
+          $ref: "#/components/schemas/AppLicense"
+
+    AiAppVerifyLicenseRequest:
+      type: object
+      required: [appId, licenseKey]
+      properties:
+        customerId:
+          type: string
+        appId:
+          type: string
+        licenseKey:
+          type: string
+        deviceId:
+          type: string
+        deviceName:
+          type: string
+
+    AiAppVerifyLicenseResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        license:
+          $ref: "#/components/schemas/AiAppLicense"
+        features:
+          type: array
+          items:
+            type: string
+        grace:
+          $ref: "#/components/schemas/LicenseGrace"
 
     AdminDashboardResponse:
       type: object

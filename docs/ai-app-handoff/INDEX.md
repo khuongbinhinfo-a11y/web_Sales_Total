@@ -15,6 +15,8 @@ Thu muc nay da gom san cac file can thiet de ban giao cho AI-app.
   8. `ai-app-connect-commands.md`
   9. `ai-gates/definition-ready-done.<app>.yaml`
 
+Ghi chu: trong `app-license-minimum-schema-api.md` da co muc `Contract da chot giua AIT va AIA (v1)` de 2 ben implement dong bo.
+
 ## 2) File theo muc dich
 - Contract API:
   - `openapi/openapi-v1.yaml`

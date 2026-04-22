@@ -137,6 +137,7 @@ const env = {
   customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
   portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
   aiAppSharedKey: String(process.env.AI_APP_SHARED_KEY || "").trim(),
+  aiAppOfflineGraceDays: toPositiveInt(process.env.AI_APP_OFFLINE_GRACE_DAYS, 7),
   adminAccessKey: String(process.env.ADMIN_ACCESS_KEY || "").trim(),
   adminOwnerKeyLoginEnabled: toBool(process.env.ADMIN_OWNER_KEY_LOGIN_ENABLED, false),
   adminLoginWindowMs: toPositiveInt(process.env.ADMIN_LOGIN_WINDOW_MS, 15 * 60 * 1000),

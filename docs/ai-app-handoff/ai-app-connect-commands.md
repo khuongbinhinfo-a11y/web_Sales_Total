@@ -66,3 +66,26 @@ curl -X POST "http://localhost:3900/api/licenses/<licenseId>/deactivate" \
 - `license.status` co the la `active` sau verify.
 - `expiresAt=null` nghia la khong dat han (vd one_time theo policy hien tai).
 - `lastVerifiedAt` cap nhat moi lan AI-app goi verify.
+- `features` la nguon gate chinh phia AIA.
+- `grace` gom `allowed`, `graceDays`, `offlineUntil` de xu ly offline mode.
+
+Vi du response verify:
+
+```json
+{
+  "ok": true,
+  "license": {
+    "id": "...",
+    "appId": "app_cap01",
+    "planCode": "premium",
+    "status": "active",
+    "lastVerifiedAt": "2026-04-22T11:00:00.000Z"
+  },
+  "features": ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"],
+  "grace": {
+    "allowed": true,
+    "graceDays": 7,
+    "offlineUntil": "2026-04-29T11:00:00.000Z"
+  }
+}
+```

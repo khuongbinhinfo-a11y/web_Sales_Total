@@ -122,6 +122,68 @@ function requireAiAppKey(req, res, next) {
   return next();
 }
 
+const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
+const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
+
+function inferPlanTierFromLicense(license) {
+  const joined = [license?.planCode, license?.productId]
+    .map((value) => String(value || "").toLowerCase())
+    .join(" ");
+  if (joined.includes("premium") || joined.includes("pro")) {
+    return "premium";
+  }
+  if (joined.includes("basic")) {
+    return "basic";
+  }
+  return "standard";
+}
+
+function computeLicenseGrace(license) {
+  const graceDays = Math.max(1, Number(env.aiAppOfflineGraceDays) || 7);
+  const lastVerifiedAt = license?.lastVerifiedAt ? new Date(license.lastVerifiedAt) : new Date();
+  const offlineUntilDate = new Date(lastVerifiedAt.getTime() + graceDays * 24 * 60 * 60 * 1000);
+  const now = Date.now();
+
+  const activeStates = new Set(["active", "inactive"]);
+  const status = String(license?.status || "").toLowerCase();
+  const statusAllowed = activeStates.has(status);
+  const expiryAllowed = !license?.expiresAt || new Date(license.expiresAt).getTime() > now;
+
+  return {
+    allowed: statusAllowed && expiryAllowed,
+    graceDays,
+    offlineUntil: offlineUntilDate.toISOString()
+  };
+}
+
+function resolveLicenseFeatures(license) {
+  const rawFeatures = Array.isArray(license?.metadata?.features)
+    ? license.metadata.features
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+    : null;
+
+  if (rawFeatures && rawFeatures.length > 0) {
+    return rawFeatures;
+  }
+
+  const tier = inferPlanTierFromLicense(license);
+  if (tier === "premium") {
+    return AI_APP_PREMIUM_FEATURES;
+  }
+  return AI_APP_STANDARD_FEATURES;
+}
+
+function buildAiAppLicenseView(license) {
+  const features = resolveLicenseFeatures(license);
+  const grace = computeLicenseGrace(license);
+  return {
+    ...license,
+    features,
+    grace
+  };
+}
+
 const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
 const aiGateFileByApp = {
   default: "definition-ready-done.yaml",
@@ -874,7 +936,8 @@ app.get(
     }
 
     const licenses = await listCustomerLicenses({ customerId, appId });
-    return res.json({ customerId, appId: appId || null, licenses });
+    const items = licenses.map(buildAiAppLicenseView);
+    return res.json({ customerId, appId: appId || null, licenses: items });
   })
 );
 
@@ -904,7 +967,8 @@ app.post(
       return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
     }
 
-    return res.json({ ok: true, license });
+    const aiLicense = buildAiAppLicenseView(license);
+    return res.json({ ok: true, license: aiLicense, features: aiLicense.features, grace: aiLicense.grace });
   })
 );
 
