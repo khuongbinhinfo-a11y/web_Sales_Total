@@ -21,12 +21,16 @@ Tai lieu nay la playbook de tat ca AI agent cua cac app bám theo cung mot chuan
 ## 3. Nguon su that duy nhat (single source of truth)
 - Contract: docs/openapi/openapi-v1.yaml
 - Collection: docs/openapi/postman-v1.collection.json
+- Product map cho AI-app checkout: docs/ai-app-handoff/WEB_TOTAL_PRODUCT_MAP_JSON.json
 - Environments:
   - docs/openapi/environments/local.postman_environment.json
   - docs/openapi/environments/staging.postman_environment.json
   - docs/openapi/environments/prod.postman_environment.json
 - Rule check: scripts/validate-api-contracts.mjs
 - CI gate: .github/workflows/api-contract.yml
+
+Luu y:
+- Moi ban copy product map theo app (vi du thu muc onboarding rieng) phai duoc regen tu catalog hien tai; khong duoc sua tay roi de lech voi file handoff trung tam.
 
 ## 3.1 Conflict resolution policy
 - OpenAPI YAML la master source.

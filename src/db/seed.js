@@ -8,7 +8,7 @@ async function seed() {
     await client.query(
       `INSERT INTO apps(id, name, slug, status, description)
        VALUES
-         ('app-study-12', 'Phan mem hoc tap khoi cap 01', 'phan-mem-hoc-tap-khoi-cap-01', 'active', 'Nen tang hoc tap thong minh cho hoc sinh tieu hoc khoi cap 01.'),
+         ('app-study-12', 'Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học', 'phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc', 'active', 'Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc.'),
          ('app-ai-writing', 'AI Writing Coach', 'ai-writing-coach', 'coming_soon', 'Cong cu viet va sua bai theo ngu canh hoc tap va cong viec.')
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,

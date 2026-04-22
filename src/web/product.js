@@ -3,12 +3,12 @@
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
-  { id:"prod-study-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:89000,  credits:120 },
-  { id:"prod-study-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"prod-study-premium-month", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"monthly", price:119000,  credits:240 },
-  { id:"prod-study-premium-year", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"yearly", price:899000,  credits:3600 },
-  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:999000,  credits:9990 },
-  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"PHẦN MỀM HỌC TẬP CHO HỌC SINH KHỐI CẤP 01", cycle:"one_time", price:1599000,  credits:15990 },
+  { id:"prod-study-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:89000,  credits:120 },
+  { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
+  { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
+  { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
+  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:999000,  credits:9990 },
+  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1599000,  credits:15990 },
   { id:"demo-map",   appId:"lamviec", name:"Quét data Google Map",          cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 }
@@ -49,7 +49,7 @@ function isStudyCap01Family(product) {
   const appId = normalizeText(product?.appId);
   return (
     appId === "app study 12" ||
-    /phan mem hoc tap cho hoc sinh khoi cap 01|khoi cap 01|prod study/.test(`${id} ${name}`)
+    /phan mem hoc tap cho hoc sinh khoi cap 01|phan mem on tap khoi cap 01 tien tieu hoc|khoi cap 01|tien tieu hoc|prod study/.test(`${id} ${name}`)
   );
 }
 

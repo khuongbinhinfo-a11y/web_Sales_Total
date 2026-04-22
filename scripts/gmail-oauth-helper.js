@@ -92,6 +92,16 @@ function resolveConfig(args) {
   };
 }
 
+function resolveNotifyEmail(args) {
+  return String(
+    args["notify-email"] ||
+      process.env.GMAIL_NOTIFY_FROM ||
+      process.env.GMAIL_NOTIFY_TO ||
+      process.env.SMTP_FROM ||
+      ""
+  ).trim();
+}
+
 function printUsage() {
   console.log([
     "Usage:",
@@ -158,6 +168,7 @@ async function main() {
   }
 
   const config = resolveConfig(args);
+  const notifyEmail = resolveNotifyEmail(args);
   const scope = String(args.scope || "https://www.googleapis.com/auth/gmail.send").trim();
 
   if (!config.clientId) {
@@ -200,8 +211,8 @@ async function main() {
     console.log(`GOOGLE_CLIENT_ID=${config.clientId}`);
     console.log("GOOGLE_CLIENT_SECRET=<your-secret>");
     console.log("GMAIL_NOTIFY_ENABLED=true");
-    console.log("GMAIL_NOTIFY_FROM=khuongbinh.info@gmail.com");
-    console.log("GMAIL_NOTIFY_TO=khuongbinh.info@gmail.com");
+    console.log(`GMAIL_NOTIFY_FROM=${notifyEmail}`);
+    console.log(`GMAIL_NOTIFY_TO=${notifyEmail}`);
 
     if (!token.refresh_token) {
       console.log("\nWarning: refresh_token is empty. You may have already granted consent before.");

@@ -31,6 +31,9 @@ Ghi chu: trong `app-license-minimum-schema-api.md` da co muc `Contract da chot g
   - `multi-app-license-position-note.md` (ban tom tat de chot huong account + entitlement + license)
   - `app-license-minimum-schema-api.md` (schema DB + API toi thieu de AIapp/Web tong tham chieu)
   - `ai-app-connect-commands.md` (lenh curl ket noi AI-app vao Web tong)
+  - `cap01-integration-audit-2026-04-22.md` (audit thuc te Cap01 da noi gi, chua noi gi)
+  - `cap01-send-to-aiapp-2026-04-22.md` (ban tom tat ngan gon de gui thang cho AI-app)
+  - `cap01-bridge-fixes-checklist-2026-04-22.md` (checklist sua cac path bridge-only va path sai)
   - `app-onboarding-ticket-template.md`
   - `WEB_TOTAL_PRODUCT_MAP_JSON.json` (map productId de AI-app noi checkout)
 - Gate theo app:

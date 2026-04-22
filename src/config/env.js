@@ -2,8 +2,8 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 
-// Load environment variables once at process startup.
-dotenv.config();
+// Prefer workspace .env values over stale shell-level variables when the dev server restarts.
+dotenv.config({ override: true });
 
 function isIpAddress(hostname) {
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
