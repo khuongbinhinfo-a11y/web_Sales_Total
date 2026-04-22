@@ -22,7 +22,6 @@
         <nav class="header-nav" id="headerNav">
           <a href="#catalog" data-i18n="nav_products">Sản phẩm</a>
           <a href="#" id="navMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
-          <a href="#" id="navBalance" class="balance-badge is-hidden"><span id="balanceAmount">0</span> credit</a>
           <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
           <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register" data-i18n="nav_register">Đăng ký</a>
           <div id="userMenu" class="user-menu is-hidden">
@@ -48,7 +47,7 @@
           <div class="hero-text">
             <span class="hero-badge" data-i18n="hero_badge">✨ Ứng dụng học tập & làm việc</span>
             <h1>
-              <span data-i18n="hero_line1">Ứng Dụng Thông Minh</span>
+              <img class="hero-title-image" src="/heroes-home.png" alt="Ứng Dụng Thông Minh" loading="eager" decoding="async" />
             </h1>
             <p class="hero-sub" data-i18n="hero_sub">Gọn, nhanh, dùng được ngay.</p>
             <div class="hero-btns">
@@ -290,10 +289,6 @@
           <button class="modal-close" id="purchasedDrawerClose">✕</button>
         </div>
         <div class="drawer-body" id="purchasedContent">
-          <div class="drawer-section">
-            <h3 data-i18n="wallet_title">💰 Số dư Credit</h3>
-            <div id="drawerWallet" class="wallet-summary"></div>
-          </div>
           <div class="drawer-section">
             <h3 data-i18n="purchased_subs_title">📋 Gói đang sử dụng</h3>
             <div id="drawerSubs"></div>

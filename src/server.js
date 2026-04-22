@@ -59,7 +59,6 @@ const {
   requireAdminPermission,
   requirePortalOrAdmin,
   handlePortalLogin,
-  handleAdminLogin,
   portalLoginPage,
   adminLoginPage,
   clearAuthCookie,
@@ -1361,7 +1360,7 @@ app.post(
         username: safeUsername,
         ipAddress,
         userAgent,
-        loginMethod: accessKey ? "owner_key" : "password",
+        loginMethod: "password",
         outcome: "blocked",
         reason: `blocked:${blockState.dimensions.join(",") || "unknown"}`
       });
@@ -1370,63 +1369,25 @@ app.post(
     }
 
     if (accessKey) {
-      if (isOtpRequiredForAdminRole("owner")) {
-        await registerAdminLoginFailureGuard({
-          ipAddress,
-          username: safeUsername || "owner",
-          windowMs: env.adminLoginWindowMs,
-          maxAttempts: env.adminLoginMaxAttempts,
-          lockoutMs: env.adminLoginLockoutMs
-        });
-        await recordAdminLoginAudit({
-          username: safeUsername || "owner",
-          ipAddress,
-          userAgent,
-          loginMethod: "owner_key",
-          outcome: "failure",
-          reason: "owner_key_blocked_by_2fa_policy",
-          role: "owner",
-          requiresOtp: true,
-          otpVerified: false
-        });
-        return res.status(403).send("Owner key login is disabled under mandatory OTP policy");
-      }
-
-      const result = handleAdminLogin(req, res);
-      if (res.statusCode >= 400) {
-        await registerAdminLoginFailureGuard({
-          ipAddress,
-          username: safeUsername || "owner",
-          windowMs: env.adminLoginWindowMs,
-          maxAttempts: env.adminLoginMaxAttempts,
-          lockoutMs: env.adminLoginLockoutMs
-        });
-        await recordAdminLoginAudit({
-          username: safeUsername || "owner",
-          ipAddress,
-          userAgent,
-          loginMethod: "owner_key",
-          outcome: "failure",
-          reason: "invalid_owner_key",
-          role: "owner",
-          requiresOtp: false,
-          otpVerified: false
-        });
-      } else {
-        await clearAdminLoginFailureGuard({ ipAddress, username: safeUsername || "owner" });
-        await recordAdminLoginAudit({
-          username: safeUsername || "owner",
-          ipAddress,
-          userAgent,
-          loginMethod: "owner_key",
-          outcome: "success",
-          reason: "owner_key_login_success",
-          role: "owner",
-          requiresOtp: false,
-          otpVerified: false
-        });
-      }
-      return result;
+      await registerAdminLoginFailureGuard({
+        ipAddress,
+        username: safeUsername || "legacy_key",
+        windowMs: env.adminLoginWindowMs,
+        maxAttempts: env.adminLoginMaxAttempts,
+        lockoutMs: env.adminLoginLockoutMs
+      });
+      await recordAdminLoginAudit({
+        username: safeUsername || "legacy_key",
+        ipAddress,
+        userAgent,
+        loginMethod: "owner_key",
+        outcome: "failure",
+        reason: "owner_key_login_removed",
+        role: "owner",
+        requiresOtp: false,
+        otpVerified: false
+      });
+      return res.status(400).send("Owner key login has been removed. Please use username/password and OTP.");
     }
 
     if (!username || !password) {

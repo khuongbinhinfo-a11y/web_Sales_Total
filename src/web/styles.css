@@ -87,7 +87,8 @@ pointer-events:none;z-index:0}
 @keyframes floatOrb{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
 .hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:center}
 .hero-badge{display:inline-block;padding:8px 22px;border-radius:999px;font-size:.78rem;font-weight:700;letter-spacing:.03em;background:linear-gradient(135deg,rgba(124,109,216,.1),rgba(165,148,249,.08));color:var(--primary);margin-bottom:20px;border:1px solid rgba(124,109,216,.18)}
-.hero h1{font-size:clamp(2.5rem,5.1vw,3.8rem);font-weight:900;line-height:1.02;margin:0 0 18px;letter-spacing:-.05em;color:var(--ink);text-wrap:balance;max-width:8ch}
+.hero h1{margin:0 0 18px;line-height:1;max-width:100%}
+.hero-title-image{display:block;width:min(540px,100%);height:auto;max-width:100%;object-fit:contain}
 .hero-sub{color:var(--muted);font-size:1rem;margin:0 0 30px;max-width:28ch;line-height:1.7;text-wrap:pretty}
 .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
 
@@ -414,7 +415,8 @@ pointer-events:none;z-index:0}
   .hero-orb{display:none}
   .hero{padding:56px 0 40px}
   .hero-badge{margin-bottom:14px}
-  .hero h1{font-size:clamp(2rem,9vw,2.7rem);line-height:1.12;max-width:100%;text-wrap:balance}
+  .hero h1{margin:0 0 16px;max-width:100%}
+  .hero-title-image{width:min(420px,100%)}
   .hero-sub{font-size:.98rem;line-height:1.68;max-width:42ch;margin:0 0 24px}
   .hero-btns{gap:10px}
   .hero-logo-board{max-width:100%;padding:14px;border-radius:22px}

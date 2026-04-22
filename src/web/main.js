@@ -8,8 +8,6 @@ const catalogNotice = document.getElementById("catalogNotice");
 /* ── DOM refs: auth & drawer ── */
 const navLoginBtn      = document.getElementById("navLoginBtn");
 const navMyProducts    = document.getElementById("navMyProducts");
-const navBalance       = document.getElementById("navBalance");
-const balanceAmount    = document.getElementById("balanceAmount");
 const userMenu         = document.getElementById("userMenu");
 const userMenuBtn      = document.getElementById("userMenuBtn");
 const userEmail        = document.getElementById("userEmail");
@@ -424,13 +422,10 @@ function buildStorefrontProducts(products) {
 /* ═══════════════ AUTH STATE ═══════════════ */
 function setLoggedIn(snapshot){
   currentUser = snapshot;
-  navLoginBtn.classList.add("is-hidden");
+  navLoginBtn.classList.remove("is-hidden");
   navRegisterBtn.classList.add("is-hidden");
   userMenu.classList.remove("is-hidden");
-  navBalance.classList.remove("is-hidden");
   userEmail.textContent = snapshot.customer?.email || "user";
-  const totalBal = (snapshot.wallets||[]).reduce((s,w)=>s+w.balance,0);
-  balanceAmount.textContent = totalBal.toLocaleString();
 }
 
 function setLoggedOut(){
@@ -438,7 +433,6 @@ function setLoggedOut(){
   navLoginBtn.classList.remove("is-hidden");
   navRegisterBtn.classList.remove("is-hidden");
   userMenu.classList.add("is-hidden");
-  navBalance.classList.add("is-hidden");
   userDropdown.classList.remove("show");
 }
 
@@ -791,15 +785,7 @@ function expiryStatus(endAt){
 
 function renderPurchased(){
   if(!currentUser){ return; }
-  const { wallets, subscriptions, keyDeliveries, orders } = currentUser;
-
-  // Wallet
-  const wEl = document.getElementById("drawerWallet");
-  if(wallets && wallets.length){
-    wEl.innerHTML = wallets.map(w=>
-      `<div class="wallet-row"><span class="wallet-app">${iconFor(w.appId)} ${w.appId}</span><span class="wallet-bal">${w.balance.toLocaleString()} credits</span></div>`
-    ).join("");
-  } else { wEl.innerHTML = `<p class="empty-text">${t("wallet_empty")}</p>`; }
+  const { subscriptions, keyDeliveries, orders } = currentUser;
 
   // Subscriptions
   const sEl = document.getElementById("drawerSubs");
@@ -949,7 +935,7 @@ function renderProducts(){
         <span class="p-card-cat">${softwareCode(p.appId)}</span>
         <h3 class="p-card-name">${productName}</h3>
         <p class="p-card-intro">${intro}</p>
-        <p class="p-card-meta">${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}</p>
+        <p class="p-card-meta">${fmtCycle(p.cycle)}</p>
         <div class="p-card-price-row">
           <span class="p-card-price">${fmtVnd(p.price)}</span>
         </div>

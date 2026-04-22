@@ -485,16 +485,14 @@ function adminLoginPage() {
     <div class="card">
       <h2>Admin Login</h2>
       <form method="post" action="/auth/admin/login">
-        <label>Owner access key (tuỳ chọn, nếu hệ thống bật)</label>
-        <input type="password" name="accessKey" autocomplete="off" placeholder="owner access key" />
-        <div class="tip">Khuyen nghi dang nhap bang username/password de quan ly phan quyen chat che.</div>
-        <hr />
         <label>Username</label>
-        <input type="text" name="username" autocomplete="username" placeholder="manager01" />
+        <input type="text" name="username" autocomplete="username" placeholder="manager01" required />
         <label>Password</label>
-        <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" />
+        <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
         <label>OTP email (bat buoc cho owner/manager)</label>
         <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
+        <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
+        <div class="tip">Buoc 2: nhap OTP roi bam Login lai de vao trang admin.</div>
         <button type="submit">Login Admin</button>
       </form>
     </div>
