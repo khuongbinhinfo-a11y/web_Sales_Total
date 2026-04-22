@@ -10,6 +10,7 @@
     "db:seed": "node src/db/seed.js",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "prod:verify": "node scripts/verify-production-sync.mjs",
+    "review:ai-app:local": "node scripts/review-ai-app-local.mjs",
     "api:check": "node scripts/validate-api-contracts.mjs",
     "ai:gate": "node scripts/validate-ready-done.mjs",
     "gmail:auth-url": "node scripts/gmail-oauth-helper.js auth-url",

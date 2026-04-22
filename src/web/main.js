@@ -1056,10 +1056,7 @@ async function loadCatalog(){
       catalogMode = "live";
       allProducts = publicProducts;
       allProducts._live = true;
-      showNotice(t("notice_live_detail"), {
-        tone: "success",
-        title: t("notice_live_title")
-      });
+      showNotice("");
     }
   } catch(e){
     const health = await getApiHealthHint();
