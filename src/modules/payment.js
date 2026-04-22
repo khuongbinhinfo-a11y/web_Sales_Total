@@ -356,14 +356,7 @@ async function hasRecentPaidOrderEmailSent(orderId) {
 }
 
 async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, idempotencyKey }) {
-  if (!isGmailNotifyEnabled()) {
-    return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config" };
-  }
-
   const recipients = resolveGmailRecipients();
-  if (!recipients.length) {
-    return { ok: false, skipped: true, reason: "missing_recipient" };
-  }
 
   const attempt = await createEmailNotificationAttempt({
     eventType: EMAIL_EVENT_PAID_ORDER_SUCCESS,
@@ -385,6 +378,34 @@ async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, i
       skipped: true,
       reason: "duplicate_idempotency_key",
       notificationEventId: null
+    };
+  }
+
+  if (!isGmailNotifyEnabled()) {
+    await updateEmailNotificationAttempt({
+      notificationEventId: attempt.notificationEventId,
+      status: "skipped",
+      reason: "gmail_disabled_or_missing_config"
+    });
+    return {
+      ok: false,
+      skipped: true,
+      reason: "gmail_disabled_or_missing_config",
+      notificationEventId: attempt.notificationEventId
+    };
+  }
+
+  if (!recipients.length) {
+    await updateEmailNotificationAttempt({
+      notificationEventId: attempt.notificationEventId,
+      status: "skipped",
+      reason: "missing_recipient"
+    });
+    return {
+      ok: false,
+      skipped: true,
+      reason: "missing_recipient",
+      notificationEventId: attempt.notificationEventId
     };
   }
 
