@@ -1950,6 +1950,11 @@ app.use((req, res, next) => {
     return next();
   }
 
+  // Never let admin routes fall back to public SPA index.
+  if (req.path === "/admin" || req.path.startsWith("/admin/")) {
+    return res.redirect("/admin/login");
+  }
+
   if (req.accepts("html")) {
     return res.sendFile(path.join(webRoot, "index.html"));
   }
