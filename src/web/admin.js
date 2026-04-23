@@ -1297,6 +1297,55 @@ function bindCustomerModal(){
   });
 }
 
+// ── Key lookup ──
+function bindKeyLookup(){
+  const input = document.getElementById("keyLookupInput");
+  const btn = document.getElementById("keyLookupBtn");
+  const msg = document.getElementById("keyLookupMsg");
+  const result = document.getElementById("keyLookupResult");
+  if(!btn || !input) return;
+
+  async function doLookup(){
+    const key = input.value.trim().toUpperCase();
+    if(!key){ if(msg){ msg.textContent="Nhập license key để tra cứu"; msg.style.color="var(--muted)"; } return; }
+    if(msg){ msg.textContent="Đang tra..."; msg.style.color="var(--muted)"; }
+    if(result) result.innerHTML="";
+    try {
+      const res = await fetchAdmin(`/api/admin/licenses/lookup?key=${encodeURIComponent(key)}`);
+      if(res.status===401){ redirectToAdminLogin("/api/admin/licenses/lookup"); return; }
+      const data = await res.json().catch(()=>({}));
+      if(res.status===404){ if(msg){ msg.textContent="Không tìm thấy key này trong hệ thống"; msg.style.color="var(--danger)"; } return; }
+      if(!res.ok){ if(msg){ msg.textContent=data.message||"Lỗi tra cứu"; msg.style.color="var(--danger)"; } return; }
+      if(msg){ msg.textContent="Tìm thấy"; msg.style.color="var(--success,#16a34a)"; }
+      const l = data.license || {};
+      const tier = data.resolvedTier || "—";
+      const tierColor = tier==="premium" ? "#7c3aed" : tier==="standard" ? "#2563eb" : "#64748b";
+      const meta = l.metadata ? JSON.stringify(l.metadata, null, 2) : "{}";
+      result.innerHTML = `<div class="info-card" style="margin-top:8px">
+        <table class="data-table" style="font-size:.84rem">
+          <tbody>
+            <tr><th style="width:140px;text-align:left">License key</th><td style="font-family:monospace">${escapeHtml(l.licenseKey||"—")}</td></tr>
+            <tr><th style="text-align:left">App</th><td>${escapeHtml(l.appId||"—")}</td></tr>
+            <tr><th style="text-align:left">Product ID</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.productId||"—")}</td></tr>
+            <tr><th style="text-align:left">Plan code</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.planCode||"—")}</td></tr>
+            <tr><th style="text-align:left">Tier</th><td><span style="font-weight:700;color:${tierColor}">${escapeHtml(tier)}</span></td></tr>
+            <tr><th style="text-align:left">Trạng thái</th><td>${badge(l.status||"—")}</td></tr>
+            <tr><th style="text-align:left">Hết hạn</th><td>${l.expiresAt ? fmtDate(l.expiresAt) : "∞ Lifetime"}</td></tr>
+            <tr><th style="text-align:left">Customer ID</th><td style="font-family:monospace;font-size:.75rem">${escapeHtml(l.customerId||"—")}</td></tr>
+            <tr><th style="text-align:left">Kích hoạt</th><td>${l.activatedAt ? fmtDate(l.activatedAt) : "Chưa kích hoạt"}</td></tr>
+            <tr><th style="text-align:left;vertical-align:top">Metadata</th><td><pre style="font-size:.73rem;white-space:pre-wrap;margin:0">${escapeHtml(meta)}</pre></td></tr>
+          </tbody>
+        </table>
+      </div>`;
+    } catch(err){
+      if(msg){ msg.textContent="Lỗi: "+err.message; msg.style.color="var(--danger)"; }
+    }
+  }
+
+  btn.addEventListener("click", doLookup);
+  input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLookup(); });
+}
+
 // Sidebar nav highlight
 document.querySelectorAll(".admin-sidebar a").forEach(a=>{
   a.addEventListener("click", ()=>{
@@ -1319,6 +1368,7 @@ bindManualGrant();
 loadManualGrantCatalog();
 bindCustomerSearch();
 bindCustomerModal();
+bindKeyLookup();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();

@@ -696,6 +696,25 @@ async function findAppLicenseByKey({ appId, licenseKey, customerId }) {
   return mapAppLicense(result.rows[0]);
 }
 
+async function findAppLicenseByKeyAdmin(licenseKey) {
+  const normalizedKey = String(licenseKey || "").trim().toUpperCase();
+  if (!normalizedKey) return null;
+
+  const result = await pool.query(
+    `SELECT al.id, al.customer_id, al.app_id, al.product_id, al.order_id,
+            al.plan_code, al.billing_cycle, al.license_key,
+            al.status, al.activated_at, al.expires_at, al.device_id, al.device_name,
+            al.last_verified_at, al.metadata, al.created_at, al.updated_at
+     FROM app_licenses al
+     WHERE al.license_key = $1
+     LIMIT 1`,
+    [normalizedKey]
+  );
+
+  if (result.rowCount === 0) return null;
+  return mapAppLicense(result.rows[0]);
+}
+
 async function deactivateCustomerLicense({ licenseId, customerId }) {
   const result = await pool.query(
     `UPDATE app_licenses
@@ -2101,6 +2120,7 @@ module.exports = {
   verifyCustomerLicense,
   deactivateCustomerLicense,
   findAppLicenseByKey,
+  findAppLicenseByKeyAdmin,
   verifyAppLicenseByKey,
   getAdminDashboard,
   findOrCreateCustomerByEmail,

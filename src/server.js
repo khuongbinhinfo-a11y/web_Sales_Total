@@ -26,6 +26,7 @@ const {
   verifyCustomerLicense,
   deactivateCustomerLicense,
   findAppLicenseByKey,
+  findAppLicenseByKeyAdmin,
   verifyAppLicenseByKey,
   getAdminDashboard,
   createCustomerAccount,
@@ -1295,6 +1296,20 @@ app.delete(
     } catch (err) {
       return res.status(err.statusCode || 500).json({ message: err.message });
     }
+  })
+);
+
+app.get(
+  "/api/admin/licenses/lookup",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const key = String(req.query.key || "").trim().toUpperCase();
+    if (!key) return res.status(400).json({ message: "Thiếu tham số key" });
+    const license = await findAppLicenseByKeyAdmin(key);
+    if (!license) return res.status(404).json({ message: "Không tìm thấy key trong hệ thống" });
+    const { resolveLicenseFeatures } = require("./modules/licenseFeatures");
+    const features = resolveLicenseFeatures(license);
+    return res.json({ license, resolvedTier: features.tier });
   })
 );
 

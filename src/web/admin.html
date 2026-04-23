@@ -39,6 +39,7 @@
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
         <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
+        <a href="#section-key-lookup"><span class="icon">🔍</span> Tra key</a>
       </nav>
 
       <main class="admin-main" id="adminMain">
@@ -370,6 +371,20 @@
                 <button id="custModalConfirm" class="btn btn-accent">Xác nhận</button>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- Key Lookup -->
+        <section id="section-key-lookup" class="admin-section">
+          <h3>🔍 Tra cứu license key</h3>
+          <div class="info-card">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <input id="keyLookupInput" placeholder="VD: WSTL-MOBOIF8-E18F2E"
+                     style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.88rem;font-family:monospace" />
+              <button id="keyLookupBtn" class="btn btn-accent" style="min-height:38px">Tra key</button>
+            </div>
+            <p id="keyLookupMsg" style="margin:4px 0 8px;font-size:.82rem;color:var(--muted)"></p>
+            <div id="keyLookupResult"></div>
           </div>
         </section>
       </main>
