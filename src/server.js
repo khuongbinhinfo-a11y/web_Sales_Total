@@ -1558,7 +1558,7 @@ app.delete(
 
 app.post(
   "/api/admin/manual-grant",
-  requireAdminPermission("admins:write"),
+  requireAdminPermission("customers:write"),
   asyncHandler(async (req, res) => {
     const { customerEmail, productId, adminNote } = req.body || {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
