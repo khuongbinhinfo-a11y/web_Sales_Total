@@ -12,6 +12,30 @@ let currentGateApp = "desktop";
 let currentGateData = null;
 let aiAppSecretConfigured = false;
 
+function wait(ms){
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchAdmin(url, options){
+  const nextOptions = options ? { ...options } : {};
+  nextOptions.credentials = "include";
+
+  const method = String(nextOptions.method || "GET").toUpperCase();
+  let response = await fetch(url, nextOptions);
+
+  // Fresh logins can race with the first protected GET call on some browsers/proxies.
+  if(response.status === 401 && (method === "GET" || method === "HEAD")){
+    await wait(250);
+    response = await fetch(url, nextOptions);
+  }
+
+  return response;
+}
+
+function redirectToAdminLogin(){
+  window.location.assign("/admin/login");
+}
+
 function escapeHtml(value){
   return String(value || "")
     .replace(/&/g,"&amp;")
@@ -34,8 +58,8 @@ function isPublicWebhookUrl(url){
 
 async function loadAdmin(){
   try {
-    const res = await fetch("/api/admin/dashboard");
-    if(res.status===401){ window.location.href="/admin/login"; return; }
+    const res = await fetchAdmin("/api/admin/dashboard");
+    if(res.status===401){ redirectToAdminLogin(); return; }
     if(res.status===403){
       const payload = await res.json().catch(()=>({}));
       const required = payload.requiredPermission || "dashboard:read";
@@ -177,7 +201,7 @@ function renderDashboard(d){
 
 async function loadMe(){
   try {
-    const res = await fetch("/api/admin/me");
+    const res = await fetchAdmin("/api/admin/me");
     if(!res.ok){ return; }
     const d = await res.json();
     meAdmin = d.admin || null;
@@ -211,8 +235,8 @@ async function loadAdminUsers(){
   if(!wrap) return;
 
   try {
-    const res = await fetch("/api/admin/admin-users");
-    if(res.status===401){ window.location.href="/admin/login"; return; }
+    const res = await fetchAdmin("/api/admin/admin-users");
+    if(res.status===401){ redirectToAdminLogin(); return; }
     if(res.status===403){
       wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Tài khoản hiện tại không có quyền xem danh sách admin.</p>`;
       return;
@@ -276,7 +300,7 @@ function bindAdminRowActions(){
       const old = btn.textContent;
       btn.textContent = "Đang lưu...";
       try {
-        const res = await fetch(`/api/admin/admin-users/${adminId}`,{
+        const res = await fetchAdmin(`/api/admin/admin-users/${adminId}`,{
           method:"PATCH",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({ role, isActive })
@@ -313,7 +337,7 @@ function bindCreateAdminForm(){
     msg.style.color = "var(--muted)";
 
     try {
-      const res = await fetch("/api/admin/admin-users",{
+      const res = await fetchAdmin("/api/admin/admin-users",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ username, email, password, role })
@@ -367,7 +391,7 @@ function bindChangeMyAdminPasswordForm(){
     msg.style.color = "var(--muted)";
 
     try {
-      const res = await fetch("/api/admin/me/password", {
+      const res = await fetchAdmin("/api/admin/me/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword })
@@ -394,8 +418,8 @@ async function loadSepayConfig(){
   if(!modeEl) return;
 
   try {
-    const res = await fetch("/api/admin/integrations/sepay");
-    if(res.status===401){ window.location.href = "/admin/login"; return; }
+    const res = await fetchAdmin("/api/admin/integrations/sepay");
+    if(res.status===401){ redirectToAdminLogin(); return; }
     if(res.status===403){
       const msg = document.getElementById("sepayConfigMsg");
       if(msg){ msg.textContent = "Bạn không có quyền xem cấu hình Sepay"; msg.style.color = "var(--danger)"; }
@@ -455,7 +479,7 @@ function bindSepayForm(){
     }
 
     try {
-      const res = await fetch("/api/admin/integrations/sepay", {
+      const res = await fetchAdmin("/api/admin/integrations/sepay", {
         method:"PUT",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify(payload)
@@ -498,8 +522,8 @@ async function loadAiAppSecretStatus(){
   if(!maskedEl || !headerEl || !baseUrlEl || !msg) return;
 
   try {
-    const res = await fetch("/api/admin/integrations/ai-app");
-    if(res.status===401){ window.location.href = "/admin/login"; return; }
+    const res = await fetchAdmin("/api/admin/integrations/ai-app");
+    if(res.status===401){ redirectToAdminLogin(); return; }
     const data = await res.json().catch(()=>({}));
     if(!res.ok){
       msg.textContent = data.message || "Không tải được trạng thái AI-app secret";
@@ -532,8 +556,8 @@ function bindAiAppSecretControls(){
     msg.style.color = "var(--muted)";
 
     try {
-      const res = await fetch("/api/admin/integrations/ai-app/reveal", { method:"POST" });
-      if(res.status===401){ window.location.href = "/admin/login"; return; }
+      const res = await fetchAdmin("/api/admin/integrations/ai-app/reveal", { method:"POST" });
+      if(res.status===401){ redirectToAdminLogin(); return; }
       const data = await res.json().catch(()=>({}));
       if(!res.ok){
         msg.textContent = data.message || "Không lấy được shared secret";
@@ -587,8 +611,8 @@ async function loadGateStatus(){
   const wrap = document.getElementById("gateStatusWrap");
   if(!wrap) return;
   try {
-    const res = await fetch("/api/admin/ai-gates");
-    if(res.status===401){ window.location.href="/admin/login"; return; }
+    const res = await fetchAdmin("/api/admin/ai-gates");
+    if(res.status===401){ redirectToAdminLogin(); return; }
     if(res.status===403){
       wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Ban khong co quyen xem AI Gate.</p>`;
       return;
@@ -618,8 +642,8 @@ async function loadGateDetail(app){
   const msg = document.getElementById("gateMsg");
   if(msg){ msg.textContent = "Dang tai checklist..."; msg.style.color = "var(--muted)"; }
   try {
-    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(app)}`);
-    if(res.status===401){ window.location.href="/admin/login"; return; }
+    const res = await fetchAdmin(`/api/admin/ai-gates/${encodeURIComponent(app)}`);
+    if(res.status===401){ redirectToAdminLogin(); return; }
     const payload = await res.json().catch(()=>({}));
     if(!res.ok){
       if(msg){ msg.textContent = payload.message || "Khong tai duoc checklist"; msg.style.color = "var(--danger)"; }
@@ -648,7 +672,7 @@ async function saveGateChecklist(){
   if(!currentGateApp) return;
   if(msg){ msg.textContent = "Dang luu checklist..."; msg.style.color = "var(--muted)"; }
   try {
-    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}`, {
+    const res = await fetchAdmin(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}`, {
       method:"PUT",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
@@ -676,7 +700,7 @@ async function commitGateChecklist(){
   const branch = document.getElementById("gateCommitBranch")?.value?.trim();
   if(msg){ msg.textContent = "Dang commit qua GitHub API..."; msg.style.color = "var(--muted)"; }
   try {
-    const res = await fetch(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}/commit`, {
+    const res = await fetchAdmin(`/api/admin/ai-gates/${encodeURIComponent(currentGateApp)}/commit`, {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ message, branch })
