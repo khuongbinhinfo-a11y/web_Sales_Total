@@ -895,6 +895,49 @@ app.get(
 );
 
 app.post(
+  "/api/ai-app/customer/auth",
+  requireAiAppKey,
+  asyncHandler(async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    const appId = String(req.body?.appId || "").trim() || undefined;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+
+    const customer = await findCustomerByEmail(email);
+    if (!customer) {
+      return res.status(401).json({ ok: false, message: "Email hoặc mật khẩu không đúng" });
+    }
+    if (!customer.passwordHash) {
+      return res.status(401).json({
+        ok: false,
+        needsPassword: true,
+        message: "Tài khoản này đăng nhập bằng Google. Vui lòng vào ungdungthongminh.shop → dùng \"Quên mật khẩu\" để đặt mật khẩu trước khi đăng nhập vào app."
+      });
+    }
+
+    const passwordOk = verifyPassword(password, customer.passwordHash);
+    if (!passwordOk) {
+      return res.status(401).json({ ok: false, message: "Email hoặc mật khẩu không đúng" });
+    }
+
+    const licenses = await listCustomerLicenses({ customerId: customer.id, appId });
+    const items = licenses.map(buildAiAppLicenseView);
+
+    return res.json({
+      ok: true,
+      customer: { id: customer.id, email: customer.email, fullName: customer.fullName },
+      licenses: items
+    });
+  })
+);
+
+app.post(
   "/api/ai-app/licenses/verify",
   requireAiAppKey,
   asyncHandler(async (req, res) => {

@@ -845,7 +845,9 @@ function updateBuyBtn(){
   if(!active){
     btn.textContent = "🆓 Gói miễn phí";
     btn.disabled = true;
-    if(note) note.textContent = "Bạn có thể dùng gói miễn phí ngay không cần thanh toán.";
+    if(note) note.textContent = hasPlanBlueprint
+      ? "Đăng nhập vào app bằng tài khoản web là dùng được gói Free. Muốn Standard/Premium, hãy mua gói rồi nhập mã kích hoạt trong app."
+      : "Bạn có thể dùng gói miễn phí ngay không cần thanh toán.";
     return;
   }
 
