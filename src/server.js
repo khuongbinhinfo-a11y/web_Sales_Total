@@ -25,6 +25,7 @@ const {
   activateCustomerLicense,
   verifyCustomerLicense,
   deactivateCustomerLicense,
+  findAppLicenseByKey,
   verifyAppLicenseByKey,
   getAdminDashboard,
   createCustomerAccount,
@@ -331,6 +332,42 @@ function buildAiAppLicenseView(license) {
     ...license,
     features,
     grace
+  };
+}
+
+function buildUpdateEntitlement(licenses, appVersion) {
+  const now = Date.now();
+  const active = licenses.filter(
+    (l) => l.status !== "revoked" && (!l.expiresAt || new Date(l.expiresAt).getTime() > now)
+  );
+
+  const ownsBaseApp = active.some((l) => l.metadata?.licenseType === "base_app");
+
+  const entitledMajors = active
+    .map((l) => Number(l.metadata?.entitledMajor))
+    .filter((n) => Number.isInteger(n) && n > 0);
+  const highestEntitledMajor = entitledMajors.length > 0 ? Math.max(...entitledMajors) : null;
+
+  const sourceProductIds = [
+    ...new Set(
+      active
+        .filter((l) => l.metadata?.licenseType)
+        .map((l) => l.productId)
+        .filter(Boolean)
+    )
+  ];
+
+  let currentVersionAllowed = null;
+  if (appVersion && highestEntitledMajor !== null) {
+    const major = parseInt(String(appVersion).split(".")[0], 10);
+    currentVersionAllowed = !isNaN(major) && Number.isFinite(major) && highestEntitledMajor >= major;
+  }
+
+  return {
+    ownsBaseApp,
+    highestEntitledMajor,
+    currentVersionAllowed,
+    sourceProductIds
   };
 }
 
@@ -900,7 +937,8 @@ app.get(
 
     const licenses = await listCustomerLicenses({ customerId, appId });
     const items = licenses.map(buildAiAppLicenseView);
-    return res.json({ customerId, appId: appId || null, licenses: items });
+    const updateEntitlement = buildUpdateEntitlement(licenses, req.query?.appVersion || null);
+    return res.json({ customerId, appId: appId || null, licenses: items, updateEntitlement });
   })
 );
 
@@ -977,7 +1015,48 @@ app.post(
     }
 
     const aiLicense = buildAiAppLicenseView(license);
-    return res.json({ ok: true, license: aiLicense, features: aiLicense.features, grace: aiLicense.grace });
+    const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
+    const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
+    return res.json({ ok: true, license: aiLicense, features: aiLicense.features, grace: aiLicense.grace, updateEntitlement });
+  })
+);
+
+app.post(
+  "/api/ai-app/licenses/deactivate",
+  requireAiAppKey,
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim();
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+
+    if (!customerId || !appId || !licenseKey) {
+      return res.status(400).json({ message: "customerId, appId and licenseKey are required" });
+    }
+
+    const existing = await findAppLicenseByKey({ appId, licenseKey, customerId });
+    if (!existing) {
+      return res.status(404).json({ ok: false, message: "License không tồn tại hoặc đã bị thu hồi" });
+    }
+
+    // Security: only allow deactivate if deviceId matches bound device (or no device bound)
+    if (deviceId && existing.deviceId && existing.deviceId !== deviceId) {
+      return res.status(403).json({
+        ok: false,
+        message: "deviceId không khớp với thiết bị đang bind. Chỉ có thể deactivate từ đúng thiết bị đó."
+      });
+    }
+
+    const deactivated = await deactivateCustomerLicense({
+      licenseId: existing.id,
+      customerId
+    });
+
+    if (!deactivated) {
+      return res.status(404).json({ ok: false, message: "Không thể deactivate license" });
+    }
+
+    return res.json({ ok: true, license: deactivated });
   })
 );
 
