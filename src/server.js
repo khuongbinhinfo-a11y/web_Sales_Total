@@ -223,7 +223,7 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
   }
 
   if (redirectTo) {
-    return res.redirect(redirectTo);
+    return res.redirect(303, redirectTo);
   }
 
   if (requiresOtp) {
@@ -244,7 +244,7 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
       params.set("username", username);
     }
 
-    return res.redirect(`/admin/login?${params.toString()}`);
+    return res.redirect(303, `/admin/login?${params.toString()}`);
   }
 
   const htmlAccept = String(req?.headers?.accept || "").toLowerCase().includes("text/html");
@@ -258,7 +258,7 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
     if (username) {
       params.set("username", username);
     }
-    return res.redirect(`/admin/login?${params.toString()}`);
+    return res.redirect(303, `/admin/login?${params.toString()}`);
   }
 
   return res.status(status).send(message);
