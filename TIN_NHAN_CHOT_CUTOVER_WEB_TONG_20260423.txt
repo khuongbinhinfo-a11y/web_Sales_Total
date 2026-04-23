@@ -1,0 +1,7 @@
+[CHOT THOI DIEM CUTOVER CONTRACT MOI - 2026-04-23]
+
+Nho Web Tong xac nhan ro:
+- Tu thoi diem nao AI-app duoc phep coi contract moi la chinh thuc?
+- Hien con endpoint/response cu nao dang chay song song khong?
+
+Neu con luong cu, de nghi liet ke day du endpoint + field response cu + thoi diem tat han de tranh regression khi AI-app go-live.

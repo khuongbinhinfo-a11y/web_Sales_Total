@@ -1,0 +1,10 @@
+[YEU CAU XAC NHAN BAT BUOC TU WEB TONG - 2026-04-23]
+
+Nho Web Tong phan hoi bang van ban 4 xac nhan sau de AI-app chot cutover:
+
+1) Xac nhan scope integration cua app-study-12 chi con: free, standard, premium (Basic da loai khoi pricing/activation integration).
+2) Xac nhan product map Standard/Premium hien tai la source of truth dang van hanh.
+3) Xac nhan gia catalog hien hanh dung theo bao cao ban giao.
+4) Xac nhan verify license tra on dinh cac truong: planCode, billingCycle, expiresAt, customerId, features, grace.
+
+De nghi phan hoi truoc thoi diem cutover de hai ben chay E2E va nghiem thu.

@@ -1,0 +1,40 @@
+YEU CAU BAT BUOC - WEB TONG (GO-LIVE APP DAU TIEN app-study-12)
+
+1) GIU NGUYEN CONTRACT AI-APP:
+- GET /api/ai-app/customers/:customerId/licenses?appId=app-study-12
+- POST /api/ai-app/licenses/verify
+- Header bat buoc: x-ai-app-key
+
+2) GIU NGUYEN SCOPE GOI:
+- Chi dung free, standard, premium
+- Khong dua Basic vao pricing/activation integration hien tai
+
+3) GIU NGUYEN PRODUCT MAP CHUAN:
+- standard.monthly -> prod-study-month
+- standard.yearly -> prod-study-year
+- standard.lifetime -> prod-study-standard-lifetime
+- premium.monthly -> prod-study-premium-month
+- premium.yearly -> prod-study-premium-year
+- premium.lifetime -> prod-study-premium-lifetime
+
+4) GIU NGUYEN GIA GOC:
+- 89,000 / 599,000 / 999,000 (standard)
+- 119,000 / 899,000 / 1,599,000 (premium)
+
+5) KEY VAN HANH:
+- Giu duy nhat x-ai-app-key theo integration hien tai
+- Thay doi key phai thong bao AI-app ngay + thong nhat thoi diem cutover
+
+6) LOGIN/CUSTOMER/CHECKOUT:
+- Login chi dung de xac dinh customer chung cho webapp va desktop app
+- Login KHONG tu mo goi tra phi
+- Checkout phai tao dung customerId cua Web Tong
+
+7) VERIFY RESPONSE BAT BUOC ON DINH:
+- planCode, billingCycle, expiresAt, customerId, features, grace
+
+8) TIEU CHI NGHIEM THU:
+- Test dung key -> verify thanh cong
+- Test sai key -> 401
+- Gia AI-app phai trung catalog Web Tong
+- Khong duoc pha vo login/admin flow sau khi deploy
