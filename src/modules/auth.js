@@ -605,15 +605,26 @@ function adminLoginPage() {
       const configuredPublicBaseUrl = ${JSON.stringify(String(env.publicAppBaseUrl || env.appBaseUrl || "").trim())};
 
       function getAdminOrigin() {
+        const currentOrigin = window.location.origin;
         const candidate = String(configuredPublicBaseUrl || "").trim();
         if (!candidate) {
-          return window.location.origin;
+          return currentOrigin;
         }
 
         try {
-          return new URL(candidate, window.location.origin).origin;
+          const parsed = new URL(candidate, currentOrigin);
+          const currentHost = String(window.location.hostname || "").trim().toLowerCase();
+          const candidateHost = String(parsed.hostname || "").trim().toLowerCase();
+
+          // Never switch login flow to another host. Cross-origin fetch can drop cookies
+          // and cause immediate bounce back to admin login.
+          if (!currentHost || !candidateHost || candidateHost !== currentHost) {
+            return currentOrigin;
+          }
+
+          return parsed.origin;
         } catch {
-          return window.location.origin;
+          return currentOrigin;
         }
       }
 
