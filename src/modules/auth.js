@@ -783,6 +783,26 @@ function adminLoginPage() {
           if (reason === "admin_api_401" && failedEndpoint) {
             setMessage("error", "Phiên admin hết hạn/không hợp lệ khi gọi: " + failedEndpoint);
           }
+
+          const username = String(params.get("username") || "").trim();
+          if (username) {
+            const usernameInput = document.getElementById("adminUsername");
+            if (usernameInput && !usernameInput.value) {
+              usernameInput.value = username;
+            }
+          }
+
+          const otpFlag = String(params.get("otp") || "").trim();
+          const maskedEmail = String(params.get("maskedEmail") || "").trim();
+          const msgText = String(params.get("msg") || "").trim();
+          if (otpFlag === "1") {
+            updateOtpDestination(msgText, maskedEmail);
+            setMessage("success", msgText || "OTP da duoc gui vao email admin. Nhap OTP roi bam Login lai.");
+            const otpInput = document.getElementById("adminOtp");
+            if (otpInput) {
+              otpInput.focus();
+            }
+          }
         } catch {
           // ignore
         }

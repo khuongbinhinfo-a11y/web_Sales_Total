@@ -215,6 +215,27 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
     return res.redirect(redirectTo);
   }
 
+  if (requiresOtp) {
+    const params = new URLSearchParams();
+    params.set("otp", "1");
+    if (message) {
+      params.set("msg", String(message));
+    }
+    if (maskedEmail) {
+      params.set("maskedEmail", String(maskedEmail));
+    }
+    if (otpResent) {
+      params.set("otpResent", "1");
+    }
+
+    const username = String(req?.body?.username || "").trim().toLowerCase();
+    if (username) {
+      params.set("username", username);
+    }
+
+    return res.redirect(`/admin/login?${params.toString()}`);
+  }
+
   return res.status(status).send(message);
 }
 
