@@ -2,6 +2,13 @@ const crypto = require("crypto");
 const { env } = require("../config/env");
 const { findAdminById } = require("./store");
 
+const ADMIN_AUTH_DEBUG_ENABLED = String(process.env.ADMIN_AUTH_DEBUG || "1").trim() !== "0";
+const ADMIN_AUTH_TRACE_PATH_PREFIXES = [
+  "/api/admin/dashboard",
+  "/api/admin/me",
+  "/api/admin/ai-gates"
+];
+
 const adminLoginAttempts = new Map();
 
 function getClientIp(req) {
@@ -9,6 +16,42 @@ function getClientIp(req) {
   const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
   const socketIp = String(req?.socket?.remoteAddress || "").trim();
   return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
+}
+
+function shouldTraceAdminAuth(req) {
+  if (!ADMIN_AUTH_DEBUG_ENABLED) {
+    return false;
+  }
+
+  const path = String(req?.path || req?.originalUrl || "");
+  return ADMIN_AUTH_TRACE_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+function summarizeCookieState(req) {
+  const cookies = parseCookies(req);
+  return {
+    hasAdminSessionCookie: Boolean(cookies.wst_admin_session),
+    hasAdminOtpCookie: Boolean(cookies.wst_admin_otp_challenge),
+    cookieCount: Object.keys(cookies).length
+  };
+}
+
+function logAdminAuthDebug(req, stage, details = {}) {
+  if (!shouldTraceAdminAuth(req)) {
+    return;
+  }
+
+  const payload = {
+    stage,
+    method: String(req?.method || ""),
+    path: String(req?.path || req?.originalUrl || ""),
+    host: getRequestHost(req),
+    ip: getClientIp(req),
+    ...summarizeCookieState(req),
+    ...details
+  };
+
+  console.log("[admin-auth-debug]", JSON.stringify(payload));
 }
 
 function pruneAdminLoginAttempt(ip, now) {
@@ -170,15 +213,9 @@ function resolveCookieDomain(req) {
     return "";
   }
 
-  const normalizedConfigured = configured.replace(/^\./, "").toLowerCase();
-  const requestHost = getRequestHost(req);
-  if (!requestHost) {
-    return configured;
-  }
-
-  const matchesRoot = requestHost === normalizedConfigured;
-  const matchesSubdomain = requestHost.endsWith(`.${normalizedConfigured}`);
-  return matchesRoot || matchesSubdomain ? configured : "";
+  // In production behind proxies/CDN, host headers may vary. If a cookie domain is
+  // explicitly configured, always use it to keep auth cookies stable across subdomains.
+  return configured;
 }
 
 function appendSetCookieHeader(res, cookieValue) {
@@ -203,6 +240,14 @@ function setAuthCookie(res, name, token, req) {
       : 12 * 60 * 60;
   const newCookie = `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds};${domainFlag}${secureFlag}`;
   appendSetCookieHeader(res, newCookie);
+
+  if (name === "wst_admin_session" || name === "wst_admin_otp_challenge") {
+    logAdminAuthDebug(req, "set_cookie", {
+      cookieName: name,
+      domain: resolvedDomain || "(host-only)",
+      maxAgeSeconds
+    });
+  }
 }
 
 function clearAuthCookie(res, name, req) {
@@ -360,6 +405,14 @@ function isSameAdminSession(left, right) {
 async function syncAdminSessionFromRequest(req, res) {
   const currentSession = getAdminFromSession(req);
   if (!currentSession?.id) {
+    const cookies = parseCookies(req);
+    const hasAdminSessionCookie = Boolean(cookies.wst_admin_session);
+    req.adminAuthFailReason = hasAdminSessionCookie
+      ? "invalid_or_legacy_admin_session_token"
+      : "missing_admin_session_cookie";
+    logAdminAuthDebug(req, "session_missing", {
+      reason: req.adminAuthFailReason
+    });
     if (parseCookies(req).wst_admin_session) {
       clearAuthCookie(res, "wst_admin_session", req);
     }
@@ -368,6 +421,11 @@ async function syncAdminSessionFromRequest(req, res) {
 
   const admin = await findAdminById(currentSession.id);
   if (!admin || !admin.isActive) {
+    req.adminAuthFailReason = !admin ? "admin_not_found" : "admin_inactive";
+    logAdminAuthDebug(req, "session_invalid_db", {
+      reason: req.adminAuthFailReason,
+      adminId: currentSession.id
+    });
     clearAuthCookie(res, "wst_admin_session", req);
     return null;
   }
@@ -376,13 +434,25 @@ async function syncAdminSessionFromRequest(req, res) {
   req.adminSession = syncedSession;
 
   if (!isSameAdminSession(currentSession, syncedSession)) {
+    logAdminAuthDebug(req, "session_refresh", {
+      adminId: syncedSession.id,
+      role: syncedSession.role
+    });
     setAuthCookie(res, "wst_admin_session", createAdminSessionToken(admin), req);
   }
+
+  logAdminAuthDebug(req, "session_ok", {
+    adminId: syncedSession.id,
+    role: syncedSession.role
+  });
 
   return syncedSession;
 }
 
 function handleAdminUnauthorized(req, res) {
+  logAdminAuthDebug(req, "unauthorized", {
+    reason: String(req?.adminAuthFailReason || "unknown")
+  });
   if (wantsHtml(req)) {
     return res.redirect("/admin/login");
   }
@@ -404,8 +474,20 @@ function requireAdminPermission(permission) {
     }
 
     if (!hasAdminPermission(adminSession, permission)) {
+      logAdminAuthDebug(req, "forbidden", {
+        reason: "missing_permission",
+        requiredPermission: permission,
+        role: adminSession.role,
+        adminId: adminSession.id
+      });
       return res.status(403).json({ message: "Forbidden", requiredPermission: permission });
     }
+
+    logAdminAuthDebug(req, "permission_ok", {
+      requiredPermission: permission,
+      role: adminSession.role,
+      adminId: adminSession.id
+    });
 
     req.adminSession = adminSession;
     return next();
@@ -472,6 +554,11 @@ async function requireAdminAuth(req, res, next) {
   if (!adminSession) {
     return handleAdminUnauthorized(req, res);
   }
+
+  logAdminAuthDebug(req, "auth_ok", {
+    role: adminSession.role,
+    adminId: adminSession.id
+  });
 
   req.adminSession = adminSession;
   return next();
@@ -687,6 +774,19 @@ function adminLoginPage() {
         msg.className = "msg show " + type;
         msg.textContent = text;
       }
+
+      (function showTraceFromQuery() {
+        try {
+          const params = new URLSearchParams(window.location.search || "");
+          const reason = String(params.get("reason") || "").trim();
+          const failedEndpoint = String(params.get("failedEndpoint") || "").trim();
+          if (reason === "admin_api_401" && failedEndpoint) {
+            setMessage("error", "Phiên admin hết hạn/không hợp lệ khi gọi: " + failedEndpoint);
+          }
+        } catch {
+          // ignore
+        }
+      })();
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();

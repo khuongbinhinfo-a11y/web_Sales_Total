@@ -32,8 +32,18 @@ async function fetchAdmin(url, options){
   return response;
 }
 
-function redirectToAdminLogin(){
-  window.location.assign("/admin/login");
+function redirectToAdminLogin(failedEndpoint){
+  const endpoint = String(failedEndpoint || "").trim();
+  if(!endpoint){
+    window.location.assign("/admin/login");
+    return;
+  }
+
+  const query = new URLSearchParams({
+    reason: "admin_api_401",
+    failedEndpoint: endpoint
+  });
+  window.location.assign(`/admin/login?${query.toString()}`);
 }
 
 function escapeHtml(value){
@@ -59,7 +69,7 @@ function isPublicWebhookUrl(url){
 async function loadAdmin(){
   try {
     const res = await fetchAdmin("/api/admin/dashboard");
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin("/api/admin/dashboard"); return; }
     if(res.status===403){
       const payload = await res.json().catch(()=>({}));
       const required = payload.requiredPermission || "dashboard:read";
@@ -236,7 +246,7 @@ async function loadAdminUsers(){
 
   try {
     const res = await fetchAdmin("/api/admin/admin-users");
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin("/api/admin/admin-users"); return; }
     if(res.status===403){
       wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Tài khoản hiện tại không có quyền xem danh sách admin.</p>`;
       return;
@@ -419,7 +429,7 @@ async function loadSepayConfig(){
 
   try {
     const res = await fetchAdmin("/api/admin/integrations/sepay");
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/sepay"); return; }
     if(res.status===403){
       const msg = document.getElementById("sepayConfigMsg");
       if(msg){ msg.textContent = "Bạn không có quyền xem cấu hình Sepay"; msg.style.color = "var(--danger)"; }
@@ -523,7 +533,7 @@ async function loadAiAppSecretStatus(){
 
   try {
     const res = await fetchAdmin("/api/admin/integrations/ai-app");
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app"); return; }
     const data = await res.json().catch(()=>({}));
     if(!res.ok){
       msg.textContent = data.message || "Không tải được trạng thái AI-app secret";
@@ -557,7 +567,7 @@ function bindAiAppSecretControls(){
 
     try {
       const res = await fetchAdmin("/api/admin/integrations/ai-app/reveal", { method:"POST" });
-      if(res.status===401){ redirectToAdminLogin(); return; }
+      if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app/reveal"); return; }
       const data = await res.json().catch(()=>({}));
       if(!res.ok){
         msg.textContent = data.message || "Không lấy được shared secret";
@@ -612,7 +622,7 @@ async function loadGateStatus(){
   if(!wrap) return;
   try {
     const res = await fetchAdmin("/api/admin/ai-gates");
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin("/api/admin/ai-gates"); return; }
     if(res.status===403){
       wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Ban khong co quyen xem AI Gate.</p>`;
       return;
@@ -643,7 +653,7 @@ async function loadGateDetail(app){
   if(msg){ msg.textContent = "Dang tai checklist..."; msg.style.color = "var(--muted)"; }
   try {
     const res = await fetchAdmin(`/api/admin/ai-gates/${encodeURIComponent(app)}`);
-    if(res.status===401){ redirectToAdminLogin(); return; }
+    if(res.status===401){ redirectToAdminLogin(`/api/admin/ai-gates/${encodeURIComponent(app)}`); return; }
     const payload = await res.json().catch(()=>({}));
     if(!res.ok){
       if(msg){ msg.textContent = payload.message || "Khong tai duoc checklist"; msg.style.color = "var(--danger)"; }
