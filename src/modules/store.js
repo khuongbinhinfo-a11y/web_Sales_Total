@@ -1827,6 +1827,68 @@ async function upsertRuntimeConfigValue(configKey, configValue) {
   };
 }
 
+async function searchCustomersByEmail(q, limit = 50) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 && limit <= 200 ? limit : 50;
+  const pattern = `%${String(q || "").trim().toLowerCase()}%`;
+  const result = await pool.query(
+    `SELECT id, email, full_name, created_at
+     FROM customers
+     WHERE LOWER(email) LIKE $1 OR LOWER(full_name) LIKE $1
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [pattern, safeLimit]
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    email: row.email,
+    fullName: row.full_name,
+    createdAt: row.created_at
+  }));
+}
+
+async function updateCustomerById({ customerId, fullName }) {
+  const safeName = String(fullName || "").trim();
+  if (!safeName) {
+    const err = new Error("fullName kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng");
+    err.statusCode = 400;
+    throw err;
+  }
+  const result = await pool.query(
+    `UPDATE customers SET full_name = $1 WHERE id = $2 RETURNING id, email, full_name, created_at`,
+    [safeName, customerId]
+  );
+  if (result.rowCount === 0) {
+    const err = new Error("Kh\u00f4ng t\u00ecm th\u1ea5y kh\u00e1ch h\u00e0ng");
+    err.statusCode = 404;
+    throw err;
+  }
+  const row = result.rows[0];
+  return { id: row.id, email: row.email, fullName: row.full_name, createdAt: row.created_at };
+}
+
+async function deleteCustomerById(customerId) {
+  const orderCheck = await pool.query(
+    "SELECT COUNT(*) AS cnt FROM orders WHERE customer_id = $1",
+    [customerId]
+  );
+  const orderCount = Number(orderCheck.rows[0]?.cnt || 0);
+  if (orderCount > 0) {
+    const err = new Error(`Kh\u00f4ng th\u1ec3 x\u00f3a: kh\u00e1ch h\u00e0ng c\u00f3 ${orderCount} \u0111\u01a1n h\u00e0ng trong h\u1ec7 th\u1ed1ng`);
+    err.statusCode = 409;
+    throw err;
+  }
+  const result = await pool.query(
+    "DELETE FROM customers WHERE id = $1 RETURNING id",
+    [customerId]
+  );
+  if (result.rowCount === 0) {
+    const err = new Error("Kh\u00f4ng t\u00ecm th\u1ea5y kh\u00e1ch h\u00e0ng");
+    err.statusCode = 404;
+    throw err;
+  }
+  return { deleted: true, customerId };
+}
+
 async function manualGrantLicense({ customerEmail, productId, adminNote }) {
   const normalizedEmail = String(customerEmail || "").trim().toLowerCase();
   if (!normalizedEmail) {
@@ -1985,5 +2047,8 @@ module.exports = {
   ensureRuntimeConfigSchema,
   getRuntimeConfigValue,
   upsertRuntimeConfigValue,
+  searchCustomersByEmail,
+  updateCustomerById,
+  deleteCustomerById,
   manualGrantLicense
 };

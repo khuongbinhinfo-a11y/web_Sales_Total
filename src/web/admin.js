@@ -1116,6 +1116,187 @@ function bindManualGrant(){
   });
 }
 
+// ── Customer management ──
+function bindCustomerSearch(){
+  const input = document.getElementById("custSearchInput");
+  const btn = document.getElementById("custSearchBtn");
+  const msg = document.getElementById("custSearchMsg");
+  if(!btn || !input) return;
+
+  async function doSearch(){
+    const q = input.value.trim();
+    if(!q){ if(msg){ msg.textContent="Nh\u1eadp email ho\u1eb7c t\u00ean \u0111\u1ec3 t\u00ecm ki\u1ebfm"; msg.style.color="var(--muted)"; } return; }
+    if(msg){ msg.textContent="\u0110ang t\u00ecm..."; msg.style.color="var(--muted)"; }
+    try {
+      const res = await fetchAdmin(`/api/admin/customers?q=${encodeURIComponent(q)}&limit=50`);
+      if(res.status===401){ redirectToAdminLogin("/api/admin/customers"); return; }
+      const data = await res.json().catch(()=>({customers:[]}));
+      if(!res.ok){ if(msg){ msg.textContent = data.message||"L\u1ed7i t\u00ecm ki\u1ebfm"; msg.style.color="var(--danger)"; } return; }
+      const customers = data.customers || [];
+      if(msg){ msg.textContent = customers.length ? `T\u00ecm th\u1ea5y ${customers.length} kh\u00e1ch h\u00e0ng` : "Kh\u00f4ng t\u00ecm th\u1ea5y k\u1ebft qu\u1ea3 n\u00e0o"; msg.style.color="var(--muted)"; }
+      renderCustomerList(customers);
+    } catch(err){
+      if(msg){ msg.textContent="L\u1ed7i: "+err.message; msg.style.color="var(--danger)"; }
+    }
+  }
+
+  btn.addEventListener("click", doSearch);
+  input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doSearch(); });
+}
+
+function renderCustomerList(customers){
+  const wrap = document.getElementById("custListWrap");
+  const detailWrap = document.getElementById("custDetailWrap");
+  if(!wrap) return;
+  if(detailWrap){ detailWrap.style.display="none"; detailWrap.innerHTML=""; }
+  if(!customers.length){ wrap.innerHTML=""; return; }
+
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+    <th>Email</th><th>H\u1ecd t\u00ean</th><th>ID</th><th>Ng\u00e0y t\u1ea1o</th><th style="text-align:center">H\u00e0nh \u0111\u1ed9ng</th>
+  </tr></thead><tbody>${customers.map(c=>`<tr>
+    <td>${escapeHtml(c.email)}</td>
+    <td>${escapeHtml(c.fullName||"\u2014")}</td>
+    <td style="font-family:monospace;font-size:.78rem">${escapeHtml(c.id)}</td>
+    <td style="font-size:.8rem">${fmtDate(c.createdAt)}</td>
+    <td style="text-align:center;white-space:nowrap">
+      <button onclick="expandCustomerDetail('${c.id}')" class="btn btn-outline" style="padding:3px 10px;font-size:.78rem;min-height:0">👁 Xem</button>
+      <button onclick="openEditCustomerModal('${c.id}','${escapeHtml(c.fullName||'')}')" class="btn btn-outline" style="padding:3px 10px;font-size:.78rem;min-height:0">\u270f\ufe0f S\u1eeda</button>
+      <button onclick="openDeleteCustomerModal('${c.id}','${escapeHtml(c.email)}')" class="btn" style="padding:3px 10px;font-size:.78rem;min-height:0;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">🗑 X\u00f3a</button>
+    </td>
+  </tr>`).join("")}</tbody></table>`;
+}
+
+async function expandCustomerDetail(customerId){
+  const wrap = document.getElementById("custDetailWrap");
+  if(!wrap) return;
+  wrap.style.display = "block";
+  wrap.innerHTML = `<div class="info-card"><p style="color:var(--muted)">\u0110ang t\u1ea3i chi ti\u1ebft...</p></div>`;
+  try {
+    const res = await fetchAdmin(`/api/customers/${customerId}/snapshot`);
+    if(!res.ok){ wrap.innerHTML=`<div class="info-card"><p style="color:var(--danger)">L\u1ed7i t\u1ea3i chi ti\u1ebft</p></div>`; return; }
+    const snap = await res.json();
+    const c = snap.customer || {};
+    const orders = snap.orders || [];
+    const licenses = snap.licenses || [];
+
+    const ordersHtml = orders.length
+      ? `<table class="data-table" style="font-size:.82rem"><thead><tr><th>M\u00e3 \u0111\u01a1n</th><th>App</th><th>S\u1ea3n ph\u1ea9m</th><th>S\u1ed1 ti\u1ec1n</th><th>Tr\u1ea1ng th\u00e1i</th><th>Ng\u00e0y t\u1ea1o</th></tr></thead><tbody>
+        ${orders.map(o=>`<tr><td style="font-family:monospace">${o.orderCode||o.id.slice(0,8)}</td><td>${o.appId}</td><td style="font-size:.78rem">${o.productId}</td><td>${fmtVnd(o.amount)}</td><td>${badge(o.status)}</td><td>${fmtDate(o.createdAt)}</td></tr>`).join("")}
+      </tbody></table>`
+      : `<p style="color:var(--muted);font-size:.83rem;padding:8px 0">Ch\u01b0a c\u00f3 \u0111\u01a1n h\u00e0ng</p>`;
+
+    const licensesHtml = licenses.length
+      ? `<table class="data-table" style="font-size:.82rem"><thead><tr><th>License key</th><th>App</th><th>G\u00f3i</th><th>Tr\u1ea1ng th\u00e1i</th><th>H\u1ebft h\u1ea1n</th></tr></thead><tbody>
+        ${licenses.map(l=>`<tr><td style="font-family:monospace;font-size:.75rem">${l.licenseKey}</td><td>${l.appId}</td><td style="font-size:.78rem">${l.planCode}</td><td>${badge(l.status)}</td><td style="font-size:.8rem">${l.expiresAt ? fmtDate(l.expiresAt) : "\u221e"}</td></tr>`).join("")}
+      </tbody></table>`
+      : `<p style="color:var(--muted);font-size:.83rem;padding:8px 0">Ch\u01b0a c\u00f3 license</p>`;
+
+    wrap.innerHTML = `<div class="info-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b>\ud83d\udccb Chi ti\u1ebft: ${escapeHtml(c.email||customerId)}</b>
+        <button onclick="document.getElementById('custDetailWrap').style.display='none'" class="btn btn-outline" style="padding:3px 10px;font-size:.78rem;min-height:0">\u2715 \u0110\u00f3ng</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin:0 0 10px">ID: ${c.id||customerId} \u00b7 T\u00ean: ${escapeHtml(c.fullName||"\u2014")} \u00b7 Telegram: ${c.telegramUsername||"ch\u01b0a li\u00ean k\u1ebft"}</p>
+      <div style="margin-bottom:8px"><b style="font-size:.82rem">\u0110\u01a1n h\u00e0ng (${orders.length})</b>${ordersHtml}</div>
+      <div><b style="font-size:.82rem">License (${licenses.length})</b>${licensesHtml}</div>
+    </div>`;
+  } catch(err){
+    wrap.innerHTML = `<div class="info-card"><p style="color:var(--danger)">L\u1ed7i: ${err.message}</p></div>`;
+  }
+}
+
+let _custModalAction = null;
+
+function openEditCustomerModal(customerId, currentName){
+  const modal = document.getElementById("custConfirmModal");
+  const title = document.getElementById("custModalTitle");
+  const desc = document.getElementById("custModalDesc");
+  const nameRow = document.getElementById("custModalNameRow");
+  const newNameInput = document.getElementById("custModalNewName");
+  const pwInput = document.getElementById("custModalPassword");
+  const msg = document.getElementById("custModalMsg");
+  if(!modal) return;
+  title.textContent = "\u270f\ufe0f S\u1eeda th\u00f4ng tin kh\u00e1ch h\u00e0ng";
+  desc.textContent = `S\u1eeda t\u00ean cho kh\u00e1ch h\u00e0ng ID: ${customerId}`;
+  nameRow.style.display = "block";
+  newNameInput.value = currentName;
+  pwInput.value = "";
+  if(msg) msg.textContent = "";
+  modal.style.display = "flex";
+  _custModalAction = async ()=>{
+    const fullName = newNameInput.value.trim();
+    const confirmPassword = pwInput.value;
+    if(!fullName){ if(msg){ msg.textContent="T\u00ean kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng"; msg.style.color="var(--danger)"; } return false; }
+    if(!confirmPassword){ if(msg){ msg.textContent="Vui l\u00f2ng nh\u1eadp m\u1eadt kh\u1ea9u x\u00e1c nh\u1eadn"; msg.style.color="var(--danger)"; } return false; }
+    const res = await fetchAdmin(`/api/admin/customers/${customerId}`, {
+      method: "PATCH",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ fullName, confirmPassword })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){ if(msg){ msg.textContent = data.message||"C\u1eadp nh\u1eadt th\u1ea5t b\u1ea1i"; msg.style.color="var(--danger)"; } return false; }
+    return true;
+  };
+}
+
+function openDeleteCustomerModal(customerId, email){
+  const modal = document.getElementById("custConfirmModal");
+  const title = document.getElementById("custModalTitle");
+  const desc = document.getElementById("custModalDesc");
+  const nameRow = document.getElementById("custModalNameRow");
+  const pwInput = document.getElementById("custModalPassword");
+  const msg = document.getElementById("custModalMsg");
+  if(!modal) return;
+  title.textContent = "\ud83d\uddd1 X\u00f3a kh\u00e1ch h\u00e0ng";
+  desc.textContent = `X\u00f3a v\u0129nh vi\u1ec5n "${email}"? Ch\u1ec9 x\u00f3a \u0111\u01b0\u1ee3c n\u1ebfu ch\u01b0a c\u00f3 \u0111\u01a1n h\u00e0ng.`;
+  nameRow.style.display = "none";
+  pwInput.value = "";
+  if(msg) msg.textContent = "";
+  modal.style.display = "flex";
+  _custModalAction = async ()=>{
+    const confirmPassword = pwInput.value;
+    if(!confirmPassword){ if(msg){ msg.textContent="Vui l\u00f2ng nh\u1eadp m\u1eadt kh\u1ea9u x\u00e1c nh\u1eadn"; msg.style.color="var(--danger)"; } return false; }
+    const res = await fetchAdmin(`/api/admin/customers/${customerId}`, {
+      method: "DELETE",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ confirmPassword })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){ if(msg){ msg.textContent = data.message||"X\u00f3a th\u1ea5t b\u1ea1i"; msg.style.color="var(--danger)"; } return false; }
+    return true;
+  };
+}
+
+function bindCustomerModal(){
+  const modal = document.getElementById("custConfirmModal");
+  const cancelBtn = document.getElementById("custModalCancel");
+  const confirmBtn = document.getElementById("custModalConfirm");
+  const msg = document.getElementById("custModalMsg");
+  if(!modal || !cancelBtn || !confirmBtn) return;
+
+  cancelBtn.addEventListener("click", ()=>{ modal.style.display="none"; _custModalAction=null; });
+
+  confirmBtn.addEventListener("click", async ()=>{
+    if(!_custModalAction) return;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "\u0110ang x\u1eed l\u00fd...";
+    if(msg) msg.textContent = "";
+    try {
+      const success = await _custModalAction();
+      if(success){
+        modal.style.display = "none";
+        _custModalAction = null;
+        document.getElementById("custSearchBtn")?.click();
+      }
+    } catch(err){
+      if(msg){ msg.textContent="L\u1ed7i: "+err.message; msg.style.color="var(--danger)"; }
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "X\u00e1c nh\u1eadn";
+    }
+  });
+}
+
 // Sidebar nav highlight
 document.querySelectorAll(".admin-sidebar a").forEach(a=>{
   a.addEventListener("click", ()=>{
@@ -1125,9 +1306,8 @@ document.querySelectorAll(".admin-sidebar a").forEach(a=>{
 });
 
 // Customer lookup
-document.getElementById("lookupBtn").addEventListener("click",()=>{
-  const cid = document.getElementById("lookupCustId").value;
-  if(cid) window.open("/portal","_blank");
+document.getElementById("lookupBtn")?.addEventListener("click",()=>{
+  // replaced by customer search section
 });
 
 bindCreateAdminForm();
@@ -1137,6 +1317,8 @@ bindAiAppSecretControls();
 bindAiGateControls();
 bindManualGrant();
 loadManualGrantCatalog();
+bindCustomerSearch();
+bindCustomerModal();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();

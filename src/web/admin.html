@@ -89,16 +89,26 @@
 
           <div class="info-card" style="margin-bottom:12px">
             <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Đổi mật khẩu cho tài khoản admin đang đăng nhập.</p>
-            <form id="changeMyAdminPasswordForm" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
-              <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu hiện tại</label>
-                <input id="currentAdminPassword" type="password" required minlength="8" placeholder="Nhập mật khẩu hiện tại" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+            <form id="changeMyAdminPasswordForm" style="display:grid;gap:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 200px;gap:8px;align-items:end">
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu hiện tại</label>
+                  <input id="currentAdminPassword" type="password" required minlength="8" placeholder="Nhập mật khẩu hiện tại" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu mới</label>
+                  <input id="nextAdminPassword" type="password" required minlength="8" placeholder="Tối thiểu 8 ký tự" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+                </div>
+                <button id="adminPwSendOtpBtn" type="button" class="btn btn-outline" style="min-height:38px;font-size:.85rem">📧 Gửi OTP email</button>
               </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu mới</label>
-                <input id="nextAdminPassword" type="password" required minlength="8" placeholder="Tối thiểu 8 ký tự" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              <div id="adminOtpRow" style="display:none;grid-template-columns:200px 1fr;gap:8px;align-items:end">
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mã OTP (gửi qua email)</label>
+                  <input id="adminOtpCode" placeholder="6 chữ số" maxlength="6"
+                         style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem;letter-spacing:.15em" />
+                </div>
+                <button type="submit" class="btn btn-accent" style="min-height:38px;font-size:.85rem">Xác nhận đổi mật khẩu</button>
               </div>
-              <button type="submit" class="btn btn-outline" style="min-height:38px;font-size:.85rem">Đổi mật khẩu</button>
             </form>
             <p id="changeAdminPasswordMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
           </div>
@@ -327,14 +337,38 @@
           </div>
         </section>
 
-        <!-- Customers placeholder -->
+        <!-- Customers -->
         <section id="section-customers" class="admin-section">
-          <h3>👥 Khách hàng</h3>
-          <div class="info-card">
-            <p style="color:var(--muted);font-size:.88rem">Tra cứu nhanh: nhập Customer ID rồi chuyển sang Portal để xem chi tiết.</p>
-            <div style="display:flex;gap:8px;margin-top:12px">
-              <input id="lookupCustId" value="cus-demo" placeholder="Customer ID" style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.88rem" />
-              <button id="lookupBtn" class="btn btn-outline" style="min-height:38px;font-size:.85rem">Xem Portal</button>
+          <h3>👥 Quản lý khách hàng</h3>
+          <div class="info-card" style="margin-bottom:12px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="custSearchInput" placeholder="Tìm theo email hoặc tên..."
+                     style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.88rem" />
+              <button id="custSearchBtn" class="btn btn-accent" style="min-height:38px">Tìm kiếm</button>
+            </div>
+            <p id="custSearchMsg" style="margin:6px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+          <div class="table-wrap" id="custListWrap"></div>
+          <div id="custDetailWrap" style="display:none;margin-top:12px"></div>
+
+          <!-- Modal xác nhận mật khẩu -->
+          <div id="custConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;align-items:center;justify-content:center">
+            <div style="background:#fff;border-radius:16px;padding:24px 28px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+              <h4 id="custModalTitle" style="margin:0 0 10px">Xác nhận hành động</h4>
+              <p id="custModalDesc" style="font-size:.84rem;color:var(--muted);margin:0 0 10px"></p>
+              <div id="custModalNameRow">
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Tên mới</label>
+                <input id="custModalNewName" placeholder="Họ và tên"
+                       style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem;margin-top:4px;margin-bottom:8px" />
+              </div>
+              <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mật khẩu admin để xác nhận</label>
+              <input id="custModalPassword" type="password" placeholder="Nhập mật khẩu của bạn"
+                     style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem;margin-top:4px" />
+              <p id="custModalMsg" style="margin:8px 0 0;font-size:.82rem;color:var(--muted)"></p>
+              <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+                <button id="custModalCancel" class="btn btn-outline">Huỷ</button>
+                <button id="custModalConfirm" class="btn btn-accent">Xác nhận</button>
+              </div>
             </div>
           </div>
         </section>

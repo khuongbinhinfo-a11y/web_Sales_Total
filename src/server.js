@@ -48,7 +48,10 @@ const {
   registerAdminLoginFailureGuard,
   clearAdminLoginFailureGuard,
   recordAdminLoginAudit,
-  manualGrantLicense
+  manualGrantLicense,
+  searchCustomersByEmail,
+  updateCustomerById,
+  deleteCustomerById
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -1055,7 +1058,16 @@ app.post(
       return res.status(404).json({ message: "Không tìm thấy tài khoản admin hiện tại" });
     }
     if (!verifyPassword(currentPassword, admin.passwordHash)) {
-      return res.status(401).json({ message: "Mật khẩu hiện tại không đúng" });
+      return res.status(401).json({ message: "M\u1eadt kh\u1ea9u hi\u1ec7n t\u1ea1i kh\u00f4ng \u0111\u00fang" });
+    }
+
+    const otpCode = String(req.body?.otpCode || "").trim();
+    if (!otpCode) {
+      return res.status(400).json({ message: "Vui l\u00f2ng nh\u1eadp m\u00e3 OTP \u0111\u00e3 g\u1eedi qua email" });
+    }
+    const otpResult = await verifyOtpCode({ email: admin.email, purpose: "admin_password_change", code: otpCode });
+    if (!otpResult.ok) {
+      return res.status(400).json({ message: otpResult.message || "M\u00e3 OTP kh\u00f4ng \u0111\u00fang ho\u1eb7c \u0111\u00e3 h\u1ebft h\u1ea1n" });
     }
 
     await updateAdminPasswordById({
@@ -1180,6 +1192,72 @@ app.post(
 
     const result = await createCustomerAccount(email, fullName);
     return res.status(result.created ? 201 : 200).json(result);
+  })
+);
+
+app.get(
+  "/api/admin/customers",
+  requireAdminPermission("customers:read"),
+  asyncHandler(async (req, res) => {
+    const q = String(req.query.q || "").trim();
+    const limit = Number(req.query.limit || 50);
+    if (!q) return res.json({ customers: [] });
+    const customers = await searchCustomersByEmail(q, limit);
+    return res.json({ customers });
+  })
+);
+
+app.patch(
+  "/api/admin/customers/:customerId",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    const admin = adminSession?.id ? await findAdminById(adminSession.id) : null;
+    if (!admin || !verifyPassword(String(req.body?.confirmPassword || ""), admin.passwordHash)) {
+      return res.status(401).json({ message: "M\u1eadt kh\u1ea9u x\u00e1c nh\u1eadn kh\u00f4ng \u0111\u00fang" });
+    }
+    try {
+      const updated = await updateCustomerById({ customerId: req.params.customerId, fullName: req.body.fullName });
+      return res.json({ ok: true, customer: updated });
+    } catch (err) {
+      return res.status(err.statusCode || 500).json({ message: err.message });
+    }
+  })
+);
+
+app.delete(
+  "/api/admin/customers/:customerId",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    const admin = adminSession?.id ? await findAdminById(adminSession.id) : null;
+    if (!admin || !verifyPassword(String(req.body?.confirmPassword || ""), admin.passwordHash)) {
+      return res.status(401).json({ message: "M\u1eadt kh\u1ea9u x\u00e1c nh\u1eadn kh\u00f4ng \u0111\u00fang" });
+    }
+    try {
+      const result = await deleteCustomerById(req.params.customerId);
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(err.statusCode || 500).json({ message: err.message });
+    }
+  })
+);
+
+app.post(
+  "/api/admin/me/password/otp",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    const admin = adminSession?.id ? await findAdminById(adminSession.id) : null;
+    if (!admin?.email) {
+      return res.status(400).json({ message: "T\u00e0i kho\u1ea3n admin ch\u01b0a c\u00f3 email \u0111\u1ec3 g\u1eedi OTP" });
+    }
+    if (!isEmailOtpConfigured()) {
+      return res.status(503).json({ message: "H\u1ec7 th\u1ed1ng email OTP ch\u01b0a \u0111\u01b0\u1ee3c c\u1ea5u h\u00ecnh" });
+    }
+    const result = await issueAndSendOtp({ email: admin.email, purpose: "admin_password_change" });
+    const masked = admin.email.replace(/(.{2}).+(@.+)/, "$1***$2");
+    return res.json({ ok: true, maskedEmail: masked, expiresInMinutes: result.expiresInMinutes });
   })
 );
 
