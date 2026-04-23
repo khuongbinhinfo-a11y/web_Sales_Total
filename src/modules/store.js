@@ -1771,6 +1771,62 @@ async function updateAdminPasswordById({ adminId, passwordHash }) {
   };
 }
 
+async function ensureRuntimeConfigSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS runtime_configs (
+      config_key TEXT PRIMARY KEY,
+      config_value JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
+async function getRuntimeConfigValue(configKey) {
+  const key = String(configKey || "").trim();
+  if (!key) {
+    return null;
+  }
+
+  await ensureRuntimeConfigSchema();
+  const result = await pool.query(
+    `SELECT config_value
+     FROM runtime_configs
+     WHERE config_key = $1`,
+    [key]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return result.rows[0].config_value || null;
+}
+
+async function upsertRuntimeConfigValue(configKey, configValue) {
+  const key = String(configKey || "").trim();
+  if (!key) {
+    throw new Error("config_key is required");
+  }
+
+  await ensureRuntimeConfigSchema();
+  const payload = (configValue && typeof configValue === "object") ? configValue : {};
+  const result = await pool.query(
+    `INSERT INTO runtime_configs(config_key, config_value, updated_at)
+     VALUES ($1, $2::jsonb, NOW())
+     ON CONFLICT (config_key)
+     DO UPDATE SET
+       config_value = EXCLUDED.config_value,
+       updated_at = NOW()
+     RETURNING config_value, updated_at`,
+    [key, JSON.stringify(payload)]
+  );
+
+  return {
+    value: result.rows[0]?.config_value || {},
+    updatedAt: result.rows[0]?.updated_at || null
+  };
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -1815,5 +1871,8 @@ module.exports = {
   listAdminUsers,
   countActiveOwners,
   updateAdminUserById,
-  updateAdminPasswordById
+  updateAdminPasswordById,
+  ensureRuntimeConfigSchema,
+  getRuntimeConfigValue,
+  upsertRuntimeConfigValue
 };

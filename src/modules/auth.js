@@ -123,7 +123,7 @@ function clearAdminLoginFailures(req) {
 
 const ADMIN_ROLE_PERMISSIONS = {
   owner: ["*"],
-  manager: ["dashboard:read", "customers:read", "customers:write", "orders:read", "keys:read", "admins:read"],
+  manager: ["dashboard:read", "customers:read", "customers:write", "orders:read", "keys:read", "admins:read", "admins:write"],
   support: ["dashboard:read", "customers:read", "orders:read"]
 };
 
@@ -795,6 +795,8 @@ function adminLoginPage() {
           const otpFlag = String(params.get("otp") || "").trim();
           const maskedEmail = String(params.get("maskedEmail") || "").trim();
           const msgText = String(params.get("msg") || "").trim();
+          const statusText = String(params.get("status") || "").trim();
+          const statusCode = Number(statusText || 0);
           if (otpFlag === "1") {
             updateOtpDestination(msgText, maskedEmail);
             setMessage("success", msgText || "OTP da duoc gui vao email admin. Nhap OTP roi bam Login lai.");
@@ -802,6 +804,12 @@ function adminLoginPage() {
             if (otpInput) {
               otpInput.focus();
             }
+            return;
+          }
+
+          if (msgText) {
+            const type = statusCode >= 200 && statusCode < 300 ? "success" : "error";
+            setMessage(type, msgText);
           }
         } catch {
           // ignore

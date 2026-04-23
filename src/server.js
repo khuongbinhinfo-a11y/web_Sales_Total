@@ -42,6 +42,8 @@ const {
   countActiveOwners,
   updateAdminUserById,
   updateAdminPasswordById,
+  getRuntimeConfigValue,
+  upsertRuntimeConfigValue,
   getAdminLoginBlockState,
   registerAdminLoginFailureGuard,
   clearAdminLoginFailureGuard,
@@ -117,23 +119,32 @@ function normalizeAiAppKeyProfile(value) {
   return AI_APP_KEY_PROFILES.includes(profile) ? profile : "shared";
 }
 
-function getAiAppKeyState() {
+async function getAiAppKeyState() {
+  const persisted = await getRuntimeConfigValue("ai_app_keys");
+  const persistedObj = (persisted && typeof persisted === "object") ? persisted : {};
+  const persistedKeys = (persistedObj.keys && typeof persistedObj.keys === "object") ? persistedObj.keys : {};
+
   const runtimeAiApp = getAiAppRuntimeSettings();
-  const runtimeShared = String(runtimeAiApp.sharedKey || "").trim();
-  const envShared = String(env.aiAppSharedKey || "").trim();
   const runtimeKeys = runtimeAiApp.keys || {};
 
+  const dbShared = String(persistedObj.sharedKey || "").trim();
+  const dbWeb = String(persistedKeys.web || "").trim();
+  const dbDesktop = String(persistedKeys.desktop || "").trim();
+
+  const runtimeShared = String(runtimeAiApp.sharedKey || "").trim();
+  const envShared = String(env.aiAppSharedKey || "").trim();
+
   const profileKeys = {
-    shared: runtimeShared || envShared,
-    web: String(runtimeKeys.web || "").trim(),
-    desktop: String(runtimeKeys.desktop || "").trim()
+    shared: dbShared || runtimeShared || envShared,
+    web: dbWeb || String(runtimeKeys.web || "").trim(),
+    desktop: dbDesktop || String(runtimeKeys.desktop || "").trim()
   };
 
   const acceptedKeys = [...new Set(Object.values(profileKeys).filter(Boolean))];
   const sourceByProfile = {
-    shared: runtimeShared ? "runtime" : (envShared ? "env" : "none"),
-    web: profileKeys.web ? "runtime" : "none",
-    desktop: profileKeys.desktop ? "runtime" : "none"
+    shared: dbShared ? "database" : (runtimeShared ? "runtime" : (envShared ? "env" : "none")),
+    web: dbWeb ? "database" : (profileKeys.web ? "runtime" : "none"),
+    desktop: dbDesktop ? "database" : (profileKeys.desktop ? "runtime" : "none")
   };
 
   return {
@@ -143,8 +154,8 @@ function getAiAppKeyState() {
   };
 }
 
-function requireAiAppKey(req, res, next) {
-  const keyState = getAiAppKeyState();
+async function requireAiAppKey(req, res, next) {
+  const keyState = await getAiAppKeyState();
   if (keyState.acceptedKeys.length === 0) {
     return res.status(503).json({ message: "AI app integration key is not configured" });
   }
@@ -233,6 +244,20 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
       params.set("username", username);
     }
 
+    return res.redirect(`/admin/login?${params.toString()}`);
+  }
+
+  const htmlAccept = String(req?.headers?.accept || "").toLowerCase().includes("text/html");
+  if (htmlAccept) {
+    const params = new URLSearchParams();
+    params.set("status", String(status));
+    if (message) {
+      params.set("msg", String(message));
+    }
+    const username = String(req?.body?.username || "").trim().toLowerCase();
+    if (username) {
+      params.set("username", username);
+    }
     return res.redirect(`/admin/login?${params.toString()}`);
   }
 
@@ -1267,7 +1292,7 @@ app.get(
   "/api/admin/integrations/ai-app",
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
-    const keyState = getAiAppKeyState();
+    const keyState = await getAiAppKeyState();
     const sharedKey = keyState.profileKeys.shared;
     return res.json({
       configured: keyState.acceptedKeys.length > 0,
@@ -1315,18 +1340,37 @@ app.post(
       return res.status(400).json({ message: "Shared secret phải có tối thiểu 16 ký tự" });
     }
 
-    let next;
-    if (profile === "shared") {
-      next = updateAiAppRuntimeSettings({ sharedKey: nextSharedKey });
-    } else {
-      next = updateAiAppRuntimeSettings({
-        keys: {
-          [profile]: nextSharedKey
-        }
-      });
+    const current = await getRuntimeConfigValue("ai_app_keys");
+    const currentObj = (current && typeof current === "object") ? current : {};
+    const currentKeys = (currentObj.keys && typeof currentObj.keys === "object") ? currentObj.keys : {};
+    const nextPersisted = {
+      sharedKey: profile === "shared"
+        ? nextSharedKey
+        : String(currentObj.sharedKey || "").trim(),
+      keys: {
+        ...currentKeys,
+        web: profile === "web"
+          ? nextSharedKey
+          : String(currentKeys.web || "").trim(),
+        desktop: profile === "desktop"
+          ? nextSharedKey
+          : String(currentKeys.desktop || "").trim()
+      }
+    };
+    await upsertRuntimeConfigValue("ai_app_keys", nextPersisted);
+
+    // Keep legacy runtime file path updated when writable; ignore filesystem errors on production.
+    try {
+      if (profile === "shared") {
+        updateAiAppRuntimeSettings({ sharedKey: nextSharedKey });
+      } else {
+        updateAiAppRuntimeSettings({ keys: { [profile]: nextSharedKey } });
+      }
+    } catch {
+      // noop
     }
 
-    const keyState = getAiAppKeyState();
+    const keyState = await getAiAppKeyState();
     const configuredKey = keyState.profileKeys[profile] || "";
 
     return res.json({
@@ -1349,7 +1393,7 @@ app.post(
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
     const profile = normalizeAiAppKeyProfile(req.body?.profile || req.query?.profile || "shared");
-    const keyState = getAiAppKeyState();
+    const keyState = await getAiAppKeyState();
     const configuredKey = String(keyState.profileKeys[profile] || "").trim();
     if (!configuredKey) {
       return res.status(404).json({ message: `AI app key profile ${profile} chưa được cấu hình trên server` });
@@ -1593,6 +1637,10 @@ app.post("/api/auth/customer/logout", (req, res) => {
 
 app.get("/admin/login", (req, res) => {
   res.send(adminLoginPage());
+});
+
+app.get("/auth/admin/login", (req, res) => {
+  res.redirect("/admin/login");
 });
 
 app.post("/auth/portal/login", handlePortalLogin);

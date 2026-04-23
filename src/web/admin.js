@@ -688,6 +688,12 @@ function bindAiAppSecretControls(){
     if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app"); return { ok:false, redirected:true }; }
     const data = await res.json().catch(()=>({}));
     if(!res.ok){
+      if(res.status === 403){
+        return { ok:false, message: "Bạn không có quyền lưu key (thiếu admins:write)." };
+      }
+      if(res.status >= 500){
+        return { ok:false, message: data.message || "Server đang lỗi khi lưu key. Vui lòng thử lại sau." };
+      }
       return { ok:false, message: data.message || "Lưu key thất bại." };
     }
     return { ok:true, message: data.message || `Đã lưu key profile ${profile}.` };
