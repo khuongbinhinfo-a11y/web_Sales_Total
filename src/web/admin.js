@@ -11,6 +11,7 @@ let sepaySecretConfigured = false;
 let currentGateApp = "desktop";
 let currentGateData = null;
 let aiAppSecretConfigured = false;
+let adminListFocusUsername = "";
 
 function wait(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -279,8 +280,9 @@ async function loadAdminUsers(){
       <th>Username</th><th>Email</th><th>Role</th><th>Trạng thái</th><th>Đăng nhập gần nhất</th><th>Lưu</th>
     </tr></thead><tbody>${admins.map(a=>{
       const disableEdit = meAdmin && meAdmin.id && meAdmin.id === a.id;
+      const highlight = adminListFocusUsername && String(a.username || "").toLowerCase() === adminListFocusUsername;
       return `<tr data-admin-id="${a.id}">
-        <td>${a.username}</td>
+        <td style="${highlight ? "background:#fff7d6;font-weight:700" : ""}">${a.username}</td>
         <td style="font-size:.82rem">${a.email || "—"}</td>
         <td>
           <select class="adm-role" ${disableEdit?"disabled":""} style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff">
@@ -303,6 +305,13 @@ async function loadAdminUsers(){
     }).join("")}</tbody></table>`;
 
     bindAdminRowActions();
+    if(adminListFocusUsername){
+      const target = Array.from(wrap.querySelectorAll("tr[data-admin-id]"))
+        .find((row)=>String(row.children?.[0]?.textContent || "").trim().toLowerCase() === adminListFocusUsername);
+      if(target){
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
   } catch(e){
     wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">Lỗi tải danh sách admin: ${e.message}</p>`;
   }
@@ -365,13 +374,24 @@ function bindCreateAdminForm(){
       });
       const p = await res.json().catch(()=>({}));
       if(!res.ok){
-        msg.textContent = p.message || "Không tạo được sub-admin";
-        msg.style.color = "var(--danger)";
+        if(res.status === 409 && p.existingAdmin){
+          adminListFocusUsername = String(p.existingAdmin.username || username).toLowerCase();
+          msg.textContent = `Username đã tồn tại: ${p.existingAdmin.username}. Đã định vị tài khoản trong danh sách bên dưới.`;
+          msg.style.color = "var(--danger)";
+          await loadAdminUsers();
+        } else if(res.status === 403){
+          msg.textContent = "Bạn không có quyền tạo sub-admin (thiếu admins:write).";
+          msg.style.color = "var(--danger)";
+        } else {
+          msg.textContent = p.message || "Không tạo được sub-admin";
+          msg.style.color = "var(--danger)";
+        }
         return;
       }
 
       form.reset();
       document.getElementById("newAdminRole").value = "support";
+      adminListFocusUsername = String(p.admin?.username || username).toLowerCase();
       msg.textContent = `Đã tạo sub-admin: ${p.admin?.username || username}`;
       msg.style.color = "var(--success)";
       await loadAdminUsers();
@@ -557,13 +577,38 @@ async function loadAiAppSecretStatus(){
     headerEl.value = data.authHeaderName || "x-ai-app-key";
     baseUrlEl.value = data.productionBaseUrl || "";
     msg.textContent = data.configured
-      ? `Secret đang có trên production (${data.keyLength || 0} ký tự). Bấm 'Hiện shared secret' để lấy bản đầy đủ.`
+      ? `Key đang có trên production (${data.keyLength || 0} ký tự, nguồn: ${data.source || "unknown"}). Bạn có thể quản lý theo profile shared/web/desktop.`
       : "Production chưa có AI-app shared secret.";
     msg.style.color = data.configured ? "var(--success)" : "var(--danger)";
+    renderAiAppKeyManager(data.profiles || {});
   } catch(err){
     msg.textContent = "Lỗi tải trạng thái AI-app secret: " + err.message;
     msg.style.color = "var(--danger)";
   }
+}
+
+function renderAiAppKeyManager(profiles){
+  const wrap = document.getElementById("aiAppKeyManagerWrap");
+  if(!wrap) return;
+
+  const profileOrder = ["shared", "web", "desktop"];
+  const rows = profileOrder.map((profile)=>{
+    const info = profiles?.[profile] || {};
+    const configured = Boolean(info.configured);
+    const source = info.source || "none";
+    const keyLength = Number(info.keyLength || 0);
+    return `<tr>
+      <td><b>${profile}</b></td>
+      <td>${configured ? (info.maskedKey || "********") : "Chưa cấu hình"}</td>
+      <td>${configured ? keyLength : 0}</td>
+      <td>${source}</td>
+      <td>${configured ? '<span class="status-badge status-active">active</span>' : '<span class="status-badge" style="background:#fee2e2;color:#991b1b">missing</span>'}</td>
+    </tr>`;
+  }).join("");
+
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+    <th>Profile</th><th>Masked key</th><th>Độ dài</th><th>Nguồn</th><th>Trạng thái</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function bindAiAppSecretControls(){
@@ -571,9 +616,11 @@ function bindAiAppSecretControls(){
   const maskedEl = document.getElementById("aiAppMaskedSecret");
   const msg = document.getElementById("aiAppSecretMsg");
   const generateBtn = document.getElementById("aiAppGenerateBtn");
+  const saveSecretBtn = document.getElementById("aiAppSaveSecretBtn");
   const generatedEl = document.getElementById("aiAppGeneratedSecret");
   const copySecretBtn = document.getElementById("aiAppCopySecretBtn");
-  const copyCommandBtn = document.getElementById("aiAppCopyCommandBtn");
+  const generateSaveBtn = document.getElementById("aiAppGenerateSaveBtn");
+  const profileEl = document.getElementById("aiAppKeyProfile");
   const commandEl = document.getElementById("aiAppVercelCommand");
   const guideMsg = document.getElementById("aiAppGuideMsg");
   const baseUrlEl = document.getElementById("aiAppBaseUrl");
@@ -590,14 +637,21 @@ function bindAiAppSecretControls(){
     return out;
   }
 
+  function currentProfile(){
+    const v = String(profileEl?.value || "shared").trim().toLowerCase();
+    if(v === "web" || v === "desktop" || v === "shared") return v;
+    return "shared";
+  }
+
   function updateVercelCommand(secret){
     if(!commandEl) return;
     const value = String(secret || "").trim();
+    const profile = currentProfile();
     if(!value){
       commandEl.value = "";
       return;
     }
-    commandEl.value = `vercel env add AI_APP_SHARED_KEY production --value \"${value}\" --force --yes`;
+    commandEl.value = `Sẵn sàng lưu profile ${profile} (${value.length} ký tự). Bấm \"Lưu key trực tiếp\" hoặc \"Tạo và lưu ngay\".`;
   }
 
   async function copyText(value, okMessage){
@@ -624,6 +678,21 @@ function bindAiAppSecretControls(){
     }
   }
 
+  async function saveKeyForProfile(sharedKey){
+    const profile = currentProfile();
+    const res = await fetchAdmin("/api/admin/integrations/ai-app", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile, sharedKey })
+    });
+    if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app"); return { ok:false, redirected:true }; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      return { ok:false, message: data.message || "Lưu key thất bại." };
+    }
+    return { ok:true, message: data.message || `Đã lưu key profile ${profile}.` };
+  }
+
   if(generateBtn && generatedEl){
     generateBtn.addEventListener("click", ()=>{
       const nextSecret = randomSecret(32);
@@ -631,8 +700,84 @@ function bindAiAppSecretControls(){
       updateVercelCommand(nextSecret);
       if(guideMsg){
         const baseUrl = String(baseUrlEl?.value || "").trim() || "(chưa rõ base URL)";
-        guideMsg.textContent = `Đã tạo key mẫu 32 ký tự. Bước tiếp: copy lệnh Vercel, set env, deploy lại, rồi đối chiếu bằng 'Hiện shared secret'. Base URL hiện tại: ${baseUrl}`;
+        guideMsg.textContent = `Đã tạo key mẫu 32 ký tự cho profile ${currentProfile()}. Bước tiếp: bấm 'Lưu key trực tiếp' hoặc 'Tạo và lưu ngay'. Base URL hiện tại: ${baseUrl}`;
         guideMsg.style.color = "var(--muted)";
+      }
+    });
+  }
+
+  if(generateSaveBtn && generatedEl){
+    generateSaveBtn.addEventListener("click", async ()=>{
+      const nextSecret = randomSecret(32);
+      generatedEl.value = nextSecret;
+      updateVercelCommand(nextSecret);
+      if(guideMsg){
+        guideMsg.textContent = `Đang tạo và lưu key profile ${currentProfile()}...`;
+        guideMsg.style.color = "var(--muted)";
+      }
+
+      try {
+        const result = await saveKeyForProfile(nextSecret);
+        if(result.redirected) return;
+        if(!result.ok){
+          if(guideMsg){
+            guideMsg.textContent = result.message;
+            guideMsg.style.color = "var(--danger)";
+          }
+          return;
+        }
+
+        if(guideMsg){
+          guideMsg.textContent = result.message;
+          guideMsg.style.color = "var(--success)";
+        }
+        await loadAiAppSecretStatus();
+      } catch(err){
+        if(guideMsg){
+          guideMsg.textContent = "Lỗi lưu key: " + err.message;
+          guideMsg.style.color = "var(--danger)";
+        }
+      }
+    });
+  }
+
+  if(saveSecretBtn && generatedEl){
+    saveSecretBtn.addEventListener("click", async ()=>{
+      const sharedKey = String(generatedEl.value || "").trim();
+      if(!sharedKey || sharedKey.length < 16){
+        if(guideMsg){
+          guideMsg.textContent = "Shared secret tối thiểu 16 ký tự. Hãy tạo key mới rồi lưu.";
+          guideMsg.style.color = "var(--danger)";
+        }
+        return;
+      }
+
+      if(guideMsg){
+        guideMsg.textContent = "Đang lưu key trực tiếp lên hệ thống...";
+        guideMsg.style.color = "var(--muted)";
+      }
+
+      try {
+        const result = await saveKeyForProfile(sharedKey);
+        if(result.redirected) return;
+        if(!result.ok){
+          if(guideMsg){
+            guideMsg.textContent = result.message || "Lưu key thất bại.";
+            guideMsg.style.color = "var(--danger)";
+          }
+          return;
+        }
+
+        if(guideMsg){
+          guideMsg.textContent = result.message || "Đã lưu key trực tiếp thành công.";
+          guideMsg.style.color = "var(--success)";
+        }
+        await loadAiAppSecretStatus();
+      } catch(err){
+        if(guideMsg){
+          guideMsg.textContent = "Lỗi lưu key: " + err.message;
+          guideMsg.style.color = "var(--danger)";
+        }
       }
     });
   }
@@ -643,18 +788,17 @@ function bindAiAppSecretControls(){
     });
   }
 
-  if(copyCommandBtn && commandEl){
-    copyCommandBtn.addEventListener("click", ()=>{
-      copyText(commandEl.value, "Đã copy lệnh Vercel.");
-    });
-  }
-
   revealBtn.addEventListener("click", async ()=>{
     msg.textContent = "Đang lấy shared secret...";
     msg.style.color = "var(--muted)";
 
     try {
-      const res = await fetchAdmin("/api/admin/integrations/ai-app/reveal", { method:"POST" });
+      const profile = currentProfile();
+      const res = await fetchAdmin("/api/admin/integrations/ai-app/reveal", {
+        method:"POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile })
+      });
       if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app/reveal"); return; }
       const data = await res.json().catch(()=>({}));
       if(!res.ok){
@@ -664,7 +808,7 @@ function bindAiAppSecretControls(){
       }
 
       maskedEl.value = data.sharedSecret || "";
-      msg.textContent = "Đã hiện shared secret thật. Sao chép và gửi cho AI-app qua kênh secure, rồi yêu cầu họ set WEB_TOTAL_AI_APP_KEY ngay.";
+      msg.textContent = `Đã hiện key thật cho profile ${data.profile || currentProfile()}. Sao chép và gửi qua kênh secure.`;
       msg.style.color = "var(--success)";
       updateVercelCommand(data.sharedSecret || "");
     } catch(err){

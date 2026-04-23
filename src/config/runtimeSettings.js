@@ -32,6 +32,13 @@ function ensureSettingsFile() {
   if (!fs.existsSync(settingsFile)) {
     const initial = {
       paymentProviderMode: "",
+      aiApp: {
+        sharedKey: "",
+        keys: {
+          web: "",
+          desktop: ""
+        }
+      },
       sepay: {
         webhookSecret: "",
         bankCode: "",
@@ -111,10 +118,57 @@ function updateSepayRuntimeSettings(input) {
   return writeRuntimeSettings(next);
 }
 
+function getAiAppRuntimeSettings() {
+  const all = readRuntimeSettings();
+  const aiApp = all.aiApp || {};
+  const keys = aiApp.keys || {};
+  return {
+    sharedKey: String(aiApp.sharedKey || "").trim(),
+    keys: {
+      web: String(keys.web || "").trim(),
+      desktop: String(keys.desktop || "").trim()
+    }
+  };
+}
+
+function updateAiAppRuntimeSettings(input) {
+  const all = readRuntimeSettings();
+  const currentAiApp = all.aiApp || {};
+  const currentKeys = currentAiApp.keys || {};
+
+  const rawValue = input?.sharedKey;
+  const nextSharedKey = typeof rawValue === "string"
+    ? rawValue.trim()
+    : String(currentAiApp.sharedKey || "").trim();
+
+  const nextKeysInput = (input && typeof input.keys === "object" && input.keys) ? input.keys : {};
+  const nextKeys = {
+    web: typeof nextKeysInput.web === "string"
+      ? nextKeysInput.web.trim()
+      : String(currentKeys.web || "").trim(),
+    desktop: typeof nextKeysInput.desktop === "string"
+      ? nextKeysInput.desktop.trim()
+      : String(currentKeys.desktop || "").trim()
+  };
+
+  const next = {
+    ...all,
+    aiApp: {
+      ...currentAiApp,
+      sharedKey: nextSharedKey,
+      keys: nextKeys
+    }
+  };
+
+  return writeRuntimeSettings(next);
+}
+
 module.exports = {
   readRuntimeSettings,
   writeRuntimeSettings,
   getSepayRuntimeSettings,
   updateSepayRuntimeSettings,
+  getAiAppRuntimeSettings,
+  updateAiAppRuntimeSettings,
   resolveSepayWebhookUrl
 };

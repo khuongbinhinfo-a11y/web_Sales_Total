@@ -7,7 +7,13 @@ const { OAuth2Client } = require("google-auth-library");
 const { env, startupConfigIssues } = require("./config/env");
 const { runMigrations } = require("./db/migrate");
 const { pool } = require("./db/pool");
-const { getSepayRuntimeSettings, updateSepayRuntimeSettings, resolveSepayWebhookUrl } = require("./config/runtimeSettings");
+const {
+  getSepayRuntimeSettings,
+  updateSepayRuntimeSettings,
+  getAiAppRuntimeSettings,
+  updateAiAppRuntimeSettings,
+  resolveSepayWebhookUrl
+} = require("./config/runtimeSettings");
 
 const {
   getPublicCatalog,
@@ -104,14 +110,56 @@ function getRequestIp(req) {
   return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
 }
 
+const AI_APP_KEY_PROFILES = ["shared", "web", "desktop"];
+
+function normalizeAiAppKeyProfile(value) {
+  const profile = String(value || "shared").trim().toLowerCase();
+  return AI_APP_KEY_PROFILES.includes(profile) ? profile : "shared";
+}
+
+function getAiAppKeyState() {
+  const runtimeAiApp = getAiAppRuntimeSettings();
+  const runtimeShared = String(runtimeAiApp.sharedKey || "").trim();
+  const envShared = String(env.aiAppSharedKey || "").trim();
+  const runtimeKeys = runtimeAiApp.keys || {};
+
+  const profileKeys = {
+    shared: runtimeShared || envShared,
+    web: String(runtimeKeys.web || "").trim(),
+    desktop: String(runtimeKeys.desktop || "").trim()
+  };
+
+  const acceptedKeys = [...new Set(Object.values(profileKeys).filter(Boolean))];
+  const sourceByProfile = {
+    shared: runtimeShared ? "runtime" : (envShared ? "env" : "none"),
+    web: profileKeys.web ? "runtime" : "none",
+    desktop: profileKeys.desktop ? "runtime" : "none"
+  };
+
+  return {
+    profileKeys,
+    acceptedKeys,
+    sourceByProfile
+  };
+}
+
 function requireAiAppKey(req, res, next) {
-  const configuredKey = String(env.aiAppSharedKey || "").trim();
-  if (!configuredKey) {
+  const keyState = getAiAppKeyState();
+  if (keyState.acceptedKeys.length === 0) {
     return res.status(503).json({ message: "AI app integration key is not configured" });
   }
 
   const incomingKey = String(req.header("x-ai-app-key") || "").trim();
-  if (!incomingKey || incomingKey !== configuredKey) {
+  const requestedProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
+  const expectedForProfile = [
+    keyState.profileKeys[requestedProfile],
+    keyState.profileKeys.shared
+  ].filter(Boolean);
+  const expectedKeys = expectedForProfile.length > 0
+    ? [...new Set(expectedForProfile)]
+    : keyState.acceptedKeys;
+
+  if (!incomingKey || !expectedKeys.includes(incomingKey)) {
     return res.status(401).json({ message: "Invalid AI app key" });
   }
 
@@ -1075,7 +1123,17 @@ app.post(
 
     const existed = await findAdminByUsername(safeUsername);
     if (existed) {
-      return res.status(409).json({ message: "Username admin đã tồn tại" });
+      return res.status(409).json({
+        message: "Username admin đã tồn tại",
+        existingAdmin: {
+          id: existed.id,
+          username: existed.username,
+          email: existed.email,
+          role: existed.role,
+          isActive: existed.isActive,
+          lastLoginAt: existed.lastLoginAt
+        }
+      });
     }
 
     const passwordHash = hashPassword(password);
@@ -1188,12 +1246,35 @@ app.get(
   "/api/admin/integrations/ai-app",
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
-    const configuredKey = String(env.aiAppSharedKey || "").trim();
+    const keyState = getAiAppKeyState();
+    const sharedKey = keyState.profileKeys.shared;
     return res.json({
-      configured: Boolean(configuredKey),
-      maskedKey: maskConfiguredSecret(configuredKey),
-      keyLength: configuredKey.length,
+      configured: keyState.acceptedKeys.length > 0,
+      maskedKey: maskConfiguredSecret(sharedKey),
+      keyLength: sharedKey.length,
+      source: keyState.sourceByProfile.shared,
+      profiles: {
+        shared: {
+          configured: Boolean(keyState.profileKeys.shared),
+          maskedKey: maskConfiguredSecret(keyState.profileKeys.shared),
+          keyLength: keyState.profileKeys.shared.length,
+          source: keyState.sourceByProfile.shared
+        },
+        web: {
+          configured: Boolean(keyState.profileKeys.web),
+          maskedKey: maskConfiguredSecret(keyState.profileKeys.web),
+          keyLength: keyState.profileKeys.web.length,
+          source: keyState.sourceByProfile.web
+        },
+        desktop: {
+          configured: Boolean(keyState.profileKeys.desktop),
+          maskedKey: maskConfiguredSecret(keyState.profileKeys.desktop),
+          keyLength: keyState.profileKeys.desktop.length,
+          source: keyState.sourceByProfile.desktop
+        }
+      },
       authHeaderName: "x-ai-app-key",
+      profileHeaderName: "x-ai-app-profile",
       productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl,
       endpoints: {
         listLicenses: "/api/ai-app/customers/:customerId/licenses?appId=app-study-12",
@@ -1204,18 +1285,61 @@ app.get(
 );
 
 app.post(
+  "/api/admin/integrations/ai-app",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const profile = normalizeAiAppKeyProfile(req.body?.profile || "shared");
+    const nextSharedKey = String(req.body?.sharedKey || "").trim();
+    if (!nextSharedKey || nextSharedKey.length < 16) {
+      return res.status(400).json({ message: "Shared secret phải có tối thiểu 16 ký tự" });
+    }
+
+    let next;
+    if (profile === "shared") {
+      next = updateAiAppRuntimeSettings({ sharedKey: nextSharedKey });
+    } else {
+      next = updateAiAppRuntimeSettings({
+        keys: {
+          [profile]: nextSharedKey
+        }
+      });
+    }
+
+    const keyState = getAiAppKeyState();
+    const configuredKey = keyState.profileKeys[profile] || "";
+
+    return res.json({
+      ok: true,
+      configured: keyState.acceptedKeys.length > 0,
+      profile,
+      maskedKey: maskConfiguredSecret(configuredKey),
+      keyLength: configuredKey.length,
+      source: "runtime",
+      authHeaderName: "x-ai-app-key",
+      profileHeaderName: "x-ai-app-profile",
+      productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl,
+      message: `Đã lưu key profile ${profile} trực tiếp trong runtime settings`
+    });
+  })
+);
+
+app.post(
   "/api/admin/integrations/ai-app/reveal",
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
-    const configuredKey = String(env.aiAppSharedKey || "").trim();
+    const profile = normalizeAiAppKeyProfile(req.body?.profile || req.query?.profile || "shared");
+    const keyState = getAiAppKeyState();
+    const configuredKey = String(keyState.profileKeys[profile] || "").trim();
     if (!configuredKey) {
-      return res.status(404).json({ message: "AI app shared secret chưa được cấu hình trên server" });
+      return res.status(404).json({ message: `AI app key profile ${profile} chưa được cấu hình trên server` });
     }
 
     return res.json({
       ok: true,
+      profile,
       sharedSecret: configuredKey,
       authHeaderName: "x-ai-app-key",
+      profileHeaderName: "x-ai-app-profile",
       productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl
     });
   })
