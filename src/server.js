@@ -811,6 +811,9 @@ app.post(
     if (!license) {
       return res.status(404).json({ message: "License not found or not activeable" });
     }
+    if (license.deviceMismatch) {
+      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng huỷ kích hoạt (deactivate) trước khi đăng ký thiết bị mới." });
+    }
 
     return res.json({ ok: true, license });
   })
@@ -845,6 +848,9 @@ app.post(
 
     if (!license) {
       return res.status(404).json({ message: "License not found, revoked or expired" });
+    }
+    if (license.deviceMismatch) {
+      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác." });
     }
 
     return res.json({ ok: true, license });
@@ -965,6 +971,9 @@ app.post(
 
     if (!license) {
       return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
+    }
+    if (license.deviceMismatch) {
+      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng liên hệ hỗ trợ để chuyển thiết bị." });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
