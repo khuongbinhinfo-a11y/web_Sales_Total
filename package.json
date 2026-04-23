@@ -15,7 +15,7 @@
     "ai:gate": "node scripts/validate-ready-done.mjs",
     "gmail:auth-url": "node scripts/gmail-oauth-helper.js auth-url",
     "gmail:exchange-token": "node scripts/gmail-oauth-helper.js exchange",
-    "test": "echo \"No automated tests yet\""
+    "test": "node --test src/modules"
   },
   "keywords": [],
   "author": "",

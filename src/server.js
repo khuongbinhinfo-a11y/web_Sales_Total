@@ -94,6 +94,7 @@ const {
   verifyOtpCode,
   isEmailOtpConfigured
 } = require("./modules/emailOtp");
+const { resolveLicenseFeatures } = require("./modules/licenseFeatures");
 
 const app = express();
 const webRoot = path.join(__dirname, "web");
@@ -273,56 +274,6 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
   return res.status(status).send(message);
 }
 
-const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
-const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
-
-function inferPlanTierFromLicense(license) {
-  const normalizedProductId = String(license?.productId || "").trim().toLowerCase();
-  const pinnedStandardProductIds = new Set([
-    "prod-study-month",
-    "prod-study-year",
-    "prod-study-standard-lifetime"
-  ]);
-
-  if (pinnedStandardProductIds.has(normalizedProductId)) {
-    return "standard";
-  }
-
-  const explicitTierTokens = [
-    license?.metadata?.planTier,
-    license?.metadata?.tier,
-    license?.planTier,
-    license?.tier
-  ]
-    .map((value) => String(value || "").toLowerCase().trim())
-    .filter(Boolean);
-
-  if (explicitTierTokens.includes("premium")) {
-    return "premium";
-  }
-  if (explicitTierTokens.includes("basic")) {
-    return "basic";
-  }
-  if (explicitTierTokens.includes("standard")) {
-    return "standard";
-  }
-
-  const tokens = [license?.planCode, license?.productId]
-    .map((value) => String(value || "").toLowerCase())
-    .join(" ")
-    .split(/[^a-z0-9]+/)
-    .filter(Boolean);
-
-  // Premium only when the token is explicit.
-  if (tokens.includes("premium")) {
-    return "premium";
-  }
-  if (tokens.includes("basic")) {
-    return "basic";
-  }
-  return "standard";
-}
-
 function computeLicenseGrace(license) {
   const graceDays = Math.max(1, Number(env.aiAppOfflineGraceDays) || 7);
   const lastVerifiedAt = license?.lastVerifiedAt ? new Date(license.lastVerifiedAt) : new Date();
@@ -339,24 +290,6 @@ function computeLicenseGrace(license) {
     graceDays,
     offlineUntil: offlineUntilDate.toISOString()
   };
-}
-
-function resolveLicenseFeatures(license) {
-  const rawFeatures = Array.isArray(license?.metadata?.features)
-    ? license.metadata.features
-        .map((item) => String(item || "").trim())
-        .filter(Boolean)
-    : null;
-
-  if (rawFeatures && rawFeatures.length > 0) {
-    return rawFeatures;
-  }
-
-  const tier = inferPlanTierFromLicense(license);
-  if (tier === "premium") {
-    return AI_APP_PREMIUM_FEATURES;
-  }
-  return AI_APP_STANDARD_FEATURES;
 }
 
 function buildAiAppLicenseView(license) {
