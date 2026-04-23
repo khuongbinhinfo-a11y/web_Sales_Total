@@ -277,13 +277,17 @@ const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
 const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
 
 function inferPlanTierFromLicense(license) {
-  const joined = [license?.planCode, license?.productId]
+  const tokens = [license?.planCode, license?.productId]
     .map((value) => String(value || "").toLowerCase())
-    .join(" ");
-  if (joined.includes("premium") || joined.includes("pro")) {
+    .join(" ")
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+
+  // Match exact tokens only, so "prod" no longer triggers "pro" premium detection.
+  if (tokens.includes("premium") || tokens.includes("pro")) {
     return "premium";
   }
-  if (joined.includes("basic")) {
+  if (tokens.includes("basic")) {
     return "basic";
   }
   return "standard";
