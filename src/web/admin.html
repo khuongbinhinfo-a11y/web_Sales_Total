@@ -83,6 +83,7 @@
           <div class="info-card" style="margin-bottom:12px">
             <p style="color:var(--muted);font-size:.88rem;margin-bottom:8px">OTP đăng nhập admin chỉ áp dụng cho role <b>owner</b> và <b>manager</b>. Nếu tài khoản hiện tại là <b>support</b> thì sẽ không có bước OTP.</p>
             <p id="adminMeSummary" style="font-size:.82rem;color:var(--muted);margin:0">Đang tải thông tin tài khoản hiện tại...</p>
+            <p id="adminMeDetail" style="font-size:.8rem;color:var(--muted);margin:6px 0 0">Đang tải chi tiết tài khoản...</p>
           </div>
 
           <div class="info-card" style="margin-bottom:12px">
@@ -200,6 +201,26 @@
             </div>
             <p style="font-size:.82rem;color:var(--muted);margin:0 0 8px">Dùng mục này để lấy đúng shared secret đang chạy trên Web tổng production rồi chuyển cho AI-app qua kênh secure.</p>
             <p id="aiAppSecretMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+
+            <hr style="margin:14px 0" />
+            <h4 style="margin:0 0 8px;font-size:.95rem">Hướng dẫn tạo/đổi secret key (rõ ràng từng bước)</h4>
+            <ol style="margin:0 0 10px 18px;color:var(--muted);font-size:.82rem;line-height:1.55">
+              <li>Bấm "Tạo key mẫu 32 ký tự" để sinh key mới (local, không tự lưu).</li>
+              <li>Sao chép lệnh Vercel được tạo sẵn và chạy trên máy deploy.</li>
+              <li>Deploy lại production.</li>
+              <li>Bấm "Hiện shared secret" để đối chiếu key đang chạy thực tế.</li>
+            </ol>
+
+            <div style="display:grid;grid-template-columns:220px 1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+              <button id="aiAppGenerateBtn" type="button" class="btn btn-outline" style="min-height:38px">Tạo key mẫu 32 ký tự</button>
+              <input id="aiAppGeneratedSecret" readonly placeholder="Key mẫu sẽ hiển thị ở đây" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f7f7f7;font-size:.85rem" />
+              <button id="aiAppCopySecretBtn" type="button" class="btn btn-accent" style="min-height:38px">Copy key</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+              <input id="aiAppVercelCommand" readonly placeholder="Lệnh Vercel sẽ hiện ở đây" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#f7f7f7;font-size:.8rem" />
+              <button id="aiAppCopyCommandBtn" type="button" class="btn btn-outline" style="min-height:38px">Copy lệnh</button>
+            </div>
+            <p id="aiAppGuideMsg" style="margin:8px 0 0;font-size:.8rem;color:var(--muted)"></p>
           </div>
         </section>
 

@@ -221,9 +221,11 @@ async function loadMe(){
 
 function renderAdminMeSummary(){
   const host = document.getElementById("adminMeSummary");
+  const detail = document.getElementById("adminMeDetail");
   if(!host) return;
   if(!meAdmin){
     host.textContent = "Không đọc được thông tin tài khoản admin hiện tại.";
+    if(detail){ detail.textContent = "Không có dữ liệu chi tiết tài khoản."; }
     return;
   }
 
@@ -231,6 +233,15 @@ function renderAdminMeSummary(){
   const role = escapeHtml(meAdmin.role || "support");
   const otpRequired = meAdmin.role === "owner" || meAdmin.role === "manager";
   host.innerHTML = `Tài khoản hiện tại: <b>${username}</b> · role: <b>${role}</b> · OTP khi đăng nhập: <b>${otpRequired ? "bật" : "tắt"}</b>`;
+
+  if(detail){
+    const email = escapeHtml(meAdmin.email || "(chưa có email)");
+    const adminId = escapeHtml(meAdmin.id || "");
+    const loginAt = fmtDate(meAdmin.lastLoginAt || null);
+    const activeText = meAdmin.isActive === false ? "inactive" : "active";
+    const permCount = Array.isArray(meAdmin.permissions) ? meAdmin.permissions.length : 0;
+    detail.innerHTML = `ID: <b>${adminId || "—"}</b> · Email: <b>${email}</b> · Trạng thái: <b>${activeText}</b> · Quyền: <b>${permCount}</b> · Đăng nhập gần nhất: <b>${loginAt}</b>`;
+  }
 }
 
 function adminActionBadge(a){
@@ -559,7 +570,84 @@ function bindAiAppSecretControls(){
   const revealBtn = document.getElementById("aiAppRevealBtn");
   const maskedEl = document.getElementById("aiAppMaskedSecret");
   const msg = document.getElementById("aiAppSecretMsg");
+  const generateBtn = document.getElementById("aiAppGenerateBtn");
+  const generatedEl = document.getElementById("aiAppGeneratedSecret");
+  const copySecretBtn = document.getElementById("aiAppCopySecretBtn");
+  const copyCommandBtn = document.getElementById("aiAppCopyCommandBtn");
+  const commandEl = document.getElementById("aiAppVercelCommand");
+  const guideMsg = document.getElementById("aiAppGuideMsg");
+  const baseUrlEl = document.getElementById("aiAppBaseUrl");
   if(!revealBtn || !maskedEl || !msg) return;
+
+  function randomSecret(size){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    let out = "";
+    const length = Math.max(16, Number(size) || 32);
+    for(let i=0;i<length;i+=1){
+      const idx = Math.floor(Math.random() * chars.length);
+      out += chars[idx];
+    }
+    return out;
+  }
+
+  function updateVercelCommand(secret){
+    if(!commandEl) return;
+    const value = String(secret || "").trim();
+    if(!value){
+      commandEl.value = "";
+      return;
+    }
+    commandEl.value = `vercel env add AI_APP_SHARED_KEY production --value \"${value}\" --force --yes`;
+  }
+
+  async function copyText(value, okMessage){
+    const text = String(value || "").trim();
+    if(!text){
+      if(guideMsg){
+        guideMsg.textContent = "Chưa có dữ liệu để copy.";
+        guideMsg.style.color = "var(--danger)";
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      if(guideMsg){
+        guideMsg.textContent = okMessage;
+        guideMsg.style.color = "var(--success)";
+      }
+    } catch(err){
+      if(guideMsg){
+        guideMsg.textContent = "Không copy tự động được. Hãy copy thủ công.";
+        guideMsg.style.color = "var(--danger)";
+      }
+    }
+  }
+
+  if(generateBtn && generatedEl){
+    generateBtn.addEventListener("click", ()=>{
+      const nextSecret = randomSecret(32);
+      generatedEl.value = nextSecret;
+      updateVercelCommand(nextSecret);
+      if(guideMsg){
+        const baseUrl = String(baseUrlEl?.value || "").trim() || "(chưa rõ base URL)";
+        guideMsg.textContent = `Đã tạo key mẫu 32 ký tự. Bước tiếp: copy lệnh Vercel, set env, deploy lại, rồi đối chiếu bằng 'Hiện shared secret'. Base URL hiện tại: ${baseUrl}`;
+        guideMsg.style.color = "var(--muted)";
+      }
+    });
+  }
+
+  if(copySecretBtn && generatedEl){
+    copySecretBtn.addEventListener("click", ()=>{
+      copyText(generatedEl.value, "Đã copy key mẫu.");
+    });
+  }
+
+  if(copyCommandBtn && commandEl){
+    copyCommandBtn.addEventListener("click", ()=>{
+      copyText(commandEl.value, "Đã copy lệnh Vercel.");
+    });
+  }
 
   revealBtn.addEventListener("click", async ()=>{
     msg.textContent = "Đang lấy shared secret...";
@@ -578,6 +666,7 @@ function bindAiAppSecretControls(){
       maskedEl.value = data.sharedSecret || "";
       msg.textContent = "Đã hiện shared secret thật. Sao chép và gửi cho AI-app qua kênh secure, rồi yêu cầu họ set WEB_TOTAL_AI_APP_KEY ngay.";
       msg.style.color = "var(--success)";
+      updateVercelCommand(data.sharedSecret || "");
     } catch(err){
       msg.textContent = "Lỗi kết nối: " + err.message;
       msg.style.color = "var(--danger)";

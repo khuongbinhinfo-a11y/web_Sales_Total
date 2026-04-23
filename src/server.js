@@ -861,11 +861,29 @@ app.get(
   "/api/admin/me",
   requireAdminAuth,
   asyncHandler(async (req, res) => {
-    const admin = getAdminFromSession(req);
-    if (!admin) {
+    const sessionAdmin = getAdminFromSession(req);
+    if (!sessionAdmin) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    return res.json({ admin });
+
+    const adminFromDb = sessionAdmin?.id ? await findAdminById(sessionAdmin.id) : null;
+    if (sessionAdmin?.id && !adminFromDb) {
+      return res.status(404).json({ message: "Không tìm thấy admin trong cơ sở dữ liệu" });
+    }
+
+    const mergedAdmin = {
+      id: adminFromDb?.id || sessionAdmin.id || null,
+      username: adminFromDb?.username || sessionAdmin.username || "admin",
+      email: adminFromDb?.email || null,
+      role: adminFromDb?.role || sessionAdmin.role || "support",
+      permissions: Array.isArray(adminFromDb?.permissions)
+        ? adminFromDb.permissions
+        : (Array.isArray(sessionAdmin.permissions) ? sessionAdmin.permissions : []),
+      isActive: adminFromDb ? Boolean(adminFromDb.isActive) : true,
+      lastLoginAt: adminFromDb?.lastLoginAt || null
+    };
+
+    return res.json({ admin: mergedAdmin });
   })
 );
 
