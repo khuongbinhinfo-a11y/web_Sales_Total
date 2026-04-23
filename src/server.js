@@ -277,14 +277,44 @@ const AI_APP_STANDARD_FEATURES = ["lesson.basic", "practice.core"];
 const AI_APP_PREMIUM_FEATURES = ["lesson.basic", "practice.core", "lesson.premium", "ai.voice", "ai.writing"];
 
 function inferPlanTierFromLicense(license) {
+  const normalizedProductId = String(license?.productId || "").trim().toLowerCase();
+  const pinnedStandardProductIds = new Set([
+    "prod-study-month",
+    "prod-study-year",
+    "prod-study-standard-lifetime"
+  ]);
+
+  if (pinnedStandardProductIds.has(normalizedProductId)) {
+    return "standard";
+  }
+
+  const explicitTierTokens = [
+    license?.metadata?.planTier,
+    license?.metadata?.tier,
+    license?.planTier,
+    license?.tier
+  ]
+    .map((value) => String(value || "").toLowerCase().trim())
+    .filter(Boolean);
+
+  if (explicitTierTokens.includes("premium")) {
+    return "premium";
+  }
+  if (explicitTierTokens.includes("basic")) {
+    return "basic";
+  }
+  if (explicitTierTokens.includes("standard")) {
+    return "standard";
+  }
+
   const tokens = [license?.planCode, license?.productId]
     .map((value) => String(value || "").toLowerCase())
     .join(" ")
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
 
-  // Match exact tokens only, so "prod" no longer triggers "pro" premium detection.
-  if (tokens.includes("premium") || tokens.includes("pro")) {
+  // Premium only when the token is explicit.
+  if (tokens.includes("premium")) {
     return "premium";
   }
   if (tokens.includes("basic")) {
