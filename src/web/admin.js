@@ -580,35 +580,74 @@ async function loadAiAppSecretStatus(){
       ? `Key đang có trên production (${data.keyLength || 0} ký tự, nguồn: ${data.source || "unknown"}). Bạn có thể quản lý theo profile shared/web/desktop.`
       : "Production chưa có AI-app shared secret.";
     msg.style.color = data.configured ? "var(--success)" : "var(--danger)";
-    renderAiAppKeyManager(data.profiles || {});
+    renderAiAppKeyManager(data.profiles || {}, data.productionBaseUrl || "");
   } catch(err){
     msg.textContent = "Lỗi tải trạng thái AI-app secret: " + err.message;
     msg.style.color = "var(--danger)";
   }
 }
 
-function renderAiAppKeyManager(profiles){
+function renderAiAppKeyManager(profiles, productionBaseUrl){
   const wrap = document.getElementById("aiAppKeyManagerWrap");
   if(!wrap) return;
 
   const profileOrder = ["shared", "web", "desktop"];
+  const appLabel = { shared: "AI-app (chung)", web: "AI-app (web)", desktop: "AI-app (desktop)" };
   const rows = profileOrder.map((profile)=>{
     const info = profiles?.[profile] || {};
     const configured = Boolean(info.configured);
     const source = info.source || "none";
-    const keyLength = Number(info.keyLength || 0);
+    const url = (profile === "desktop") ? "" : (productionBaseUrl || "");
+    const urlCell = url ? `<a href="${url}" target="_blank" style="font-size:.78rem;color:var(--primary)">${url}</a>` : "<span style='color:var(--muted)'>—</span>";
     return `<tr>
-      <td><b>${profile}</b></td>
+      <td><b>${appLabel[profile]||profile}</b></td>
+      <td>${profile}</td>
       <td>${configured ? (info.maskedKey || "********") : "Chưa cấu hình"}</td>
-      <td>${configured ? keyLength : 0}</td>
+      <td>${urlCell}</td>
       <td>${source}</td>
       <td>${configured ? '<span class="status-badge status-active">active</span>' : '<span class="status-badge" style="background:#fee2e2;color:#991b1b">missing</span>'}</td>
+      <td style="white-space:nowrap">
+        <button onclick="editKeyProfile('${profile}')" class="btn btn-outline" style="padding:3px 10px;font-size:.78rem;min-height:0">Sửa</button>
+        <button onclick="deleteKeyForProfile('${profile}')" class="btn" style="padding:3px 10px;font-size:.78rem;min-height:0;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">Xóa</button>
+      </td>
     </tr>`;
   }).join("");
 
   wrap.innerHTML = `<table class="data-table"><thead><tr>
-    <th>Profile</th><th>Masked key</th><th>Độ dài</th><th>Nguồn</th><th>Trạng thái</th>
+    <th>Tên app</th><th>Profile</th><th>Masked key</th><th>URL</th><th>Nguồn</th><th>Trạng thái</th><th>Hành động</th>
   </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function editKeyProfile(profile){
+  const profileEl = document.getElementById("aiAppKeyProfile");
+  const generatedEl = document.getElementById("aiAppGeneratedSecret");
+  if(profileEl) profileEl.value = profile;
+  if(generatedEl) generatedEl.value = "";
+  const section = document.getElementById("section-aiapp-secret");
+  if(section){
+    section.scrollIntoView({behavior:"smooth",block:"start"});
+    setTimeout(()=>{ const inp = document.getElementById("aiAppGeneratedSecret"); if(inp) inp.focus(); }, 400);
+  }
+}
+
+async function deleteKeyForProfile(profile){
+  if(!confirm(`Xóa key profile "${profile}"? Hành động này sẽ ngắt kết nối AI-app dùng profile này.`)) return;
+  try {
+    const res = await fetchAdmin("/api/admin/integrations/ai-app", {
+      method: "DELETE",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({profile})
+    });
+    if(res.status===401){ redirectToAdminLogin("/api/admin/integrations/ai-app"); return; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      alert(data.message || "Xóa key thất bại");
+      return;
+    }
+    await loadAiAppSecretStatus();
+  } catch(err){
+    alert("Lỗi xóa key: " + err.message);
+  }
 }
 
 function bindAiAppSecretControls(){
@@ -990,6 +1029,93 @@ function bindAiGateControls(){
   loadGateDetail(appSelect.value);
 }
 
+async function loadManualGrantCatalog(){
+  const sel = document.getElementById("mgProductId");
+  if(!sel) return;
+  try {
+    const res = await fetchAdmin("/api/catalog");
+    if(!res.ok) return;
+    const data = await res.json().catch(()=>({products:[]}));
+    const products = (data.products || []).filter(p => p.active !== false);
+    if(!products.length){
+      sel.innerHTML = '<option value="">Không có sản phẩm nào</option>';
+      return;
+    }
+    // Group by appId
+    const byApp = {};
+    products.forEach(p=>{ (byApp[p.appId] = byApp[p.appId]||[]).push(p); });
+    sel.innerHTML = Object.entries(byApp).map(([appId, items])=>{
+      const opts = items.map(p=>{
+        const price = p.price ? new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(p.price) : "free";
+        return `<option value="${p.id}">[${appId}] ${p.name} (${p.cycle} — ${price})</option>`;
+      }).join("");
+      return `<optgroup label="${appId}">${opts}</optgroup>`;
+    }).join("");
+  } catch(err){
+    sel.innerHTML = '<option value="">Lỗi tải sản phẩm</option>';
+  }
+}
+
+function bindManualGrant(){
+  const grantBtn = document.getElementById("mgGrantBtn");
+  if(!grantBtn) return;
+  grantBtn.addEventListener("click", async ()=>{
+    const emailEl = document.getElementById("mgEmail");
+    const productEl = document.getElementById("mgProductId");
+    const noteEl = document.getElementById("mgNote");
+    const msgEl = document.getElementById("mgMsg");
+    const resultEl = document.getElementById("mgResult");
+
+    const customerEmail = (emailEl?.value||"").trim();
+    const productId = (productEl?.value||"").trim();
+    const adminNote = (noteEl?.value||"").trim();
+
+    if(!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
+      if(msgEl){ msgEl.textContent="Email không hợp lệ"; msgEl.style.color="var(--danger)"; }
+      return;
+    }
+    if(!productId){
+      if(msgEl){ msgEl.textContent="Vui lòng chọn sản phẩm"; msgEl.style.color="var(--danger)"; }
+      return;
+    }
+
+    grantBtn.disabled = true;
+    grantBtn.textContent = "Đang xử lý...";
+    if(msgEl){ msgEl.textContent=""; }
+    if(resultEl){ resultEl.style.display="none"; resultEl.innerHTML=""; }
+
+    try {
+      const res = await fetchAdmin("/api/admin/manual-grant", {
+        method: "POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({customerEmail, productId, adminNote})
+      });
+      if(res.status===401){ redirectToAdminLogin("/api/admin/manual-grant"); return; }
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        if(msgEl){ msgEl.textContent = data.message||"Cấp key thất bại"; msgEl.style.color="var(--danger)"; }
+        return;
+      }
+      if(msgEl){ msgEl.textContent="Cấp key thành công!"; msgEl.style.color="var(--success)"; }
+      if(resultEl){
+        resultEl.style.display="block";
+        resultEl.innerHTML = [
+          `<div style="margin-bottom:6px"><b>License Key:</b> <code style="background:#dcfce7;padding:2px 8px;border-radius:4px;font-size:.9rem">${data.licenseKey||""}</code>`,
+          ` <button onclick="navigator.clipboard.writeText('${data.licenseKey||""}')"
+              style="padding:2px 8px;font-size:.75rem;border:1px solid #86efac;border-radius:4px;background:#fff;cursor:pointer">Copy</button></div>`,
+          `<div><b>Order:</b> ${data.orderCode||""} | <b>App:</b> ${data.appId||""} | <b>Gói:</b> ${data.productName||""} (${data.billingCycle||""})</div>`,
+          `<div><b>Khách hàng:</b> ${data.customerEmail||""} | <b>Hết hạn:</b> ${data.expiresAt ? new Date(data.expiresAt).toLocaleDateString("vi-VN") : "Không thời hạn"}</div>`
+        ].join("");
+      }
+    } catch(err){
+      if(msgEl){ msgEl.textContent="Lỗi: "+err.message; msgEl.style.color="var(--danger)"; }
+    } finally {
+      grantBtn.disabled = false;
+      grantBtn.textContent = "Cấp key ngay";
+    }
+  });
+}
+
 // Sidebar nav highlight
 document.querySelectorAll(".admin-sidebar a").forEach(a=>{
   a.addEventListener("click", ()=>{
@@ -1009,6 +1135,8 @@ bindChangeMyAdminPasswordForm();
 bindSepayForm();
 bindAiAppSecretControls();
 bindAiGateControls();
+bindManualGrant();
+loadManualGrantCatalog();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();

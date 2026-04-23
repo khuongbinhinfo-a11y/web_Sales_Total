@@ -47,7 +47,8 @@ const {
   getAdminLoginBlockState,
   registerAdminLoginFailureGuard,
   clearAdminLoginFailureGuard,
-  recordAdminLoginAudit
+  recordAdminLoginAudit,
+  manualGrantLicense
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -1454,6 +1455,52 @@ app.post(
       profileHeaderName: "x-ai-app-profile",
       productionBaseUrl: env.publicAppBaseUrl || env.appBaseUrl
     });
+  })
+);
+
+app.delete(
+  "/api/admin/integrations/ai-app",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const profile = normalizeAiAppKeyProfile(req.body?.profile || "shared");
+    const current = await getRuntimeConfigValue("ai_app_keys");
+    const currentObj = (current && typeof current === "object") ? current : {};
+    const currentKeys = (currentObj.keys && typeof currentObj.keys === "object") ? currentObj.keys : {};
+    const nextPersisted = {
+      sharedKey: profile === "shared" ? "" : String(currentObj.sharedKey || "").trim(),
+      keys: {
+        web: profile === "web" ? "" : String(currentKeys.web || "").trim(),
+        desktop: profile === "desktop" ? "" : String(currentKeys.desktop || "").trim()
+      }
+    };
+    await upsertRuntimeConfigValue("ai_app_keys", nextPersisted);
+    return res.json({ ok: true, profile, message: `Đã xóa key profile ${profile}` });
+  })
+);
+
+app.post(
+  "/api/admin/manual-grant",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const { customerEmail, productId, adminNote } = req.body || {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customerEmail || !emailRegex.test(String(customerEmail))) {
+      return res.status(400).json({ message: "customerEmail không hợp lệ" });
+    }
+    if (!productId || String(productId).trim().length < 2) {
+      return res.status(400).json({ message: "productId không được để trống" });
+    }
+    try {
+      const result = await manualGrantLicense({
+        customerEmail: String(customerEmail).trim(),
+        productId: String(productId).trim(),
+        adminNote: String(adminNote || "").trim()
+      });
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      const status = err.statusCode || 500;
+      return res.status(status).json({ message: err.message });
+    }
   })
 );
 

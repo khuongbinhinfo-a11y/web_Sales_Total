@@ -1827,6 +1827,116 @@ async function upsertRuntimeConfigValue(configKey, configValue) {
   };
 }
 
+async function manualGrantLicense({ customerEmail, productId, adminNote }) {
+  const normalizedEmail = String(customerEmail || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    const err = new Error("customerEmail là bắt buộc");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const customerResult = await pool.query(
+    "SELECT id, email FROM customers WHERE email = $1",
+    [normalizedEmail]
+  );
+  if (customerResult.rowCount === 0) {
+    const err = new Error(`Không tìm thấy khách hàng với email ${normalizedEmail}`);
+    err.statusCode = 404;
+    throw err;
+  }
+  const customer = customerResult.rows[0];
+
+  const safeProductId = String(productId || "").trim();
+  const productResult = await pool.query(
+    `SELECT id, app_id, name, cycle, price, currency, credits
+     FROM products
+     WHERE id = $1 AND active = TRUE`,
+    [safeProductId]
+  );
+  if (productResult.rowCount === 0) {
+    const err = new Error(`Không tìm thấy sản phẩm "${safeProductId}" hoặc sản phẩm đã ngừng bán`);
+    err.statusCode = 404;
+    throw err;
+  }
+  const productRow = productResult.rows[0];
+  const product = {
+    id: productRow.id,
+    appId: productRow.app_id,
+    name: productRow.name,
+    cycle: productRow.cycle,
+    price: Number(productRow.price),
+    currency: productRow.currency,
+    credits: Number(productRow.credits)
+  };
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let orderRow = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const orderCode = generateReadableOrderCode();
+      try {
+        const orderResult = await client.query(
+          `INSERT INTO orders(id, order_code, customer_id, app_id, product_id, amount, currency, status, paid_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, 0, $5, 'paid', NOW())
+           RETURNING id, order_code, customer_id, app_id, product_id, amount, currency, status, paid_at`,
+          [orderCode, customer.id, product.appId, product.id, product.currency]
+        );
+        orderRow = orderResult.rows[0];
+        break;
+      } catch (error) {
+        const uniqueConflict =
+          error?.code === "23505" &&
+          (String(error?.constraint || "").includes("order_code") ||
+            String(error?.detail || "").includes("order_code"));
+        if (!uniqueConflict || attempt === 4) {
+          throw error;
+        }
+      }
+    }
+
+    const order = {
+      id: orderRow.id,
+      order_code: orderRow.order_code,
+      customer_id: orderRow.customer_id,
+      app_id: orderRow.app_id,
+      product_id: orderRow.product_id
+    };
+
+    const license = await issueAppLicenseForOrder({ client, order, product });
+
+    // Override source metadata so manual grants are distinguishable from auto grants
+    await client.query(
+      `UPDATE app_licenses
+       SET metadata = metadata || $1::jsonb
+       WHERE id = $2::uuid`,
+      [JSON.stringify({ source: "manual_grant", adminNote: adminNote || "" }), license.id]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      licenseKey: license.licenseKey,
+      orderId: order.id,
+      orderCode: orderRow.order_code,
+      customerId: customer.id,
+      customerEmail: customer.email,
+      appId: product.appId,
+      productId: product.id,
+      productName: product.name,
+      planCode: product.id,
+      billingCycle: product.cycle,
+      expiresAt: license.expiresAt
+    };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   getPublicCatalog,
   createOrder,
@@ -1874,5 +1984,6 @@ module.exports = {
   updateAdminPasswordById,
   ensureRuntimeConfigSchema,
   getRuntimeConfigValue,
-  upsertRuntimeConfigValue
+  upsertRuntimeConfigValue,
+  manualGrantLicense
 };

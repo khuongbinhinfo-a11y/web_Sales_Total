@@ -37,6 +37,7 @@
         <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
         <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
+        <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
       </nav>
 
@@ -291,6 +292,38 @@
           <div class="info-card">
             <p style="color:var(--muted);font-size:.88rem">Quản trị key theo profile giúp tách quyền giữa web/desktop. Nên dùng 2 key riêng cho 1 app có 2 client; giữ shared key làm fallback khi cần chuyển đổi.</p>
             <div class="table-wrap" id="aiAppKeyManagerWrap"><p style="padding:16px;color:var(--muted)">Đang tải trạng thái key...</p></div>
+          </div>
+        </section>
+
+        <!-- Manual grant -->
+        <section id="section-manual-grant" class="admin-section">
+          <h3>🎁 Cấp key kích hoạt thủ công</h3>
+          <div class="info-card">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">
+              Dùng khi khách đã thanh toán nhưng webhook lỗi, hoặc cần cấp key đặc biệt.
+              Hệ thống sẽ tạo order ảo (amount=0) và cấp license key tự động.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Email khách hàng</label>
+                <input id="mgEmail" type="email" placeholder="customer@example.com"
+                       style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Sản phẩm</label>
+                <select id="mgProductId" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem">
+                  <option value="">-- Đang tải sản phẩm... --</option>
+                </select>
+              </div>
+              <button id="mgGrantBtn" type="button" class="btn btn-accent" style="min-height:38px">Cấp key ngay</button>
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);font-weight:700">Ghi chú nội bộ (tùy chọn)</label>
+              <input id="mgNote" placeholder="VD: Webhook lỗi ngày 2026-04-23, đã xác nhận CK"
+                     style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem;margin-top:4px" />
+            </div>
+            <p id="mgMsg" style="margin:10px 0 0;font-size:.82rem;color:var(--muted)"></p>
+            <div id="mgResult" style="display:none;margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:.85rem"></div>
           </div>
         </section>
 
