@@ -205,6 +205,10 @@ function maskEmailAddress(email) {
 }
 
 function prefersJsonResponse(req) {
+  const queryMode = String(req?.query?.mode || "").toLowerCase();
+  if (queryMode === "json") {
+    return true;
+  }
   const accept = String(req?.headers?.accept || "").toLowerCase();
   const requestedWith = String(req?.headers?.["x-requested-with"] || "").toLowerCase();
   return requestedWith === "fetch" || requestedWith === "xmlhttprequest" || accept.includes("application/json");

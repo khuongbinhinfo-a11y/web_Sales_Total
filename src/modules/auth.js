@@ -728,9 +728,13 @@ function adminLoginPage() {
 
       function getAdminLoginEndpoints() {
         const pathname = window.location.pathname || "";
+        const withJsonMode = (path) => {
+          const url = buildAdminUrl(path);
+          return url.includes("?") ? (url + "&mode=json") : (url + "?mode=json");
+        };
         const endpoints = pathname.startsWith("/api/")
-          ? [buildAdminUrl("/api/auth/admin/login"), buildAdminUrl("/auth/admin/login")]
-          : [buildAdminUrl("/auth/admin/login"), buildAdminUrl("/api/auth/admin/login")];
+          ? [withJsonMode("/api/auth/admin/login"), withJsonMode("/auth/admin/login")]
+          : [withJsonMode("/auth/admin/login"), withJsonMode("/api/auth/admin/login")];
         return [...new Set(endpoints)];
       }
 
@@ -832,6 +836,8 @@ function adminLoginPage() {
           let text = "";
           let payload = null;
           for (const endpoint of getAdminLoginEndpoints()) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
             response = await fetch(endpoint, {
               method: "POST",
               headers: {
@@ -840,10 +846,18 @@ function adminLoginPage() {
                 "X-Requested-With": "fetch"
               },
               body: body.toString(),
-              redirect: "follow"
+              redirect: "follow",
+              signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             const rawText = await response.text();
+            const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+            if (contentType.includes("text/html")) {
+              setMessage("error", "Dang nhap bi sai luong phan hoi (HTML). Vui long thu lai hoac F5.");
+              return;
+            }
+
             payload = parseResponsePayload(rawText);
             text = payload?.message || normalizeResponseText(rawText);
             if (response.status !== 404) {
@@ -876,7 +890,11 @@ function adminLoginPage() {
 
           setMessage("error", text || "Dang nhap admin that bai.");
         } catch (error) {
-          setMessage("error", "Loi ket noi: " + error.message);
+          if (String(error?.name || "") === "AbortError") {
+            setMessage("error", "Dang nhap bi timeout sau 15s. Vui long thu lai.");
+          } else {
+            setMessage("error", "Loi ket noi: " + error.message);
+          }
         } finally {
           submitBtn.disabled = false;
         }
