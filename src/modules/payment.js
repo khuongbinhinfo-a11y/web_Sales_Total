@@ -158,37 +158,134 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
   ].join("\n");
 }
 
-function buildGmailPaidOrderMessage({ order, keyDelivery }) {
+function _escHtml(str) {
+  return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) {
   const orderId = order?.orderCode || order?.id || "(unknown)";
   const appId = order?.appId || "(unknown)";
-  const customerId = order?.customerId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
+  const portalUrl = `${websiteUrl}/portal`;
+  const supportEmail = resolveGmailSender() || "support@ungdungthongminh.shop";
+  const websiteDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
 
-  const keyValue = keyDelivery?.keyValue || "(chua cap key)";
+  const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
   const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
+  const customerDisplay = customerEmail || order?.customerId || "(unknown)";
 
-  const subject = `[WST] Thanh toan thanh cong - ${orderId}`;
+  const subject = `Thanh toán thành công - ${orderId}`;
+
   const text = [
-    "Thanh toan thanh cong",
-    `Order: ${orderId}`,
-    `Customer: ${customerId}`,
-    `App: ${appId}`,
-    `So tien: ${amount} ${currency}`,
-    `Key: ${keyText}`,
-    `Website: ${websiteUrl}`
+    "Thanh toán thành công",
+    "Đơn hàng của bạn đã được xác nhận và key bản quyền đã được cấp tự động.",
+    "",
+    `Mã đơn: ${orderId}`,
+    `Khách hàng: ${customerDisplay}`,
+    `Ứng dụng: ${appId}`,
+    `Số tiền: ${amount} ${currency}`,
+    "",
+    `Key bản quyền: ${keyText}`,
+    "",
+    `Mở cổng khách hàng: ${portalUrl}`,
+    "",
+    "Ứng Dụng Thông Minh",
+    `${supportEmail} | ${websiteUrl}`,
+    "Email này được gửi tự động — vui lòng không reply trực tiếp."
   ].join("\n");
 
-  const html = [
-    "<h3>Thanh toan thanh cong</h3>",
-    `<p><b>Order:</b> <code>${orderId}</code></p>`,
-    `<p><b>Customer:</b> <code>${customerId}</code></p>`,
-    `<p><b>App:</b> <code>${appId}</code></p>`,
-    `<p><b>So tien:</b> <b>${amount} ${currency}</b></p>`,
-    `<p><b>Key:</b> <code>${keyText}</code></p>`,
-    `<p><b>Website:</b> <a href="${websiteUrl}">${websiteUrl}</a></p>`
-  ].join("");
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:'Segoe UI',Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f7fa;padding:32px 16px">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.09)">
+
+<!-- HEADER -->
+<tr>
+  <td style="background:linear-gradient(135deg,#6c47ff 0%,#8b5cf6 100%);padding:28px 36px;text-align:center">
+    <div style="font-size:32px;line-height:1;margin-bottom:8px">&#128241;</div>
+    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:.4px">&#7912;ng D&#7909;ng Th&#244;ng Minh</div>
+    <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:4px">${_escHtml(websiteDomain)}</div>
+  </td>
+</tr>
+
+<!-- MAIN TITLE -->
+<tr>
+  <td style="padding:28px 36px 0">
+    <div style="font-size:22px;font-weight:700;color:#111827;margin-bottom:8px">&#9989; Thanh to&#225;n th&#224;nh c&#244;ng</div>
+    <div style="font-size:14px;color:#6b7280;line-height:1.65">&#272;&#417;n h&#224;ng c&#7911;a b&#7841;n &#273;&#227; &#273;&#432;&#7907;c x&#225;c nh&#7853;n v&#224; key b&#7843;n quy&#7873;n &#273;&#227; &#273;&#432;&#7907;c c&#7845;p t&#7921; &#273;&#7897;ng.</div>
+  </td>
+</tr>
+
+<!-- ORDER BOX -->
+<tr>
+  <td style="padding:20px 36px 0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+      <tr><td colspan="2" style="padding:12px 16px 6px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase">Th&#244;ng tin &#273;&#417;n h&#224;ng</td></tr>
+      <tr>
+        <td style="padding:7px 16px;font-size:13px;color:#9ca3af;width:38%">M&#227; &#273;&#417;n</td>
+        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600;font-family:'Courier New',monospace">${_escHtml(orderId)}</td>
+      </tr>
+      <tr style="background:#ffffff">
+        <td style="padding:7px 16px;font-size:13px;color:#9ca3af">Kh&#225;ch h&#224;ng</td>
+        <td style="padding:7px 16px;font-size:13px;color:#374151">${_escHtml(customerDisplay)}</td>
+      </tr>
+      <tr>
+        <td style="padding:7px 16px;font-size:13px;color:#9ca3af">&#7912;ng d&#7909;ng</td>
+        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600">${_escHtml(appId)}</td>
+      </tr>
+      <tr style="background:#ffffff">
+        <td style="padding:7px 16px 13px;font-size:13px;color:#9ca3af">S&#7889; ti&#7873;n</td>
+        <td style="padding:7px 16px 13px;font-size:14px;color:#059669;font-weight:700">${amount} ${currency}</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+
+<!-- KEY BOX -->
+<tr>
+  <td style="padding:16px 36px 0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:8px">
+      <tr><td style="padding:13px 16px 6px;font-size:11px;font-weight:700;color:#7c3aed;letter-spacing:1px;text-transform:uppercase">&#128273; Key b&#7843;n quy&#7873;n</td></tr>
+      <tr>
+        <td style="padding:4px 16px 14px">
+          <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#4c1d95;background:#ede9fe;border-radius:6px;padding:10px 14px;word-break:break-all;letter-spacing:.5px;text-align:center">${_escHtml(keyText)}</div>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+
+<!-- CTA BUTTONS -->
+<tr>
+  <td style="padding:24px 36px 0;text-align:center">
+    <a href="${portalUrl}" style="display:inline-block;background:#6c47ff;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px">M&#7903; c&#7893;ng kh&#225;ch h&#224;ng</a>
+    <a href="${portalUrl}" style="display:inline-block;background:#ffffff;color:#6c47ff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;border:1.5px solid #6c47ff;margin:4px 5px">Xem chi ti&#7871;t &#273;&#417;n</a>
+  </td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+  <td style="padding:24px 36px 28px;text-align:center">
+    <div style="border-top:1px solid #f3f4f6;padding-top:20px">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:5px">&#7912;ng D&#7909;ng Th&#244;ng Minh</div>
+      <div style="font-size:12px;color:#9ca3af;margin-bottom:4px">
+        <a href="mailto:${_escHtml(supportEmail)}" style="color:#6c47ff;text-decoration:none">${_escHtml(supportEmail)}</a>
+        &nbsp;&middot;&nbsp;
+        <a href="${portalUrl}" style="color:#6c47ff;text-decoration:none">${_escHtml(websiteDomain)}</a>
+      </div>
+      <div style="font-size:11px;color:#d1d5db;margin-top:8px">Email n&#224;y &#273;&#432;&#7907;c g&#7917;i t&#7921; &#273;&#7897;ng &#8212; vui l&#242;ng kh&#244;ng reply tr&#7921;c ti&#7871;p.</div>
+    </div>
+  </td>
+</tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
 
   return { subject, text, html };
 }
@@ -251,8 +348,9 @@ async function sendGmailMessage({ subject, text, html, to }) {
 
   const accessToken = await getGoogleAccessTokenByRefreshToken();
   const boundary = `wst_${Date.now().toString(16)}`;
+  const fromHeader = sender.includes("<") ? sender : `"Smart App" <${sender}>`;
   const rawEmail = [
-    `From: ${sender}`,
+    `From: ${fromHeader}`,
     `To: ${recipients.join(", ")}`,
     `Subject: ${subject}`,
     "MIME-Version: 1.0",
@@ -458,7 +556,15 @@ async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, i
   }
 
   try {
-    const message = buildGmailPaidOrderMessage({ order, keyDelivery });
+    let customerEmail = "";
+    const _custId = String(order?.customerId || "").trim();
+    if (_custId) {
+      try {
+        const _cust = await findCustomerById(_custId);
+        customerEmail = String(_cust?.email || "").trim();
+      } catch { /* ignore */ }
+    }
+    const message = buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail });
     const sendResult = await sendGmailMessage({ ...message, to: recipients });
 
     if (sendResult.ok) {
