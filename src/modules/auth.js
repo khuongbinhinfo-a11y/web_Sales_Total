@@ -720,7 +720,7 @@ function adminLoginPage() {
         if (!value) {
           return getAdminOrigin() + "/admin";
         }
-        if (/^https?:\/\//i.test(value)) {
+        if (/^https?:\\/\\//i.test(value)) {
           return value;
         }
         return getAdminOrigin() + (value.startsWith("/") ? value : "/" + value);
@@ -767,7 +767,7 @@ function adminLoginPage() {
 
       function updateOtpDestination(text, maskedEmail) {
         const direct = String(maskedEmail || "").trim();
-        const match = String(text || "").match(/[A-Za-z0-9._%+-]+\*+[^\s]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+        const match = String(text || "").match(/[A-Za-z0-9._%+-]+\\*+[^\\s]*@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/);
         const destination = direct || (match ? match[0] : "");
         otpEmailHint.textContent = destination
           ? "OTP se gui toi: " + destination
