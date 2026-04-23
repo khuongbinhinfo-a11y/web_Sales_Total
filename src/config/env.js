@@ -158,7 +158,7 @@ const env = {
   gmailNotifyEnabled: String(process.env.GMAIL_NOTIFY_ENABLED || "false").toLowerCase() === "true",
   gmailNotifyFrom: String(process.env.GMAIL_NOTIFY_FROM || process.env.SMTP_FROM || "").trim(),
   gmailNotifyTo: String(process.env.GMAIL_NOTIFY_TO || "").trim(),
-  gmailIncludeKey: String(process.env.GMAIL_INCLUDE_KEY || "false").toLowerCase() === "true",
+  gmailIncludeKey: String(process.env.GMAIL_INCLUDE_KEY || "true").toLowerCase() === "true",
   googleClientId: resolvedGoogleClientId,
   googleClientSecret: resolvedGoogleClientSecret,
   googleRefreshToken: resolvedGoogleRefreshToken,
