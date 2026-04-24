@@ -292,6 +292,31 @@ main{
 .pd-plan-card[data-tier="standard"]{ border-color:#f19800; background:#fffaf1; }
 .pd-plan-card[data-tier="premium"]{ border-color:#8a61ff; }
 
+.pd-plan-card.is-hot{
+  border-color:#ff7a00;
+  background:linear-gradient(180deg,#fff7eb,#fffdf8);
+  box-shadow:0 14px 28px rgba(255,122,0,.2);
+}
+
+.pd-plan-card.is-hot .pd-plan-top-tag{
+  background:linear-gradient(135deg,#ff7a00,#ff9f1a);
+}
+
+.pd-plan-media{
+  margin:0 0 6px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,153,0,.28);
+  background:#fff;
+}
+
+.pd-plan-media img{
+  display:block;
+  width:100%;
+  aspect-ratio:16/8;
+  object-fit:cover;
+}
+
 .pd-plan-top-tag{
   display:inline-flex;
   align-self:flex-start;
@@ -428,6 +453,10 @@ main{
   overflow:auto;
   border:1px solid rgba(124,109,216,.2);
   background:rgba(255,255,255,.7);
+}
+
+.pd-plan-zone-filter.is-hidden{
+  display:none;
 }
 
 .pd-plan-table{

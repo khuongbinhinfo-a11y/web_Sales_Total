@@ -4,6 +4,7 @@
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
   { id:"prod-study-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:89000,  credits:120 },
+  { id:"standard_1year_1grade", appId:"app-study-12",  name:"Gói 01 Năm - 01 Lớp Full môn học", cycle:"yearly", price:299000,  credits:1800 },
   { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
   { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
   { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
@@ -363,6 +364,7 @@ let catalogProducts = [];
 let selectedPlanPeriod = "month";
 let selectedPlanTier = "standard";
 let selectedPlanUnavailable = false;
+let selectedPlanPackage = "default";
 
 const planBlueprintByApp = {
   hoctap: {
@@ -458,6 +460,37 @@ const planProductIdMapByApp = {
       standard: "prod-study-standard-lifetime",
       premium: "prod-study-premium-lifetime"
     }
+  }
+};
+
+const planPackageVariantByApp = {
+  "app-study-12": {
+    year: [
+      {
+        key: "default",
+        label: "Mặc định",
+        standardPrice: 599000
+      },
+      {
+        key: "onegrade",
+        label: "01 lớp + 2 hồ sơ",
+        standardPrice: 299000,
+        standardProductId: "standard_1year_1grade",
+        standardTag: "Nhu cầu cao nhất",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: [
+          "Tất cả môn học",
+          "Đúng 1 lớp",
+          "Tối đa 2 hồ sơ học sinh",
+          "Ôn tập thông minh AI",
+          "Bảng phụ huynh cơ bản",
+          "Phòng trí nhớ + TTS",
+          "Báo cáo tiến độ cơ bản",
+          "Không quảng cáo"
+        ],
+        standardSaveText: "Gói khuyến nghị"
+      }
+    ]
   }
 };
 
@@ -614,6 +647,16 @@ function pickPlanTargets(appId, period, fallbackProduct) {
   return targets;
 }
 
+function getPackageVariants(appId, period) {
+  return planPackageVariantByApp?.[String(appId || "")]?.[period] || [];
+}
+
+function getSelectedPackageVariant(appId, period) {
+  const variants = getPackageVariants(appId, period);
+  if (!variants.length) return null;
+  return variants.find((item) => item.key === selectedPlanPackage) || variants[0];
+}
+
 function renderPlanCompare(blueprint) {
   const compare = document.getElementById("pdPlanCompare");
   const tiers = blueprint?.tiers || [];
@@ -675,6 +718,8 @@ function renderPlanZone(product) {
   const tierToggle = document.getElementById("pdTierToggle");
   const toggle = document.getElementById("pdPlanToggle");
   const zoneToggle = document.getElementById("pdPlanToggleZone");
+  const packageRow = document.getElementById("pdPackageFilterRow");
+  const packageToggle = document.getElementById("pdPackageToggle");
   const grid = document.getElementById("pdPlanGrid");
   const compare = document.getElementById("pdPlanCompare");
   const compareBtn = document.getElementById("pdCompareToggle");
@@ -691,6 +736,7 @@ function renderPlanZone(product) {
 
   zone.classList.remove("is-hidden");
   selectedPlanPeriod = periodFromCycle(product.cycle);
+  selectedPlanPackage = "default";
 
   const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
   selectedPlanTier = inferTierByProduct(initialTargets, product);
@@ -726,15 +772,68 @@ function renderPlanZone(product) {
     container.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
       button.addEventListener("click", () => {
         selectedPlanPeriod = button.dataset.period;
+        selectedPlanPackage = "default";
         syncPeriodButtons();
         paintPlanCards();
       });
     });
   }
 
-  function paintPlanCards() {
-    const prices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
+  function renderPackageToggle() {
+    if (!packageRow || !packageToggle) return;
+    const variants = getPackageVariants(product.appId, selectedPlanPeriod);
+    if (!variants.length) {
+      packageRow.classList.add("is-hidden");
+      packageToggle.innerHTML = "";
+      selectedPlanPackage = "default";
+      return;
+    }
+
+    packageRow.classList.remove("is-hidden");
+    const activeKey = variants.some((item) => item.key === selectedPlanPackage)
+      ? selectedPlanPackage
+      : variants[0].key;
+    selectedPlanPackage = activeKey;
+
+    packageToggle.innerHTML = variants.map((variant) => `
+      <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""}" data-package="${variant.key}" type="button">
+        ${escapeHtml(variant.label)}
+      </button>
+    `).join("");
+
+    packageToggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPlanPackage = button.dataset.package || "default";
+        renderPackageToggle();
+        paintPlanCards(false);
+      });
+    });
+  }
+
+  function paintPlanCards(renderPackage = true) {
+    if (renderPackage) {
+      renderPackageToggle();
+    }
+
+    const variant = getSelectedPackageVariant(product.appId, selectedPlanPeriod);
+    const basePrices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
+    const prices = { ...basePrices };
+    if (variant && Number(variant.standardPrice) > 0) {
+      prices.standard = Number(variant.standardPrice);
+    }
+
     const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+    if (variant?.standardProductId && selectedPlanPeriod === "year") {
+      const fromCatalog = catalogProducts.find((item) => item.id === variant.standardProductId) || null;
+      targets.standard = fromCatalog || {
+        id: variant.standardProductId,
+        appId: product.appId,
+        name: product.name,
+        cycle: cycleFromPeriod(selectedPlanPeriod),
+        price: Number(prices.standard || 0)
+      };
+    }
+
     const tierExists = blueprint.tiers.some((tier) => tier.key === selectedPlanTier);
     if (!tierExists) {
       selectedPlanTier = targets.standard ? "standard" : "free";
@@ -756,8 +855,13 @@ function renderPlanZone(product) {
 
     grid.innerHTML = blueprint.tiers.map((tier) => {
       const price = Number(prices?.[tier.key] || 0);
-      const saveText = String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
-      const features = (tier.features || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+      const saveText = tier.key === "standard" && variant?.standardSaveText
+        ? String(variant.standardSaveText).trim()
+        : String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
+      const featureList = tier.key === "standard" && Array.isArray(variant?.standardFeatures)
+        ? variant.standardFeatures
+        : (tier.features || []);
+      const features = featureList.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       const targetProduct = targets[tier.key];
       const targetPrice = Number(targetProduct?.price || 0);
       const isPurchasable = tier.key !== "free" && !!targetProduct && targetPrice === price;
@@ -765,10 +869,15 @@ function renderPlanZone(product) {
       const isSelected = tier.key === selectedPlanTier;
       const buyLabel = tier.key === "free" ? "Đang dùng" : (isPurchasable ? "Thanh toán QR" : "Chưa mở bán");
       const unit = selectedPlanPeriod === "month" ? "/tháng" : selectedPlanPeriod === "year" ? "/năm" : "(1 lần)";
+      const topTag = tier.key === "standard" && variant?.standardTag ? variant.standardTag : tier.tag;
+      const media = tier.key === "standard" && variant?.standardImage
+        ? `<figure class="pd-plan-media"><img src="${variant.standardImage}" alt="${escapeHtml(variant.label || "Gói nổi bật")}"></figure>`
+        : "";
 
       return `
-        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"}" data-tier="${tier.key}">
-          ${tier.tag ? `<span class="pd-plan-top-tag">${escapeHtml(tier.tag)}</span>` : ""}
+        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"} ${tier.key === "standard" && variant?.key === "onegrade" ? "is-hot" : ""}" data-tier="${tier.key}">
+          ${topTag ? `<span class="pd-plan-top-tag">${escapeHtml(topTag)}</span>` : ""}
+          ${media}
           <p class="pd-plan-tier">${tier.icon}</p>
           <h3 class="pd-plan-name">${escapeHtml(tier.name)}</h3>
           <p class="pd-plan-price">${formatPlanPrice(price)}</p>
@@ -776,7 +885,7 @@ function renderPlanZone(product) {
           <p class="pd-plan-save">${escapeHtml(saveText)}</p>
           <ul class="pd-plan-features">${features}</ul>
           <div class="pd-plan-actions">
-            <button class="pd-plan-buy" type="button" data-target-id="${isPurchasable ? (targetProduct?.id || "") : ""}" ${tier.key === "free" || !isPurchasable ? "disabled" : ""}>${buyLabel}</button>
+            <button class="pd-plan-buy" type="button" data-target-id="${isPurchasable ? (targetProduct?.id || "") : ""}" data-target-app="${escapeHtml(targetProduct?.appId || product.appId)}" data-target-cycle="${escapeHtml(targetProduct?.cycle || cycleFromPeriod(selectedPlanPeriod))}" data-target-price="${String(price)}" ${tier.key === "free" || !isPurchasable ? "disabled" : ""}>${buyLabel}</button>
             <button class="pd-plan-activate" type="button">Nhập mã kích hoạt</button>
           </div>
         </article>`;
@@ -785,7 +894,15 @@ function renderPlanZone(product) {
     grid.querySelectorAll(".pd-plan-buy").forEach((button) => {
       button.addEventListener("click", async () => {
         const targetId = button.dataset.targetId;
-        const target = catalogProducts.find((item) => item.id === targetId) || (currentProduct?.id === targetId ? currentProduct : null);
+        const target =
+          catalogProducts.find((item) => item.id === targetId)
+          || (currentProduct?.id === targetId ? currentProduct : null)
+          || (targetId ? {
+            id: targetId,
+            appId: button.dataset.targetApp || product.appId,
+            cycle: button.dataset.targetCycle || cycleFromPeriod(selectedPlanPeriod),
+            price: Number(button.dataset.targetPrice || 0)
+          } : null);
         await startCheckoutForProduct(target);
       });
     });
