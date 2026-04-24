@@ -662,6 +662,19 @@ function getPackageVariants(appId, period) {
   return planPackageVariantByApp?.[String(appId || "")]?.[period] || [];
 }
 
+function getDefaultPackageKey(appId, period) {
+  const variants = getPackageVariants(appId, period);
+  if (!variants.length) return "default";
+
+  const normalizedAppId = String(appId || "").trim().toLowerCase();
+  if (normalizedAppId === "app-study-12" && period === "year") {
+    const onegrade = variants.find((item) => item.key === "onegrade");
+    if (onegrade) return onegrade.key;
+  }
+
+  return variants[0].key;
+}
+
 function getSelectedPackageVariant(appId, period) {
   const variants = getPackageVariants(appId, period);
   if (!variants.length) return null;
@@ -747,7 +760,7 @@ function renderPlanZone(product) {
 
   zone.classList.remove("is-hidden");
   selectedPlanPeriod = periodFromCycle(product.cycle);
-  selectedPlanPackage = "default";
+  selectedPlanPackage = getDefaultPackageKey(product.appId, selectedPlanPeriod);
 
   const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
   selectedPlanTier = inferTierByProduct(initialTargets, product);
@@ -783,7 +796,7 @@ function renderPlanZone(product) {
     container.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
       button.addEventListener("click", () => {
         selectedPlanPeriod = button.dataset.period;
-        selectedPlanPackage = "default";
+        selectedPlanPackage = getDefaultPackageKey(product.appId, selectedPlanPeriod);
         syncPeriodButtons();
         paintPlanCards();
       });
@@ -796,7 +809,7 @@ function renderPlanZone(product) {
     if (!variants.length) {
       packageRow.classList.add("is-hidden");
       packageToggle.innerHTML = "";
-      selectedPlanPackage = "default";
+      selectedPlanPackage = getDefaultPackageKey(product.appId, selectedPlanPeriod);
       return;
     }
 
