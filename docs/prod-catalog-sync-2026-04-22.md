@@ -34,7 +34,7 @@ Da kiem tra production qua `https://ungdungthongminh.shop/api/catalog`.
 | `prod-study-year` | `890000` | `599000` |
 | `prod-study-premium-month` | can verify lai sau deploy | `119000` |
 | `prod-study-premium-year` | can verify lai sau deploy | `899000` |
-| `prod-study-standard-lifetime` | can verify lai sau deploy | `999000` |
+| `prod-study-standard-lifetime` | can verify lai sau deploy | `1299000` |
 | `prod-study-premium-lifetime` | can verify lai sau deploy | `1599000` |
 | `prod-study-topup` | `149000` | `149000` |
 

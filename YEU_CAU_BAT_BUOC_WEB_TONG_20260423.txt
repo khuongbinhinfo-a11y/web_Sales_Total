@@ -18,7 +18,7 @@ YEU CAU BAT BUOC - WEB TONG (GO-LIVE APP DAU TIEN app-study-12)
 - premium.lifetime -> prod-study-premium-lifetime
 
 4) GIU NGUYEN GIA GOC:
-- 89,000 / 599,000 / 999,000 (standard)
+- 89,000 / 599,000 / 1,299,000 (standard)
 - 119,000 / 899,000 / 1,599,000 (premium)
 
 5) KEY VAN HANH:

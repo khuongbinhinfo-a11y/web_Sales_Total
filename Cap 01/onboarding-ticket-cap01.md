@@ -22,7 +22,7 @@
 |------------|-------------|------------------------------|-----------|
 | standard   | monthly     | prod-study-month             | 89,000    |
 | standard   | yearly      | prod-study-year              | 599,000   |
-| standard   | lifetime    | prod-study-standard-lifetime | 999,000   |
+| standard   | lifetime    | prod-study-standard-lifetime | 1,299,000 |
 | premium    | monthly     | prod-study-premium-month     | 119,000   |
 | premium    | yearly      | prod-study-premium-year      | 899,000   |
 | premium    | lifetime    | prod-study-premium-lifetime  | 1,599,000 |

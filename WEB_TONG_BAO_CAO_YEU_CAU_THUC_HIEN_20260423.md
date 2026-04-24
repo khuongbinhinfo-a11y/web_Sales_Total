@@ -43,7 +43,7 @@ Nguon map: `docs/ai-app-handoff/WEB_TOTAL_PRODUCT_MAP_JSON.json`
 Tham chieu catalog hien tai:
 - `prod-study-month`: 89,000 VND
 - `prod-study-year`: 599,000 VND
-- `prod-study-standard-lifetime`: 999,000 VND
+- `prod-study-standard-lifetime`: 1,299,000 VND
 - `prod-study-premium-month`: 119,000 VND
 - `prod-study-premium-year`: 899,000 VND
 - `prod-study-premium-lifetime`: 1,599,000 VND

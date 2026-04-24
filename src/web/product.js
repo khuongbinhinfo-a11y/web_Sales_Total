@@ -8,7 +8,7 @@ const fallbackProducts = [
   { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
   { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
   { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
-  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:999000,  credits:9990 },
+  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1299000,  credits:9990 },
   { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1599000,  credits:15990 },
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:3 },
@@ -436,7 +436,7 @@ const planBlueprintByApp = {
     prices: {
       month: { free: 0, standard: 89000, premium: 119000 },
       year: { free: 0, standard: 599000, premium: 899000 },
-      lifetime: { free: 0, standard: 999000, premium: 1599000 }
+      lifetime: { free: 0, standard: 1299000, premium: 1599000 }
     },
     compareRows: [
       { label: "Số môn học", values: { free: "1", standard: "Tất cả", premium: "Tất cả" } },

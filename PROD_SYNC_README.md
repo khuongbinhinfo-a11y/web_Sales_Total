@@ -47,7 +47,7 @@ Syncs production database with 100% local parity:
 - prod-study-year: Yearly @ 599,000 VND
 - prod-study-premium-month: Premium monthly @ 119,000 VND
 - prod-study-premium-year: Premium yearly @ 899,000 VND
-- prod-study-standard-lifetime: Lifetime @ 999,000 VND
+- prod-study-standard-lifetime: Lifetime @ 1,299,000 VND
 - prod-study-premium-lifetime: Premium lifetime @ 1,599,000 VND
 - prod-study-topup: 300 credit top-up @ 149,000 VND
 
