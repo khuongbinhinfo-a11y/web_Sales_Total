@@ -4,7 +4,7 @@
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
   { id:"prod-study-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:89000,  credits:120 },
-  { id:"standard_1year_1grade", appId:"app-study-12",  name:"Gói 01 Năm - 01 Lớp Full môn học", cycle:"yearly", price:299000,  credits:1800 },
+  { id:"standard_1year_1grade", appId:"app-study-12",  name:"Gói 1 năm / Lớp", cycle:"yearly", price:299000,  credits:1800 },
   { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
   { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
   { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
@@ -479,12 +479,15 @@ const planPackageVariantByApp = {
     year: [
       {
         key: "default",
-        label: "1 năm / 3 lớp / 3 hồ sơ",
-        standardPrice: 599000
+        label: "Gói 1 năm / 3 lớp",
+        standardName: "Gói 1 năm / 3 lớp",
+        standardPrice: 599000,
+        standardSaveText: "3 hồ sơ học sinh"
       },
       {
         key: "onegrade",
-        label: "1 năm / 1 lớp / 2 hồ sơ",
+        label: "Gói 1 năm / Lớp",
+        standardName: "Gói 1 năm / Lớp",
         standardPrice: 299000,
         standardProductId: "standard_1year_1grade",
         standardTag: "Nhu cầu cao nhất",
@@ -503,7 +506,7 @@ const planPackageVariantByApp = {
           classes: "1",
           profiles: "2"
         },
-        standardSaveText: "Gói khuyến nghị"
+        standardSaveText: "2 hồ sơ học sinh"
       }
     ]
   }
@@ -666,10 +669,35 @@ function getPackageVariants(appId, period) {
   return planPackageVariantByApp?.[String(appId || "")]?.[period] || [];
 }
 
+function shouldRenderSeparateStandardCards(appId, period) {
+  const normalizedAppId = String(appId || "").trim().toLowerCase();
+  return normalizedAppId === "app-study-12" && period === "year" && getPackageVariants(appId, period).length > 1;
+}
+
 function getDefaultPackageKey(appId, period) {
   const variants = getPackageVariants(appId, period);
   if (!variants.length) return "default";
   return variants[0].key;
+}
+
+function inferPackageKeyByProduct(appId, period, productId) {
+  const normalizedProductId = String(productId || "").trim().toLowerCase();
+  if (!normalizedProductId) {
+    return null;
+  }
+
+  const variants = getPackageVariants(appId, period);
+  const matched = variants.find((item) => String(item.standardProductId || "").trim().toLowerCase() === normalizedProductId);
+  if (matched) {
+    return matched.key;
+  }
+
+  const defaultProductId = planProductIdMapByApp?.[String(appId || "")]?.[period]?.standard;
+  if (String(defaultProductId || "").trim().toLowerCase() === normalizedProductId) {
+    return "default";
+  }
+
+  return null;
 }
 
 function getSelectedPackageVariant(appId, period) {
@@ -766,7 +794,8 @@ function renderPlanZone(product) {
 
   zone.classList.remove("is-hidden");
   selectedPlanPeriod = periodFromCycle(product.cycle);
-  selectedPlanPackage = getDefaultPackageKey(product.appId, selectedPlanPeriod);
+  selectedPlanPackage = inferPackageKeyByProduct(product.appId, selectedPlanPeriod, product.id)
+    || getDefaultPackageKey(product.appId, selectedPlanPeriod);
 
   const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
   selectedPlanTier = inferTierByProduct(initialTargets, product);
@@ -817,6 +846,12 @@ function renderPlanZone(product) {
       return;
     }
 
+    if (shouldRenderSeparateStandardCards(product.appId, selectedPlanPeriod)) {
+      packageRow.classList.add("is-hidden");
+      packageToggle.innerHTML = "";
+      return;
+    }
+
     packageRow.classList.remove("is-hidden");
     const activeKey = variants.some((item) => item.key === selectedPlanPackage)
       ? selectedPlanPackage
@@ -851,7 +886,8 @@ function renderPlanZone(product) {
       prices.standard = Number(variant.standardPrice);
     }
 
-    const targets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+    const baseTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
+    const targets = { ...baseTargets };
     if (variant?.standardProductId && selectedPlanPeriod === "year") {
       const fromCatalog = catalogProducts.find((item) => item.id === variant.standardProductId) || null;
       targets.standard = fromCatalog || {
@@ -862,6 +898,9 @@ function renderPlanZone(product) {
         price: Number(prices.standard || 0)
       };
     }
+
+    const renderSeparateStandardCards = shouldRenderSeparateStandardCards(product.appId, selectedPlanPeriod);
+    grid.classList.toggle("has-four-cards", renderSeparateStandardCards);
 
     const tierExists = blueprint.tiers.some((tier) => tier.key === selectedPlanTier);
     if (!tierExists) {
@@ -882,33 +921,66 @@ function renderPlanZone(product) {
       btn.classList.toggle("is-active", btn.dataset.tier === selectedPlanTier);
     });
 
-    grid.innerHTML = blueprint.tiers.map((tier) => {
-      const price = Number(prices?.[tier.key] || 0);
-      const saveText = tier.key === "standard" && variant?.standardSaveText
-        ? String(variant.standardSaveText).trim()
+    const tierByKey = Object.fromEntries(blueprint.tiers.map((item) => [item.key, item]));
+    const standardVariants = renderSeparateStandardCards
+      ? getPackageVariants(product.appId, selectedPlanPeriod)
+      : [variant || null];
+
+    const resolveStandardTarget = (standardVariant) => {
+      if (standardVariant?.standardProductId) {
+        return catalogProducts.find((item) => item.id === standardVariant.standardProductId) || {
+          id: standardVariant.standardProductId,
+          appId: product.appId,
+          name: standardVariant.standardName || product.name,
+          cycle: cycleFromPeriod(selectedPlanPeriod),
+          price: Number(standardVariant.standardPrice || 0)
+        };
+      }
+      return baseTargets.standard;
+    };
+
+    const cardEntries = [
+      { tier: tierByKey.free, standardVariant: null },
+      ...standardVariants.map((standardVariant) => ({ tier: tierByKey.standard, standardVariant })),
+      { tier: tierByKey.premium, standardVariant: null }
+    ].filter((entry) => entry.tier);
+
+    grid.innerHTML = cardEntries.map(({ tier, standardVariant }) => {
+      const isStandardCard = tier.key === "standard";
+      const price = isStandardCard
+        ? Number(standardVariant?.standardPrice || basePrices.standard || 0)
+        : Number(prices?.[tier.key] || 0);
+      const saveText = isStandardCard && standardVariant?.standardSaveText
+        ? String(standardVariant.standardSaveText).trim()
         : String(tier.saveByPeriod?.[selectedPlanPeriod] || "").trim();
-      const featureList = tier.key === "standard" && Array.isArray(variant?.standardFeatures)
-        ? variant.standardFeatures
+      const featureList = isStandardCard && Array.isArray(standardVariant?.standardFeatures)
+        ? standardVariant.standardFeatures
         : (tier.features || []);
       const features = featureList.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-      const targetProduct = targets[tier.key];
+      const targetProduct = isStandardCard ? resolveStandardTarget(standardVariant) : targets[tier.key];
       const targetPrice = Number(targetProduct?.price || 0);
       const isPurchasable = tier.key !== "free" && !!targetProduct && targetPrice === price;
       const isCurrent = targetProduct && currentProduct && targetProduct.id === currentProduct.id;
-      const isSelected = tier.key === selectedPlanTier;
+      const isSelected = isStandardCard
+        ? selectedPlanTier === "standard" && selectedPlanPackage === (standardVariant?.key || "default")
+        : tier.key === selectedPlanTier;
       const buyLabel = tier.key === "free" ? "Đang dùng" : (isPurchasable ? "Thanh toán QR" : "Chưa mở bán");
       const unit = selectedPlanPeriod === "month" ? "/tháng" : selectedPlanPeriod === "year" ? "/năm" : "(1 lần)";
-      const topTag = tier.key === "standard" && variant?.standardTag ? variant.standardTag : tier.tag;
-      const media = tier.key === "standard" && variant?.standardImage
-        ? `<figure class="pd-plan-media"><img src="${variant.standardImage}" alt="${escapeHtml(variant.label || "Gói nổi bật")}"></figure>`
+      const topTag = isStandardCard && standardVariant?.standardTag ? standardVariant.standardTag : tier.tag;
+      const media = isStandardCard && standardVariant?.standardImage
+        ? `<figure class="pd-plan-media"><img src="${standardVariant.standardImage}" alt="${escapeHtml(standardVariant.label || "Gói nổi bật")}"></figure>`
         : "";
+      const displayName = isStandardCard && standardVariant?.standardName
+        ? standardVariant.standardName
+        : tier.name;
+      const packageKey = isStandardCard ? (standardVariant?.key || "default") : "";
 
       return `
-        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"} ${tier.key === "standard" && variant?.key === "onegrade" ? "is-hot" : ""}" data-tier="${tier.key}">
+        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"} ${isStandardCard && standardVariant?.key === "onegrade" ? "is-hot" : ""}" data-tier="${tier.key}" data-package="${escapeHtml(packageKey)}">
           ${topTag ? `<span class="pd-plan-top-tag">${escapeHtml(topTag)}</span>` : ""}
           ${media}
           <p class="pd-plan-tier">${tier.icon}</p>
-          <h3 class="pd-plan-name">${escapeHtml(tier.name)}</h3>
+          <h3 class="pd-plan-name">${escapeHtml(displayName)}</h3>
           <p class="pd-plan-price">${formatPlanPrice(price)}</p>
           <p class="pd-plan-unit">${unit}</p>
           <p class="pd-plan-save">${escapeHtml(saveText)}</p>
@@ -919,6 +991,19 @@ function renderPlanZone(product) {
           </div>
         </article>`;
     }).join("");
+
+    grid.querySelectorAll(".pd-plan-card").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("button")) {
+          return;
+        }
+        selectedPlanTier = card.dataset.tier || selectedPlanTier;
+        if (card.dataset.package) {
+          selectedPlanPackage = card.dataset.package;
+        }
+        paintPlanCards(false);
+      });
+    });
 
     grid.querySelectorAll(".pd-plan-buy").forEach((button) => {
       button.addEventListener("click", async () => {

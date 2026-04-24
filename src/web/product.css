@@ -284,6 +284,10 @@ main{
   gap:12px;
 }
 
+.pd-plan-grid.has-four-cards{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
 .pd-plan-card{
   display:flex;
   flex-direction:column;
