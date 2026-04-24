@@ -17,6 +17,7 @@ const {
 
 const {
   getPublicCatalog,
+  getAdminCatalog,
   createOrder,
   getOrderDetailsById,
   consumeUsage,
@@ -646,6 +647,15 @@ app.get(
   "/api/catalog",
   asyncHandler(async (req, res) => {
     const catalog = await getPublicCatalog();
+    res.json(catalog);
+  })
+);
+
+app.get(
+  "/api/admin/catalog",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const catalog = await getAdminCatalog();
     res.json(catalog);
   })
 );

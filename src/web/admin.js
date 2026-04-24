@@ -1033,7 +1033,8 @@ async function loadManualGrantCatalog(){
   const sel = document.getElementById("mgProductId");
   if(!sel) return;
   try {
-    const res = await fetchAdmin("/api/catalog");
+    const res = await fetchAdmin("/api/admin/catalog");
+    if(res.status===401){ redirectToAdminLogin("/api/admin/catalog"); return; }
     if(!res.ok) return;
     const data = await res.json().catch(()=>({products:[]}));
     const products = (data.products || []).filter(p => p.active !== false);

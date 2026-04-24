@@ -142,6 +142,14 @@ async function issueAppLicenseForOrder({ client, order, product }) {
     cycle: product.cycle
   };
 
+  if (String(product.id || "").trim().toLowerCase() === "standard_1year_1grade") {
+    metadata.planId = "standard_1year_1grade";
+    metadata.basePlan = "standard";
+    metadata.subjects = "all";
+    metadata.grades = 1;
+    metadata.profiles = 2;
+  }
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const licenseKey = generateReadableLicenseKey();
     try {
@@ -197,14 +205,16 @@ function computePeriod(cycle) {
   return { startAt, endAt };
 }
 
-async function getPublicCatalog() {
+async function getCatalog({ includeHidden = false } = {}) {
   const appsResult = await pool.query(
     "SELECT id, name, slug, status, description FROM apps ORDER BY created_at ASC"
   );
+  const visibilityWhere = includeHidden ? "" : "AND visibility = 'public'";
   const productsResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, currency, credits, active
+    `SELECT id, app_id, name, cycle, price, currency, credits, active, visibility
      FROM products
      WHERE active = TRUE
+       ${visibilityWhere}
      ORDER BY created_at ASC`
   );
 
@@ -224,9 +234,18 @@ async function getPublicCatalog() {
       price: Number(row.price),
       currency: row.currency,
       credits: Number(row.credits),
-      active: row.active
+      active: row.active,
+      visibility: row.visibility
     }))
   };
+}
+
+async function getPublicCatalog() {
+  return getCatalog({ includeHidden: false });
+}
+
+async function getAdminCatalog() {
+  return getCatalog({ includeHidden: true });
 }
 
 async function createOrder({ customerId, appId, productId }) {
@@ -2120,6 +2139,7 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
 
 module.exports = {
   getPublicCatalog,
+  getAdminCatalog,
   createOrder,
   getOrderById,
   getOrderByCode,
