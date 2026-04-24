@@ -780,24 +780,18 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
 
   // Enforce 1-key-1-machine: reject if license is already bound to a different device
   if (incomingDeviceId) {
-    const checkFilter = customerId ? " AND customer_id = $3" : "";
-    const checkParams = customerId
-      ? [normalizedLicenseKey, appId, customerId]
-      : [normalizedLicenseKey, appId];
     const check = await pool.query(
       `SELECT device_id FROM app_licenses
-       WHERE license_key = $1 AND app_id = $2${checkFilter}
+       WHERE license_key = $1 AND app_id = $2
          AND status <> 'revoked'
          AND (expires_at IS NULL OR expires_at > NOW())`,
-      checkParams
+      [normalizedLicenseKey, appId]
     );
     if (check.rowCount > 0 && check.rows[0].device_id &&
         check.rows[0].device_id !== incomingDeviceId) {
       return { deviceMismatch: true };
     }
   }
-
-  const customerFilterSql = customerId ? " AND customer_id = $5" : "";
 
   const result = await pool.query(
     `UPDATE app_licenses
@@ -807,15 +801,13 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
          device_id = COALESCE(device_id, $3),
          device_name = COALESCE(device_name, $4),
          updated_at = NOW()
-     WHERE license_key = $1 AND app_id = $2${customerFilterSql}
+     WHERE license_key = $1 AND app_id = $2
        AND status <> 'revoked'
        AND (expires_at IS NULL OR expires_at > NOW())
      RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
                metadata, created_at, updated_at`,
-    customerId
-      ? [normalizedLicenseKey, appId, incomingDeviceId, deviceName || null, customerId]
-      : [normalizedLicenseKey, appId, incomingDeviceId, deviceName || null]
+    [normalizedLicenseKey, appId, incomingDeviceId, deviceName || null]
   );
 
   if (result.rowCount === 0) {

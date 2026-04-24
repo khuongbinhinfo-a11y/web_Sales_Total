@@ -479,12 +479,12 @@ const planPackageVariantByApp = {
     year: [
       {
         key: "default",
-        label: "Mặc định",
+        label: "1 năm / 3 lớp / 3 hồ sơ",
         standardPrice: 599000
       },
       {
         key: "onegrade",
-        label: "01 lớp + 2 hồ sơ",
+        label: "1 năm / 1 lớp / 2 hồ sơ",
         standardPrice: 299000,
         standardProductId: "standard_1year_1grade",
         standardTag: "Nhu cầu cao nhất",
@@ -499,6 +499,10 @@ const planPackageVariantByApp = {
           "Báo cáo tiến độ cơ bản",
           "Không quảng cáo"
         ],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
         standardSaveText: "Gói khuyến nghị"
       }
     ]
@@ -681,12 +685,21 @@ function getSelectedPackageVariant(appId, period) {
   return variants.find((item) => item.key === selectedPlanPackage) || variants[0];
 }
 
-function renderPlanCompare(blueprint) {
+function renderPlanCompare(blueprint, variant = null) {
   const compare = document.getElementById("pdPlanCompare");
   const tiers = blueprint?.tiers || [];
+  const compareOverride = variant?.standardCompare || null;
   const rows = (blueprint?.compareRows || []).map((row) => {
+    const rowValues = { ...(row.values || {}) };
+    if (compareOverride && row.label === "Số lớp" && compareOverride.classes) {
+      rowValues.standard = String(compareOverride.classes);
+    }
+    if (compareOverride && row.label === "Hồ sơ học sinh" && compareOverride.profiles) {
+      rowValues.standard = String(compareOverride.profiles);
+    }
+
     const cells = tiers.map((tierItem) => {
-      const value = row.values?.[tierItem.key];
+      const value = rowValues?.[tierItem.key];
       if (typeof value === "boolean") {
         return value ? '<td class="pd-plan-tick">✓</td>' : '<td class="pd-plan-miss">✕</td>';
       }
@@ -781,8 +794,6 @@ function renderPlanZone(product) {
     </button>`).join("");
   tierToggle.innerHTML = tierButtons;
 
-  renderPlanCompare(blueprint);
-
   function syncPeriodButtons() {
     [toggle, zoneToggle].filter(Boolean).forEach((container) => {
       container.querySelectorAll(".pd-plan-period-btn").forEach((btn) => {
@@ -840,6 +851,7 @@ function renderPlanZone(product) {
     }
 
     const variant = getSelectedPackageVariant(product.appId, selectedPlanPeriod);
+    renderPlanCompare(blueprint, variant);
     const basePrices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const prices = { ...basePrices };
     if (variant && Number(variant.standardPrice) > 0) {
@@ -952,14 +964,7 @@ function renderPlanZone(product) {
     });
   });
 
-  toggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedPlanPeriod = button.dataset.period;
-      syncPeriodButtons();
-      paintPlanCards();
-    });
-  });
-
+  bindPeriodToggle(toggle);
   bindPeriodToggle(zoneToggle);
 
   compareBtn.onclick = () => {
