@@ -846,12 +846,6 @@ function renderPlanZone(product) {
       return;
     }
 
-    if (shouldRenderSeparateStandardCards(product.appId, selectedPlanPeriod)) {
-      packageRow.classList.add("is-hidden");
-      packageToggle.innerHTML = "";
-      return;
-    }
-
     packageRow.classList.remove("is-hidden");
     const activeKey = variants.some((item) => item.key === selectedPlanPackage)
       ? selectedPlanPackage
