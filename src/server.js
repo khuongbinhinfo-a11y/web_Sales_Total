@@ -53,7 +53,8 @@ const {
   manualGrantLicense,
   searchCustomersByEmail,
   updateCustomerById,
-  deleteCustomerById
+  deleteCustomerById,
+  revokeAppLicenseAdmin
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -1313,6 +1314,18 @@ app.get(
     const resolvedTier = inferPlanTierFromLicense(license);
     const resolvedFeatures = resolveLicenseFeatures(license);
     return res.json({ license, resolvedTier, resolvedFeatures });
+  })
+);
+
+app.post(
+  "/api/admin/licenses/:licenseId/revoke",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const licenseId = String(req.params.licenseId || "").trim();
+    if (!licenseId) return res.status(400).json({ message: "licenseId is required" });
+    const license = await revokeAppLicenseAdmin(licenseId);
+    if (!license) return res.status(404).json({ message: "License không tồn tại hoặc đã bị vô hiệu hóa rồi" });
+    return res.json({ ok: true, license });
   })
 );
 

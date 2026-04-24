@@ -715,6 +715,21 @@ async function findAppLicenseByKeyAdmin(licenseKey) {
   return mapAppLicense(result.rows[0]);
 }
 
+async function revokeAppLicenseAdmin(licenseId) {
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET status = 'revoked',
+         updated_at = NOW()
+     WHERE id = $1::uuid AND status <> 'revoked'
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               metadata, created_at, updated_at`,
+    [licenseId]
+  );
+  if (result.rowCount === 0) return null;
+  return mapAppLicense(result.rows[0]);
+}
+
 async function deactivateCustomerLicense({ licenseId, customerId }) {
   const result = await pool.query(
     `UPDATE app_licenses
@@ -2156,5 +2171,6 @@ module.exports = {
   searchCustomersByEmail,
   updateCustomerById,
   deleteCustomerById,
-  manualGrantLicense
+  manualGrantLicense,
+  revokeAppLicenseAdmin
 };

@@ -83,6 +83,9 @@ function resolveProductImage(product) {
   if (/(map|ggmap|quet data|scan data|data kh)/.test(hint)) {
     return productImageLibrary.map;
   }
+  if (/(bds|website)/.test(productId)) {
+    return productImageLibrary.bds;
+  }
   if (/(video|dong bo|nhan vat|lip sync)/.test(hint)) {
     return productImageLibrary.video;
   }
@@ -256,6 +259,97 @@ const productContent = {
       { title:"Đăng nhập hệ thống", detail:"Truy cập link được cấp → Đăng nhập với email & mật khẩu tạm thời." },
       { title:"Đổi mật khẩu & thiết lập", detail:"Vào Cài đặt → Đổi mật khẩu → Cấu hình thông tin website." },
       { title:"Bắt đầu đăng tin", detail:"Vào Quản lý Tin đăng → Thêm tin mới → Điền thông tin và xuất bản." },
+    ]
+  },
+  "prod-bds-website-lifetime": {
+    desc: "Phần mềm quản lý website và đăng tin bất động sản trọn đời. Đăng tin, quản lý khách hàng, theo dõi tương tác — kích hoạt một lần dùng mãi mãi.",
+    icon: "🏠",
+    descImage: productImageLibrary.bds,
+    longDescription: {
+      highlights: [
+        "Quản lý toàn bộ tin đăng bất động sản trên một giao diện trực quan, dễ dùng.",
+        "Tích hợp CRM theo dõi khách hàng tiềm năng và lịch sử tương tác.",
+        "Bản quyền trọn đời — mua một lần, dùng không giới hạn thời gian.",
+      ],
+      sections: [
+        {
+          heading: "Tổng quan sản phẩm",
+          paragraphs: [
+            "Phần mềm cung cấp đầy đủ công cụ để vận hành website bất động sản chuyên nghiệp: từ đăng tin, quản lý danh mục đến theo dõi khách hàng quan tâm.",
+            "Thiết kế cho môi giới BĐS, chủ đầu tư và sàn giao dịch muốn quản lý online hiệu quả mà không cần đội kỹ thuật.",
+          ]
+        },
+        {
+          heading: "Điểm nổi bật",
+          paragraphs: [
+            "Dashboard trực quan hiển thị số tin đăng, lượt xem và khách hàng liên hệ theo ngày/tuần/tháng.",
+            "Cho phép đăng tin kèm ảnh, video, bản đồ và thông tin chi tiết dự án.",
+          ]
+        },
+        {
+          heading: "Lợi ích thực tế",
+          paragraphs: [
+            "Tiết kiệm thời gian quản lý tin đăng so với thao tác thủ công trên nhiều nền tảng khác nhau.",
+            "Bản quyền trọn đời không phát sinh phí hàng tháng, phù hợp cho cá nhân và doanh nghiệp nhỏ.",
+          ]
+        }
+      ]
+    },
+    features: [
+      { icon:"🏘️", title:"Đăng tin BĐS", detail:"Tạo và quản lý hàng trăm tin đăng kèm ảnh, video, bản đồ" },
+      { icon:"👥", title:"CRM khách hàng", detail:"Lưu trữ và theo dõi khách hàng tiềm năng tập trung" },
+      { icon:"✍️", title:"Quản lý blog", detail:"Tạo và xuất bản bài viết, tin tức dự án chuyên nghiệp" },
+      { icon:"📈", title:"Báo cáo thống kê", detail:"Dashboard lượt xem, leads và hiệu suất tin đăng" },
+      { icon:"♾️", title:"Trọn đời", detail:"Mua một lần — dùng không giới hạn, không phí gia hạn" },
+    ],
+    guide: [
+      { title:"Bước 1: Nhận key kích hoạt", detail:"Key trọn đời giao tự động sau thanh toán, sao chép từ trang đơn hàng." },
+      { title:"Bước 2: Kích hoạt phần mềm", detail:"Mở phần mềm → Nhập key → Kích hoạt. Cần kết nối internet lần đầu." },
+      { title:"Bước 3: Cấu hình website", detail:"Vào Cài đặt → Điền thông tin website, logo và thông tin liên hệ." },
+      { title:"Bước 4: Đăng tin đầu tiên", detail:"Vào Quản lý Tin đăng → Thêm mới → Điền thông tin BĐS và xuất bản." },
+      { title:"Bước 5: Quản lý khách hàng", detail:"Mọi lead từ form liên hệ tự động lưu vào CRM để theo dõi." },
+    ]
+  },
+  "prod-prompt-lifetime": {
+    desc: "Công cụ tạo prompt chuyên nghiệp cho ảnh AI. Tạo ra những prompt chi tiết, chuẩn xác để khai thác tối đa sức mạnh của các mô hình AI tạo ảnh.",
+    icon: "🎨",
+    descImage: productImageLibrary.video,
+    longDescription: {
+      highlights: [
+        "Tạo prompt tối ưu cho Midjourney, Stable Diffusion, DALL-E và các mô hình AI ảnh phổ biến.",
+        "Thư viện template prompt đa dạng theo phong cách, chủ đề và mục đích sử dụng.",
+        "Bản quyền trọn đời — kích hoạt một lần, dùng vĩnh viễn.",
+      ],
+      sections: [
+        {
+          heading: "Tổng quan sản phẩm",
+          paragraphs: [
+            "Image Prompt Generator là công cụ desktop hỗ trợ tạo prompt ảnh AI chất lượng cao, giúp người dùng khai thác tối đa các mô hình sinh ảnh hiện đại.",
+            "Thay vì thử nghiệm ngẫu nhiên, phần mềm hướng dẫn bạn xây dựng prompt có cấu trúc rõ ràng: chủ thể, phong cách, ánh sáng, màu sắc và chi tiết kỹ thuật.",
+          ]
+        },
+        {
+          heading: "Điểm nổi bật",
+          paragraphs: [
+            "Giao diện trực quan cho phép chọn thông số và xem preview prompt trước khi copy vào AI.",
+            "Hỗ trợ nhiều công cụ AI ảnh phổ biến với preset tối ưu sẵn có.",
+          ]
+        }
+      ]
+    },
+    features: [
+      { icon:"✨", title:"Prompt chuẩn xác", detail:"Tạo prompt có cấu trúc tối ưu cho từng mô hình AI" },
+      { icon:"📚", title:"Thư viện template", detail:"Hàng trăm template theo phong cách và chủ đề đa dạng" },
+      { icon:"⚡", title:"Tạo nhanh", detail:"Xây dựng prompt phức tạp trong vài giây" },
+      { icon:"🔗", title:"Đa nền tảng AI", detail:"Hỗ trợ Midjourney, DALL-E, Stable Diffusion..." },
+      { icon:"♾️", title:"Trọn đời", detail:"Mua một lần — dùng không giới hạn, không phí gia hạn" },
+    ],
+    guide: [
+      { title:"Bước 1: Nhận key kích hoạt", detail:"Key trọn đời giao tự động sau thanh toán, sao chép từ trang đơn hàng." },
+      { title:"Bước 2: Cài đặt & kích hoạt", detail:"Tải và cài phần mềm → Mở ứng dụng → Nhập key → Kích hoạt." },
+      { title:"Bước 3: Chọn phong cách", detail:"Chọn mô hình AI đích và phong cách ảnh mong muốn từ thư viện." },
+      { title:"Bước 4: Tạo prompt", detail:"Điền thông tin chủ thể, style, ánh sáng → Nhấn Tạo → Copy prompt." },
+      { title:"Bước 5: Dùng với AI", detail:"Dán prompt vào Midjourney/DALL-E/SD và tận hưởng kết quả chất lượng cao." },
     ]
   }
 };

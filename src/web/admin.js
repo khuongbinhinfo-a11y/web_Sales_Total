@@ -1338,7 +1338,24 @@ function bindKeyLookup(){
             <tr><th style="text-align:left;vertical-align:top">Metadata</th><td><pre style="font-size:.73rem;white-space:pre-wrap;margin:0">${escapeHtml(meta)}</pre></td></tr>
           </tbody>
         </table>
+        ${l.status !== "revoked" && l.id ? `<div style="margin-top:10px"><button id="keyRevokeBtn" class="btn" style="background:#dc2626;color:#fff;font-size:.83rem;padding:6px 14px">🔒 Vô hiệu hóa key này</button></div>` : `<div style="margin-top:8px;font-size:.82rem;color:#dc2626;font-weight:600">⛔ Key này đã bị vô hiệu hóa</div>`}
       </div>`;
+      if (l.status !== "revoked" && l.id) {
+        document.getElementById("keyRevokeBtn")?.addEventListener("click", async () => {
+          if (!confirm(`Xác nhận vô hiệu hóa key:\n${l.licenseKey || l.id}?\n\nKey sẽ không thể dùng được nữa.`)) return;
+          try {
+            const rRes = await fetchAdmin(`/api/admin/licenses/${encodeURIComponent(l.id)}/revoke`, { method: "POST" });
+            const rData = await rRes.json().catch(() => ({}));
+            if (!rRes.ok) { if(msg){ msg.textContent = rData.message || "Lỗi vô hiệu hóa"; msg.style.color = "var(--danger)"; } return; }
+            if(msg){ msg.textContent = "✅ Đã vô hiệu hóa key thành công"; msg.style.color = "var(--success,#16a34a)"; }
+            document.getElementById("keyRevokeBtn")?.remove();
+            const statusCells = result.querySelectorAll("td");
+            statusCells.forEach(td => { if(td.previousElementSibling?.textContent?.trim() === "Trạng thái") td.innerHTML = badge("revoked"); });
+          } catch(err) {
+            if(msg){ msg.textContent = "Lỗi: " + err.message; msg.style.color = "var(--danger)"; }
+          }
+        });
+      }
     } catch(err){
       if(msg){ msg.textContent="Lỗi: "+err.message; msg.style.color="var(--danger)"; }
     }

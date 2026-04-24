@@ -94,6 +94,9 @@ function resolveProductImage(product) {
   if (/(map|ggmap|quet data|scan data|data kh)/.test(hint)) {
     return productImageLibrary.map;
   }
+  if (/(bds|website)/.test(productId)) {
+    return productImageLibrary.bds;
+  }
   if (/(video|dong bo|nhan vat|lip sync)/.test(hint)) {
     return productImageLibrary.video;
   }
