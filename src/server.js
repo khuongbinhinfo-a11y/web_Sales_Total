@@ -322,6 +322,99 @@ function buildAiAppLicenseView(license) {
   };
 }
 
+function getCustomerFromBridgeAuthorization(req) {
+  const authHeader = String(req.header("authorization") || "").trim();
+  if (!/^bearer\s+/i.test(authHeader)) {
+    return null;
+  }
+
+  const bearerToken = authHeader.replace(/^bearer\s+/i, "").trim();
+  if (!bearerToken) {
+    return null;
+  }
+
+  const originalCookieHeader = req.headers.cookie;
+  req.headers.cookie = originalCookieHeader
+    ? `${originalCookieHeader}; wst_customer_session=${bearerToken}`
+    : `wst_customer_session=${bearerToken}`;
+
+  try {
+    return getCustomerFromSession(req);
+  } finally {
+    if (typeof originalCookieHeader === "undefined") {
+      delete req.headers.cookie;
+    } else {
+      req.headers.cookie = originalCookieHeader;
+    }
+  }
+}
+
+function getCustomerBridgeSession(req) {
+  return getCustomerFromBridgeAuthorization(req) || getCustomerFromSession(req);
+}
+
+async function buildBridgePricingPlans() {
+  const catalog = await getPublicCatalog();
+  const products = Array.isArray(catalog?.products) ? catalog.products : [];
+  const productById = new Map(products.map((item) => [String(item.id || "").trim().toLowerCase(), item]));
+
+  const pickPrice = (productId, fallback = 0) => Number(productById.get(String(productId || "").trim().toLowerCase())?.price || fallback || 0);
+
+  return {
+    free: {
+      id: "free",
+      name: "Miễn phí",
+      prices: { monthly: 0, yearly: 0, lifetime: 0 },
+      source: "local",
+      features: { subjects: 1, grades: 1, profiles: 1 }
+    },
+    standard: {
+      id: "standard",
+      name: "Tiêu chuẩn",
+      prices: {
+        monthly: pickPrice("prod-study-month", 89000),
+        yearly: pickPrice("prod-study-year", 599000),
+        lifetime: pickPrice("prod-study-standard-lifetime", 1299000)
+      },
+      source: "web-total",
+      features: { subjects: null, grades: 3, profiles: 3 }
+    },
+    standard_1year_1grade: {
+      id: "standard_1year_1grade",
+      name: "Tiêu chuẩn 01 năm - 01 lớp",
+      prices: {
+        monthly: 0,
+        yearly: pickPrice("standard_1year_1grade", 299000),
+        lifetime: 0
+      },
+      source: "web-total",
+      features: { subjects: null, grades: 1, profiles: 2 }
+    },
+    standard_1year_3grade: {
+      id: "standard_1year_3grade",
+      name: "Tiêu chuẩn 01 năm - 03 lớp",
+      prices: {
+        monthly: 0,
+        yearly: pickPrice("prod-study-year", 599000),
+        lifetime: 0
+      },
+      source: "web-total",
+      features: { subjects: null, grades: 3, profiles: 3 }
+    },
+    premium: {
+      id: "premium",
+      name: "Cao cấp",
+      prices: {
+        monthly: pickPrice("prod-study-premium-month", 119000),
+        yearly: pickPrice("prod-study-premium-year", 899000),
+        lifetime: pickPrice("prod-study-premium-lifetime", 1599000)
+      },
+      source: "web-total",
+      features: { subjects: null, grades: null, profiles: 5 }
+    }
+  };
+}
+
 function buildUpdateEntitlement(licenses, appVersion) {
   const now = Date.now();
   const active = licenses.filter(
@@ -1053,6 +1146,181 @@ app.post(
     }
 
     return res.json({ ok: true, license: deactivated });
+  })
+);
+
+app.post(
+  "/api/v1/auth/customer/login",
+  asyncHandler(async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: "Email không hợp lệ" });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ success: false, error: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+
+    const customer = await findCustomerByEmail(email);
+    if (!customer) {
+      return res.status(401).json({ success: false, error: "Email hoặc mật khẩu không đúng" });
+    }
+    if (!customer.passwordHash) {
+      return res.status(401).json({ success: false, needsPassword: true, error: "Tài khoản này chưa có mật khẩu. Hãy thiết lập mật khẩu trước khi đăng nhập vào app." });
+    }
+
+    const passwordOk = verifyPassword(password, customer.passwordHash);
+    if (!passwordOk) {
+      return res.status(401).json({ success: false, error: "Email hoặc mật khẩu không đúng" });
+    }
+
+    const bridgeToken = createCustomerSessionToken(customer.id, customer.email);
+    setAuthCookie(res, "wst_customer_session", bridgeToken, req);
+
+    return res.json({
+      success: true,
+      data: {
+        bridgeToken,
+        customer: {
+          id: customer.id,
+          email: customer.email,
+          fullName: customer.fullName
+        }
+      }
+    });
+  })
+);
+
+app.get(
+  "/api/v1/auth/me",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerBridgeSession(req);
+    if (!session?.customerId) {
+      return res.status(401).json({ success: false, error: "Chưa đăng nhập" });
+    }
+
+    const snapshot = await getCustomerSnapshot(session.customerId);
+    return res.json({ success: true, data: snapshot });
+  })
+);
+
+app.post(
+  "/api/v1/auth/customer/logout",
+  asyncHandler(async (req, res) => {
+    clearAuthCookie(res, "wst_customer_session", req);
+    return res.json({ success: true, data: { ok: true } });
+  })
+);
+
+app.get(
+  "/api/v1/customer/snapshot",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerBridgeSession(req);
+    if (!session?.customerId) {
+      return res.status(401).json({ success: false, error: "Chưa đăng nhập" });
+    }
+
+    const snapshot = await getCustomerSnapshot(session.customerId);
+    return res.json({ success: true, data: snapshot });
+  })
+);
+
+app.get(
+  "/api/v1/plans",
+  asyncHandler(async (req, res) => {
+    const plans = await buildBridgePricingPlans();
+    return res.json({ success: true, data: plans, source: "web-total" });
+  })
+);
+
+app.get(
+  "/api/v1/payments/web-total/orders/:orderId/status",
+  asyncHandler(async (req, res) => {
+    const orderDetails = await getOrderDetailsById(req.params.orderId);
+    if (!orderDetails?.order) {
+      return res.status(404).json({ success: false, error: "Order not found" });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        orderId: orderDetails.order.id,
+        orderCode: orderDetails.order.orderCode,
+        status: orderDetails.order.status,
+        paymentStatus: orderDetails.order.status,
+        amount: orderDetails.order.amount,
+        paidAt: orderDetails.order.paidAt || null,
+        productId: orderDetails.order.productId || ""
+      }
+    });
+  })
+);
+
+app.get(
+  "/api/v1/ai-app/customers/:customerId/licenses",
+  asyncHandler(async (req, res) => {
+    const session = getCustomerBridgeSession(req);
+    const customerId = String(req.params.customerId || "").trim();
+    const appId = String(req.query.appId || "").trim() || undefined;
+
+    if (!session?.customerId) {
+      return res.status(401).json({ success: false, error: "Thiếu bridge token Web tổng." });
+    }
+    if (!customerId) {
+      return res.status(400).json({ success: false, error: "customerId is required" });
+    }
+    if (session.customerId !== customerId) {
+      return res.status(403).json({ success: false, error: "Không có quyền truy cập licenses của khách hàng khác" });
+    }
+
+    const licenses = await listCustomerLicenses({ customerId, appId });
+    const items = licenses.map(buildAiAppLicenseView);
+    const updateEntitlement = buildUpdateEntitlement(licenses, req.query?.appVersion || null);
+    return res.json({ success: true, data: { customerId, appId: appId || null, licenses: items, updateEntitlement } });
+  })
+);
+
+app.post(
+  "/api/v1/ai-app/licenses/verify",
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim() || null;
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+    const deviceName = String(req.body?.deviceName || "").trim() || null;
+
+    if (!appId || !licenseKey) {
+      return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
+    }
+
+    const license = await verifyAppLicenseByKey({
+      appId,
+      licenseKey,
+      customerId,
+      deviceId,
+      deviceName
+    });
+
+    if (!license) {
+      return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
+    }
+    if (license.deviceMismatch) {
+      return res.status(409).json({ success: false, error: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng liên hệ hỗ trợ để chuyển thiết bị." });
+    }
+
+    const aiLicense = buildAiAppLicenseView(license);
+    const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
+    const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
+    return res.json({
+      success: true,
+      data: {
+        license: aiLicense,
+        features: aiLicense.features,
+        grace: aiLicense.grace,
+        updateEntitlement
+      }
+    });
   })
 );
 
