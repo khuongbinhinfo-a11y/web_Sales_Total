@@ -28,6 +28,8 @@ Ghi chu: trong `app-license-minimum-schema-api.md` da co muc `Contract da chot g
 - Checklist va van hanh:
   - `integration-checklist.md`
   - `ai-app-sync-plan-v1.md`
+  - `../app-study-12-integration-contract-v1.md` (contract 1 trang cho app-study-12)
+  - `../app-study-12-safe-cleanup-runbook-v1.md` (thu tu commit, gate merge, rollback an toan)
   - `multi-app-license-position-note.md` (ban tom tat de chot huong account + entitlement + license)
   - `app-license-minimum-schema-api.md` (schema DB + API toi thieu de AIapp/Web tong tham chieu)
   - `ai-app-connect-commands.md` (lenh curl ket noi AI-app vao Web tong)
