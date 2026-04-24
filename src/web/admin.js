@@ -1319,6 +1319,7 @@ function bindKeyLookup(){
       if(msg){ msg.textContent="Tìm thấy"; msg.style.color="var(--success,#16a34a)"; }
       const l = data.license || {};
       const tier = data.resolvedTier || "—";
+      const resolvedFeatures = Array.isArray(data.resolvedFeatures) ? data.resolvedFeatures : [];
       const tierColor = tier==="premium" ? "#7c3aed" : tier==="standard" ? "#2563eb" : "#64748b";
       const meta = l.metadata ? JSON.stringify(l.metadata, null, 2) : "{}";
       result.innerHTML = `<div class="info-card" style="margin-top:8px">
@@ -1329,6 +1330,7 @@ function bindKeyLookup(){
             <tr><th style="text-align:left">Product ID</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.productId||"—")}</td></tr>
             <tr><th style="text-align:left">Plan code</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.planCode||"—")}</td></tr>
             <tr><th style="text-align:left">Tier</th><td><span style="font-weight:700;color:${tierColor}">${escapeHtml(tier)}</span></td></tr>
+            <tr><th style="text-align:left">Features gửi app</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(resolvedFeatures.join(", ") || "—")}</td></tr>
             <tr><th style="text-align:left">Trạng thái</th><td>${badge(l.status||"—")}</td></tr>
             <tr><th style="text-align:left">Hết hạn</th><td>${l.expiresAt ? fmtDate(l.expiresAt) : "∞ Lifetime"}</td></tr>
             <tr><th style="text-align:left">Customer ID</th><td style="font-family:monospace;font-size:.75rem">${escapeHtml(l.customerId||"—")}</td></tr>

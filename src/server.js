@@ -1307,9 +1307,10 @@ app.get(
     if (!key) return res.status(400).json({ message: "Thiếu tham số key" });
     const license = await findAppLicenseByKeyAdmin(key);
     if (!license) return res.status(404).json({ message: "Không tìm thấy key trong hệ thống" });
-    const { resolveLicenseFeatures } = require("./modules/licenseFeatures");
-    const features = resolveLicenseFeatures(license);
-    return res.json({ license, resolvedTier: features.tier });
+    const { inferPlanTierFromLicense, resolveLicenseFeatures } = require("./modules/licenseFeatures");
+    const resolvedTier = inferPlanTierFromLicense(license);
+    const resolvedFeatures = resolveLicenseFeatures(license);
+    return res.json({ license, resolvedTier, resolvedFeatures });
   })
 );
 
