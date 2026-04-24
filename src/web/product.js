@@ -312,45 +312,56 @@ const productContent = {
     ]
   },
   "prod-prompt-lifetime": {
-    desc: "Công cụ tạo prompt chuyên nghiệp cho ảnh AI. Tạo ra những prompt chi tiết, chuẩn xác để khai thác tối đa sức mạnh của các mô hình AI tạo ảnh.",
-    icon: "🎨",
+    desc: "Video Creator là phần mềm tạo prompt và điều phối workflow AI video trong một nơi, giúp làm nhanh hơn, chuẩn hơn và đồng bộ hơn giữa nhiều clip.",
+    icon: "🎬",
     descImage: productImageLibrary.video,
     longDescription: {
       highlights: [
-        "Tạo prompt tối ưu cho Midjourney, Stable Diffusion, DALL-E và các mô hình AI ảnh phổ biến.",
-        "Thư viện template prompt đa dạng theo phong cách, chủ đề và mục đích sử dụng.",
-        "Bản quyền trọn đời — kích hoạt một lần, dùng vĩnh viễn.",
+        "Tạo prompt nhanh bằng preset, không phải viết tay dài mỗi lần.",
+        "Giữ continuity nhân vật, bối cảnh, ánh sáng và mood giữa các clip.",
+        "Quản lý tập trung tài nguyên và workflow AI video trong một hệ thống.",
       ],
       sections: [
         {
           heading: "Tổng quan sản phẩm",
           paragraphs: [
-            "Image Prompt Generator là công cụ desktop hỗ trợ tạo prompt ảnh AI chất lượng cao, giúp người dùng khai thác tối đa các mô hình sinh ảnh hiện đại.",
-            "Thay vì thử nghiệm ngẫu nhiên, phần mềm hướng dẫn bạn xây dựng prompt có cấu trúc rõ ràng: chủ thể, phong cách, ánh sáng, màu sắc và chi tiết kỹ thuật.",
+            "Video Creator - Phần mềm tạo prompt và điều phối AI Video trong một nơi. Công cụ được thiết kế cho người làm nội dung, chủ shop, marketer, agency, đội media và doanh nghiệp muốn tăng tốc làm video bằng AI nhưng vẫn kiểm soát chất lượng đầu ra.",
+            "Thay vì nghĩ prompt từ đầu mỗi lần, mở nhiều tab, copy thủ công từng đoạn mô tả và lo clip sau bị lệch clip trước, Video Creator gom toàn bộ quá trình vào workflow gọn hơn, dễ dùng hơn và ổn định hơn.",
           ]
         },
         {
-          heading: "Điểm nổi bật",
+          heading: "Phần mềm này giải quyết vấn đề gì",
           paragraphs: [
-            "Giao diện trực quan cho phép chọn thông số và xem preview prompt trước khi copy vào AI.",
-            "Hỗ trợ nhiều công cụ AI ảnh phổ biến với preset tối ưu sẵn có.",
+            "Nhiều người dùng AI video gặp tình trạng prompt lúc hay lúc dở, clip sau lệch mặt hoặc lệch bối cảnh, phải gõ lại từ đầu, khó quản lý ảnh nhân vật/bối cảnh/ảnh mốc và tốn nhiều thời gian khi dựng video dài từ nhiều clip ngắn.",
+            "Video Creator được tạo ra để xử lý các điểm nghẽn đó: chuẩn hóa prompt, tăng tính đồng bộ, tổ chức tài nguyên tốt hơn và giảm thao tác lặp lại.",
+          ]
+        },
+        {
+          heading: "Vì sao nên dùng thay vì làm thủ công",
+          paragraphs: [
+            "Làm thủ công thường thiếu ổn định prompt, dễ quên bố cục clip, khó giữ consistency và khó mở rộng số lượng clip. Video Creator đưa quá trình làm video AI từ cảm tính thành có hệ thống.",
+            "Bạn có hệ thống prompt, preset, kho ảnh và logic continuity để phối hợp nhiều nền tảng AI video trong cùng workflow thực tế.",
           ]
         }
       ]
     },
     features: [
-      { icon:"✨", title:"Prompt chuẩn xác", detail:"Tạo prompt có cấu trúc tối ưu cho từng mô hình AI" },
-      { icon:"📚", title:"Thư viện template", detail:"Hàng trăm template theo phong cách và chủ đề đa dạng" },
-      { icon:"⚡", title:"Tạo nhanh", detail:"Xây dựng prompt phức tạp trong vài giây" },
-      { icon:"🔗", title:"Đa nền tảng AI", detail:"Hỗ trợ Midjourney, DALL-E, Stable Diffusion..." },
-      { icon:"♾️", title:"Trọn đời", detail:"Mua một lần — dùng không giới hạn, không phí gia hạn" },
+      { icon:"⚡", title:"Preset tạo prompt nhanh", detail:"Chọn nhanh chủ thể, phong cách, góc máy, ánh sáng, không khí, bối cảnh, chuyển động." },
+      { icon:"🗂️", title:"Kho nhân vật và bối cảnh", detail:"Lưu và gọi lại ảnh nhân vật/bối cảnh/ảnh mốc để làm clip nối tiếp đồng bộ hơn." },
+      { icon:"🔗", title:"Đa nền tảng AI video", detail:"Tối ưu workflow cho Flow, Runway, Pika, Kling, Hailuo, Luma, MiniMax và các nền tảng tương tự." },
+      { icon:"🎞️", title:"3 kiểu tạo clip thực dụng", detail:"Clip mới, clip nối tiếp, clip riêng để ghép sau cho video dài từ nhiều đoạn ngắn." },
+      { icon:"🧠", title:"Tăng continuity", detail:"Giữ ổn định nhân vật, trang phục, bối cảnh, ánh sáng, phong cách và hướng chuyển động." },
+      { icon:"🤖", title:"Bán tự động hóa", detail:"Hỗ trợ map ảnh vào workflow, chuẩn bị prompt và tăng tốc thao tác theo flow làm việc." },
+      { icon:"♾️", title:"Trọn đời", detail:"Mua một lần, dùng lâu dài, giảm gánh nặng viết prompt tay mỗi ngày." },
     ],
     guide: [
-      { title:"Bước 1: Nhận key kích hoạt", detail:"Key trọn đời giao tự động sau thanh toán, sao chép từ trang đơn hàng." },
-      { title:"Bước 2: Cài đặt & kích hoạt", detail:"Tải và cài phần mềm → Mở ứng dụng → Nhập key → Kích hoạt." },
-      { title:"Bước 3: Chọn phong cách", detail:"Chọn mô hình AI đích và phong cách ảnh mong muốn từ thư viện." },
-      { title:"Bước 4: Tạo prompt", detail:"Điền thông tin chủ thể, style, ánh sáng → Nhấn Tạo → Copy prompt." },
-      { title:"Bước 5: Dùng với AI", detail:"Dán prompt vào Midjourney/DALL-E/SD và tận hưởng kết quả chất lượng cao." },
+      { title:"Bước 1: Chọn nhân vật từ kho", detail:"Chọn ảnh nhân vật đã lưu để giữ nhất quán xuyên suốt chuỗi clip." },
+      { title:"Bước 2: Chọn bối cảnh từ kho", detail:"Gọi lại bối cảnh/ảnh mốc thay vì tìm ảnh lại từ đầu mỗi lần." },
+      { title:"Bước 3: Chọn preset nhanh", detail:"Chọn phong cách, góc máy, ánh sáng và chuyển động theo mục tiêu clip." },
+      { title:"Bước 4: Sinh prompt chuẩn", detail:"Tạo prompt có cấu trúc rõ ràng, dễ kiểm thử và dễ tái sử dụng." },
+      { title:"Bước 5: Đẩy sang nền tảng AI", detail:"Chuyển prompt sang nền tảng phù hợp để tạo clip mới hoặc clip nối tiếp." },
+      { title:"Bước 6: Chọn clip tốt", detail:"Đánh giá đầu ra, giữ clip đạt quality và continuity tốt nhất." },
+      { title:"Bước 7: Ghép video hoàn chỉnh", detail:"Ghép nhiều clip ngắn thành video dài đồng nhất và dễ sản xuất hàng loạt." },
     ]
   }
 };
