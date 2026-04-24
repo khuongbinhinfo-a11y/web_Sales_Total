@@ -300,11 +300,17 @@ function computeLicenseGrace(license) {
 }
 
 function buildAiAppLicenseView(license) {
+  const normalizedProductId = String(license?.productId || '').trim().toLowerCase();
+  const metadataPlanId = String(license?.metadata?.planId || '').trim();
+  const resolvedPlanId = metadataPlanId
+    || (normalizedProductId === 'standard_1year_1grade' ? 'standard_1year_1grade' : '')
+    || (normalizedProductId === 'prod-study-year' ? 'standard_1year_3grade' : '');
   const tier = inferPlanTierFromLicense(license);
   const features = resolveLicenseFeatures(license);
   const grace = computeLicenseGrace(license);
   return {
     ...license,
+    planId: resolvedPlanId || null,
     tier,
     features,
     grace

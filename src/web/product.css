@@ -347,7 +347,8 @@ main{
   display:block;
   width:100%;
   aspect-ratio:16/8;
-  object-fit:cover;
+  object-fit:contain;
+  background:#fff;
 }
 
 .pd-plan-top-tag{
@@ -885,6 +886,8 @@ main{
   .pd-plan-zone-label{min-width:42px;font-size:.68rem}
   .pd-plan-grid{grid-template-columns:1fr}
   .pd-plan-card{min-height:auto}
+  .pd-plan-media{padding:4px}
+  .pd-plan-media img{aspect-ratio:16/9;object-fit:contain}
   .pd-download-app-btn{min-height:38px;padding:0 16px;font-size:.84rem}
   .pd-tab-bar{display:flex;width:100%}
   .pd-tab-btn{flex:1;padding:10px 8px;font-size:.81rem;text-align:center}

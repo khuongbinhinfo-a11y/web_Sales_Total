@@ -778,6 +778,8 @@ function renderPlanZone(product) {
   const zoneToggle = document.getElementById("pdPlanToggleZone");
   const packageRow = document.getElementById("pdPackageFilterRow");
   const packageToggle = document.getElementById("pdPackageToggle");
+  const packageRowTop = document.getElementById("pdBuyPackageRow");
+  const packageToggleTop = document.getElementById("pdPackageToggleTop");
   const grid = document.getElementById("pdPlanGrid");
   const compare = document.getElementById("pdPlanCompare");
   const compareBtn = document.getElementById("pdCompareToggle");
@@ -837,32 +839,44 @@ function renderPlanZone(product) {
   }
 
   function renderPackageToggle() {
-    if (!packageRow || !packageToggle) return;
+    const packageRows = [packageRow, packageRowTop].filter(Boolean);
+    const packageToggles = [packageToggle, packageToggleTop].filter(Boolean);
+    if (!packageRows.length || !packageToggles.length) return;
+
     const variants = getPackageVariants(product.appId, selectedPlanPeriod);
     if (!variants.length) {
-      packageRow.classList.add("is-hidden");
-      packageToggle.innerHTML = "";
+      packageRows.forEach((row) => row.classList.add("is-hidden"));
+      packageToggles.forEach((toggleNode) => {
+        toggleNode.innerHTML = "";
+      });
       selectedPlanPackage = getDefaultPackageKey(product.appId, selectedPlanPeriod);
       return;
     }
 
-    packageRow.classList.remove("is-hidden");
+    packageRows.forEach((row) => row.classList.remove("is-hidden"));
     const activeKey = variants.some((item) => item.key === selectedPlanPackage)
       ? selectedPlanPackage
       : variants[0].key;
     selectedPlanPackage = activeKey;
 
-    packageToggle.innerHTML = variants.map((variant) => `
+    const buttonsHtml = variants.map((variant) => `
       <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""} ${variant.key === "onegrade" ? "is-recommended" : ""}" data-package="${variant.key}" type="button">
         ${escapeHtml(variant.label)}
       </button>
     `).join("");
 
-    packageToggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        selectedPlanPackage = button.dataset.package || "default";
-        renderPackageToggle();
-        paintPlanCards(false);
+    packageToggles.forEach((toggleNode) => {
+      toggleNode.innerHTML = buttonsHtml;
+    });
+
+    packageToggles.forEach((toggleNode) => {
+      toggleNode.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedPlanTier = "standard";
+          selectedPlanPackage = button.dataset.package || "default";
+          renderPackageToggle();
+          paintPlanCards(false);
+        });
       });
     });
   }
