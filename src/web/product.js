@@ -482,6 +482,11 @@ function resolveDownloadLink(product, content) {
   const customLink = String(content?.downloadUrl || "").trim();
   if (customLink) return customLink;
 
+  const appId = String(product?.appId || "").trim().toLowerCase();
+  if (appId === "app-study-12") {
+    return "https://hoctap-cap-01.vercel.app/";
+  }
+
   const app = normalizeText(product?.appId);
   if (app.includes("hoc") || app.includes("study")) {
     return "/portal";
