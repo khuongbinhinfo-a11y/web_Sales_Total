@@ -3,20 +3,19 @@
 -- Purpose: Setup app-prompt-image-video cho desktop app tạo video/ảnh
 
 -- 1. Tạo app app-prompt-image-video
-INSERT INTO apps (id, name, slug, status, description, created_at, updated_at)
+INSERT INTO apps (id, name, slug, status, description, created_at)
 VALUES (
   'app-prompt-image-video',
   'Prompt Video/Image Assistant',
   'prompt-video-image',
   'active',
   'Desktop app tạo video và ảnh từ prompt text',
-  NOW(),
   NOW()
 )
 ON CONFLICT (id) DO NOTHING;
 
 -- 2. Tạo 2 product lifetime cho app
-INSERT INTO products (id, app_id, name, cycle, price, currency, credits, active, created_at, updated_at)
+INSERT INTO products (id, app_id, name, cycle, price, currency, credits, active, created_at)
 VALUES 
   (
     'prod-video-lifetime',
@@ -27,7 +26,6 @@ VALUES
     'VND',
     0,
     TRUE,
-    NOW(),
     NOW()
   ),
   (
@@ -39,7 +37,6 @@ VALUES
     'VND',
     0,
     TRUE,
-    NOW(),
     NOW()
   )
 ON CONFLICT (id) DO NOTHING;
