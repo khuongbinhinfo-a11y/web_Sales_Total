@@ -2172,5 +2172,89 @@ module.exports = {
   updateCustomerById,
   deleteCustomerById,
   manualGrantLicense,
-  revokeAppLicenseAdmin
+  revokeAppLicenseAdmin,
+  listProductKeySummary,
+  listProductKeys,
+  bulkImportProductKeys,
+  deleteProductKey
 };
+
+async function listProductKeySummary() {
+  const result = await pool.query(
+    `SELECT p.id AS product_id, p.name AS product_name, p.app_id,
+            COUNT(k.id) FILTER (WHERE k.status = 'available') AS available,
+            COUNT(k.id) FILTER (WHERE k.status = 'delivered') AS delivered,
+            COUNT(k.id) AS total
+     FROM products p
+     LEFT JOIN product_keys k ON k.product_id = p.id
+     GROUP BY p.id, p.name, p.app_id
+     ORDER BY p.app_id, p.id`
+  );
+  return result.rows.map(r => ({
+    productId: r.product_id,
+    productName: r.product_name,
+    appId: r.app_id,
+    available: Number(r.available),
+    delivered: Number(r.delivered),
+    total: Number(r.total)
+  }));
+}
+
+async function listProductKeys(productId, { status = null, limit = 200, offset = 0 } = {}) {
+  const params = [productId];
+  let statusClause = "";
+  if (status) {
+    params.push(status);
+    statusClause = `AND status = $${params.length}`;
+  }
+  params.push(limit, offset);
+  const result = await pool.query(
+    `SELECT id, product_id, key_value, status, created_at, updated_at
+     FROM product_keys
+     WHERE product_id = $1 ${statusClause}
+     ORDER BY created_at ASC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+  return result.rows.map(r => ({
+    id: r.id,
+    productId: r.product_id,
+    keyValue: r.key_value,
+    status: r.status,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at
+  }));
+}
+
+async function bulkImportProductKeys(productId, keyValues) {
+  const unique = [...new Set(keyValues.map(k => String(k).trim()).filter(Boolean))];
+  if (!unique.length) return { inserted: 0, skipped: 0 };
+  let inserted = 0;
+  let skipped = 0;
+  for (const kv of unique) {
+    const r = await pool.query(
+      `INSERT INTO product_keys (id, product_id, key_value, status)
+       VALUES (gen_random_uuid(), $1, $2, 'available')
+       ON CONFLICT (key_value) DO NOTHING`,
+      [productId, kv]
+    );
+    if (r.rowCount > 0) inserted++;
+    else skipped++;
+  }
+  return { inserted, skipped };
+}
+
+async function deleteProductKey(keyId) {
+  const result = await pool.query(
+    `DELETE FROM product_keys
+     WHERE id = $1::uuid AND status = 'available'
+     RETURNING id, key_value, product_id`,
+    [keyId]
+  );
+  if (result.rowCount === 0) return null;
+  return {
+    id: result.rows[0].id,
+    keyValue: result.rows[0].key_value,
+    productId: result.rows[0].product_id
+  };
+}

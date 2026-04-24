@@ -1388,8 +1388,129 @@ loadManualGrantCatalog();
 bindCustomerSearch();
 bindCustomerModal();
 bindKeyLookup();
+bindProductKeyManager();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();
   loadAiAppSecretStatus();
 });
+
+function bindProductKeyManager() {
+  const summaryWrap = document.getElementById("pkSummaryWrap");
+  const refreshBtn = document.getElementById("pkRefreshSummaryBtn");
+  const importProductSel = document.getElementById("pkImportProduct");
+  const importBtn = document.getElementById("pkImportBtn");
+  const importKeysTA = document.getElementById("pkImportKeys");
+  const importMsg = document.getElementById("pkImportMsg");
+  const detailProductSel = document.getElementById("pkDetailProduct");
+  const detailStatusSel = document.getElementById("pkDetailStatus");
+  const detailLoadBtn = document.getElementById("pkDetailLoadBtn");
+  const detailMsg = document.getElementById("pkDetailMsg");
+  const detailWrap = document.getElementById("pkDetailWrap");
+  if (!summaryWrap) return;
+
+  async function loadSummary() {
+    summaryWrap.innerHTML = `<p style="padding:8px;color:var(--muted);font-size:.85rem">Đang tải...</p>`;
+    try {
+      const res = await fetchAdmin("/api/admin/product-keys/summary");
+      if (res.status === 401) { redirectToAdminLogin("/api/admin/product-keys/summary"); return; }
+      const data = await res.json().catch(() => ({ summary: [] }));
+      if (!res.ok) { summaryWrap.innerHTML = `<p style="color:var(--danger);padding:8px">${escapeHtml(data.message||"Lỗi tải summary")}</p>`; return; }
+      const rows = data.summary || [];
+      if (!rows.length) { summaryWrap.innerHTML = `<p style="color:var(--muted);padding:8px;font-size:.85rem">Chưa có sản phẩm nào</p>`; return; }
+      summaryWrap.innerHTML = `<table class="data-table" style="font-size:.85rem">
+        <thead><tr><th>App</th><th>Sản phẩm</th><th style="text-align:center;color:#16a34a">Còn lại</th><th style="text-align:center">Đã giao</th><th style="text-align:center">Tổng</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td style="font-size:.78rem;color:var(--muted)">${escapeHtml(r.appId)}</td>
+          <td>${escapeHtml(r.productName)}<br><span style="font-family:monospace;font-size:.72rem;color:var(--muted)">${escapeHtml(r.productId)}</span></td>
+          <td style="text-align:center;font-weight:700;color:${r.available>0?"#16a34a":"#dc2626"}">${r.available}</td>
+          <td style="text-align:center">${r.delivered}</td>
+          <td style="text-align:center">${r.total}</td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+      const opts = rows.map(r=>`<option value="${escapeHtml(r.productId)}">${escapeHtml(r.productName)} (${r.available} còn lại)</option>`).join("");
+      if (importProductSel) importProductSel.innerHTML = `<option value="">-- Chọn sản phẩm --</option>${opts}`;
+      if (detailProductSel) detailProductSel.innerHTML = `<option value="">-- Chọn sản phẩm --</option>${opts}`;
+    } catch(err) {
+      summaryWrap.innerHTML = `<p style="color:var(--danger);padding:8px">Lỗi: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  if (refreshBtn) refreshBtn.addEventListener("click", loadSummary);
+  loadSummary();
+
+  if (importBtn) importBtn.addEventListener("click", async () => {
+    const productId = importProductSel?.value?.trim();
+    const raw = importKeysTA?.value?.trim();
+    if (!productId) { if(importMsg){importMsg.textContent="Chọn sản phẩm trước";importMsg.style.color="var(--danger)";} return; }
+    if (!raw) { if(importMsg){importMsg.textContent="Nhập danh sách key";importMsg.style.color="var(--danger)";} return; }
+    importBtn.disabled = true;
+    importBtn.textContent = "Đang import...";
+    if (importMsg) importMsg.textContent = "";
+    try {
+      const res = await fetchAdmin("/api/admin/product-keys/import", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ productId, keys: raw })
+      });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) { if(importMsg){importMsg.textContent=data.message||"Import thất bại";importMsg.style.color="var(--danger)";} return; }
+      if (importMsg) { importMsg.textContent=`✅ Đã thêm ${data.inserted} key mới, bỏ qua ${data.skipped} key trùng`; importMsg.style.color="var(--success,#16a34a)"; }
+      if (importKeysTA) importKeysTA.value = "";
+      loadSummary();
+    } catch(err) {
+      if (importMsg) { importMsg.textContent="Lỗi: "+err.message; importMsg.style.color="var(--danger)"; }
+    } finally {
+      importBtn.disabled = false;
+      importBtn.textContent = "Import";
+    }
+  });
+
+  async function loadDetailKeys() {
+    const productId = detailProductSel?.value?.trim();
+    const status = detailStatusSel?.value?.trim() || null;
+    if (!productId) { if(detailMsg){detailMsg.textContent="Chọn sản phẩm để xem";detailMsg.style.color="var(--muted)";} return; }
+    if (detailMsg) { detailMsg.textContent="Đang tải..."; detailMsg.style.color="var(--muted)"; }
+    if (detailWrap) detailWrap.innerHTML = "";
+    try {
+      const qs = new URLSearchParams({ productId, limit: "200" });
+      if (status) qs.set("status", status);
+      const res = await fetchAdmin(`/api/admin/product-keys?${qs}`);
+      const data = await res.json().catch(()=>({keys:[]}));
+      if (!res.ok) { if(detailMsg){detailMsg.textContent=data.message||"Lỗi tải key";detailMsg.style.color="var(--danger)";} return; }
+      const keys = data.keys || [];
+      if (detailMsg) detailMsg.textContent = `${keys.length} key${keys.length>=200?" (hiển thị tối đa 200)":""}`;
+      if (!keys.length) { if(detailWrap) detailWrap.innerHTML=`<p style="color:var(--muted);font-size:.85rem;padding:8px 0">Không có key nào</p>`; return; }
+      if (detailWrap) detailWrap.innerHTML = `<table class="data-table" style="font-size:.83rem">
+        <thead><tr><th>Key value</th><th style="text-align:center">Trạng thái</th><th>Ngày tạo</th><th style="text-align:center">Hành động</th></tr></thead>
+        <tbody>${keys.map(k=>`<tr id="pkrow-${escapeHtml(k.id)}">
+          <td style="font-family:monospace;font-size:.8rem">${escapeHtml(k.keyValue)}</td>
+          <td style="text-align:center">${k.status==="available"
+            ?`<span class="status-badge status-active">available</span>`
+            :`<span class="status-badge">${escapeHtml(k.status)}</span>`}</td>
+          <td style="font-size:.78rem">${fmtDate(k.createdAt)}</td>
+          <td style="text-align:center">${k.status==="available"
+            ?`<button onclick="pkDeleteKey('${escapeHtml(k.id)}','${escapeHtml(k.keyValue)}')" class="btn" style="padding:2px 10px;font-size:.75rem;min-height:0;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">🗑 Xóa</button>`
+            :`<span style="color:var(--muted);font-size:.75rem">—</span>`}</td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    } catch(err) {
+      if (detailMsg) { detailMsg.textContent="Lỗi: "+err.message; detailMsg.style.color="var(--danger)"; }
+    }
+  }
+
+  if (detailLoadBtn) detailLoadBtn.addEventListener("click", loadDetailKeys);
+}
+
+async function pkDeleteKey(keyId, keyValue) {
+  if (!confirm(`Xác nhận xóa key:\n${keyValue}\n\nChỉ xóa được key chưa giao cho khách.`)) return;
+  try {
+    const res = await fetchAdmin(`/api/admin/product-keys/${encodeURIComponent(keyId)}`, { method: "DELETE" });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { alert(data.message||"Xóa thất bại"); return; }
+    const row = document.getElementById(`pkrow-${keyId}`);
+    if (row) row.remove();
+  } catch(err) {
+    alert("Lỗi: "+err.message);
+  }
+}

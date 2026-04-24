@@ -54,7 +54,11 @@ const {
   searchCustomersByEmail,
   updateCustomerById,
   deleteCustomerById,
-  revokeAppLicenseAdmin
+  revokeAppLicenseAdmin,
+  listProductKeySummary,
+  listProductKeys,
+  bulkImportProductKeys,
+  deleteProductKey
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -1329,6 +1333,55 @@ app.post(
   })
 );
 
+
+app.get(
+  "/api/admin/product-keys/summary",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const summary = await listProductKeySummary();
+    return res.json({ summary });
+  })
+);
+
+app.get(
+  "/api/admin/product-keys",
+  requireAdminAuth,
+  asyncHandler(async (req, res) => {
+    const productId = String(req.query.productId || "").trim();
+    if (!productId) return res.status(400).json({ message: "productId la bat buoc" });
+    const status = req.query.status ? String(req.query.status).trim() : null;
+    const limit = Math.min(parseInt(req.query.limit || "200", 10) || 200, 500);
+    const offset = parseInt(req.query.offset || "0", 10) || 0;
+    const keys = await listProductKeys(productId, { status, limit, offset });
+    return res.json({ keys });
+  })
+);
+
+app.post(
+  "/api/admin/product-keys/import",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const productId = String(req.body?.productId || "").trim();
+    const raw = String(req.body?.keys || "").trim();
+    if (!productId) return res.status(400).json({ message: "productId la bat buoc" });
+    if (!raw) return res.status(400).json({ message: "Danh sach key khong duoc trong" });
+    const keyValues = raw.split(/[\n,]+/).map(k => k.trim()).filter(Boolean);
+    if (keyValues.length > 1000) return res.status(400).json({ message: "Toi da 1000 key moi lan import" });
+    const result = await bulkImportProductKeys(productId, keyValues);
+    return res.json({ ok: true, ...result });
+  })
+);
+
+app.delete(
+  "/api/admin/product-keys/:keyId",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const keyId = String(req.params.keyId || "").trim();
+    const deleted = await deleteProductKey(keyId);
+    if (!deleted) return res.status(404).json({ message: "Key khong ton tai hoac da giao cho khach" });
+    return res.json({ ok: true, deleted });
+  })
+);
 app.post(
   "/api/admin/me/password/otp",
   requireAdminAuth,

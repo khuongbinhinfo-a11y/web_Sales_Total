@@ -37,6 +37,7 @@
         <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
         <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
+        <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
         <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
         <a href="#section-key-lookup"><span class="icon">🔍</span> Tra key</a>
@@ -303,6 +304,61 @@
           <div class="info-card">
             <p style="color:var(--muted);font-size:.88rem">Quản trị key theo profile giúp tách quyền giữa web/desktop. Nên dùng 2 key riêng cho 1 app có 2 client; giữ shared key làm fallback khi cần chuyển đổi.</p>
             <div class="table-wrap" id="aiAppKeyManagerWrap"><p style="padding:16px;color:var(--muted)">Đang tải trạng thái key...</p></div>
+          </div>
+        </section>
+
+        <!-- Product Key Stock -->
+        <section id="section-product-keys" class="admin-section">
+          <h3>📦 Kho key sản phẩm (user key)</h3>
+
+          <!-- Summary -->
+          <div class="info-card" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <b style="font-size:.9rem">Tổng quan kho key theo sản phẩm</b>
+              <button id="pkRefreshSummaryBtn" class="btn btn-outline" style="font-size:.8rem;padding:4px 12px;min-height:0">🔄 Làm mới</button>
+            </div>
+            <div class="table-wrap" id="pkSummaryWrap"><p style="padding:8px;color:var(--muted);font-size:.85rem">Đang tải...</p></div>
+          </div>
+
+          <!-- Import -->
+          <div class="info-card" style="margin-bottom:12px">
+            <b style="font-size:.9rem;display:block;margin-bottom:10px">📥 Import key mới vào kho</b>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Sản phẩm</label>
+                <select id="pkImportProduct" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+                  <option value="">-- Đang tải sản phẩm... --</option>
+                </select>
+              </div>
+              <button id="pkImportBtn" class="btn btn-accent" style="min-height:38px">Import</button>
+            </div>
+            <label style="font-size:.75rem;color:var(--muted);font-weight:700">Danh sách key (mỗi key 1 dòng, tối đa 1000 key)</label>
+            <textarea id="pkImportKeys" rows="6" placeholder="AAAA-BBBB-CCCC&#10;DDDD-EEEE-FFFF&#10;..."
+                      style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.83rem;margin-top:4px;resize:vertical;box-sizing:border-box"></textarea>
+            <p id="pkImportMsg" style="margin:6px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <!-- Key list detail -->
+          <div class="info-card">
+            <div style="display:flex;gap:8px;align-items:end;margin-bottom:10px">
+              <div style="flex:1">
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Xem chi tiết key theo sản phẩm</label>
+                <select id="pkDetailProduct" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+                  <option value="">-- Chọn sản phẩm --</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Lọc trạng thái</label>
+                <select id="pkDetailStatus" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+                  <option value="">Tất cả</option>
+                  <option value="available">available</option>
+                  <option value="delivered">delivered</option>
+                </select>
+              </div>
+              <button id="pkDetailLoadBtn" class="btn btn-accent" style="min-height:38px">Xem</button>
+            </div>
+            <p id="pkDetailMsg" style="margin:0 0 8px;font-size:.82rem;color:var(--muted)"></p>
+            <div class="table-wrap" id="pkDetailWrap"></div>
           </div>
         </section>
 
