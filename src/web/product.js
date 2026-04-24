@@ -824,7 +824,7 @@ function renderPlanZone(product) {
     selectedPlanPackage = activeKey;
 
     packageToggle.innerHTML = variants.map((variant) => `
-      <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""}" data-package="${variant.key}" type="button">
+      <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""} ${variant.key === "onegrade" ? "is-recommended" : ""}" data-package="${variant.key}" type="button">
         ${escapeHtml(variant.label)}
       </button>
     `).join("");

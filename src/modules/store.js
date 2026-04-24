@@ -142,6 +142,14 @@ async function issueAppLicenseForOrder({ client, order, product }) {
     cycle: product.cycle
   };
 
+  if (String(product.id || "").trim().toLowerCase() === "prod-study-year") {
+    metadata.planId = "standard_1year_3grade";
+    metadata.basePlan = "standard";
+    metadata.subjects = "all";
+    metadata.grades = 3;
+    metadata.profiles = 3;
+  }
+
   if (String(product.id || "").trim().toLowerCase() === "standard_1year_1grade") {
     metadata.planId = "standard_1year_1grade";
     metadata.basePlan = "standard";

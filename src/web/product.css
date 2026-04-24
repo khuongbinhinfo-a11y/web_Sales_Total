@@ -243,6 +243,35 @@ main{
   box-shadow:0 4px 12px rgba(31,127,192,.26);
 }
 
+.pd-plan-period-btn.is-recommended{
+  color:#b25f00;
+  background:linear-gradient(135deg,#fff4df,#ffe7bf);
+  box-shadow:inset 0 0 0 1px rgba(255,140,0,.28);
+}
+
+.pd-plan-period-btn.is-recommended::after{
+  content:"Hot";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:28px;
+  height:18px;
+  margin-left:8px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#ff8a00;
+  color:#fff;
+  font-size:.64rem;
+  font-weight:900;
+  letter-spacing:.03em;
+}
+
+.pd-plan-period-btn.is-recommended.is-active{
+  color:#fff;
+  background:linear-gradient(135deg,#ff8a00,#ff6a00);
+  box-shadow:0 6px 16px rgba(255,122,0,.28);
+}
+
 .pd-plan-tier-btn.is-active{
   color:#fff;
   background:linear-gradient(135deg,#297fc8,#1f67a5);
