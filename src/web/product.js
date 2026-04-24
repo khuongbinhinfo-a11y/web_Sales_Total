@@ -669,13 +669,6 @@ function getPackageVariants(appId, period) {
 function getDefaultPackageKey(appId, period) {
   const variants = getPackageVariants(appId, period);
   if (!variants.length) return "default";
-
-  const normalizedAppId = String(appId || "").trim().toLowerCase();
-  if (normalizedAppId === "app-study-12" && period === "year") {
-    const onegrade = variants.find((item) => item.key === "onegrade");
-    if (onegrade) return onegrade.key;
-  }
-
   return variants[0].key;
 }
 
