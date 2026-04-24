@@ -95,7 +95,7 @@ const {
   verifyOtpCode,
   isEmailOtpConfigured
 } = require("./modules/emailOtp");
-const { resolveLicenseFeatures } = require("./modules/licenseFeatures");
+const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/licenseFeatures");
 
 const app = express();
 const webRoot = path.join(__dirname, "web");
@@ -294,10 +294,12 @@ function computeLicenseGrace(license) {
 }
 
 function buildAiAppLicenseView(license) {
+  const tier = inferPlanTierFromLicense(license);
   const features = resolveLicenseFeatures(license);
   const grace = computeLicenseGrace(license);
   return {
     ...license,
+    tier,
     features,
     grace
   };
@@ -985,7 +987,7 @@ app.post(
     const aiLicense = buildAiAppLicenseView(license);
     const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
     const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
-    return res.json({ ok: true, license: aiLicense, features: aiLicense.features, grace: aiLicense.grace, updateEntitlement });
+    return res.json({ ok: true, license: aiLicense, tier: aiLicense.tier, features: aiLicense.features, grace: aiLicense.grace, updateEntitlement });
   })
 );
 
