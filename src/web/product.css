@@ -385,7 +385,7 @@ main{
   font-size:2.08rem;
   font-weight:900;
   color:#0f4c7a;
-  letter-spacing:-.03em;
+  letter-spacing:0;
   line-height:1.1;
 }
 
@@ -561,7 +561,7 @@ main{
   font-weight:900;
   line-height:1.18;
   margin:0;
-  letter-spacing:-.03em;
+  letter-spacing:0;
   color:var(--ink);
 }
 

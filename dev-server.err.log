@@ -1,0 +1,34 @@
+F:\web_Sales_Total\node_modules\pg-pool\index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+AggregateError [ECONNREFUSED]: 
+    at F:\web_Sales_Total\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async runMigrations (F:\web_Sales_Total\src\db\migrate.js:7:18)
+    at async F:\web_Sales_Total\src\server.js:2921:7
+    at async startServer (F:\web_Sales_Total\src\server.js:2938:3) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:5432
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 5432
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:5432
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 5432
+    }
+  ]
+}
+
+Node.js v20.20.1
