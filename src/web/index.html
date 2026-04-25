@@ -15,12 +15,14 @@
       <div class="container header-inner">
         <a class="logo" href="#top">
           <img class="logo-img" src="/logo_2.png" alt="Logo" />
+          <span class="logo-wordmark"><span>Ứng Dụng</span><span>Thông Minh</span></span>
         </a>
         <div class="header-search">
           <input type="text" id="searchInput" placeholder="Tìm sản phẩm..." data-i18n-placeholder="search_placeholder" />
         </div>
         <nav class="header-nav" id="headerNav">
           <a href="#catalog" data-i18n="nav_products">Sản phẩm</a>
+          <a href="#web-demo" data-i18n="nav_web_design">Thiết kế Web</a>
           <a href="#" id="navMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
           <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
           <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register" data-i18n="nav_register">Đăng ký</a>
@@ -187,6 +189,92 @@
         </div>
       </section>
 
+      <section class="web-demo-section" id="web-demo">
+        <div class="container">
+          <div class="section-head web-demo-head">
+            <span class="section-eyebrow" data-i18n="web_demo_eyebrow">Web Demo</span>
+            <h2 data-i18n="web_demo_title">Chọn ngành thiết kế web</h2>
+            <p data-i18n="web_demo_sub">Một số mẫu trang đầu cho các ngành phổ biến, có cấu trúc và tính năng tóm tắt.</p>
+          </div>
+
+          <div class="web-demo-layout">
+            <div class="web-demo-industries" aria-label="Chọn ngành web demo">
+              <button class="web-demo-industry active" type="button" data-web-demo="restaurant">
+                <span class="web-demo-mini is-restaurant"><span></span><span></span><span></span></span>
+                <span class="web-demo-industry-copy">
+                  <strong class="web-demo-industry-name">Nhà hàng & Cafe</strong>
+                  <small class="web-demo-industry-kind">Menu, đặt bàn, ưu đãi</small>
+                </span>
+              </button>
+              <button class="web-demo-industry" type="button" data-web-demo="realestate">
+                <span class="web-demo-mini is-realestate"><span></span><span></span><span></span></span>
+                <span class="web-demo-industry-copy">
+                  <strong class="web-demo-industry-name">Bất động sản</strong>
+                  <small class="web-demo-industry-kind">Dự án, lead, bảng giá</small>
+                </span>
+              </button>
+              <button class="web-demo-industry" type="button" data-web-demo="spa">
+                <span class="web-demo-mini is-spa"><span></span><span></span><span></span></span>
+                <span class="web-demo-industry-copy">
+                  <strong class="web-demo-industry-name">Spa & Thẩm mỹ</strong>
+                  <small class="web-demo-industry-kind">Dịch vụ, booking, feedback</small>
+                </span>
+              </button>
+              <button class="web-demo-industry" type="button" data-web-demo="education">
+                <span class="web-demo-mini is-education"><span></span><span></span><span></span></span>
+                <span class="web-demo-industry-copy">
+                  <strong class="web-demo-industry-name">Giáo dục</strong>
+                  <small class="web-demo-industry-kind">Khoá học, lịch học, form</small>
+                </span>
+              </button>
+              <button class="web-demo-industry" type="button" data-web-demo="interior">
+                <span class="web-demo-mini is-interior"><span></span><span></span><span></span></span>
+                <span class="web-demo-industry-copy">
+                  <strong class="web-demo-industry-name">Nội thất</strong>
+                  <small class="web-demo-industry-kind">Portfolio, báo giá, tư vấn</small>
+                </span>
+              </button>
+            </div>
+
+            <article class="web-demo-preview-card" aria-live="polite">
+              <div class="web-demo-browser" id="webDemoFrame">
+                <div class="web-demo-browser-top">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="web-demo-page">
+                  <div class="web-demo-page-copy">
+                    <span id="webDemoPill">F&B</span>
+                    <strong id="webDemoMockTitle">Nhà hàng signature</strong>
+                    <small id="webDemoMockSub">Đặt bàn nhanh, menu nổi bật, combo theo mùa.</small>
+                  </div>
+                  <div class="web-demo-page-media">
+                    <span></span>
+                    <span></span>
+                  </div>
+                  <div class="web-demo-page-strip">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="web-demo-summary">
+                <span id="webDemoLabel">Trang đầu demo</span>
+                <h3 id="webDemoTitle">Nhà hàng & Cafe</h3>
+                <p id="webDemoDesc">Hero bán món chủ lực, menu nhanh, đặt bàn, khu ưu đãi và đánh giá khách hàng.</p>
+                <div class="web-demo-features" id="webDemoFeatures">
+                  <span>Hero chuyển đổi</span>
+                  <span>Menu nổi bật</span>
+                  <span>Đặt bàn</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section class="categories" id="catalog">
         <div class="container">
           <div class="section-head">
@@ -288,12 +376,15 @@
     <footer class="footer">
       <div class="container footer-inner">
         <div class="footer-brand">
-          <img class="footer-logo" src="/logo_2.png" alt="Logo" />
-          <strong>Ứng Dụng Thông Minh</strong>
+          <div class="footer-brand-mark">
+            <img class="footer-logo" src="/logo_2.png" alt="Logo" />
+            <strong>Ứng Dụng Thông Minh</strong>
+          </div>
           <p data-i18n="footer_desc">Nền tảng bán key phần mềm bản quyền tự động. Thanh toán linh hoạt, giao key ngay.</p>
         </div>
         <div class="footer-links">
           <h4 data-i18n="footer_quick">Truy cập nhanh</h4>
+          <a href="#web-demo">🌐 Thiết kế Web</a>
           <a href="#catalog">🛒 Sản phẩm</a>
           <a href="/portal">🔍 Tra cứu đơn</a>
           <a href="#how">📖 Hướng dẫn mua</a>
@@ -306,8 +397,9 @@
         </div>
         <div class="footer-links">
           <h4 data-i18n="footer_contact">Liên hệ</h4>
-          <span>📧 Email: khuongbinh.info@gmail.com</span>
+          <span>📧 Email: ungdungthongminh.info@gmail.com</span>
           <span>📱 SĐT: 0902 96 46 85</span>
+          <a href="https://www.facebook.com/share/1BFbrsX3UK/?mibextid=wwXIfr" target="_blank" rel="noopener">📘 Fanpage</a>
         </div>
       </div>
       <div class="footer-bottom">

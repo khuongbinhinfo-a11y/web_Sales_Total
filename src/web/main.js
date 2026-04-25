@@ -133,7 +133,7 @@ const T = {
     brand_tagline:"Key bản quyền",
     announce:"🔥 Thanh toán linh hoạt — giao key tự động ngay sau khi thanh toán thành công",
     search_placeholder:"Tìm sản phẩm...",
-    nav_products:"Sản phẩm", nav_lookup:"Tra cứu đơn", nav_login:"Đăng nhập", nav_admin:"Admin",
+    nav_products:"Sản phẩm", nav_web_design:"Thiết kế Web", nav_lookup:"Tra cứu đơn", nav_login:"Đăng nhập", nav_admin:"Admin",
     nav_my_products:"Sản phẩm đã mua", nav_balance:"Số dư", nav_logout:"Đăng xuất",
     hero_badge:"⚡ Hệ sinh thái giải pháp số",
     hero_title_kicker:"Website, phần mềm, công cụ AI",
@@ -152,6 +152,9 @@ const T = {
     web_spotlight_badge:"Thiết kế web",
     web_spotlight_title:"Thiết kế website chuyên nghiệp",
     web_spotlight_sub:"Landing page, web bán hàng, web thương hiệu triển khai gọn.",
+    web_demo_eyebrow:"Web Demo",
+    web_demo_title:"Chọn ngành thiết kế web",
+    web_demo_sub:"Một số mẫu trang đầu cho các ngành phổ biến, có cấu trúc và tính năng tóm tắt.",
     trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
     cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
     cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
@@ -227,7 +230,7 @@ const T = {
     brand_tagline:"Licensed software keys",
     announce:"🔥 Pay with Sepay — automatic key delivery right after transfer",
     search_placeholder:"Search products...",
-    nav_products:"Products", nav_lookup:"Order lookup", nav_login:"Login", nav_admin:"Admin",
+    nav_products:"Products", nav_web_design:"Web Design", nav_lookup:"Order lookup", nav_login:"Login", nav_admin:"Admin",
     nav_my_products:"My Products", nav_balance:"Balance", nav_logout:"Logout",
     hero_badge:"⚡ Digital solution ecosystem",
     hero_title_kicker:"Websites, software, AI tools",
@@ -246,6 +249,9 @@ const T = {
     web_spotlight_badge:"Web design",
     web_spotlight_title:"Professional website design",
     web_spotlight_sub:"Landing pages, sales sites, and brand websites delivered cleanly.",
+    web_demo_eyebrow:"Web Demo",
+    web_demo_title:"Choose a website industry",
+    web_demo_sub:"Starter homepage demos for common industries, with structure and feature summaries.",
     trust_products:"Products", trust_orders:"Orders delivered", trust_rating:"Rating", trust_support:"Support",
     cat_title:"Product categories", cat_sub:"Choose a category or browse all products below", cat_all:"All",
     cat_hoctap:"Study", cat_lamviec:"Work",
@@ -330,12 +336,173 @@ let catalogMode = "loading";
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
+const WEB_DEMOS = {
+  vi: {
+    restaurant: {
+      label: "Trang đầu demo",
+      title: "Nhà hàng & Cafe",
+      desc: "Hero bán món chủ lực, menu nhanh, đặt bàn, khu ưu đãi và đánh giá khách hàng.",
+      pill: "F&B",
+      mockTitle: "Nhà hàng signature",
+      mockSub: "Đặt bàn nhanh, menu nổi bật, combo theo mùa.",
+      cardTitle: "Nhà hàng & Cafe",
+      cardKind: "Menu, đặt bàn, ưu đãi",
+      features: ["Hero chuyển đổi", "Menu nổi bật", "Đặt bàn"]
+    },
+    realestate: {
+      label: "Trang đầu demo",
+      title: "Bất động sản",
+      desc: "Hero dự án, bộ lọc sản phẩm, form nhận tư vấn, bảng giá và khu pháp lý tóm tắt.",
+      pill: "BĐS",
+      mockTitle: "Dự án nổi bật",
+      mockSub: "Lọc nhu cầu, giữ lead, xem bảng giá nhanh.",
+      cardTitle: "Bất động sản",
+      cardKind: "Dự án, lead, bảng giá",
+      features: ["Dự án nổi bật", "Form nhận lead", "Bảng giá"]
+    },
+    spa: {
+      label: "Trang đầu demo",
+      title: "Spa & Thẩm mỹ",
+      desc: "Banner dịch vụ chủ lực, bảng liệu trình, đặt lịch, feedback và khu cam kết an toàn.",
+      pill: "SPA",
+      mockTitle: "Liệu trình đẹp",
+      mockSub: "Dịch vụ, booking, feedback trước sau.",
+      cardTitle: "Spa & Thẩm mỹ",
+      cardKind: "Dịch vụ, booking, feedback",
+      features: ["Dịch vụ chính", "Đặt lịch", "Feedback"]
+    },
+    education: {
+      label: "Trang đầu demo",
+      title: "Giáo dục",
+      desc: "Trang đầu giới thiệu khóa học, lịch khai giảng, giáo viên, form tư vấn và học phí.",
+      pill: "EDU",
+      mockTitle: "Khóa học mới",
+      mockSub: "Lộ trình, lịch học, form ghi danh.",
+      cardTitle: "Giáo dục",
+      cardKind: "Khóa học, lịch học, form",
+      features: ["Khóa học", "Lịch khai giảng", "Form tư vấn"]
+    },
+    interior: {
+      label: "Trang đầu demo",
+      title: "Nội thất",
+      desc: "Portfolio công trình, quy trình thiết kế, form báo giá, vật liệu và dự án tiêu biểu.",
+      pill: "HOME",
+      mockTitle: "Không gian mẫu",
+      mockSub: "Portfolio, quy trình, báo giá nhanh.",
+      cardTitle: "Nội thất",
+      cardKind: "Portfolio, báo giá, tư vấn",
+      features: ["Portfolio", "Quy trình", "Báo giá"]
+    }
+  },
+  en: {
+    restaurant: {
+      label: "Homepage demo",
+      title: "Restaurant & Cafe",
+      desc: "Hero offer, quick menu, reservation block, promotion area, and customer reviews.",
+      pill: "F&B",
+      mockTitle: "Signature dining",
+      mockSub: "Fast booking, featured menu, seasonal combos.",
+      cardTitle: "Restaurant & Cafe",
+      cardKind: "Menu, booking, offers",
+      features: ["Conversion hero", "Featured menu", "Reservation"]
+    },
+    realestate: {
+      label: "Homepage demo",
+      title: "Real Estate",
+      desc: "Project hero, listing filter, consultation form, pricing block, and legal summary.",
+      pill: "REAL",
+      mockTitle: "Featured project",
+      mockSub: "Filter demand, capture leads, show pricing.",
+      cardTitle: "Real Estate",
+      cardKind: "Projects, leads, pricing",
+      features: ["Featured project", "Lead form", "Pricing"]
+    },
+    spa: {
+      label: "Homepage demo",
+      title: "Spa & Beauty",
+      desc: "Service hero, treatment table, booking, testimonials, and safety commitments.",
+      pill: "SPA",
+      mockTitle: "Beauty journey",
+      mockSub: "Services, booking, before-after proof.",
+      cardTitle: "Spa & Beauty",
+      cardKind: "Services, booking, proof",
+      features: ["Key services", "Booking", "Reviews"]
+    },
+    education: {
+      label: "Homepage demo",
+      title: "Education",
+      desc: "Course intro, opening schedule, teacher block, consultation form, and tuition summary.",
+      pill: "EDU",
+      mockTitle: "New courses",
+      mockSub: "Roadmap, schedule, enrollment form.",
+      cardTitle: "Education",
+      cardKind: "Courses, schedule, form",
+      features: ["Courses", "Schedule", "Consultation"]
+    },
+    interior: {
+      label: "Homepage demo",
+      title: "Interior",
+      desc: "Project portfolio, design process, quote form, material highlights, and featured work.",
+      pill: "HOME",
+      mockTitle: "Living concept",
+      mockSub: "Portfolio, process, quick quote.",
+      cardTitle: "Interior",
+      cardKind: "Portfolio, quote, consult",
+      features: ["Portfolio", "Process", "Quote"]
+    }
+  }
+};
+
+let activeWebDemo = "restaurant";
+const webDemoButtons = Array.from(document.querySelectorAll("[data-web-demo]"));
+const webDemoFrame = document.getElementById("webDemoFrame");
+const webDemoLabel = document.getElementById("webDemoLabel");
+const webDemoTitle = document.getElementById("webDemoTitle");
+const webDemoDesc = document.getElementById("webDemoDesc");
+const webDemoFeatures = document.getElementById("webDemoFeatures");
+const webDemoPill = document.getElementById("webDemoPill");
+const webDemoMockTitle = document.getElementById("webDemoMockTitle");
+const webDemoMockSub = document.getElementById("webDemoMockSub");
+
+function renderWebDemo(nextId) {
+  if (nextId) activeWebDemo = nextId;
+  const demos = WEB_DEMOS[lang] || WEB_DEMOS.vi;
+  const item = demos[activeWebDemo] || demos.restaurant;
+  if (!item || !webDemoTitle) return;
+
+  webDemoButtons.forEach((button) => {
+    const id = button.dataset.webDemo;
+    const buttonItem = demos[id] || WEB_DEMOS.vi[id];
+    button.classList.toggle("active", id === activeWebDemo);
+    const name = button.querySelector(".web-demo-industry-name");
+    const kind = button.querySelector(".web-demo-industry-kind");
+    if (name && buttonItem) name.textContent = buttonItem.cardTitle;
+    if (kind && buttonItem) kind.textContent = buttonItem.cardKind;
+  });
+
+  if (webDemoFrame) webDemoFrame.className = `web-demo-browser is-${activeWebDemo}`;
+  if (webDemoLabel) webDemoLabel.textContent = item.label;
+  webDemoTitle.textContent = item.title;
+  if (webDemoDesc) webDemoDesc.textContent = item.desc;
+  if (webDemoPill) webDemoPill.textContent = item.pill;
+  if (webDemoMockTitle) webDemoMockTitle.textContent = item.mockTitle;
+  if (webDemoMockSub) webDemoMockSub.textContent = item.mockSub;
+  if (webDemoFeatures) {
+    webDemoFeatures.innerHTML = item.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
+  }
+}
+
+webDemoButtons.forEach((button) => {
+  button.addEventListener("click", () => renderWebDemo(button.dataset.webDemo));
+});
+
 function applyLang(){
   document.documentElement.lang = lang;
   document.title = t("meta_title");
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.getAttribute("data-i18n-placeholder")); });
   langToggle.textContent = lang === "vi" ? "VI / EN" : "EN / VI";
+  renderWebDemo();
 }
 
 function fmtVnd(v){
