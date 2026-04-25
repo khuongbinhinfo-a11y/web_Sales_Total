@@ -6,6 +6,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web công ty / dịch vụ",
     title: "Website tin cậy để lấy lead tư vấn",
     desc: "Hướng này hợp với công ty dịch vụ, agency, tư vấn, luật, kế toán hoặc B2B. Trọng tâm là uy tín, quy trình rõ và form nhận tư vấn.",
+    image: "/web-demo-company.jpg",
     primary: "Tư vấn mẫu công ty",
     caption: "Tone xanh đậm / trắng / xám",
     liveTitle: "Hero doanh nghiệp, dịch vụ, quy trình và form lead",
@@ -35,6 +36,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web shop bán hàng",
     title: "Trang bán hàng năng động để chốt đơn nhanh",
     desc: "Hướng này dành cho shop online, cửa hàng mỹ phẩm, thời trang, phụ kiện hoặc hàng tiêu dùng. Trọng tâm là khuyến mãi, danh mục, sản phẩm và mua ngay.",
+    image: "/web-demo-photo.jpg",
     primary: "Tư vấn mẫu shop",
     caption: "Tone năng động, màu theo ngành hàng",
     liveTitle: "Banner sale, danh mục, sản phẩm nổi bật và CTA mua ngay",
@@ -64,6 +66,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web giáo dục / khóa học",
     title: "Trang khóa học truyền cảm hứng để tăng đăng ký",
     desc: "Hướng này phù hợp trung tâm, khóa học online, lớp kỹ năng hoặc đào tạo nội bộ. Trọng tâm là chương trình, lợi ích, lộ trình, giảng viên và đăng ký học.",
+    image: "/web-demo-photo.jpg",
     primary: "Tư vấn mẫu giáo dục",
     caption: "Tone sáng, trẻ, thân thiện",
     liveTitle: "Chương trình, lợi ích, roadmap học và form đăng ký",
@@ -93,6 +96,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web spa / làm đẹp",
     title: "Trang làm đẹp cao cấp để khách đặt lịch",
     desc: "Hướng này dành cho spa, clinic, salon hoặc dịch vụ làm đẹp. Trọng tâm là cảm giác sang, dịch vụ nổi bật, before-after, bảng giá và đặt lịch.",
+    image: "/web-demo-photo.jpg",
     primary: "Tư vấn mẫu spa",
     caption: "Tone nude / tím nhạt / champagne",
     liveTitle: "Dịch vụ nổi bật, before-after, bảng giá và booking",
@@ -122,6 +126,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web nhà hàng / local business",
     title: "Trang địa phương giàu hình ảnh để khách ghé quán",
     desc: "Hướng này dành cho nhà hàng, cafe, quán ăn, showroom hoặc local business. Trọng tâm là món nổi bật, menu, không gian, bản đồ và đặt bàn/gọi món.",
+    image: "/web-demo-photo.jpg",
     primary: "Tư vấn mẫu nhà hàng",
     caption: "Tone ấm, đậm, giàu hình ảnh",
     liveTitle: "Món nổi bật, menu, không gian, bản đồ và đặt bàn",
@@ -177,6 +182,10 @@ function renderLivePreview(item) {
   if (item.template === "company") {
     el.innerHTML = `
       <div class="live-company">
+        <figure class="live-company-showcase">
+          <img src="/web-demo-company.jpg" alt="Demo website công ty dịch vụ chuyên nghiệp" loading="lazy">
+          <figcaption>Ảnh demo landing page công ty dịch vụ</figcaption>
+        </figure>
         <div class="live-company-hero">
           <span>Trusted Advisory</span>
           <h3>Giải pháp vận hành cho doanh nghiệp tăng trưởng</h3>
@@ -293,6 +302,12 @@ setText("demoFlowTitle", active.flowTitle);
 setText("demoFlowDesc", active.flowDesc);
 setText("demoContactTitle", active.contactTitle);
 setText("demoContactText", active.contactText);
+
+const heroImage = document.getElementById("demoHeroImage");
+if (heroImage) {
+  heroImage.src = active.image || "/web-demo-photo.jpg";
+  heroImage.alt = `Ảnh demo ${active.name}`;
+}
 
 const switchEl = document.getElementById("demoSwitch");
 if (switchEl) {
