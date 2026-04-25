@@ -1121,12 +1121,31 @@ function bindManualGrant(){
 function bindCustomerSearch(){
   const input = document.getElementById("custSearchInput");
   const btn = document.getElementById("custSearchBtn");
+  const loadAllBtn = document.getElementById("custLoadAllBtn");
   const msg = document.getElementById("custSearchMsg");
   if(!btn || !input) return;
 
+  async function loadAll(){
+    if(msg){ msg.textContent="Đang tải toàn bộ khách hàng..."; msg.style.color="var(--muted)"; }
+    try {
+      const res = await fetchAdmin(`/api/admin/customers?limit=200`);
+      if(res.status===401){ redirectToAdminLogin("/api/admin/customers"); return; }
+      const data = await res.json().catch(()=>({customers:[]}));
+      if(!res.ok){ if(msg){ msg.textContent = data.message||"Lỗi tải danh sách khách hàng"; msg.style.color="var(--danger)"; } return; }
+      const customers = data.customers || [];
+      if(msg){ msg.textContent = customers.length ? `Đang hiển thị ${customers.length} khách hàng mới nhất` : "Chưa có khách hàng nào"; msg.style.color="var(--muted)"; }
+      renderCustomerList(customers);
+    } catch(err){
+      if(msg){ msg.textContent="Lỗi: "+err.message; msg.style.color="var(--danger)"; }
+    }
+  }
+
   async function doSearch(){
     const q = input.value.trim();
-    if(!q){ if(msg){ msg.textContent="Nh\u1eadp email, t\u00ean, m\u00e3 \u0111\u01a1n, key ho\u1eb7c customer ID \u0111\u1ec3 t\u00ecm"; msg.style.color="var(--muted)"; } return; }
+    if(!q){
+      await loadAll();
+      return;
+    }
     if(msg){ msg.textContent="\u0110ang t\u00ecm..."; msg.style.color="var(--muted)"; }
     try {
       const res = await fetchAdmin(`/api/admin/customers?q=${encodeURIComponent(q)}&limit=50`);
@@ -1142,6 +1161,7 @@ function bindCustomerSearch(){
   }
 
   btn.addEventListener("click", doSearch);
+  if(loadAllBtn){ loadAllBtn.addEventListener("click", loadAll); }
   input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doSearch(); });
 }
 

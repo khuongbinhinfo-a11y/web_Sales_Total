@@ -1647,8 +1647,9 @@ app.get(
   asyncHandler(async (req, res) => {
     const q = String(req.query.q || "").trim();
     const limit = Number(req.query.limit || 50);
-    if (!q) return res.json({ customers: [] });
-    const customers = await searchCustomersByEmail(q, limit);
+    const customers = q
+      ? await searchCustomersByEmail(q, limit)
+      : await listCustomers(limit);
     return res.json({ customers });
   })
 );
