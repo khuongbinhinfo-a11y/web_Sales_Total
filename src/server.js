@@ -303,14 +303,18 @@ function computeLicenseGrace(license) {
 function buildAiAppLicenseView(license) {
   const normalizedProductId = String(license?.productId || '').trim().toLowerCase();
   const metadataPlanId = String(license?.metadata?.planId || '').trim();
-  const resolvedPlanId = metadataPlanId
-    || (normalizedProductId === 'prod-study-premium-month' ? 'premium' : '')
-    || (normalizedProductId === 'prod-study-premium-year' ? 'premium' : '')
-    || (normalizedProductId === 'prod-study-premium-lifetime' ? 'premium' : '')
-    || (normalizedProductId === 'prod-study-month' ? 'standard' : '')
-    || (normalizedProductId === 'standard_1year_1grade' ? 'standard_1year_1grade' : '')
-    || (normalizedProductId === 'prod-study-year' ? 'standard_1year_3grade' : '')
-    || (normalizedProductId === 'prod-study-standard-lifetime' ? 'standard' : '');
+  const planByProductId = {
+    'prod-study-premium-month': 'premium',
+    'prod-study-premium-year': 'premium',
+    'prod-study-premium-lifetime': 'premium',
+    'prod-study-month': 'standard',
+    'standard_1year_1grade': 'standard_1year_1grade',
+    'prod-study-year': 'standard_1year_3grade',
+    'prod-study-standard-lifetime': 'standard'
+  };
+
+  // Với các productId chuẩn, productId là nguồn sự thật để tránh metadata cũ gây lệch gói.
+  const resolvedPlanId = planByProductId[normalizedProductId] || metadataPlanId;
   const tier = inferPlanTierFromLicense(license);
   const features = resolveLicenseFeatures(license);
   const grace = computeLicenseGrace(license);
