@@ -153,8 +153,9 @@ const T = {
     web_spotlight_title:"Thiết kế website chuyên nghiệp",
     web_spotlight_sub:"Landing page, web bán hàng, web thương hiệu triển khai gọn.",
     web_demo_eyebrow:"Web Demo",
-    web_demo_title:"Chọn ngành thiết kế web",
-    web_demo_sub:"Một số mẫu trang đầu cho các ngành phổ biến, có cấu trúc và tính năng tóm tắt.",
+    web_demo_title:"Thiết Kế Web Chuyên Nghiệp",
+    web_demo_sub:"Xem mẫu web demo theo từng ngành phổ biến.",
+    web_demo_view:"Xem mẫu web demo",
     trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
     cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
     cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
@@ -250,8 +251,9 @@ const T = {
     web_spotlight_title:"Professional website design",
     web_spotlight_sub:"Landing pages, sales sites, and brand websites delivered cleanly.",
     web_demo_eyebrow:"Web Demo",
-    web_demo_title:"Choose a website industry",
-    web_demo_sub:"Starter homepage demos for common industries, with structure and feature summaries.",
+    web_demo_title:"Professional Website Design",
+    web_demo_sub:"View website demo samples by popular industry.",
+    web_demo_view:"View web demo",
     trust_products:"Products", trust_orders:"Orders delivered", trust_rating:"Rating", trust_support:"Support",
     cat_title:"Product categories", cat_sub:"Choose a category or browse all products below", cat_all:"All",
     cat_hoctap:"Study", cat_lamviec:"Work",
@@ -338,122 +340,122 @@ function t(k){ return (T[lang]||T.vi)[k] || k; }
 
 const WEB_DEMOS = {
   vi: {
-    restaurant: {
-      label: "Trang đầu demo",
-      title: "Nhà hàng & Cafe",
-      desc: "Hero bán món chủ lực, menu nhanh, đặt bàn, khu ưu đãi và đánh giá khách hàng.",
-      pill: "F&B",
-      mockTitle: "Nhà hàng signature",
-      mockSub: "Đặt bàn nhanh, menu nổi bật, combo theo mùa.",
-      cardTitle: "Nhà hàng & Cafe",
-      cardKind: "Menu, đặt bàn, ưu đãi",
-      features: ["Hero chuyển đổi", "Menu nổi bật", "Đặt bàn"]
+    company: {
+      label: "Mẫu lấy lead",
+      title: "Công ty / Dịch vụ chuyên nghiệp",
+      desc: "Tone tin cậy, sạch, doanh nghiệp: hero lớn, dịch vụ, quy trình, khách hàng và CTA nhận tư vấn.",
+      pill: "LEAD",
+      mockTitle: "Dịch vụ chuyên nghiệp",
+      mockSub: "Hero tin cậy, quy trình rõ, form nhận tư vấn.",
+      cardTitle: "Công ty / Dịch vụ",
+      cardKind: "Tin cậy, quy trình, lead",
+      features: ["Hero lớn", "Quy trình", "CTA lấy lead"]
     },
-    realestate: {
-      label: "Trang đầu demo",
-      title: "Bất động sản",
-      desc: "Hero dự án, bộ lọc sản phẩm, form nhận tư vấn, bảng giá và khu pháp lý tóm tắt.",
-      pill: "BĐS",
-      mockTitle: "Dự án nổi bật",
-      mockSub: "Lọc nhu cầu, giữ lead, xem bảng giá nhanh.",
-      cardTitle: "Bất động sản",
-      cardKind: "Dự án, lead, bảng giá",
-      features: ["Dự án nổi bật", "Form nhận lead", "Bảng giá"]
-    },
-    spa: {
-      label: "Trang đầu demo",
-      title: "Spa & Thẩm mỹ",
-      desc: "Banner dịch vụ chủ lực, bảng liệu trình, đặt lịch, feedback và khu cam kết an toàn.",
-      pill: "SPA",
-      mockTitle: "Liệu trình đẹp",
-      mockSub: "Dịch vụ, booking, feedback trước sau.",
-      cardTitle: "Spa & Thẩm mỹ",
-      cardKind: "Dịch vụ, booking, feedback",
-      features: ["Dịch vụ chính", "Đặt lịch", "Feedback"]
+    shop: {
+      label: "Mẫu chốt đơn",
+      title: "Shop bán hàng",
+      desc: "Tone năng động, dễ mua: banner khuyến mãi, danh mục, sản phẩm nổi bật, feedback và CTA mua ngay.",
+      pill: "SALE",
+      mockTitle: "Ưu đãi hôm nay",
+      mockSub: "Danh mục rõ, sản phẩm nổi bật, chốt đơn nhanh.",
+      cardTitle: "Shop bán hàng",
+      cardKind: "Khuyến mãi, sản phẩm, đơn",
+      features: ["Banner sale", "Sản phẩm nổi bật", "Mua ngay"]
     },
     education: {
-      label: "Trang đầu demo",
-      title: "Giáo dục",
-      desc: "Trang đầu giới thiệu khóa học, lịch khai giảng, giáo viên, form tư vấn và học phí.",
+      label: "Mẫu đăng ký học",
+      title: "Giáo dục / Khóa học",
+      desc: "Tone thân thiện, truyền cảm hứng: chương trình học, lợi ích, lộ trình, giảng viên và form đăng ký.",
       pill: "EDU",
-      mockTitle: "Khóa học mới",
-      mockSub: "Lộ trình, lịch học, form ghi danh.",
-      cardTitle: "Giáo dục",
-      cardKind: "Khóa học, lịch học, form",
-      features: ["Khóa học", "Lịch khai giảng", "Form tư vấn"]
+      mockTitle: "Lộ trình học mới",
+      mockSub: "Chương trình, lợi ích, giảng viên, đăng ký học.",
+      cardTitle: "Giáo dục / Khóa học",
+      cardKind: "Lộ trình, giảng viên, đăng ký",
+      features: ["Lộ trình học", "Giảng viên", "Đăng ký"]
     },
-    interior: {
-      label: "Trang đầu demo",
-      title: "Nội thất",
-      desc: "Portfolio công trình, quy trình thiết kế, form báo giá, vật liệu và dự án tiêu biểu.",
-      pill: "HOME",
-      mockTitle: "Không gian mẫu",
-      mockSub: "Portfolio, quy trình, báo giá nhanh.",
-      cardTitle: "Nội thất",
-      cardKind: "Portfolio, báo giá, tư vấn",
-      features: ["Portfolio", "Quy trình", "Báo giá"]
+    spa: {
+      label: "Mẫu đặt lịch",
+      title: "Spa / Thẩm mỹ / Làm đẹp",
+      desc: "Tone cao cấp, mềm, sang: dịch vụ nổi bật, before-after, bảng giá và đặt lịch nhanh.",
+      pill: "SPA",
+      mockTitle: "Liệu trình cao cấp",
+      mockSub: "Dịch vụ, before-after, bảng giá, lịch hẹn.",
+      cardTitle: "Spa / Làm đẹp",
+      cardKind: "Sang, mềm, đặt lịch",
+      features: ["Before-after", "Bảng giá", "Đặt lịch"]
+    },
+    restaurant: {
+      label: "Mẫu local business",
+      title: "Nhà hàng / Quán / Local business",
+      desc: "Tone trực quan, giàu hình ảnh: món nổi bật, menu, không gian, bản đồ và CTA đặt bàn/gọi món.",
+      pill: "LOCAL",
+      mockTitle: "Món nổi bật hôm nay",
+      mockSub: "Menu nhanh, không gian, bản đồ, đặt bàn.",
+      cardTitle: "Nhà hàng / Local",
+      cardKind: "Món nổi bật, bản đồ, đặt bàn",
+      features: ["Menu trực quan", "Bản đồ", "Đặt bàn"]
     }
   },
   en: {
-    restaurant: {
-      label: "Homepage demo",
-      title: "Restaurant & Cafe",
-      desc: "Hero offer, quick menu, reservation block, promotion area, and customer reviews.",
-      pill: "F&B",
-      mockTitle: "Signature dining",
-      mockSub: "Fast booking, featured menu, seasonal combos.",
-      cardTitle: "Restaurant & Cafe",
-      cardKind: "Menu, booking, offers",
-      features: ["Conversion hero", "Featured menu", "Reservation"]
+    company: {
+      label: "Lead-gen demo",
+      title: "Company / Professional Services",
+      desc: "Trustworthy, clean, business-focused: large hero, services, process, clients, and consultation CTA.",
+      pill: "LEAD",
+      mockTitle: "Professional services",
+      mockSub: "Trust hero, clear process, consultation form.",
+      cardTitle: "Company / Services",
+      cardKind: "Trust, process, leads",
+      features: ["Large hero", "Process", "Lead CTA"]
     },
-    realestate: {
-      label: "Homepage demo",
-      title: "Real Estate",
-      desc: "Project hero, listing filter, consultation form, pricing block, and legal summary.",
-      pill: "REAL",
-      mockTitle: "Featured project",
-      mockSub: "Filter demand, capture leads, show pricing.",
-      cardTitle: "Real Estate",
-      cardKind: "Projects, leads, pricing",
-      features: ["Featured project", "Lead form", "Pricing"]
-    },
-    spa: {
-      label: "Homepage demo",
-      title: "Spa & Beauty",
-      desc: "Service hero, treatment table, booking, testimonials, and safety commitments.",
-      pill: "SPA",
-      mockTitle: "Beauty journey",
-      mockSub: "Services, booking, before-after proof.",
-      cardTitle: "Spa & Beauty",
-      cardKind: "Services, booking, proof",
-      features: ["Key services", "Booking", "Reviews"]
+    shop: {
+      label: "Sales demo",
+      title: "Online Shop",
+      desc: "Energetic and easy to buy: promo banner, categories, featured products, feedback, and buy-now CTA.",
+      pill: "SALE",
+      mockTitle: "Today offers",
+      mockSub: "Clear categories, featured products, quick checkout.",
+      cardTitle: "Online Shop",
+      cardKind: "Promo, products, orders",
+      features: ["Sale banner", "Featured products", "Buy now"]
     },
     education: {
-      label: "Homepage demo",
-      title: "Education",
-      desc: "Course intro, opening schedule, teacher block, consultation form, and tuition summary.",
+      label: "Enrollment demo",
+      title: "Education / Courses",
+      desc: "Friendly and inspiring: program intro, benefits, learning path, instructors, and registration form.",
       pill: "EDU",
-      mockTitle: "New courses",
-      mockSub: "Roadmap, schedule, enrollment form.",
-      cardTitle: "Education",
-      cardKind: "Courses, schedule, form",
-      features: ["Courses", "Schedule", "Consultation"]
+      mockTitle: "New learning path",
+      mockSub: "Program, benefits, instructors, enrollment.",
+      cardTitle: "Education / Courses",
+      cardKind: "Roadmap, teachers, signup",
+      features: ["Learning path", "Instructors", "Signup"]
     },
-    interior: {
-      label: "Homepage demo",
-      title: "Interior",
-      desc: "Project portfolio, design process, quote form, material highlights, and featured work.",
-      pill: "HOME",
-      mockTitle: "Living concept",
-      mockSub: "Portfolio, process, quick quote.",
-      cardTitle: "Interior",
-      cardKind: "Portfolio, quote, consult",
-      features: ["Portfolio", "Process", "Quote"]
+    spa: {
+      label: "Booking demo",
+      title: "Spa / Beauty",
+      desc: "Premium, soft, elegant: featured services, before-after proof, pricing, and appointment booking.",
+      pill: "SPA",
+      mockTitle: "Premium treatment",
+      mockSub: "Services, before-after, pricing, booking.",
+      cardTitle: "Spa / Beauty",
+      cardKind: "Elegant, soft, booking",
+      features: ["Before-after", "Pricing", "Booking"]
+    },
+    restaurant: {
+      label: "Local business demo",
+      title: "Restaurant / Local Business",
+      desc: "Visual and image-rich: featured dishes, menu, space, map, and reservation/order CTA.",
+      pill: "LOCAL",
+      mockTitle: "Today signature dish",
+      mockSub: "Quick menu, space, map, reservation.",
+      cardTitle: "Restaurant / Local",
+      cardKind: "Food, map, booking",
+      features: ["Visual menu", "Map", "Reservation"]
     }
   }
 };
 
-let activeWebDemo = "restaurant";
+let activeWebDemo = "company";
 const webDemoButtons = Array.from(document.querySelectorAll("[data-web-demo]"));
 const webDemoFrame = document.getElementById("webDemoFrame");
 const webDemoLabel = document.getElementById("webDemoLabel");
@@ -463,11 +465,12 @@ const webDemoFeatures = document.getElementById("webDemoFeatures");
 const webDemoPill = document.getElementById("webDemoPill");
 const webDemoMockTitle = document.getElementById("webDemoMockTitle");
 const webDemoMockSub = document.getElementById("webDemoMockSub");
+const webDemoViewLink = document.getElementById("webDemoViewLink");
 
 function renderWebDemo(nextId) {
   if (nextId) activeWebDemo = nextId;
   const demos = WEB_DEMOS[lang] || WEB_DEMOS.vi;
-  const item = demos[activeWebDemo] || demos.restaurant;
+  const item = demos[activeWebDemo] || demos.company;
   if (!item || !webDemoTitle) return;
 
   webDemoButtons.forEach((button) => {
@@ -476,8 +479,11 @@ function renderWebDemo(nextId) {
     button.classList.toggle("active", id === activeWebDemo);
     const name = button.querySelector(".web-demo-industry-name");
     const kind = button.querySelector(".web-demo-industry-kind");
+    const link = button.querySelector(".web-demo-card-link");
     if (name && buttonItem) name.textContent = buttonItem.cardTitle;
     if (kind && buttonItem) kind.textContent = buttonItem.cardKind;
+    if (link) link.textContent = t("web_demo_view");
+    button.setAttribute("aria-current", id === activeWebDemo ? "true" : "false");
   });
 
   if (webDemoFrame) webDemoFrame.className = `web-demo-browser is-${activeWebDemo}`;
@@ -490,10 +496,15 @@ function renderWebDemo(nextId) {
   if (webDemoFeatures) {
     webDemoFeatures.innerHTML = item.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
   }
+  if (webDemoViewLink) {
+    webDemoViewLink.href = `/web-demo/${encodeURIComponent(activeWebDemo)}`;
+    webDemoViewLink.textContent = t("web_demo_view");
+  }
 }
 
 webDemoButtons.forEach((button) => {
-  button.addEventListener("click", () => renderWebDemo(button.dataset.webDemo));
+  button.addEventListener("mouseenter", () => renderWebDemo(button.dataset.webDemo));
+  button.addEventListener("focus", () => renderWebDemo(button.dataset.webDemo));
 });
 
 function applyLang(){

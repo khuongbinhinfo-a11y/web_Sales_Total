@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mẫu web demo | Ứng Dụng Thông Minh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/web-demo-detail.css" />
+  </head>
+  <body class="demo-page" data-demo="company" data-template="company">
+    <header class="demo-header">
+      <div class="demo-container demo-header-inner">
+        <a class="logo" href="/#top" aria-label="Về trang chủ">
+          <img class="logo-img" src="/logo_2.png" alt="Logo" />
+        </a>
+        <nav class="demo-header-nav" aria-label="Điều hướng demo">
+          <a href="/#web-demo">Mẫu web demo</a>
+          <a href="/#catalog">Sản phẩm</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="demo-hero">
+        <div class="demo-container demo-hero-grid">
+          <div class="demo-hero-copy">
+            <a class="demo-back" href="/#web-demo">&larr; Quay lại danh sách mẫu</a>
+            <span class="demo-eyebrow" id="demoEyebrow">Mẫu web demo</span>
+            <h1 id="demoTitle">Thiết Kế Web Chuyên Nghiệp</h1>
+            <p id="demoDesc">Mẫu trang web demo được dựng sẵn bố cục, nội dung và khu chuyển đổi cho từng ngành.</p>
+            <div class="demo-actions">
+              <a class="demo-primary" href="#demoContact" id="demoPrimary">Tư vấn mẫu này</a>
+              <a class="demo-secondary" href="#demoSections">Xem bố cục</a>
+            </div>
+            <div class="demo-stats" id="demoStats"></div>
+          </div>
+
+          <figure class="demo-visual">
+            <img src="/web-demo-photo.jpg" alt="" />
+            <figcaption id="demoVisualCaption">Khung preview web thực tế</figcaption>
+            <div class="demo-browser-card" aria-hidden="true">
+              <div class="demo-browser-top"><span></span><span></span><span></span></div>
+              <strong id="demoMockBrand">Demo Brand</strong>
+              <p id="demoMockLine">Hero, danh mục, form tư vấn và CTA.</p>
+              <div class="demo-browser-grid" id="demoMockItems"></div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <nav class="demo-switch" aria-label="Chọn mẫu web demo">
+        <div class="demo-container" id="demoSwitch"></div>
+      </nav>
+
+      <section class="demo-live-section">
+        <div class="demo-container">
+          <div class="demo-section-head">
+            <span>Preview hướng thiết kế</span>
+            <h2 id="demoLiveTitle">Một bố cục riêng cho từng mục tiêu</h2>
+          </div>
+          <div class="demo-live-preview" id="demoLivePreview" aria-label="Preview mẫu web"></div>
+        </div>
+      </section>
+
+      <section class="demo-section" id="demoSections">
+        <div class="demo-container">
+          <div class="demo-section-head">
+            <span>Bố cục trang mẫu</span>
+            <h2 id="demoSectionTitle">Các khối nội dung chính</h2>
+          </div>
+          <div class="demo-card-grid" id="demoCards"></div>
+        </div>
+      </section>
+
+      <section class="demo-flow-section">
+        <div class="demo-container demo-flow-grid">
+          <div class="demo-flow-copy">
+            <span>Luồng chuyển đổi</span>
+            <h2 id="demoFlowTitle">Từ xem nội dung đến để lại thông tin</h2>
+            <p id="demoFlowDesc">Mỗi mẫu ưu tiên bố cục rõ, CTA nổi bật và form liên hệ gọn để khách hàng thao tác nhanh.</p>
+          </div>
+          <div class="demo-flow-list" id="demoFlowList"></div>
+        </div>
+      </section>
+
+      <section class="demo-contact" id="demoContact">
+        <div class="demo-container demo-contact-box">
+          <div>
+            <span>Mẫu web demo</span>
+            <h2 id="demoContactTitle">Muốn triển khai mẫu này?</h2>
+            <p id="demoContactText">Gửi yêu cầu, đội ngũ sẽ điều chỉnh màu sắc, nội dung và chức năng theo ngành của bạn.</p>
+          </div>
+          <a href="/#catalog" id="demoContactCta">Xem gói triển khai</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/web-demo-detail.js"></script>
+  </body>
+</html>

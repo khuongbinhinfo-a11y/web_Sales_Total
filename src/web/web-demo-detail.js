@@ -1,0 +1,346 @@
+const DEMO_DATA = {
+  company: {
+    name: "Công ty / Dịch vụ chuyên nghiệp",
+    brand: "Nova Consulting",
+    template: "company",
+    eyebrow: "Mẫu web công ty / dịch vụ",
+    title: "Website tin cậy để lấy lead tư vấn",
+    desc: "Hướng này hợp với công ty dịch vụ, agency, tư vấn, luật, kế toán hoặc B2B. Trọng tâm là uy tín, quy trình rõ và form nhận tư vấn.",
+    primary: "Tư vấn mẫu công ty",
+    caption: "Tone xanh đậm / trắng / xám",
+    liveTitle: "Hero doanh nghiệp, dịch vụ, quy trình và form lead",
+    stats: [["Tin cậy", "tone sạch, chuyên nghiệp"], ["Lead", "CTA nhận tư vấn nổi bật"], ["Quy trình", "giảm băn khoăn trước khi liên hệ"]],
+    cards: [
+      ["Hero lớn", "Nêu lời hứa chính, ngành phục vụ, bằng chứng tin cậy và CTA đặt lịch tư vấn."],
+      ["Dịch vụ cốt lõi", "3-6 dịch vụ chính, mỗi dịch vụ có lợi ích cụ thể và nút xem chi tiết."],
+      ["Quy trình làm việc", "Các bước khảo sát, tư vấn, triển khai, bàn giao để khách thấy rõ cách hợp tác."],
+      ["Khách hàng / case", "Logo khách hàng, số liệu hoặc case study ngắn để tăng độ tin cậy."],
+      ["FAQ trước khi liên hệ", "Giải đáp thời gian, chi phí, cách làm, bảo hành và phạm vi triển khai."],
+      ["Form lấy lead", "Form ngắn gồm nhu cầu, ngân sách, số điện thoại và thời gian muốn được gọi."]
+    ],
+    flowTitle: "Từ niềm tin đến form tư vấn",
+    flowDesc: "Mẫu công ty không cần quá màu mè. Cần làm khách thấy yên tâm, hiểu dịch vụ và để lại thông tin.",
+    flow: [
+      ["Tạo tin cậy", "Hero, số liệu và khách hàng tiêu biểu trả lời câu hỏi 'có đáng tin không?'."],
+      ["Làm rõ năng lực", "Dịch vụ và quy trình giúp khách hiểu công ty giải quyết vấn đề gì."],
+      ["Chốt lead", "CTA và form được đặt sau các bằng chứng để tỷ lệ gửi yêu cầu cao hơn."]
+    ],
+    contactTitle: "Muốn làm mẫu web công ty theo ngành của bạn?",
+    contactText: "Có thể đổi thành web luật, kế toán, agency, tư vấn doanh nghiệp hoặc dịch vụ kỹ thuật với màu xanh đậm / trắng / xám."
+  },
+  shop: {
+    name: "Shop bán hàng",
+    brand: "Urban Goods",
+    template: "shop",
+    eyebrow: "Mẫu web shop bán hàng",
+    title: "Trang bán hàng năng động để chốt đơn nhanh",
+    desc: "Hướng này dành cho shop online, cửa hàng mỹ phẩm, thời trang, phụ kiện hoặc hàng tiêu dùng. Trọng tâm là khuyến mãi, danh mục, sản phẩm và mua ngay.",
+    primary: "Tư vấn mẫu shop",
+    caption: "Tone năng động, màu theo ngành hàng",
+    liveTitle: "Banner sale, danh mục, sản phẩm nổi bật và CTA mua ngay",
+    stats: [["Sale", "banner khuyến mãi đầu trang"], ["Sản phẩm", "grid dễ quét và dễ mua"], ["Đơn hàng", "CTA mua ngay lặp lại đúng chỗ"]],
+    cards: [
+      ["Banner khuyến mãi", "Hiển thị ưu đãi, mã giảm giá, bộ sưu tập mới và thời hạn khuyến mãi."],
+      ["Danh mục nhanh", "Cho khách đi thẳng tới nhóm sản phẩm họ quan tâm."],
+      ["Sản phẩm nổi bật", "Card sản phẩm có ảnh, giá, tag bán chạy và nút mua ngay."],
+      ["Combo / bundle", "Gợi ý mua kèm để tăng giá trị đơn hàng."],
+      ["Feedback khách mua", "Review, ảnh thật, số đơn đã bán và cam kết đổi trả."],
+      ["CTA chốt đơn", "Nút mua ngay, chat tư vấn và giỏ hàng dễ thấy trên mobile."]
+    ],
+    flowTitle: "Từ thấy ưu đãi đến bấm mua",
+    flowDesc: "Mẫu shop nên giảm số bước ra quyết định: thấy deal, lọc danh mục, xem sản phẩm, mua ngay.",
+    flow: [
+      ["Kích hoạt nhu cầu", "Banner sale và sản phẩm nổi bật tạo lý do xem tiếp."],
+      ["Giảm ma sát", "Danh mục, giá và lợi ích sản phẩm phải đọc được trong vài giây."],
+      ["Chốt đơn", "CTA mua ngay, chat và giỏ hàng luôn ở vị trí dễ thao tác."]
+    ],
+    contactTitle: "Muốn có shop bán hàng dễ chốt đơn?",
+    contactText: "Có thể đổi màu theo ngành hàng, thêm sản phẩm, combo, giỏ hàng, thanh toán và luồng chat tư vấn."
+  },
+  education: {
+    name: "Giáo dục / Khóa học",
+    brand: "Bright Edu",
+    template: "education",
+    eyebrow: "Mẫu web giáo dục / khóa học",
+    title: "Trang khóa học truyền cảm hứng để tăng đăng ký",
+    desc: "Hướng này phù hợp trung tâm, khóa học online, lớp kỹ năng hoặc đào tạo nội bộ. Trọng tâm là chương trình, lợi ích, lộ trình, giảng viên và đăng ký học.",
+    primary: "Tư vấn mẫu giáo dục",
+    caption: "Tone sáng, trẻ, thân thiện",
+    liveTitle: "Chương trình, lợi ích, roadmap học và form đăng ký",
+    stats: [["Lộ trình", "học gì theo từng giai đoạn"], ["Giảng viên", "tăng niềm tin"], ["Đăng ký", "form tư vấn / ghi danh rõ ràng"]],
+    cards: [
+      ["Giới thiệu chương trình", "Nêu mục tiêu khóa học, đối tượng phù hợp và đầu ra sau khi hoàn thành."],
+      ["Lợi ích học viên", "Chuyển tính năng khóa học thành kết quả cụ thể cho người học."],
+      ["Lộ trình học", "Chia tuần / module để học viên hình dung tiến độ."],
+      ["Giảng viên", "Ảnh, kinh nghiệm, chứng chỉ và phong cách giảng dạy."],
+      ["Lịch khai giảng", "Ca học, ngày mở lớp, số chỗ còn lại và học phí."],
+      ["Form đăng ký", "Thu tên, số điện thoại, độ tuổi/lớp và khung giờ tư vấn."]
+    ],
+    flowTitle: "Từ cảm hứng học đến đăng ký",
+    flowDesc: "Mẫu giáo dục cần tạo động lực, giải thích lộ trình và làm form đăng ký đủ thân thiện.",
+    flow: [
+      ["Gợi cảm hứng", "Hero và lợi ích giúp người học thấy mình phù hợp."],
+      ["Làm rõ lộ trình", "Roadmap và giảng viên trả lời câu hỏi 'học như thế nào?'."],
+      ["Ghi danh", "Lịch học và form đăng ký giúp chuyển nhu cầu thành hành động."]
+    ],
+    contactTitle: "Muốn có trang khóa học riêng?",
+    contactText: "Có thể thêm khóa học, giáo viên, lịch khai giảng, học phí, form kiểm tra đầu vào và CRM tuyển sinh."
+  },
+  spa: {
+    name: "Spa / Thẩm mỹ / Làm đẹp",
+    brand: "Maison Glow",
+    template: "spa",
+    eyebrow: "Mẫu web spa / làm đẹp",
+    title: "Trang làm đẹp cao cấp để khách đặt lịch",
+    desc: "Hướng này dành cho spa, clinic, salon hoặc dịch vụ làm đẹp. Trọng tâm là cảm giác sang, dịch vụ nổi bật, before-after, bảng giá và đặt lịch.",
+    primary: "Tư vấn mẫu spa",
+    caption: "Tone nude / tím nhạt / champagne",
+    liveTitle: "Dịch vụ nổi bật, before-after, bảng giá và booking",
+    stats: [["Sang", "không gian mềm và cao cấp"], ["Chứng thực", "before-after / feedback"], ["Booking", "đặt lịch nhanh sau khi xem giá"]],
+    cards: [
+      ["Dịch vụ nổi bật", "Nêu liệu trình chủ lực, lợi ích và thời lượng."],
+      ["Before-after", "Khu bằng chứng trực quan giúp khách tin tưởng hơn."],
+      ["Bảng giá", "Gói dịch vụ rõ, có ưu đãi và combo chăm sóc."],
+      ["Đội ngũ chuyên viên", "Tăng độ an tâm bằng kinh nghiệm và tiêu chuẩn an toàn."],
+      ["Feedback khách", "Review nhẹ nhàng, sang, tập trung trải nghiệm và kết quả."],
+      ["Đặt lịch", "Form ngày giờ, dịch vụ quan tâm, số điện thoại và kênh xác nhận."]
+    ],
+    flowTitle: "Từ xem kết quả đến đặt lịch",
+    flowDesc: "Mẫu spa cần mềm và sang, nhưng CTA đặt lịch vẫn phải đủ rõ để không bị chỉ đẹp mà không chuyển đổi.",
+    flow: [
+      ["Gợi mong muốn", "Dịch vụ và hình ảnh tạo cảm giác được chăm sóc."],
+      ["Tạo niềm tin", "Before-after, feedback và chuyên viên giảm rủi ro cảm nhận."],
+      ["Đặt lịch", "Bảng giá và form booking đặt ngay cạnh nhau để khách hành động."]
+    ],
+    contactTitle: "Muốn có mẫu web spa sang hơn?",
+    contactText: "Có thể thêm ảnh dịch vụ, bảng giá, feedback, booking online và nội dung theo màu thương hiệu của spa."
+  },
+  restaurant: {
+    name: "Nhà hàng / Quán / Local business",
+    brand: "Bếp Mộc",
+    template: "restaurant",
+    eyebrow: "Mẫu web nhà hàng / local business",
+    title: "Trang địa phương giàu hình ảnh để khách ghé quán",
+    desc: "Hướng này dành cho nhà hàng, cafe, quán ăn, showroom hoặc local business. Trọng tâm là món nổi bật, menu, không gian, bản đồ và đặt bàn/gọi món.",
+    primary: "Tư vấn mẫu nhà hàng",
+    caption: "Tone ấm, đậm, giàu hình ảnh",
+    liveTitle: "Món nổi bật, menu, không gian, bản đồ và đặt bàn",
+    stats: [["Hình ảnh", "món / không gian nổi bật"], ["Menu", "dễ xem trên mobile"], ["Ghé quán", "bản đồ, hotline, đặt bàn"]],
+    cards: [
+      ["Món nổi bật", "Hero dùng ảnh món chính, ưu đãi hôm nay và CTA đặt bàn/gọi món."],
+      ["Menu trực quan", "Nhóm món, giá, món bán chạy và tag cay/chay/đặc biệt."],
+      ["Không gian quán", "Ảnh bàn ghế, khu check-in, phòng riêng hoặc không gian gia đình."],
+      ["Bản đồ / giờ mở cửa", "Địa chỉ, giờ hoạt động, chỉ đường và khu vực giao hàng."],
+      ["Đánh giá khách", "Review ngắn, ảnh thật và điểm nổi bật của dịch vụ."],
+      ["Đặt bàn / gọi món", "Form đặt bàn, nút gọi nhanh và link chat."]
+    ],
+    flowTitle: "Từ thèm món đến ghé cửa hàng",
+    flowDesc: "Mẫu local business nên trực quan, ít chữ, ưu tiên ảnh và các hành động ngay: gọi, đặt bàn, xem bản đồ.",
+    flow: [
+      ["Kích thích thị giác", "Món nổi bật và không gian tạo lý do muốn đến."],
+      ["Giúp chọn nhanh", "Menu rõ giá giúp khách quyết định trước khi gọi hoặc ghé."],
+      ["Dẫn đường", "Bản đồ, hotline và đặt bàn đưa khách tới hành động thực tế."]
+    ],
+    contactTitle: "Muốn có mẫu web quán / local business?",
+    contactText: "Có thể thêm menu thật, ảnh quán, bản đồ, đặt bàn, giao hàng và nút gọi nhanh trên mobile."
+  }
+};
+
+const ids = ["company", "shop", "education", "spa", "restaurant"];
+const slug = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "company");
+const activeId = DEMO_DATA[slug] ? slug : "company";
+const active = DEMO_DATA[activeId];
+
+document.body.dataset.demo = activeId;
+document.body.dataset.template = active.template;
+document.title = `${active.name} | Mẫu web demo`;
+
+const setText = (id, text) => {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+};
+
+const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[char]));
+
+const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
+
+function renderLivePreview(item) {
+  const el = document.getElementById("demoLivePreview");
+  if (!el) return;
+
+  if (item.template === "company") {
+    el.innerHTML = `
+      <div class="live-company">
+        <div class="live-company-hero">
+          <span>Trusted Advisory</span>
+          <h3>Giải pháp vận hành cho doanh nghiệp tăng trưởng</h3>
+          <p>Đội ngũ chuyên gia, quy trình minh bạch, báo cáo rõ ràng.</p>
+          <a href="#demoContact">Nhận tư vấn</a>
+        </div>
+        <div class="live-company-form">
+          <strong>Form lấy lead</strong>
+          <label>Nhu cầu tư vấn</label>
+          <label>Ngân sách dự kiến</label>
+          <label>Số điện thoại</label>
+          <button>Gửi yêu cầu</button>
+        </div>
+        <div class="live-company-row">
+          ${["Dịch vụ", "Quy trình", "Khách hàng", "Case study"].map((text) => `<span>${text}</span>`).join("")}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (item.template === "shop") {
+    el.innerHTML = `
+      <div class="live-shop">
+        <div class="live-shop-banner">
+          <span>SALE 35%</span>
+          <h3>Bộ sưu tập mới trong tuần</h3>
+          <a href="#demoContact">Mua ngay</a>
+        </div>
+        <div class="live-shop-cats">${renderList(["Áo", "Túi", "Mỹ phẩm", "Phụ kiện"])}</div>
+        <div class="live-shop-grid">
+          ${["Bán chạy", "Combo", "Mới về", "Ưu đãi"].map((text, index) => `
+            <article>
+              <b>${text}</b>
+              <small>${index % 2 ? "299K" : "199K"}</small>
+              <button>Thêm giỏ</button>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (item.template === "education") {
+    el.innerHTML = `
+      <div class="live-education">
+        <div class="live-edu-intro">
+          <span>Khóa học 8 tuần</span>
+          <h3>Từ nền tảng đến dự án thực tế</h3>
+          <p>Học theo lộ trình, có mentor và bài tập ứng dụng.</p>
+        </div>
+        <div class="live-edu-roadmap">
+          ${["Nền tảng", "Thực hành", "Dự án", "Đánh giá"].map((text, index) => `
+            <article><b>${index + 1}</b><span>${text}</span></article>
+          `).join("")}
+        </div>
+        <div class="live-edu-signup">
+          <strong>Đăng ký tư vấn</strong>
+          <button>Giữ chỗ học thử</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (item.template === "spa") {
+    el.innerHTML = `
+      <div class="live-spa">
+        <div class="live-spa-hero">
+          <span>Maison Glow</span>
+          <h3>Liệu trình phục hồi da chuyên sâu</h3>
+        </div>
+        <div class="live-spa-before">
+          <div>Before</div>
+          <div>After</div>
+        </div>
+        <div class="live-spa-pricing">
+          ${["Glow Basic", "Premium Lift", "Bridal Care"].map((text) => `<article><b>${text}</b><span>Đặt lịch</span></article>`).join("")}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="live-restaurant">
+      <div class="live-restaurant-hero">
+        <span>Món hôm nay</span>
+        <h3>Cơm niêu cá kho & set gia đình</h3>
+        <a href="#demoContact">Đặt bàn</a>
+      </div>
+      <div class="live-restaurant-menu">
+        ${["Món chính", "Đồ uống", "Combo", "Tráng miệng"].map((text) => `<article><b>${text}</b><span>từ 59K</span></article>`).join("")}
+      </div>
+      <div class="live-restaurant-map">
+        <strong>Bản đồ & giờ mở cửa</strong>
+        <p>10:00 - 22:00 | Gọi đặt bàn nhanh</p>
+      </div>
+    </div>
+  `;
+}
+
+setText("demoEyebrow", active.eyebrow);
+setText("demoTitle", active.title);
+setText("demoDesc", active.desc);
+setText("demoPrimary", active.primary);
+setText("demoVisualCaption", active.caption);
+setText("demoMockBrand", active.brand);
+setText("demoMockLine", active.desc);
+setText("demoLiveTitle", active.liveTitle);
+setText("demoSectionTitle", `Bố cục riêng cho ${active.name}`);
+setText("demoFlowTitle", active.flowTitle);
+setText("demoFlowDesc", active.flowDesc);
+setText("demoContactTitle", active.contactTitle);
+setText("demoContactText", active.contactText);
+
+const switchEl = document.getElementById("demoSwitch");
+if (switchEl) {
+  switchEl.innerHTML = ids.map((id) => {
+    const item = DEMO_DATA[id];
+    const current = id === activeId ? " active" : "";
+    const aria = id === activeId ? ' aria-current="page"' : "";
+    return `<a class="${current.trim()}" href="/web-demo/${id}"${aria}>${escapeHtml(item.name)}</a>`;
+  }).join("");
+}
+
+const statsEl = document.getElementById("demoStats");
+if (statsEl) {
+  statsEl.innerHTML = active.stats.map(([value, label]) => `
+    <div class="demo-stat">
+      <strong>${escapeHtml(value)}</strong>
+      <span>${escapeHtml(label)}</span>
+    </div>
+  `).join("");
+}
+
+const mockItemsEl = document.getElementById("demoMockItems");
+if (mockItemsEl) {
+  mockItemsEl.innerHTML = active.cards.slice(0, 6).map(() => "<span></span>").join("");
+}
+
+const cardsEl = document.getElementById("demoCards");
+if (cardsEl) {
+  cardsEl.innerHTML = active.cards.map(([title, text], index) => `
+    <article class="demo-card">
+      <b>${String(index + 1).padStart(2, "0")}</b>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(text)}</p>
+    </article>
+  `).join("");
+}
+
+const flowEl = document.getElementById("demoFlowList");
+if (flowEl) {
+  flowEl.innerHTML = active.flow.map(([title, text], index) => `
+    <article class="demo-flow-item">
+      <span>${index + 1}</span>
+      <div>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(text)}</p>
+      </div>
+    </article>
+  `).join("");
+}
+
+renderLivePreview(active);

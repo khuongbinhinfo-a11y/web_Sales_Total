@@ -2825,6 +2825,14 @@ app.get("/pricing", (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
+app.get("/web-demo", (req, res) => {
+  res.redirect("/#web-demo");
+});
+
+app.get("/web-demo/:id", (req, res) => {
+  res.sendFile(path.join(webRoot, "web-demo-detail.html"));
+});
+
 app.get("/portal", requirePortalAuth, (req, res) => {
   res.sendFile(path.join(webRoot, "portal.html"));
 });
