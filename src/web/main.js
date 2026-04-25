@@ -1002,7 +1002,10 @@ function renderBanner(){
   track.innerHTML = items.join("") + items.join("");
 
   // step-scroll with pause
-  const cardW = 280 + 20; // card width + gap
+  const firstCard = track.querySelector(".banner-card");
+  const trackStyles = window.getComputedStyle(track);
+  const cardGap = parseFloat(trackStyles.columnGap || trackStyles.gap || "0") || 0;
+  const cardW = firstCard ? firstCard.getBoundingClientRect().width + cardGap : 300;
   const total = allProducts.length;
   let step = 0;
   let paused = false;
