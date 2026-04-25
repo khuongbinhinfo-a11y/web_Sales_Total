@@ -36,7 +36,7 @@ const DEMO_DATA = {
     eyebrow: "Mẫu web shop bán hàng",
     title: "Trang bán hàng năng động để chốt đơn nhanh",
     desc: "Hướng này dành cho shop online, cửa hàng mỹ phẩm, thời trang, phụ kiện hoặc hàng tiêu dùng. Trọng tâm là khuyến mãi, danh mục, sản phẩm và mua ngay.",
-    image: "/web-demo-photo.jpg",
+    image: "/web-demo-shop-hero.png",
     primary: "Tư vấn mẫu shop",
     caption: "Tone năng động, màu theo ngành hàng",
     liveTitle: "Banner sale, danh mục, sản phẩm nổi bật và CTA mua ngay",
@@ -175,9 +175,80 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 
 const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
 
+function renderShopPreview() {
+  const shopItems = [
+    { badge: "Ban chay", title: "Tui xach premium", price: "650K", image: "/web-demo-shop-item-bag.png" },
+    { badge: "Moi ve", title: "Bo skincare", price: "320K", image: "/web-demo-shop-item-skincare.png" },
+    { badge: "Combo", title: "Set thoi trang", price: "790K", image: "/web-demo-shop-item-fashion.png" },
+    { badge: "Uu dai", title: "Gift box", price: "480K", image: "/web-demo-shop-bundle.png" }
+  ];
+
+  return `
+    <div class="live-shop">
+      <article class="live-shop-banner">
+        <img src="/web-demo-shop-hero.png" alt="Giao dien shop voi banner sale va san pham noi bat" loading="lazy">
+        <div class="live-shop-banner-overlay"></div>
+        <div class="live-shop-banner-copy">
+          <span>Mid-season sale</span>
+          <h3>Bo suu tap moi dang len ke</h3>
+          <p>Uu dai thoi trang va my pham den 50%, bo cuc de quet de mua.</p>
+          <a href="#demoContact">Mua ngay</a>
+        </div>
+      </article>
+      <div class="live-shop-cats">
+        ${[
+          ["Thoi trang nu", "/web-demo-shop-item-fashion.png"],
+          ["Tui xach", "/web-demo-shop-item-bag.png"],
+          ["My pham", "/web-demo-shop-item-skincare.png"],
+          ["Combo qua", "/web-demo-shop-bundle.png"]
+        ].map(([label, image]) => `
+          <span>
+            <img src="${image}" alt="${label}" loading="lazy">
+            <em>${label}</em>
+          </span>
+        `).join("")}
+      </div>
+      <div class="live-shop-grid">
+        ${shopItems.map((card) => `
+          <article>
+            <figure>
+              <img src="${card.image}" alt="${card.title}" loading="lazy">
+            </figure>
+            <b>${card.badge}</b>
+            <h4>${card.title}</h4>
+            <small>${card.price}</small>
+            <button>Them gio</button>
+          </article>
+        `).join("")}
+      </div>
+      <div class="live-shop-proof">
+        <article class="live-shop-proof-bundle">
+          <img src="/web-demo-shop-bundle.png" alt="Combo san pham de tang gia tri don hang" loading="lazy">
+          <div>
+            <strong>Combo de chot don</strong>
+            <p>Goi y mua kem giup tang gia tri moi don va day nhanh quyet dinh mua.</p>
+          </div>
+        </article>
+        <article class="live-shop-proof-feedback">
+          <img src="/web-demo-shop-feedback.png" alt="Anh khach mua thuc te sau khi nhan hang" loading="lazy">
+          <div>
+            <strong>Feedback khach mua that</strong>
+            <p>Review kem anh that tao niem tin va giup trang shop chuyen doi tot hon.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
 function renderLivePreview(item) {
   const el = document.getElementById("demoLivePreview");
   if (!el) return;
+
+  if (item.template === "shop") {
+    el.innerHTML = renderShopPreview();
+    return;
+  }
 
   if (item.template === "company") {
     el.innerHTML = `
@@ -201,29 +272,6 @@ function renderLivePreview(item) {
         </div>
         <div class="live-company-row">
           ${["Dịch vụ", "Quy trình", "Khách hàng", "Case study"].map((text) => `<span>${text}</span>`).join("")}
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  if (item.template === "shop") {
-    el.innerHTML = `
-      <div class="live-shop">
-        <div class="live-shop-banner">
-          <span>SALE 35%</span>
-          <h3>Bộ sưu tập mới trong tuần</h3>
-          <a href="#demoContact">Mua ngay</a>
-        </div>
-        <div class="live-shop-cats">${renderList(["Áo", "Túi", "Mỹ phẩm", "Phụ kiện"])}</div>
-        <div class="live-shop-grid">
-          ${["Bán chạy", "Combo", "Mới về", "Ưu đãi"].map((text, index) => `
-            <article>
-              <b>${text}</b>
-              <small>${index % 2 ? "299K" : "199K"}</small>
-              <button>Thêm giỏ</button>
-            </article>
-          `).join("")}
         </div>
       </div>
     `;

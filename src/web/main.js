@@ -456,6 +456,13 @@ const WEB_DEMOS = {
 };
 
 let activeWebDemo = "company";
+const WEB_DEMO_IMAGES = {
+  company: "/web-demo-company.jpg",
+  shop: "/web-demo-shop-hero.png",
+  education: "/web-demo-photo.jpg",
+  spa: "/web-demo-photo.jpg",
+  restaurant: "/web-demo-photo.jpg"
+};
 const webDemoButtons = Array.from(document.querySelectorAll("[data-web-demo]"));
 const webDemoFrame = document.getElementById("webDemoFrame");
 const webDemoLabel = document.getElementById("webDemoLabel");
@@ -465,6 +472,7 @@ const webDemoFeatures = document.getElementById("webDemoFeatures");
 const webDemoPill = document.getElementById("webDemoPill");
 const webDemoMockTitle = document.getElementById("webDemoMockTitle");
 const webDemoMockSub = document.getElementById("webDemoMockSub");
+const webDemoImage = document.getElementById("webDemoImage");
 const webDemoViewLink = document.getElementById("webDemoViewLink");
 
 function renderWebDemo(nextId) {
@@ -493,6 +501,10 @@ function renderWebDemo(nextId) {
   if (webDemoPill) webDemoPill.textContent = item.pill;
   if (webDemoMockTitle) webDemoMockTitle.textContent = item.mockTitle;
   if (webDemoMockSub) webDemoMockSub.textContent = item.mockSub;
+  if (webDemoImage) {
+    webDemoImage.src = WEB_DEMO_IMAGES[activeWebDemo] || "/web-demo-photo.jpg";
+    webDemoImage.alt = item.title;
+  }
   if (webDemoFeatures) {
     webDemoFeatures.innerHTML = item.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
   }
