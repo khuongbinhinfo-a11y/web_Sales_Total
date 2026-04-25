@@ -618,6 +618,7 @@ async function activateCustomerLicense({ licenseId, customerId, deviceId, device
     const check = await pool.query(
       `SELECT device_id FROM app_licenses
        WHERE id = $1::uuid AND customer_id = $2
+         AND status <> 'revoked'
          AND (expires_at IS NULL OR expires_at > NOW())`,
       [licenseId, customerId]
     );
@@ -636,6 +637,7 @@ async function activateCustomerLicense({ licenseId, customerId, deviceId, device
          device_name = COALESCE(device_name, $4),
          updated_at = NOW()
      WHERE id = $1::uuid AND customer_id = $2
+       AND status <> 'revoked'
        AND (expires_at IS NULL OR expires_at > NOW())
      RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
@@ -778,13 +780,15 @@ async function deactivateCustomerLicense({ licenseId, customerId }) {
   return mapAppLicense(result.rows[0]);
 }
 
-async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, deviceName }) {
+async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, deviceName, clientProfile }) {
   const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
   if (!normalizedLicenseKey) {
     return null;
   }
 
-  const incomingDeviceId = deviceId ? String(deviceId).trim() : null;
+  // Desktop: enforce 1-machine binding. Web/shared: skip device check so 1 key works on both.
+  const isDesktop = String(clientProfile || "").trim().toLowerCase() === "desktop";
+  const incomingDeviceId = (isDesktop && deviceId) ? String(deviceId).trim() : null;
 
   // Enforce 1-key-1-machine: reject if license is already bound to a different device
   if (incomingDeviceId) {

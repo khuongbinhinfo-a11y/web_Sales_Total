@@ -1083,6 +1083,7 @@ app.post(
     const licenseKey = String(req.body?.licenseKey || "").trim();
     const deviceId = String(req.body?.deviceId || "").trim() || null;
     const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const clientProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
 
     if (!appId || !licenseKey) {
       return res.status(400).json({ message: "appId and licenseKey are required" });
@@ -1093,7 +1094,8 @@ app.post(
       licenseKey,
       customerId,
       deviceId,
-      deviceName
+      deviceName,
+      clientProfile
     });
 
     if (!license) {
@@ -1289,6 +1291,7 @@ app.post(
     const licenseKey = String(req.body?.licenseKey || "").trim();
     const deviceId = String(req.body?.deviceId || "").trim() || null;
     const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const clientProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
 
     if (!appId || !licenseKey) {
       return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
@@ -1299,7 +1302,8 @@ app.post(
       licenseKey,
       customerId,
       deviceId,
-      deviceName
+      deviceName,
+      clientProfile
     });
 
     if (!license) {
