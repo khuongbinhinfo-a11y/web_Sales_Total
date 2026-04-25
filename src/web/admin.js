@@ -1200,9 +1200,27 @@ async function expandCustomerDetail(customerId){
     const orders = snap.orders || [];
     const licenses = snap.licenses || [];
 
+    const licenseByOrderId = new Map(
+      licenses
+        .filter((item) => item && item.orderId && item.licenseKey)
+        .map((item) => [String(item.orderId), String(item.licenseKey)])
+    );
+
+    const renderLicenseKeyCell = (order) => {
+      const key = licenseByOrderId.get(String(order.id || ""));
+      if (!key) {
+        return `<span style="color:var(--muted);font-size:.78rem">Chưa phát sinh key</span>`;
+      }
+      const safeKey = escapeHtml(key);
+      return `<div style="display:flex;gap:6px;align-items:center;justify-content:flex-start">
+        <code style="font-size:.74rem;background:#f8fafc;border:1px solid #e2e8f0;padding:2px 6px;border-radius:6px">${safeKey}</code>
+        <button onclick="navigator.clipboard.writeText('${safeKey}')" class="btn btn-outline" style="padding:1px 6px;font-size:.72rem;min-height:0">Copy</button>
+      </div>`;
+    };
+
     const ordersHtml = orders.length
-      ? `<table class="data-table" style="font-size:.82rem"><thead><tr><th>M\u00e3 \u0111\u01a1n</th><th>App</th><th>S\u1ea3n ph\u1ea9m</th><th>S\u1ed1 ti\u1ec1n</th><th>Tr\u1ea1ng th\u00e1i</th><th>Ng\u00e0y t\u1ea1o</th></tr></thead><tbody>
-        ${orders.map(o=>`<tr><td style="font-family:monospace">${o.orderCode||o.id.slice(0,8)}</td><td>${o.appId}</td><td style="font-size:.78rem">${o.productId}</td><td>${fmtVnd(o.amount)}</td><td>${badge(o.status)}</td><td>${fmtDate(o.createdAt)}</td></tr>`).join("")}
+      ? `<table class="data-table" style="font-size:.82rem"><thead><tr><th>M\u00e3 \u0111\u01a1n</th><th>App</th><th>S\u1ea3n ph\u1ea9m</th><th>License key</th><th>S\u1ed1 ti\u1ec1n</th><th>Tr\u1ea1ng th\u00e1i</th><th>Ng\u00e0y t\u1ea1o</th></tr></thead><tbody>
+        ${orders.map(o=>`<tr><td style="font-family:monospace">${o.orderCode||o.id.slice(0,8)}</td><td>${o.appId}</td><td style="font-size:.78rem">${o.productId}</td><td>${renderLicenseKeyCell(o)}</td><td>${fmtVnd(o.amount)}</td><td>${badge(o.status)}</td><td>${fmtDate(o.createdAt)}</td></tr>`).join("")}
       </tbody></table>`
       : `<p style="color:var(--muted);font-size:.83rem;padding:8px 0">Ch\u01b0a c\u00f3 \u0111\u01a1n h\u00e0ng</p>`;
 
