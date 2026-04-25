@@ -1126,7 +1126,7 @@ function bindCustomerSearch(){
 
   async function doSearch(){
     const q = input.value.trim();
-    if(!q){ if(msg){ msg.textContent="Nh\u1eadp email ho\u1eb7c t\u00ean \u0111\u1ec3 t\u00ecm ki\u1ebfm"; msg.style.color="var(--muted)"; } return; }
+    if(!q){ if(msg){ msg.textContent="Nh\u1eadp email, t\u00ean, m\u00e3 \u0111\u01a1n, key ho\u1eb7c customer ID \u0111\u1ec3 t\u00ecm"; msg.style.color="var(--muted)"; } return; }
     if(msg){ msg.textContent="\u0110ang t\u00ecm..."; msg.style.color="var(--muted)"; }
     try {
       const res = await fetchAdmin(`/api/admin/customers?q=${encodeURIComponent(q)}&limit=50`);

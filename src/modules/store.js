@@ -2113,15 +2113,29 @@ async function upsertRuntimeConfigValue(configKey, configValue) {
 
 async function searchCustomersByEmail(q, limit = 50) {
   const safeLimit = Number.isInteger(limit) && limit > 0 && limit <= 200 ? limit : 50;
-  const pattern = `%${String(q || "").trim().toLowerCase()}%`;
+  const normalizedQuery = String(q || "").trim().toLowerCase();
+  const pattern = `%${normalizedQuery}%`;
+  const compact = normalizedQuery.replace(/[^a-z0-9]/g, "");
+  const compactPattern = compact.length >= 4 ? `%${compact}%` : null;
+
   const result = await pool.query(
-    `SELECT id, email, full_name, created_at
-     FROM customers
-     WHERE LOWER(email) LIKE $1 OR LOWER(full_name) LIKE $1
-     ORDER BY created_at DESC
-     LIMIT $2`,
-    [pattern, safeLimit]
+    `SELECT DISTINCT c.id, c.email, c.full_name, c.created_at
+     FROM customers c
+     LEFT JOIN orders o ON o.customer_id = c.id
+     LEFT JOIN app_licenses al ON al.customer_id = c.id
+     WHERE LOWER(c.email) LIKE $1
+        OR LOWER(c.full_name) LIKE $1
+        OR LOWER(c.id) LIKE $1
+        OR LOWER(COALESCE(c.telegram_username, '')) LIKE $1
+        OR LOWER(COALESCE(o.order_code, '')) LIKE $1
+        OR LOWER(COALESCE(al.license_key, '')) LIKE $1
+        OR ($2::text IS NOT NULL AND REPLACE(LOWER(COALESCE(o.order_code, '')), '-', '') LIKE $2)
+        OR ($2::text IS NOT NULL AND REPLACE(LOWER(COALESCE(al.license_key, '')), '-', '') LIKE $2)
+     ORDER BY c.created_at DESC
+     LIMIT $3`,
+    [pattern, compactPattern, safeLimit]
   );
+
   return result.rows.map((row) => ({
     id: row.id,
     email: row.email,
