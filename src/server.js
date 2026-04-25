@@ -29,6 +29,7 @@ const {
   findAppLicenseByKey,
   findAppLicenseByKeyAdmin,
   verifyAppLicenseByKey,
+  lockAppLicenseStandardGradesByKey,
   getAdminDashboard,
   createCustomerAccount,
   findCustomerByEmail,
@@ -1113,6 +1114,49 @@ app.post(
 );
 
 app.post(
+  "/api/ai-app/licenses/lock-standard-grades",
+  requireAiAppKey,
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim() || null;
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const selectedGrades = Array.isArray(req.body?.selectedGrades) ? req.body.selectedGrades : [];
+    const requiredGradeCount = Number(req.body?.requiredGradeCount || 0);
+
+    if (!appId || !licenseKey) {
+      return res.status(400).json({ message: "appId and licenseKey are required" });
+    }
+
+    const locked = await lockAppLicenseStandardGradesByKey({
+      appId,
+      licenseKey,
+      customerId,
+      selectedGrades,
+      requiredGradeCount
+    });
+
+    if (!locked) {
+      return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
+    }
+    if (locked.gradeMismatch) {
+      return res.status(409).json({
+        ok: false,
+        message: "Key này đã chốt lớp trên hệ thống. Không thể chọn lại lớp khác.",
+        lockedGrades: locked.lockedGrades,
+        requiredGradeCount: locked.requiredGradeCount
+      });
+    }
+
+    return res.json({
+      ok: true,
+      lockedGrades: locked.lockedGrades,
+      requiredGradeCount: locked.requiredGradeCount,
+      license: buildAiAppLicenseView(locked.license)
+    });
+  })
+);
+
+app.post(
   "/api/ai-app/licenses/deactivate",
   requireAiAppKey,
   asyncHandler(async (req, res) => {
@@ -1323,6 +1367,52 @@ app.post(
         features: aiLicense.features,
         grace: aiLicense.grace,
         updateEntitlement
+      }
+    });
+  })
+);
+
+app.post(
+  "/api/v1/ai-app/licenses/lock-standard-grades",
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim() || null;
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const selectedGrades = Array.isArray(req.body?.selectedGrades) ? req.body.selectedGrades : [];
+    const requiredGradeCount = Number(req.body?.requiredGradeCount || 0);
+
+    if (!appId || !licenseKey) {
+      return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
+    }
+
+    const locked = await lockAppLicenseStandardGradesByKey({
+      appId,
+      licenseKey,
+      customerId,
+      selectedGrades,
+      requiredGradeCount
+    });
+
+    if (!locked) {
+      return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
+    }
+    if (locked.gradeMismatch) {
+      return res.status(409).json({
+        success: false,
+        error: "Key này đã chốt lớp trên hệ thống. Không thể chọn lại lớp khác.",
+        data: {
+          lockedGrades: locked.lockedGrades,
+          requiredGradeCount: locked.requiredGradeCount
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        lockedGrades: locked.lockedGrades,
+        requiredGradeCount: locked.requiredGradeCount,
+        license: buildAiAppLicenseView(locked.license)
       }
     });
   })

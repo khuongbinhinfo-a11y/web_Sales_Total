@@ -829,6 +829,148 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
   return mapAppLicense(result.rows[0]);
 }
 
+function normalizeStandardGrades(grades) {
+  if (!Array.isArray(grades)) {
+    return [];
+  }
+
+  const unique = [];
+  for (const item of grades) {
+    const grade = Number(item);
+    if (!Number.isInteger(grade)) {
+      continue;
+    }
+    if (grade < 0 || grade > 12) {
+      continue;
+    }
+    if (!unique.includes(grade)) {
+      unique.push(grade);
+    }
+  }
+  return unique.sort((a, b) => a - b);
+}
+
+function sameGradeSet(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function lockAppLicenseStandardGradesByKey({ appId, licenseKey, customerId, selectedGrades, requiredGradeCount }) {
+  const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
+  const normalizedAppId = String(appId || "").trim();
+  const normalizedSelectedGrades = normalizeStandardGrades(selectedGrades);
+  const normalizedRequired = Number(requiredGradeCount);
+
+  if (!normalizedLicenseKey || !normalizedAppId) {
+    return null;
+  }
+  if (!Number.isInteger(normalizedRequired) || normalizedRequired <= 0) {
+    throw new Error("requiredGradeCount must be a positive integer");
+  }
+  if (normalizedSelectedGrades.length !== normalizedRequired) {
+    throw new Error("selectedGrades does not match requiredGradeCount");
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const params = [normalizedLicenseKey, normalizedAppId];
+    let customerClause = "";
+    if (customerId) {
+      params.push(String(customerId).trim());
+      customerClause = `AND customer_id = $${params.length}`;
+    }
+
+    const checkResult = await client.query(
+      `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+              status, activated_at, expires_at, device_id, device_name, last_verified_at,
+              metadata, created_at, updated_at
+       FROM app_licenses
+       WHERE license_key = $1 AND app_id = $2
+         ${customerClause}
+         AND status <> 'revoked'
+         AND (expires_at IS NULL OR expires_at > NOW())
+       LIMIT 1
+       FOR UPDATE`,
+      params
+    );
+
+    if (checkResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const row = checkResult.rows[0];
+    const metadata = (row.metadata && typeof row.metadata === "object") ? row.metadata : {};
+    const existingGrades = normalizeStandardGrades(metadata.standardGrades);
+    const existingRequired = Number(metadata.standardGradesRequiredCount || 0);
+
+    if (existingGrades.length > 0) {
+      if (!sameGradeSet(existingGrades, normalizedSelectedGrades)) {
+        await client.query("ROLLBACK");
+        return {
+          gradeMismatch: true,
+          lockedGrades: existingGrades,
+          requiredGradeCount: existingRequired > 0 ? existingRequired : existingGrades.length,
+          license: mapAppLicense(row)
+        };
+      }
+
+      await client.query("COMMIT");
+      return {
+        gradeMismatch: false,
+        lockedGrades: existingGrades,
+        requiredGradeCount: existingRequired > 0 ? existingRequired : existingGrades.length,
+        license: mapAppLicense(row)
+      };
+    }
+
+    const nextMetadata = {
+      ...metadata,
+      standardGrades: normalizedSelectedGrades,
+      standardGradesRequiredCount: normalizedRequired,
+      standardGradesLockedAt: new Date().toISOString()
+    };
+
+    const updateResult = await client.query(
+      `UPDATE app_licenses
+       SET metadata = $2::jsonb,
+           updated_at = NOW(),
+           last_verified_at = NOW()
+       WHERE id = $1::uuid
+       RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+                 status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                 metadata, created_at, updated_at`,
+      [row.id, JSON.stringify(nextMetadata)]
+    );
+
+    await client.query("COMMIT");
+    return {
+      gradeMismatch: false,
+      lockedGrades: normalizedSelectedGrades,
+      requiredGradeCount: normalizedRequired,
+      license: mapAppLicense(updateResult.rows[0])
+    };
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // ignore rollback failures
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function consumeUsage({ customerId, appId, featureKey, creditsToConsume, units, requestId, metadata }) {
   if (!customerId || !appId || !featureKey) {
     throw new Error("customerId, appId va featureKey la bat buoc");
@@ -2161,6 +2303,7 @@ module.exports = {
   findAppLicenseByKey,
   findAppLicenseByKeyAdmin,
   verifyAppLicenseByKey,
+  lockAppLicenseStandardGradesByKey,
   getAdminDashboard,
   findOrCreateCustomerByEmail,
   createCustomerAccount,
