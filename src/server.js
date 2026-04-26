@@ -3792,8 +3792,48 @@ function isDatabaseUnavailableError(error) {
   );
 }
 
+function maskLicenseKeyForLog(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.length <= 8) {
+    return `${normalized.slice(0, 2)}***${normalized.slice(-2)}`;
+  }
+  return `${normalized.slice(0, 4)}***${normalized.slice(-4)}`;
+}
+
+function isAiAppLicenseApiPath(pathname) {
+  return Boolean(
+    pathname &&
+    (pathname.startsWith("/api/ai-app/licenses/") || pathname.startsWith("/api/v1/ai-app/licenses/"))
+  );
+}
+
+function buildAiAppLicenseErrorLogContext(req, error) {
+  if (!isAiAppLicenseApiPath(req?.path)) {
+    return null;
+  }
+
+  return {
+    path: req.path,
+    method: req.method,
+    ip: getRequestIp(req),
+    appId: String(req.body?.appId || req.query?.appId || "").trim() || null,
+    customerId: String(req.body?.customerId || req.query?.customerId || "").trim() || null,
+    licenseKeyMasked: maskLicenseKeyForLog(req.body?.licenseKey || req.query?.licenseKey),
+    deviceId: String(req.body?.deviceId || req.query?.deviceId || "").trim() || null,
+    deviceName: String(req.body?.deviceName || req.query?.deviceName || "").trim() || null,
+    clientProfile: String(req.header("x-ai-app-profile") || req.query?.profile || req.body?.clientProfile || "").trim() || null,
+    errorCode: String(error?.code || "").toUpperCase() || null,
+    errorConstraint: String(error?.constraint || "").trim() || null,
+    errorDetail: String(error?.detail || "").trim() || null,
+    errorMessage: String(error?.message || "").trim() || null,
+  };
+}
+
 function resolveAiAppLicenseApiError(error, req, statusCode) {
-  if (!req?.path || (!req.path.startsWith("/api/ai-app/licenses/") && !req.path.startsWith("/api/v1/ai-app/licenses/"))) {
+  if (!isAiAppLicenseApiPath(req?.path)) {
     return null;
   }
 
@@ -3866,6 +3906,10 @@ app.use((error, req, res, next) => {
   }
 
   if (statusCode >= 500) {
+    const aiAppLicenseErrorContext = buildAiAppLicenseErrorLogContext(req, error);
+    if (aiAppLicenseErrorContext) {
+      console.error("[ai-app-license-error]", aiAppLicenseErrorContext);
+    }
     console.error(error);
   }
   res.status(finalStatusCode).json({ message });
