@@ -500,8 +500,10 @@ setText("demoContactText", active.contactText);
 
 const contactCta = document.getElementById("demoContactCta");
 if (contactCta) {
-  contactCta.href = "#demoPricing";
-  contactCta.textContent = "Xem gói triển khai";
+  contactCta.href = "https://zalo.me/0902964685";
+  contactCta.target = "_blank";
+  contactCta.rel = "noopener";
+  contactCta.textContent = "Liên Hệ Tư Vấn";
 }
 
 const heroImage = document.getElementById("demoHeroImage");
