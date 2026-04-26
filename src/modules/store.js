@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const { pool } = require("../db/pool");
 
+const LICENSE_RUNTIME_LEASE_SECONDS = 180;
+
 function generateReadableOrderCode() {
   const timePart = Date.now().toString(36).toUpperCase();
   const randomPart = crypto.randomBytes(2).toString("hex").toUpperCase();
@@ -131,6 +133,113 @@ function mapAppLicense(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+function mapRuntimeLease(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    licenseId: row.license_id,
+    customerId: row.customer_id,
+    appId: row.app_id,
+    clientType: row.client_type,
+    clientId: row.client_id,
+    clientName: row.client_name || null,
+    acquiredAt: row.acquired_at,
+    lastSeenAt: row.last_seen_at,
+    expiresAt: row.expires_at,
+    metadata: row.metadata || {}
+  };
+}
+
+function normalizeRuntimeClientProfile(value) {
+  return String(value || "").trim().toLowerCase() === "desktop" ? "desktop" : "web";
+}
+
+function normalizeRuntimeClientId(deviceId) {
+  const normalized = String(deviceId || "").trim();
+  return normalized || null;
+}
+
+async function findActiveLicenseRuntimeLease(licenseId) {
+  const result = await pool.query(
+    `SELECT license_id, customer_id, app_id, client_type, client_id, client_name,
+            acquired_at, last_seen_at, expires_at, metadata
+     FROM app_license_runtime_leases
+     WHERE license_id = $1::uuid AND expires_at > NOW()
+     LIMIT 1`,
+    [licenseId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapRuntimeLease(result.rows[0]);
+}
+
+async function claimOrRenewLicenseRuntimeLease({ license, clientId, clientType, clientName }) {
+  const result = await pool.query(
+    `INSERT INTO app_license_runtime_leases(
+       license_id, customer_id, app_id, client_type, client_id, client_name,
+       acquired_at, last_seen_at, expires_at, metadata
+     )
+     VALUES (
+       $1::uuid, $2, $3, $4, $5, $6,
+       NOW(), NOW(), NOW() + ($7::text || ' seconds')::interval, '{}'::jsonb
+     )
+     ON CONFLICT (license_id) DO UPDATE
+     SET client_type = EXCLUDED.client_type,
+         client_id = EXCLUDED.client_id,
+         client_name = COALESCE(EXCLUDED.client_name, app_license_runtime_leases.client_name),
+         last_seen_at = NOW(),
+         expires_at = NOW() + ($7::text || ' seconds')::interval,
+         metadata = COALESCE(app_license_runtime_leases.metadata, '{}'::jsonb)
+     WHERE app_license_runtime_leases.expires_at <= NOW()
+        OR app_license_runtime_leases.client_id = EXCLUDED.client_id
+     RETURNING license_id, customer_id, app_id, client_type, client_id, client_name,
+               acquired_at, last_seen_at, expires_at, metadata`,
+    [
+      license.id,
+      license.customerId,
+      license.appId,
+      clientType,
+      clientId,
+      clientName || null,
+      LICENSE_RUNTIME_LEASE_SECONDS,
+    ]
+  );
+
+  if (result.rowCount > 0) {
+    return { ok: true, lease: mapRuntimeLease(result.rows[0]) };
+  }
+
+  return {
+    ok: false,
+    concurrentUsage: true,
+    activeLease: await findActiveLicenseRuntimeLease(license.id),
+  };
+}
+
+async function releaseLicenseRuntimeLease({ licenseId, clientId = null }) {
+  const params = [licenseId];
+  let whereSql = "WHERE license_id = $1::uuid";
+
+  if (clientId) {
+    params.push(clientId);
+    whereSql += ` AND client_id = $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `DELETE FROM app_license_runtime_leases
+     ${whereSql}
+     RETURNING license_id`,
+    params
+  );
+
+  return result.rowCount > 0;
 }
 
 function generateReadableLicenseKey() {
@@ -1100,7 +1209,17 @@ async function revokeAppLicenseAdmin(licenseId) {
   return mapAppLicense(result.rows[0]);
 }
 
-async function deactivateCustomerLicense({ licenseId, customerId }) {
+async function deactivateCustomerLicense({ licenseId, customerId, clientId = null, enforceRuntimeLease = false }) {
+  if (enforceRuntimeLease) {
+    const activeLease = await findActiveLicenseRuntimeLease(licenseId);
+    if (activeLease && activeLease.clientId !== clientId) {
+      return { leaseMismatch: true, activeLease };
+    }
+    if (activeLease && !clientId) {
+      return { leaseMismatch: true, activeLease };
+    }
+  }
+
   const result = await pool.query(
     `UPDATE app_licenses
      SET status = 'inactive',
@@ -1118,6 +1237,8 @@ async function deactivateCustomerLicense({ licenseId, customerId }) {
     return null;
   }
 
+  await releaseLicenseRuntimeLease({ licenseId, clientId: clientId || null });
+
   return mapAppLicense(result.rows[0]);
 }
 
@@ -1127,22 +1248,28 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
     return null;
   }
 
-  // Desktop: enforce 1-machine binding. Web/shared: skip device check so 1 key works on both.
-  const isDesktop = String(clientProfile || "").trim().toLowerCase() === "desktop";
-  const incomingDeviceId = (isDesktop && deviceId) ? String(deviceId).trim() : null;
+  const existingLicense = await findAppLicenseByKey({ appId, licenseKey: normalizedLicenseKey, customerId });
+  if (!existingLicense) {
+    return null;
+  }
 
-  // Enforce 1-key-1-machine: reject if license is already bound to a different device
-  if (incomingDeviceId) {
-    const check = await pool.query(
-      `SELECT device_id FROM app_licenses
-       WHERE license_key = $1 AND app_id = $2
-         AND status <> 'revoked'
-         AND (expires_at IS NULL OR expires_at > NOW())`,
-      [normalizedLicenseKey, appId]
-    );
-    if (check.rowCount > 0 && check.rows[0].device_id &&
-        check.rows[0].device_id !== incomingDeviceId) {
-      return { deviceMismatch: true };
+  const normalizedClientProfile = normalizeRuntimeClientProfile(clientProfile);
+  const runtimeClientId = normalizeRuntimeClientId(deviceId);
+  const runtimeClientName = String(deviceName || "").trim() || null;
+
+  if (runtimeClientId) {
+    const lease = await claimOrRenewLicenseRuntimeLease({
+      license: existingLicense,
+      clientId: runtimeClientId,
+      clientType: normalizedClientProfile,
+      clientName: runtimeClientName,
+    });
+
+    if (!lease.ok) {
+      return {
+        concurrentUsage: true,
+        activeLease: lease.activeLease,
+      };
     }
   }
 
@@ -1151,8 +1278,14 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
      SET status = CASE WHEN status = 'inactive' THEN 'active' ELSE status END,
          activated_at = CASE WHEN activated_at IS NULL THEN NOW() ELSE activated_at END,
          last_verified_at = NOW(),
-         device_id = COALESCE(device_id, $3),
-         device_name = COALESCE(device_name, $4),
+         device_id = CASE
+           WHEN $5 = 'desktop' AND $3 IS NOT NULL THEN $3
+           ELSE device_id
+         END,
+         device_name = CASE
+           WHEN $5 = 'desktop' AND $4 IS NOT NULL THEN $4
+           ELSE device_name
+         END,
          updated_at = NOW()
      WHERE license_key = $1 AND app_id = $2
        AND status <> 'revoked'
@@ -1160,7 +1293,7 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
      RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
                metadata, created_at, updated_at`,
-    [normalizedLicenseKey, appId, incomingDeviceId, deviceName || null]
+    [normalizedLicenseKey, appId, runtimeClientId, runtimeClientName, normalizedClientProfile]
   );
 
   if (result.rowCount === 0) {

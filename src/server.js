@@ -1291,8 +1291,8 @@ app.post(
     if (!license) {
       return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
     }
-    if (license.deviceMismatch) {
-      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng liên hệ hỗ trợ để chuyển thiết bị." });
+    if (license.concurrentUsage) {
+      return res.status(409).json({ ok: false, message: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
@@ -1363,21 +1363,21 @@ app.post(
       return res.status(404).json({ ok: false, message: "License không tồn tại hoặc đã bị thu hồi" });
     }
 
-    // Security: only allow deactivate if deviceId matches bound device (or no device bound)
-    if (deviceId && existing.deviceId && existing.deviceId !== deviceId) {
-      return res.status(403).json({
-        ok: false,
-        message: "deviceId không khớp với thiết bị đang bind. Chỉ có thể deactivate từ đúng thiết bị đó."
-      });
-    }
-
     const deactivated = await deactivateCustomerLicense({
       licenseId: existing.id,
-      customerId
+      customerId,
+      clientId: deviceId,
+      enforceRuntimeLease: true
     });
 
     if (!deactivated) {
       return res.status(404).json({ ok: false, message: "Không thể deactivate license" });
+    }
+    if (deactivated.leaseMismatch) {
+      return res.status(403).json({
+        ok: false,
+        message: "Phiên đang dùng key nằm trên một thiết bị khác. Chỉ thiết bị đang giữ phiên mới được deactivate."
+      });
     }
 
     return res.json({ ok: true, license: deactivated });
@@ -1539,10 +1539,10 @@ app.get(
           updateAllowed: false,
           sourceProductIds: []
         };
-      } else if (license.deviceMismatch) {
+      } else if (license.concurrentUsage) {
         updateEntitlement = {
           licenseValid: false,
-          reason: "device_mismatch",
+          reason: "concurrent_usage",
           ownsBaseApp: true,
           highestEntitledMajor: null,
           currentVersionAllowed: false,
@@ -1628,8 +1628,8 @@ app.post(
     if (!license) {
       return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
     }
-    if (license.deviceMismatch) {
-      return res.status(409).json({ success: false, error: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng liên hệ hỗ trợ để chuyển thiết bị." });
+    if (license.concurrentUsage) {
+      return res.status(409).json({ success: false, error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
