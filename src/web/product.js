@@ -15,7 +15,7 @@ const fallbackProducts = [
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 },
   { id:"prod-prompt-lifetime", appId:"app-prompt-image-video", name:"Video Creator - Phần mềm tạo prompt và điều phối AI Video trong một nơi", cycle:"one_time", price:249000, credits:0 },
-  { id:"prod-bds-website-lifetime", appId:"app-bds-website-manager", name:"Phần Mềm Quản Lý Website & Tin Đăng Bất Động Sản", cycle:"one_time", price:0, credits:0 },
+  { id:"prod-bds-website-lifetime", appId:"app-bds-website-manager", name:"Phần Mềm Quản Lý Website & Tin Đăng Bất Động Sản", cycle:"one_time", price:349000, credits:0 },
   { id:"prod-salon-manager-lifetime", appId:"hair-spa-manager", name:"Salon Manager", cycle:"one_time", price:990000, credits:0 }
 ];
 
@@ -289,52 +289,52 @@ const productContent = {
     ]
   },
   "prod-bds-website-lifetime": {
-    desc: "Phần mềm quản lý website và đăng tin bất động sản trọn đời. Đăng tin, quản lý khách hàng, theo dõi tương tác — kích hoạt một lần dùng mãi mãi.",
+    desc: "Phần mềm quản lý website và tin đăng bất động sản trọn đời theo đúng flow thực chiến: chọn web, mở web, soạn nội dung, lưu + copy, mở folder ảnh và đăng thủ công.",
     icon: "🏠",
     descImage: productImageLibrary.bds,
     longDescription: {
       highlights: [
-        "Quản lý toàn bộ tin đăng bất động sản trên một giao diện trực quan, dễ dùng.",
-        "Tích hợp CRM theo dõi khách hàng tiềm năng và lịch sử tương tác.",
-        "Bản quyền trọn đời — mua một lần, dùng không giới hạn thời gian.",
+        "Gom kho web đăng tin, tài khoản và mẫu nội dung vào một giao diện desktop gọn, dễ dùng.",
+        "Tối ưu đúng quy trình sale BĐS: chọn web, mở web, sửa bài, lưu + copy, mở folder ảnh để kéo ảnh thủ công.",
+        "Bản quyền trọn đời theo mô hình 1 key / 1 ID máy, phù hợp dùng ổn định trên máy làm việc chính.",
       ],
       sections: [
         {
           heading: "Tổng quan sản phẩm",
           paragraphs: [
-            "Phần mềm cung cấp đầy đủ công cụ để vận hành website bất động sản chuyên nghiệp: từ đăng tin, quản lý danh mục đến theo dõi khách hàng quan tâm.",
-            "Thiết kế cho môi giới BĐS, chủ đầu tư và sàn giao dịch muốn quản lý online hiệu quả mà không cần đội kỹ thuật.",
+            "Phần mềm được thiết kế cho sale và đội đăng tin bất động sản cần thao tác nhanh trên nhiều website mà không muốn mở quá nhiều ghi chú, file nháp và profile rời rạc.",
+            "Thay vì quảng cáo như một hệ CRM lớn, sản phẩm tập trung đúng vào bài toán thao tác hàng ngày: mở đúng web, giữ đúng profile đăng nhập, chuẩn hóa nội dung bài và copy đi đăng thật nhanh.",
           ]
         },
         {
           heading: "Điểm nổi bật",
           paragraphs: [
-            "Dashboard trực quan hiển thị số tin đăng, lượt xem và khách hàng liên hệ theo ngày/tuần/tháng.",
-            "Cho phép đăng tin kèm ảnh, video, bản đồ và thông tin chi tiết dự án.",
+            "Kho 40 website chọn lọc giúp người dùng tập trung vào các kênh đăng tin phổ biến và ổn định hơn.",
+            "Phần nội dung có sẵn mẫu chiến dịch, footer chuẩn, lưu mẫu nhanh, xem trước bài hoàn chỉnh và copy ngay sang form đăng tin.",
           ]
         },
         {
           heading: "Lợi ích thực tế",
           paragraphs: [
-            "Tiết kiệm thời gian quản lý tin đăng so với thao tác thủ công trên nhiều nền tảng khác nhau.",
-            "Bản quyền trọn đời không phát sinh phí hàng tháng, phù hợp cho cá nhân và doanh nghiệp nhỏ.",
+            "Giảm thao tác lặp lại khi mỗi ngày phải đăng nhiều bài lên nhiều website khác nhau với cùng một bộ nội dung gốc.",
+            "Mô hình 1 key / 1 ID máy giúp kiểm soát bản quyền rõ ràng, phù hợp cho cá nhân, đội sale nhỏ hoặc văn phòng cần cài trên máy chính.",
           ]
         }
       ]
     },
     features: [
-      { icon:"🏘️", title:"Đăng tin BĐS", detail:"Tạo và quản lý hàng trăm tin đăng kèm ảnh, video, bản đồ" },
-      { icon:"👥", title:"CRM khách hàng", detail:"Lưu trữ và theo dõi khách hàng tiềm năng tập trung" },
-      { icon:"✍️", title:"Quản lý blog", detail:"Tạo và xuất bản bài viết, tin tức dự án chuyên nghiệp" },
-      { icon:"📈", title:"Báo cáo thống kê", detail:"Dashboard lượt xem, leads và hiệu suất tin đăng" },
-      { icon:"♾️", title:"Trọn đời", detail:"Mua một lần — dùng không giới hạn, không phí gia hạn" },
+      { icon:"🌐", title:"Kho web chọn lọc", detail:"Mở nhanh danh sách website đăng tin với URL đăng nhập, đăng tin và profile đúng web" },
+      { icon:"✍️", title:"Soạn bài thực chiến", detail:"Nhập nội dung gốc, chèn footer chuẩn, xem trước bài hoàn chỉnh và copy ngay" },
+      { icon:"🗂️", title:"Mẫu chiến dịch", detail:"Lưu nhiều mẫu bài, nạp lại nhanh cho từng khu vực hoặc từng loại tài sản" },
+      { icon:"🖼️", title:"Mở folder ảnh", detail:"Mở đúng thư mục ảnh của chiến dịch để kéo ảnh thủ công lên website khi đăng" },
+      { icon:"🖥️", title:"1 key / 1 ID máy", detail:"Key bản quyền gắn theo máy sử dụng chính, hạn chế dùng chung nhiều máy" },
     ],
     guide: [
-      { title:"Bước 1: Nhận key kích hoạt", detail:"Key trọn đời giao tự động sau thanh toán, sao chép từ trang đơn hàng." },
-      { title:"Bước 2: Kích hoạt phần mềm", detail:"Mở phần mềm → Nhập key → Kích hoạt. Cần kết nối internet lần đầu." },
-      { title:"Bước 3: Cấu hình website", detail:"Vào Cài đặt → Điền thông tin website, logo và thông tin liên hệ." },
-      { title:"Bước 4: Đăng tin đầu tiên", detail:"Vào Quản lý Tin đăng → Thêm mới → Điền thông tin BĐS và xuất bản." },
-      { title:"Bước 5: Quản lý khách hàng", detail:"Mọi lead từ form liên hệ tự động lưu vào CRM để theo dõi." },
+      { title:"Bước 1: Nhận key kích hoạt", detail:"Key trọn đời giao tự động sau thanh toán để kích hoạt trên đúng máy đang làm việc." },
+      { title:"Bước 2: Kích hoạt theo mã máy", detail:"Mở phần mềm → nhập key → hệ thống xác minh với ID máy hiện tại và vào app." },
+      { title:"Bước 3: Chọn web và mở web", detail:"Tick website cần chạy rồi bấm Mở đã chọn để mở đúng profile và đúng URL đăng tin." },
+      { title:"Bước 4: Soạn bài và Lưu + Copy", detail:"Chọn mẫu hoặc sửa nội dung mới, kiểm tra xem trước rồi bấm Lưu + Copy để dán sang web." },
+      { title:"Bước 5: Mở folder ảnh", detail:"Bấm Mở folder để lấy ảnh chiến dịch và kéo ảnh thủ công lên website trước khi đăng." },
     ]
   },
   "prod-prompt-lifetime": {
