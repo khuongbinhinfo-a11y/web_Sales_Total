@@ -14,6 +14,8 @@ const fallbackProducts = [
   { id:"demo-map",   appId:"lamviec", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
   { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 },
+  { id:"prod-prompt-lifetime", appId:"app-prompt-image-video", name:"Video Creator - Phần mềm tạo prompt và điều phối AI Video trong một nơi", cycle:"one_time", price:249000, credits:0 },
+  { id:"prod-bds-website-lifetime", appId:"app-bds-website-manager", name:"Phần Mềm Quản Lý Website & Tin Đăng Bất Động Sản", cycle:"one_time", price:0, credits:0 },
   { id:"prod-salon-manager-lifetime", appId:"hair-spa-manager", name:"Salon Manager", cycle:"one_time", price:990000, credits:0 }
 ];
 
@@ -550,6 +552,8 @@ function softwareCode(appId) {
   if (!raw) return "APP-UNKNOWN";
   const normalized = raw.toLowerCase();
   if (normalized === "app-study-12") return "APP-CAP01";
+  if (normalized === "app-prompt-image-video") return "APP-VIDEO-CREATOR";
+  if (normalized === "app-bds-website-manager") return "APP-BDS-WEB";
   if (normalized === "hair-spa-manager") return "APP-SALON";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
 }
