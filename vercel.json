@@ -5,7 +5,7 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "{src/**,products/**,docs/ai-gates/**,runtime-settings.json,logo.png}",
+        "includeFiles": "{src/**,migrations/**,products/**,docs/ai-gates/**,runtime-settings.json,logo.png}",
         "maxDuration": 10
       }
     }
