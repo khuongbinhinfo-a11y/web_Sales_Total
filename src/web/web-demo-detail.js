@@ -7,6 +7,12 @@ const DEMO_DATA = {
     title: "Website tin cậy để lấy lead tư vấn",
     desc: "Hướng này hợp với công ty dịch vụ, agency, tư vấn, luật, kế toán hoặc B2B. Trọng tâm là uy tín, quy trình rõ và form nhận tư vấn.",
     image: "/web-demo-company.jpg",
+    fullPreview: {
+      title: "Ảnh mẫu đầy đủ cho web Công ty / Dịch vụ",
+      desc: "Xem tổng thể bố cục demo từ hero, dịch vụ, quy trình đến khu nhận tư vấn trước khi chọn gói triển khai.",
+      image: "/web-demo-company.jpg",
+      cta: "Mở ảnh lớn"
+    },
     primary: "Tư vấn mẫu công ty",
     caption: "Tone xanh đậm / trắng / xám",
     liveTitle: "Hero doanh nghiệp, dịch vụ, quy trình và form lead",
@@ -431,6 +437,35 @@ function renderLivePreview(item) {
   `;
 }
 
+function renderFullPreview(item) {
+  const section = document.getElementById("demoFullPreview");
+  if (!section) return;
+
+  if (!item?.fullPreview?.image) {
+    section.innerHTML = "";
+    section.hidden = true;
+    return;
+  }
+
+  section.hidden = false;
+  section.innerHTML = `
+    <div class="demo-container">
+      <div class="demo-section-head demo-full-preview-head">
+        <span>Ảnh demo đầy đủ</span>
+        <h2>${escapeHtml(item.fullPreview.title)}</h2>
+        <p>${escapeHtml(item.fullPreview.desc || "")}</p>
+      </div>
+      <figure class="demo-full-preview-frame">
+        <img src="${escapeHtml(item.fullPreview.image)}" alt="${escapeHtml(item.fullPreview.title)}" loading="lazy">
+        <figcaption>
+          <span>Preview nguyên ảnh</span>
+          <a href="${escapeHtml(item.fullPreview.image)}" target="_blank" rel="noopener">${escapeHtml(item.fullPreview.cta || "Mở ảnh lớn")}</a>
+        </figcaption>
+      </figure>
+    </div>
+  `;
+}
+
 setText("demoEyebrow", active.eyebrow);
 setText("demoTitle", active.title);
 setText("demoDesc", active.desc);
@@ -507,4 +542,5 @@ if (flowEl) {
 }
 
 renderLivePreview(active);
+renderFullPreview(active);
 PricingSection(activeId);

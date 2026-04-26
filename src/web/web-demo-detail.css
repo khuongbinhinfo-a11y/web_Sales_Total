@@ -130,6 +130,16 @@
 .demo-flow-item h3{margin:0 0 5px;color:#18142c;font-size:1rem}
 .demo-flow-item p{margin:0;color:#716b82;font-size:.86rem;line-height:1.55;font-weight:600}
 
+.demo-full-preview-section{padding:40px 0;background:linear-gradient(180deg,#fff,#f7f4ff)}
+.demo-full-preview-section[hidden]{display:none}
+.demo-full-preview-head{max-width:760px}
+.demo-full-preview-head p{margin:0;color:#6c657d;font-weight:600;line-height:1.7}
+.demo-full-preview-frame{margin:0;border-radius:28px;background:linear-gradient(135deg,#f8fafc,#f4f1ff);border:1px solid rgba(124,109,216,.14);box-shadow:0 24px 54px rgba(35,24,80,.12);overflow:hidden}
+.demo-full-preview-frame img{width:100%;height:auto;max-height:82vh;object-fit:contain;background:#fff;display:block}
+.demo-full-preview-frame figcaption{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:#fff;border-top:1px solid rgba(124,109,216,.12)}
+.demo-full-preview-frame figcaption span{color:#5f5871;font-size:.84rem;font-weight:800}
+.demo-full-preview-frame figcaption a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;background:linear-gradient(135deg,var(--demo-main,#6d58e1),var(--demo-accent,#8ed7ff));color:#fff;font-size:.82rem;font-weight:900;box-shadow:0 12px 24px rgba(90,70,190,.18)}
+
 .demo-pricing-section{padding:46px 0;background:linear-gradient(180deg,#f7f4ff,#fff)}
 .demo-pricing-head{max-width:760px}
 .demo-pricing-head p{margin:0;color:#6c657d;font-weight:600;line-height:1.7}
@@ -198,6 +208,11 @@ body[data-demo="restaurant"]{--demo-main:#7c2d12;--demo-accent:#f59e0b}
   .live-spa-hero,.live-restaurant-hero{min-height:260px}
   .live-shop-grid article{min-height:140px}
   .demo-card-grid{grid-template-columns:1fr}
+  .demo-full-preview-section{padding:30px 0}
+  .demo-full-preview-frame{border-radius:22px}
+  .demo-full-preview-frame img{max-height:none}
+  .demo-full-preview-frame figcaption{align-items:flex-start;flex-direction:column}
+  .demo-full-preview-frame figcaption a{width:100%}
   .demo-pricing-section{padding:34px 0}
   .demo-pricing-grid,.demo-pricing-notes,.demo-maintenance-note dl{grid-template-columns:1fr}
   .demo-pricing-card{padding:18px;border-radius:22px}
