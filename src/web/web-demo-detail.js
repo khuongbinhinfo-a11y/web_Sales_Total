@@ -73,6 +73,12 @@ const DEMO_DATA = {
     title: "Trang khóa học truyền cảm hứng để tăng đăng ký",
     desc: "Hướng này phù hợp trung tâm, khóa học online, lớp kỹ năng hoặc đào tạo nội bộ. Trọng tâm là chương trình, lợi ích, lộ trình, giảng viên và đăng ký học.",
     image: "/web-demo-photo.jpg",
+    fullPreview: {
+      title: "Ảnh mẫu đầy đủ cho web Giáo dục / Khóa học",
+      desc: "Xem tổng thể bố cục demo từ giới thiệu khóa học, lộ trình, giảng viên, học phí đến form đăng ký tư vấn.",
+      image: "/web-demo-photo.jpg",
+      cta: "Mở ảnh lớn"
+    },
     primary: "Tư vấn mẫu giáo dục",
     caption: "Tone sáng, trẻ, thân thiện",
     liveTitle: "Chương trình, lợi ích, roadmap học và form đăng ký",
