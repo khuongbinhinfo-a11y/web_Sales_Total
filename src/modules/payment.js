@@ -912,6 +912,7 @@ function buildSepayCheckout(order) {
   const sepay = getSepayConfig();
   const transferContent = `PAY ${order.orderCode || order.id}`;
   const fallbackQrText = `bank=${sepay.bankCode}|account=${sepay.bankAccountNumber}|amount=${order.amount}|memo=${transferContent}`;
+  const hasBankAccount = Boolean(String(sepay.bankCode || "").trim() && String(sepay.bankAccountNumber || "").trim());
 
   let qrUrl = "";
   if (sepay.qrTemplateUrl) {
@@ -920,6 +921,17 @@ function buildSepayCheckout(order) {
       .replace("{account}", encodeURIComponent(sepay.bankAccountNumber))
       .replace("{amount}", encodeURIComponent(String(order.amount)))
       .replace("{memo}", encodeURIComponent(transferContent));
+  } else if (hasBankAccount) {
+    const query = new URLSearchParams({
+      amount: String(order.amount),
+      addInfo: transferContent
+    });
+
+    if (sepay.accountName) {
+      query.set("accountName", sepay.accountName);
+    }
+
+    qrUrl = `https://img.vietqr.io/image/${encodeURIComponent(sepay.bankCode)}-${encodeURIComponent(sepay.bankAccountNumber)}-compact2.png?${query.toString()}`;
   }
 
   return {

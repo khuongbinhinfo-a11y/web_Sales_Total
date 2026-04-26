@@ -373,7 +373,9 @@ async function getOrderDetailsById(orderId) {
     return null;
   }
 
-  const keyDelivery = await getOrderKeyDelivery(orderId);
+  const keyDelivery = order.status === "paid"
+    ? await getOrderKeyDelivery(orderId)
+    : null;
   return { order, keyDelivery };
 }
 

@@ -2771,7 +2771,8 @@ app.get(
             <p><strong>Số tiền:</strong> ${amountFormatted} ${order.currency}</p>
             <p><strong>Nội dung CK:</strong> <code>${sepayCheckout.transferContent}</code></p>
             ${sepayCheckout.qrUrl ? `<p><img src="${sepayCheckout.qrUrl}" alt="Sepay QR" style="max-width:260px;border-radius:12px" /></p>` : ""}
-            <p style="font-size:.82rem;color:#64748b;margin-top:8px">Nếu chưa có QR URL, dùng chuỗi tạo QR thủ công:</p>
+            ${sepayCheckout.qrUrl ? `<p style="margin:8px 0 0"><a href="${sepayCheckout.qrUrl}" target="_blank" rel="noopener noreferrer" style="font-size:.84rem;font-weight:700;color:#2563eb">Mở URL QR chuyển khoản</a></p>` : ""}
+            <p style="font-size:.82rem;color:#64748b;margin-top:8px">Nếu app ngân hàng không quét QR được, dùng chuỗi tạo QR thủ công:</p>
             <p style="font-size:.78rem;word-break:break-all;color:#94a3b8">${sepayCheckout.fallbackQrText}</p>
          </div>`
     : "";
