@@ -106,8 +106,24 @@ const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/
 
 const app = express();
 const webRoot = path.join(__dirname, "web");
+const ogRoot = path.join(__dirname, "..", "public", "og");
 const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 let prepareServerPromise;
+
+const webDemoOgImages = {
+  company: "/og/og-web-cong-ty.png",
+  shop: "/og/og-web-shop-ban-hang.png",
+  education: "/og/og-web-giao-duc.png",
+  spa: "/og/og-web-spa.png",
+  restaurant: "/og/og-web-nha-hang.png"
+};
+
+const homePageMetadata = {
+  title: "Ứng Dụng Thông Minh - Giải pháp số gọn, nhanh, dùng được ngay",
+  description: "Ứng Dụng Thông Minh cung cấp phần mềm, công cụ AI, giải pháp học tập, làm việc và dịch vụ thiết kế website chuyên nghiệp.",
+  canonicalPath: "/",
+  image: "/og/og-trang-chu.png"
+};
 
 app.disable("x-powered-by");
 app.use(cors());
@@ -280,6 +296,77 @@ function respondAdminLogin(req, res, { status = 200, message = "", redirectTo = 
   }
 
   return res.status(status).send(message);
+}
+
+function escapeHtmlAttr(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function buildPublicUrl(pathname = "/") {
+  const base = String(env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop").replace(/\/+$/, "");
+  const suffix = String(pathname || "/").startsWith("/") ? pathname : `/${pathname}`;
+  return `${base}${suffix}`;
+}
+
+function buildMetadataTags(metadata) {
+  const title = escapeHtmlAttr(metadata.title);
+  const description = escapeHtmlAttr(metadata.description);
+  const canonical = escapeHtmlAttr(buildPublicUrl(metadata.canonicalPath || "/"));
+  const image = escapeHtmlAttr(metadata.image);
+
+  return [
+    `<meta name="description" content="${description}" />`,
+    `<link rel="canonical" href="${canonical}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:title" content="${title}" />`,
+    `<meta property="og:description" content="${description}" />`,
+    `<meta property="og:url" content="${canonical}" />`,
+    `<meta property="og:image" content="${image}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${title}" />`,
+    `<meta name="twitter:description" content="${description}" />`,
+    `<meta name="twitter:image" content="${image}" />`
+  ].join("\n    ");
+}
+
+function sendHtmlWithMetadata(res, filePath, metadata) {
+  fs.readFile(filePath, "utf8", (error, html) => {
+    if (error) {
+      return res.sendFile(filePath);
+    }
+
+    const safeTitle = escapeHtmlAttr(metadata.title);
+    const htmlWithTitle = html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
+    res.type("html").send(htmlWithTitle.replace("</head>", `    ${buildMetadataTags(metadata)}\n  </head>`));
+  });
+}
+
+function sendWebDemoDetailPage(req, res) {
+  const demoId = String(req.params.id || "").trim().toLowerCase();
+  const imagePath = webDemoOgImages[demoId];
+  const filePath = path.join(webRoot, "web-demo-detail.html");
+
+  if (!imagePath) {
+    return res.sendFile(filePath);
+  }
+
+  fs.readFile(filePath, "utf8", (error, html) => {
+    if (error) {
+      return res.sendFile(filePath);
+    }
+
+    const safeImagePath = escapeHtmlAttr(imagePath);
+    const metaTags = [
+      `<meta property="og:image" content="${safeImagePath}" />`,
+      `<meta name="twitter:image" content="${safeImagePath}" />`
+    ].join("\n    ");
+
+    res.type("html").send(html.replace("</head>", `    ${metaTags}\n  </head>`));
+  });
 }
 
 function computeLicenseGrace(license) {
@@ -2818,7 +2905,7 @@ app.get(
 );
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(webRoot, "index.html"));
+  sendHtmlWithMetadata(res, path.join(webRoot, "index.html"), homePageMetadata);
 });
 
 app.get("/pricing", (req, res) => {
@@ -2830,7 +2917,7 @@ app.get("/web-demo", (req, res) => {
 });
 
 app.get("/web-demo/:id", (req, res) => {
-  res.sendFile(path.join(webRoot, "web-demo-detail.html"));
+  sendWebDemoDetailPage(req, res);
 });
 
 app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
@@ -2858,6 +2945,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(webRoot));
+app.use("/og", express.static(ogRoot));
 app.use(
   "/products/image",
   express.static(path.join(__dirname, "..", "products", "image"))
