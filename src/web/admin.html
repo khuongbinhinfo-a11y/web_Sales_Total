@@ -466,7 +466,7 @@
                      class="admin-input" style="margin-top:4px" />
             </div>
             <p id="mgMsg" style="margin:10px 0 0;font-size:.82rem;color:var(--muted)"></p>
-            <div id="mgResult" style="display:none;margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:.85rem"></div>
+            <div id="mgResult" class="admin-manual-grant-result" style="display:none"></div>
           </div>
 
           <div class="info-card" style="margin-top:12px">
@@ -478,23 +478,23 @@
 
             <div style="display:grid;grid-template-columns:220px 220px 1fr auto auto;gap:8px;align-items:end;margin-bottom:8px">
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Kiểu bù ngày</label>
-                <select id="licenseCompMode" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem">
+                <label class="admin-field-label admin-field-label--muted">Kiểu bù ngày</label>
+                <select id="licenseCompMode" class="admin-input admin-input--compact">
                   <option value="set_remaining">Set còn lại từ hôm nay</option>
                   <option value="add_days">Cộng thêm vào hạn hiện tại</option>
                 </select>
               </div>
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Header dữ liệu</label>
-                <select id="licenseCompFormat" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem">
+                <label class="admin-field-label admin-field-label--muted">Header dữ liệu</label>
+                <select id="licenseCompFormat" class="admin-input admin-input--compact">
                   <option value="license_days">license_key + số ngày</option>
                   <option value="email_license_days">email + license_key + số ngày</option>
                   <option value="email_days">email + số ngày</option>
                 </select>
               </div>
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mẫu dán</label>
-                <div style="padding:8px 10px;border:1.5px dashed var(--line);border-radius:8px;background:#fafafa;font-size:.8rem;color:var(--muted)">
+                <label class="admin-field-label admin-field-label--muted">Mẫu dán</label>
+                <div class="admin-chip-panel">
                   Hỗ trợ tab từ Excel hoặc CSV. Mỗi dòng 1 khách.
                 </div>
               </div>
@@ -502,40 +502,37 @@
               <button id="licenseCompClearBtn" type="button" class="btn btn-outline" style="min-height:38px">Xóa draft</button>
             </div>
 
-            <label style="font-size:.75rem;color:var(--muted);font-weight:700">Danh sách dán từ Excel / Sheets</label>
+            <label class="admin-field-label admin-field-label--muted">Danh sách dán từ Excel / Sheets</label>
             <textarea id="licenseCompInput" rows="8" placeholder="license_key\tso_ngay\nWSTL-AAAA-BBBB\t23\nWSTL-CCCC-DDDD\t11"
-                      style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.83rem;margin-top:4px;resize:vertical;box-sizing:border-box"></textarea>
+                      class="admin-textarea admin-code-text admin-input--compact" style="margin-top:4px"></textarea>
             <p id="licenseCompMsg" style="margin:8px 0 0;font-size:.82rem;color:var(--muted)"></p>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
               <div>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">SQL test 1 khách</label>
+                  <label class="admin-field-label admin-field-label--muted">SQL test 1 khách</label>
                   <button id="licenseCompCopySingleBtn" type="button" class="btn btn-outline" style="min-height:30px;font-size:.78rem;padding:4px 10px">Copy SQL test</button>
                 </div>
-                <textarea id="licenseCompSingleSql" rows="10" readonly
-                          style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.8rem;background:#f8fafc;resize:vertical;box-sizing:border-box"></textarea>
+                <textarea id="licenseCompSingleSql" rows="10" readonly class="admin-code-surface admin-code-text"></textarea>
               </div>
               <div>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">SQL bù ngày hàng loạt</label>
+                  <label class="admin-field-label admin-field-label--muted">SQL bù ngày hàng loạt</label>
                   <button id="licenseCompCopyBulkBtn" type="button" class="btn btn-outline" style="min-height:30px;font-size:.78rem;padding:4px 10px">Copy SQL bulk</button>
                 </div>
-                <textarea id="licenseCompBulkSql" rows="10" readonly
-                          style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.8rem;background:#f8fafc;resize:vertical;box-sizing:border-box"></textarea>
+                <textarea id="licenseCompBulkSql" rows="10" readonly class="admin-code-surface admin-code-text"></textarea>
               </div>
             </div>
 
             <div style="margin-top:12px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">SELECT đối chiếu trước và sau khi update</label>
+                <label class="admin-field-label admin-field-label--muted">SELECT đối chiếu trước và sau khi update</label>
                 <div style="display:flex;gap:8px">
                   <button id="licenseCompCopyCompareBtn" type="button" class="btn btn-outline" style="min-height:30px;font-size:.78rem;padding:4px 10px">Copy SELECT</button>
                   <button id="licenseCompExportBtn" type="button" class="btn btn-accent" style="min-height:30px;font-size:.78rem;padding:4px 10px">Export .sql</button>
                 </div>
               </div>
-              <textarea id="licenseCompCompareSql" rows="12" readonly
-                        style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.8rem;background:#f8fafc;resize:vertical;box-sizing:border-box"></textarea>
+              <textarea id="licenseCompCompareSql" rows="12" readonly class="admin-code-surface admin-code-text"></textarea>
             </div>
 
             <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fcfcfc">

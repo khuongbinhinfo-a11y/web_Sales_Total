@@ -1138,9 +1138,8 @@ function bindManualGrant(){
       if(resultEl){
         resultEl.style.display="block";
         resultEl.innerHTML = [
-          `<div style="margin-bottom:6px"><b>License Key:</b> <code style="background:#dcfce7;padding:2px 8px;border-radius:4px;font-size:.9rem">${data.licenseKey||""}</code>`,
-          ` <button onclick="navigator.clipboard.writeText('${data.licenseKey||""}')"
-              style="padding:2px 8px;font-size:.75rem;border:1px solid #86efac;border-radius:4px;background:#fff;cursor:pointer">Copy</button></div>`,
+          `<div class="admin-manual-grant-result-row"><b>License Key:</b> <code>${data.licenseKey||""}</code>`,
+          ` <button onclick="navigator.clipboard.writeText('${data.licenseKey||""}')">Copy</button></div>`,
           `<div><b>Order:</b> ${data.orderCode||""} | <b>App:</b> ${data.appId||""} | <b>Gói:</b> ${data.productName||""} (${data.billingCycle||""})</div>`,
           `<div><b>Khách hàng:</b> ${data.customerEmail||""} | <b>Hết hạn:</b> ${data.expiresAt ? new Date(data.expiresAt).toLocaleDateString("vi-VN") : "Không thời hạn"}</div>`
         ].join("");
