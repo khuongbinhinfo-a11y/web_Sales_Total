@@ -738,10 +738,25 @@ async function verifyGoogleCredential(idToken) {
     throw err;
   }
 
-  const ticket = await googleOAuthClient.verifyIdToken({
-    idToken,
-    audience: env.googleClientId
-  });
+  let ticket;
+  try {
+    ticket = await googleOAuthClient.verifyIdToken({
+      idToken,
+      audience: env.googleClientId
+    });
+  } catch (error) {
+    const errorMessage = String(error?.message || "");
+    const invalidCredential =
+      /Wrong number of segments|Token used too early|Token used too late|Invalid token signature|No pem found for envelope|Can't parse token envelope|Failed to retrieve verification certificates|jwt/i.test(errorMessage);
+
+    if (invalidCredential) {
+      const err = new Error("Google credential không hợp lệ hoặc đã hết hạn");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    throw error;
+  }
 
   const payload = ticket.getPayload() || {};
   const verified = payload.email_verified === true || payload.email_verified === "true";
@@ -2976,15 +2991,22 @@ app.use((req, res) => {
   res.status(404).json({ message: "Not found" });
 });
 
+function isDatabaseUnavailableError(error) {
+  const errorCode = String(error?.code || "").toUpperCase();
+  const errorMessage = String(error?.message || "");
+  const dbUnavailableCodes = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "3D000", "08001", "08006"]);
+
+  return (
+    dbUnavailableCodes.has(errorCode) ||
+    /ECONNREFUSED|connect|Connection terminated|database .* does not exist/i.test(errorMessage)
+  );
+}
+
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
   const errorCode = String(error?.code || "").toUpperCase();
-  const errorMessage = String(error?.message || "");
   const isAuthApi = req.path.startsWith("/api/auth/customer/");
-  const dbUnavailableCodes = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "3D000", "08001", "08006"]);
-  const dbUnavailable =
-    dbUnavailableCodes.has(errorCode) ||
-    /ECONNREFUSED|connect|Connection terminated|database .* does not exist/i.test(errorMessage);
+  const dbUnavailable = isDatabaseUnavailableError(error);
 
   let message = statusCode >= 500 ? "Internal server error" : error.message;
   let finalStatusCode = statusCode;
@@ -3017,15 +3039,17 @@ async function prepareServer() {
         console.warn("⚠️ Skipping schema bootstrap because DATABASE_URL is not configured.");
         return;
       }
-
-      await runMigrations({ closePool: false });
-
       try {
+        await runMigrations({ closePool: false });
         await ensureCustomerAuthSchema();
         await ensureEmailOtpSchema();
         await ensureAdminLoginSecuritySchema();
         console.log("✅ Customer auth schema ready");
       } catch (error) {
+        if (isDatabaseUnavailableError(error)) {
+          console.warn("⚠️ Database bootstrap skipped because PostgreSQL is unavailable:", error.message);
+          return;
+        }
         console.error("⚠️ Could not auto-ensure customer auth schema:", error.message);
       }
     })();
