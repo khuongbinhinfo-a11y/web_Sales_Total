@@ -103,6 +103,12 @@ const DEMO_DATA = {
     title: "Trang làm đẹp cao cấp để khách đặt lịch",
     desc: "Hướng này dành cho spa, clinic, salon hoặc dịch vụ làm đẹp. Trọng tâm là cảm giác sang, dịch vụ nổi bật, before-after, bảng giá và đặt lịch.",
     image: "/web-demo-photo.jpg",
+    fullPreview: {
+      title: "Ảnh mẫu đầy đủ cho web Spa / Làm đẹp",
+      desc: "Xem tổng thể bố cục demo từ hero, dịch vụ nổi bật, bảng giá, feedback đến form đặt lịch trước khi chọn gói triển khai.",
+      image: "/web-demo-photo.jpg",
+      cta: "Mở ảnh lớn"
+    },
     primary: "Tư vấn mẫu spa",
     caption: "Tone nude / tím nhạt / champagne",
     liveTitle: "Dịch vụ nổi bật, before-after, bảng giá và booking",
