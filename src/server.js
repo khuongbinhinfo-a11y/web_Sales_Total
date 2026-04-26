@@ -1486,7 +1486,17 @@ app.get(
     const deviceName = String(req.query.deviceName || "").trim() || null;
     const manifest = normalizeManifestPublicPaths(manifestRecord.manifest);
 
-    let updateEntitlement = null;
+    let updateEntitlement = {
+      licenseValid: null,
+      reason: "missing_license",
+      ownsBaseApp: false,
+      highestEntitledMajor: null,
+      currentVersionAllowed: null,
+      latestVersionAllowed: false,
+      updateAllowed: false,
+      sourceProductIds: []
+    };
+
     if (licenseKey) {
       const license = await verifyAppLicenseByKey({
         appId: manifestRecord.appId,
