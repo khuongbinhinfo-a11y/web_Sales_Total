@@ -40,6 +40,7 @@
         <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
         <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
         <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
+        <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
         <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
         <a href="#section-key-lookup"><span class="icon">🔍</span> Tra key</a>
       </nav>
@@ -414,6 +415,7 @@
                 <select id="licenseCompFormat" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem">
                   <option value="license_days">license_key + số ngày</option>
                   <option value="email_license_days">email + license_key + số ngày</option>
+                  <option value="email_days">email + số ngày</option>
                 </select>
               </div>
               <div>
@@ -450,14 +452,71 @@
               </div>
             </div>
 
+            <div style="margin-top:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">SELECT đối chiếu trước và sau khi update</label>
+                <div style="display:flex;gap:8px">
+                  <button id="licenseCompCopyCompareBtn" type="button" class="btn btn-outline" style="min-height:30px;font-size:.78rem;padding:4px 10px">Copy SELECT</button>
+                  <button id="licenseCompExportBtn" type="button" class="btn btn-accent" style="min-height:30px;font-size:.78rem;padding:4px 10px">Export .sql</button>
+                </div>
+              </div>
+              <textarea id="licenseCompCompareSql" rows="12" readonly
+                        style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.8rem;background:#f8fafc;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+
             <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fcfcfc">
               <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px">Gợi ý cột Excel</div>
               <div style="font-size:.8rem;color:var(--muted);line-height:1.6">
                 Cách 1: <b>license_key</b>, <b>days</b><br />
                 Cách 2: <b>email</b>, <b>license_key</b>, <b>days</b><br />
+                Cách 3: <b>email</b>, <b>days</b><br />
                 Nếu dòng đầu là tiêu đề, tool sẽ tự bỏ qua.
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="section-discount-codes" class="admin-section">
+          <h3>🏷️ Mã giảm giá</h3>
+          <div class="info-card" style="margin-bottom:12px">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">
+              Tạo mã giảm giá dùng 1 lần cho một đơn hàng. Khách nhập mã ngay tại trang thanh toán `/pay/:orderId`.
+            </p>
+            <form id="discountCodeForm" style="display:grid;grid-template-columns:1fr 140px 1fr 1fr auto;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mã giảm giá</label>
+                <input id="discountCodeValue" placeholder="SALE10" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem;text-transform:uppercase" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">% giảm</label>
+                <input id="discountPercentOff" type="number" min="1" max="99" placeholder="10" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Bắt đầu</label>
+                <input id="discountStartsAt" type="datetime-local" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Kết thúc</label>
+                <input id="discountEndsAt" type="datetime-local" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem" />
+              </div>
+              <button type="submit" class="btn btn-accent" style="min-height:38px">Tạo mã</button>
+            </form>
+            <div style="margin-top:8px">
+              <label style="font-size:.75rem;color:var(--muted);font-weight:700">Ghi chú nội bộ</label>
+              <input id="discountNote" placeholder="VD: chạy sale cuối tuần cho Salon Manager" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.86rem;margin-top:4px" />
+            </div>
+            <p id="discountCodeMsg" style="margin:8px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div class="info-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+              <div>
+                <div style="font-size:.92rem;font-weight:700">Danh sách mã hiện có</div>
+                <div style="font-size:.8rem;color:var(--muted)">Mỗi mã chỉ giữ được cho 1 đơn pending/paid tại một thời điểm.</div>
+              </div>
+              <button id="discountRefreshBtn" type="button" class="btn btn-outline" style="min-height:34px">Tải lại</button>
+            </div>
+            <div class="table-wrap" id="discountCodesWrap"><p style="padding:12px;color:var(--muted)">Đang tải mã giảm giá...</p></div>
           </div>
         </section>
 

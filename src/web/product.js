@@ -13,7 +13,8 @@ const fallbackProducts = [
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
-  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 }
+  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly", price:300000, credits:2 },
+  { id:"prod-salon-manager-lifetime", appId:"hair-spa-manager", name:"Salon Manager", cycle:"one_time", price:990000, credits:0 }
 ];
 
 function imagePathByName(fileName) {
@@ -27,7 +28,8 @@ const productImageLibrary = {
   map: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   mapAlt: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật-2.jpeg"),
-  bds: imagePathByName("Quản_lý_website_BDS-2.jpeg")
+  bds: imagePathByName("Quản_lý_website_BDS-2.jpeg"),
+  salon: imagePathByName("Salon-Manager.png")
 };
 
 const SUPPORT_CHAT_URL = "https://zalo.me/0902964685";
@@ -85,6 +87,9 @@ function resolveProductImage(product) {
   }
   if (/(map|ggmap|quet data|scan data|data kh)/.test(hint)) {
     return productImageLibrary.map;
+  }
+  if (/(salon manager|hair spa manager|hair spa|salon)/.test(hint)) {
+    return productImageLibrary.salon;
   }
   if (/(bds|website)/.test(productId)) {
     return productImageLibrary.bds;
@@ -262,6 +267,23 @@ const productContent = {
       { title:"Đăng nhập hệ thống", detail:"Truy cập link được cấp → Đăng nhập với email & mật khẩu tạm thời." },
       { title:"Đổi mật khẩu & thiết lập", detail:"Vào Cài đặt → Đổi mật khẩu → Cấu hình thông tin website." },
       { title:"Bắt đầu đăng tin", detail:"Vào Quản lý Tin đăng → Thêm tin mới → Điền thông tin và xuất bản." },
+    ]
+  },
+  "prod-salon-manager-lifetime": {
+    desc: "Salon Manager là phần mềm quản lý salon tóc theo mô hình 1 key / 1 máy, phù hợp vận hành lịch hẹn, khách hàng, dịch vụ và tính tiền tại quầy.",
+    icon: "✂️",
+    descImage: productImageLibrary.salon,
+    features: [
+      { icon:"📅", title:"Lịch hẹn tập trung", detail:"Xem lịch theo ngày, theo thợ và theo trạng thái phục vụ." },
+      { icon:"👥", title:"Quản lý khách hàng", detail:"Lưu lịch sử làm tóc, ghi chú dị ứng và nhu cầu quay lại." },
+      { icon:"💳", title:"Tính tiền nhanh", detail:"Tạo bill tại quầy, ghi nhận dịch vụ, số lượng và phương thức thanh toán." },
+      { icon:"🖥️", title:"1 key / 1 máy", detail:"Bản quyền theo máy, phù hợp salon cần cài đặt ổn định tại quầy lễ tân." },
+    ],
+    guide: [
+      { title:"Nhận key kích hoạt", detail:"Sau thanh toán, key bản quyền được giao tự động để kích hoạt trên đúng máy sử dụng." },
+      { title:"Cài app salon", detail:"Nhận bộ cài và cài đặt trên máy vận hành chính của salon." },
+      { title:"Nhập key", detail:"Mở ứng dụng → vào khu kích hoạt → nhập key để liên kết với mã máy hiện tại." },
+      { title:"Bắt đầu vận hành", detail:"Thiết lập dịch vụ, nhân viên, lịch hẹn và sử dụng ngay tại quầy." },
     ]
   },
   "prod-bds-website-lifetime": {
@@ -528,7 +550,15 @@ function softwareCode(appId) {
   if (!raw) return "APP-UNKNOWN";
   const normalized = raw.toLowerCase();
   if (normalized === "app-study-12") return "APP-CAP01";
+  if (normalized === "hair-spa-manager") return "APP-SALON";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function shouldUseSameTabCheckout() {
+  if (typeof window === "undefined") return false;
+  const mobileByWidth = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+  const mobileByUa = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+  return mobileByWidth || mobileByUa;
 }
 
 function isExternalLink(value) {
@@ -568,6 +598,10 @@ function openDownloadAction(product, content) {
   }
 
   if (action.external) {
+    if (shouldUseSameTabCheckout()) {
+      window.location.assign(action.href);
+      return;
+    }
     window.open(action.href, "_blank", "noopener");
     return;
   }
@@ -793,6 +827,10 @@ async function startCheckoutForProduct(product) {
     const d = await res.json();
     if (!res.ok) {
       alert(d.message || "Không tạo được đơn hàng");
+      return;
+    }
+    if (shouldUseSameTabCheckout()) {
+      window.location.assign(d.checkoutUrl);
       return;
     }
     window.open(d.checkoutUrl, "_blank");
@@ -1120,6 +1158,10 @@ const switchToLogin    = document.getElementById("switchToLogin");
 const loginForm    = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const loginError   = document.getElementById("loginError");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const headerNav = document.getElementById("headerNav");
+
+mobileMenuBtn?.addEventListener("click", ()=>headerNav?.classList.toggle("open"));
 
 function showLoginTab(){ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginPane.style.display=""; registerPane.style.display="none"; loginError.textContent=""; }
 function showRegisterTab(){ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerPane.style.display=""; loginPane.style.display="none"; loginError.textContent=""; }

@@ -8,18 +8,69 @@ function generateReadableOrderCode() {
 }
 
 function mapOrder(row) {
+  const amount = Number(row.amount);
+  const subtotalAmount = Number(row.subtotal_amount ?? row.amount);
+  const discountAmount = Number(row.discount_amount ?? 0);
+  const discountPercent = Number(row.discount_percent ?? 0);
   return {
     id: row.id,
     orderCode: row.order_code,
     customerId: row.customer_id,
     appId: row.app_id,
     productId: row.product_id,
-    amount: Number(row.amount),
+    amount,
+    subtotalAmount,
+    discountAmount,
+    discountPercent,
+    discountCode: row.discount_code || null,
     currency: row.currency,
     status: row.status,
     createdAt: row.created_at,
     paidAt: row.paid_at
   };
+}
+
+function mapDiscountCode(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    code: row.code,
+    percentOff: Number(row.percent_off),
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    active: Boolean(row.active),
+    singleUse: row.single_use !== false,
+    note: row.note || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    createdByAdminId: row.created_by_admin_id || null,
+    createdByUsername: row.created_by_username || null,
+    usedAt: row.used_at || null,
+    usedOrderId: row.used_order_id || null,
+    usedOrderCode: row.used_order_code || null,
+    usageStatus: row.usage_status || "available",
+    reservedOrderId: row.reserved_order_id || null,
+    reservedOrderCode: row.reserved_order_code || null
+  };
+}
+
+function normalizeDiscountCode(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function createStoreError(message, statusCode = 400) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+function computeDiscountAmount(amount, percentOff) {
+  const safeAmount = Math.max(0, Number(amount) || 0);
+  const safePercent = Math.max(0, Math.min(100, Number(percentOff) || 0));
+  return Math.round((safeAmount * safePercent) / 100);
 }
 
 function mapUsageLog(row) {
@@ -256,63 +307,206 @@ async function getAdminCatalog() {
   return getCatalog({ includeHidden: true });
 }
 
-async function createOrder({ customerId, appId, productId }) {
-  const productResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, currency, credits
-     FROM products
-     WHERE id = $1 AND app_id = $2 AND active = TRUE`,
-    [productId, appId]
+async function applyDiscountToOrderWithClient({ client, orderId, discountCode }) {
+  const normalizedCode = normalizeDiscountCode(discountCode);
+  if (!normalizedCode) {
+    throw createStoreError("Vui lòng nhập mã giảm giá", 400);
+  }
+
+  const orderResult = await client.query(
+    `SELECT id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+            discount_amount, discount_percent, discount_code, discount_code_id,
+            currency, status, created_at, paid_at
+     FROM orders
+     WHERE id = $1::uuid
+     FOR UPDATE`,
+    [orderId]
   );
-  if (productResult.rowCount === 0) {
-    throw new Error("Product khong ton tai hoac dang tat");
+  if (orderResult.rowCount === 0) {
+    throw createStoreError("Order không tồn tại", 404);
   }
 
-  const customerResult = await pool.query("SELECT id FROM customers WHERE id = $1", [customerId]);
-  if (customerResult.rowCount === 0) {
-    throw new Error("Customer khong ton tai");
+  const order = orderResult.rows[0];
+  if (String(order.status || "").toLowerCase() !== "pending") {
+    throw createStoreError("Chỉ áp dụng mã cho đơn hàng đang chờ thanh toán", 400);
   }
 
-  const product = productResult.rows[0];
-  let orderRow = null;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const orderCode = generateReadableOrderCode();
-    try {
-      const orderResult = await pool.query(
-        `INSERT INTO orders(id, order_code, customer_id, app_id, product_id, amount, currency, status)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending')
-         RETURNING id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
-        [orderCode, customerId, appId, productId, product.price, product.currency]
-      );
-      orderRow = orderResult.rows[0];
-      break;
-    } catch (error) {
-      const uniqueOrderCodeConflict =
-        error?.code === "23505" &&
-        (String(error?.constraint || "").includes("order_code") ||
-          String(error?.detail || "").includes("order_code"));
-      if (!uniqueOrderCodeConflict || attempt === 4) {
-        throw error;
-      }
-    }
+  const codeResult = await client.query(
+    `SELECT id, code, percent_off, starts_at, ends_at, active, single_use, note,
+            created_at, updated_at, created_by_admin_id, used_at, used_order_id
+     FROM discount_codes
+     WHERE UPPER(code) = $1
+     FOR UPDATE`,
+    [normalizedCode]
+  );
+  if (codeResult.rowCount === 0) {
+    throw createStoreError("Mã giảm giá không tồn tại", 404);
   }
+
+  const code = codeResult.rows[0];
+  const now = Date.now();
+  const startsAt = new Date(code.starts_at).getTime();
+  const endsAt = new Date(code.ends_at).getTime();
+  if (!code.active) {
+    throw createStoreError("Mã giảm giá đang tắt", 400);
+  }
+  if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || startsAt > now || endsAt < now) {
+    throw createStoreError("Mã giảm giá đã hết hạn hoặc chưa đến thời gian áp dụng", 400);
+  }
+  if (code.used_order_id && code.used_order_id !== order.id) {
+    throw createStoreError("Mã giảm giá này đã được sử dụng", 400);
+  }
+
+  const reservedResult = await client.query(
+    `SELECT id, order_code, status
+     FROM orders
+     WHERE discount_code_id = $1::uuid
+       AND id <> $2::uuid
+       AND status IN ('pending', 'paid')
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [code.id, order.id]
+  );
+  if (reservedResult.rowCount > 0) {
+    const reservedOrder = reservedResult.rows[0];
+    throw createStoreError(
+      reservedOrder.status === "paid"
+        ? "Mã giảm giá này đã được sử dụng"
+        : "Mã giảm giá này đang được giữ bởi một đơn khác",
+      400
+    );
+  }
+
+  const subtotalAmount = Number(order.subtotal_amount ?? order.amount ?? 0);
+  const discountAmount = computeDiscountAmount(subtotalAmount, code.percent_off);
+  const finalAmount = Math.max(0, subtotalAmount - discountAmount);
+  const updatedResult = await client.query(
+    `UPDATE orders
+     SET subtotal_amount = $2,
+         amount = $3,
+         discount_amount = $4,
+         discount_percent = $5,
+         discount_code_id = $6::uuid,
+         discount_code = $7,
+         updated_at = NOW()
+     WHERE id = $1::uuid
+     RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+               discount_amount, discount_percent, discount_code, discount_code_id,
+               currency, status, created_at, paid_at`,
+    [order.id, subtotalAmount, finalAmount, discountAmount, Number(code.percent_off), code.id, code.code]
+  );
 
   return {
-    order: mapOrder(orderRow),
-    product: {
-      id: product.id,
-      appId: product.app_id,
-      name: product.name,
-      cycle: product.cycle,
-      price: Number(product.price),
-      currency: product.currency,
-      credits: Number(product.credits)
-    }
+    order: mapOrder(updatedResult.rows[0]),
+    discountCode: mapDiscountCode({
+      ...code,
+      usage_status: "reserved",
+      reserved_order_id: order.id,
+      reserved_order_code: order.order_code
+    })
   };
+}
+
+async function createOrder({ customerId, appId, productId, discountCode }) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const productResult = await client.query(
+      `SELECT id, app_id, name, cycle, price, currency, credits
+       FROM products
+       WHERE id = $1 AND app_id = $2 AND active = TRUE`,
+      [productId, appId]
+    );
+    if (productResult.rowCount === 0) {
+      throw createStoreError("Product khong ton tai hoac dang tat", 404);
+    }
+
+    const customerResult = await client.query("SELECT id FROM customers WHERE id = $1", [customerId]);
+    if (customerResult.rowCount === 0) {
+      throw createStoreError("Customer khong ton tai", 404);
+    }
+
+    const product = productResult.rows[0];
+    let orderRow = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const orderCode = generateReadableOrderCode();
+      try {
+        const orderResult = await client.query(
+          `INSERT INTO orders(
+             id, order_code, customer_id, app_id, product_id,
+             amount, subtotal_amount, discount_amount, discount_percent,
+             currency, status
+           )
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $5, 0, 0, $6, 'pending')
+           RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+                     discount_amount, discount_percent, discount_code, discount_code_id,
+                     currency, status, created_at, paid_at`,
+          [orderCode, customerId, appId, productId, product.price, product.currency]
+        );
+        orderRow = orderResult.rows[0];
+        break;
+      } catch (error) {
+        const uniqueOrderCodeConflict =
+          error?.code === "23505" &&
+          (String(error?.constraint || "").includes("order_code") ||
+            String(error?.detail || "").includes("order_code"));
+        if (!uniqueOrderCodeConflict || attempt === 4) {
+          throw error;
+        }
+      }
+    }
+
+    if (discountCode) {
+      const discounted = await applyDiscountToOrderWithClient({
+        client,
+        orderId: orderRow.id,
+        discountCode
+      });
+      orderRow = {
+        ...orderRow,
+        ...discounted.order,
+        order_code: discounted.order.orderCode,
+        customer_id: discounted.order.customerId,
+        app_id: discounted.order.appId,
+        product_id: discounted.order.productId,
+        subtotal_amount: discounted.order.subtotalAmount,
+        discount_amount: discounted.order.discountAmount,
+        discount_percent: discounted.order.discountPercent,
+        discount_code: discounted.order.discountCode,
+        currency: discounted.order.currency,
+        created_at: discounted.order.createdAt,
+        paid_at: discounted.order.paidAt
+      };
+    }
+
+    await client.query("COMMIT");
+
+    return {
+      order: mapOrder(orderRow),
+      product: {
+        id: product.id,
+        appId: product.app_id,
+        name: product.name,
+        cycle: product.cycle,
+        price: Number(product.price),
+        currency: product.currency,
+        credits: Number(product.credits)
+      }
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function getOrderById(orderId) {
   const result = await pool.query(
-    `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+    `SELECT id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+            discount_amount, discount_percent, discount_code, discount_code_id,
+            currency, status, created_at, paid_at
      FROM orders
      WHERE id = $1::uuid`,
     [orderId]
@@ -334,7 +528,9 @@ async function getOrderByCode(orderCode) {
   const compactCode = normalizedCode.replace(/[^A-Z0-9]/g, "");
 
   const result = await pool.query(
-    `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+    `SELECT id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+            discount_amount, discount_percent, discount_code, discount_code_id,
+            currency, status, created_at, paid_at
      FROM orders
      WHERE order_code = $1 OR REPLACE(order_code, '-', '') = $2
      ORDER BY created_at DESC
@@ -379,6 +575,117 @@ async function getOrderDetailsById(orderId) {
   return { order, keyDelivery };
 }
 
+async function applyDiscountToOrder({ orderId, discountCode }) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const applied = await applyDiscountToOrderWithClient({ client, orderId, discountCode });
+    await client.query("COMMIT");
+    return applied;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function listDiscountCodes(limit = 200) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 500);
+  const result = await pool.query(
+    `SELECT dc.id, dc.code, dc.percent_off, dc.starts_at, dc.ends_at, dc.active, dc.single_use,
+            dc.note, dc.created_at, dc.updated_at, dc.created_by_admin_id, dc.used_at, dc.used_order_id,
+            au.username AS created_by_username,
+            used_order.order_code AS used_order_code,
+            reserved_order.id AS reserved_order_id,
+            reserved_order.order_code AS reserved_order_code,
+            CASE
+              WHEN dc.used_order_id IS NOT NULL THEN 'used'
+              WHEN reserved_order.id IS NOT NULL THEN 'reserved'
+              ELSE 'available'
+            END AS usage_status
+     FROM discount_codes dc
+     LEFT JOIN admin_users au ON au.id = dc.created_by_admin_id
+     LEFT JOIN orders used_order ON used_order.id = dc.used_order_id
+     LEFT JOIN LATERAL (
+       SELECT o.id, o.order_code
+       FROM orders o
+       WHERE o.discount_code_id = dc.id
+         AND o.status = 'pending'
+       ORDER BY o.created_at DESC
+       LIMIT 1
+     ) AS reserved_order ON TRUE
+     ORDER BY dc.created_at DESC
+     LIMIT $1`,
+    [safeLimit]
+  );
+
+  return result.rows.map(mapDiscountCode);
+}
+
+async function createDiscountCode({ code, percentOff, startsAt, endsAt, note, createdByAdminId }) {
+  const normalizedCode = normalizeDiscountCode(code);
+  const safePercentOff = Number(percentOff);
+  const safeStartsAt = new Date(startsAt);
+  const safeEndsAt = new Date(endsAt);
+  const safeNote = String(note || "").trim();
+
+  if (!normalizedCode || !/^[A-Z0-9_-]{4,40}$/.test(normalizedCode)) {
+    throw createStoreError("Mã giảm giá chỉ gồm A-Z, số, gạch ngang hoặc gạch dưới, dài 4-40 ký tự", 400);
+  }
+  if (!Number.isInteger(safePercentOff) || safePercentOff <= 0 || safePercentOff >= 100) {
+    throw createStoreError("Phần trăm giảm phải là số nguyên từ 1 đến 99", 400);
+  }
+  if (Number.isNaN(safeStartsAt.getTime()) || Number.isNaN(safeEndsAt.getTime()) || safeStartsAt >= safeEndsAt) {
+    throw createStoreError("Khoảng thời gian áp dụng không hợp lệ", 400);
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO discount_codes(
+         id, code, percent_off, starts_at, ends_at, active, single_use,
+         note, created_by_admin_id
+       )
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, TRUE, TRUE, $5, $6::uuid)
+       RETURNING id, code, percent_off, starts_at, ends_at, active, single_use,
+                 note, created_at, updated_at, created_by_admin_id, used_at, used_order_id`,
+      [
+        normalizedCode,
+        safePercentOff,
+        safeStartsAt.toISOString(),
+        safeEndsAt.toISOString(),
+        safeNote || null,
+        createdByAdminId || null
+      ]
+    );
+    return mapDiscountCode(result.rows[0]);
+  } catch (error) {
+    const isConflict = error?.code === "23505";
+    if (isConflict) {
+      throw createStoreError("Mã giảm giá đã tồn tại", 409);
+    }
+    throw error;
+  }
+}
+
+async function updateDiscountCodeActive({ discountCodeId, active }) {
+  const result = await pool.query(
+    `UPDATE discount_codes
+     SET active = $2,
+         updated_at = NOW()
+     WHERE id = $1::uuid
+     RETURNING id, code, percent_off, starts_at, ends_at, active, single_use,
+               note, created_at, updated_at, created_by_admin_id, used_at, used_order_id`,
+    [discountCodeId, Boolean(active)]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapDiscountCode(result.rows[0]);
+}
+
 async function recordWebhookEvent(event) {
   const result = await pool.query(
     `INSERT INTO payment_webhook_events(event_id, order_id, provider, provider_transaction_id, status, payload)
@@ -404,7 +711,9 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     await client.query("BEGIN");
 
     const orderResult = await client.query(
-      `SELECT id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at
+      `SELECT id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+              discount_amount, discount_percent, discount_code, discount_code_id,
+              currency, status, created_at, paid_at
        FROM orders
        WHERE id = $1::uuid
        FOR UPDATE`,
@@ -415,6 +724,23 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     }
 
     const orderRow = orderResult.rows[0];
+    if (orderRow.discount_code_id) {
+      const discountLock = await client.query(
+        `SELECT id, used_order_id
+         FROM discount_codes
+         WHERE id = $1::uuid
+         FOR UPDATE`,
+        [orderRow.discount_code_id]
+      );
+      if (discountLock.rowCount === 0) {
+        throw createStoreError("Mã giảm giá đã gắn với đơn không còn tồn tại", 400);
+      }
+      const discountRow = discountLock.rows[0];
+      if (discountRow.used_order_id && discountRow.used_order_id !== orderId) {
+        throw createStoreError("Mã giảm giá này đã được dùng cho đơn khác", 400);
+      }
+    }
+
     if (orderRow.status === "paid") {
       const existingDelivery = await getOrderKeyDelivery(orderId);
       const existingLicense = await getOrderAppLicense(orderId);
@@ -445,10 +771,23 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       `UPDATE orders
        SET status = 'paid', paid_at = NOW()
        WHERE id = $1::uuid
-       RETURNING id, order_code, customer_id, app_id, product_id, amount, currency, status, created_at, paid_at`,
+       RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
+                 discount_amount, discount_percent, discount_code, discount_code_id,
+                 currency, status, created_at, paid_at`,
       [orderId]
     );
     const paidOrder = paidOrderResult.rows[0];
+
+    if (paidOrder.discount_code_id) {
+      await client.query(
+        `UPDATE discount_codes
+         SET used_at = COALESCE(used_at, NOW()),
+             used_order_id = COALESCE(used_order_id, $2::uuid),
+             updated_at = NOW()
+         WHERE id = $1::uuid`,
+        [paidOrder.discount_code_id, paidOrder.id]
+      );
+    }
 
     const productResult = await client.query(
       `SELECT id, app_id, cycle, credits
@@ -2303,6 +2642,7 @@ module.exports = {
   getPublicCatalog,
   getAdminCatalog,
   createOrder,
+  applyDiscountToOrder,
   getOrderById,
   getOrderByCode,
   getOrderDetailsById,
@@ -2359,7 +2699,10 @@ module.exports = {
   listProductKeySummary,
   listProductKeys,
   bulkImportProductKeys,
-  deleteProductKey
+  deleteProductKey,
+  listDiscountCodes,
+  createDiscountCode,
+  updateDiscountCodeActive
 };
 
 async function listProductKeySummary() {

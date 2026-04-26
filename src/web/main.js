@@ -77,7 +77,8 @@ const fallbackProducts = [
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"lamviec", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:3 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
-  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly",  price:300000, credits:2 }
+  { id:"demo-cv2",   appId:"lamviec", name:"Phần mềm quản lý site bất động sản và bài viết", cycle:"monthly",  price:300000, credits:2 },
+  { id:"prod-salon-manager-lifetime", appId:"hair-spa-manager", name:"Salon Manager", cycle:"one_time", price:990000, credits:0 }
 ];
 
 function imagePathByName(fileName) {
@@ -91,7 +92,8 @@ const productImageLibrary = {
   map: imagePathByName("Phần mềm quét data KH-GGmap.jpeg"),
   mapAlt: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật.jpeg"),
-  bds: imagePathByName("Quản_lý_website_BDS.jpeg")
+  bds: imagePathByName("Quản_lý_website_BDS.jpeg"),
+  salon: imagePathByName("Salon-Manager.png")
 };
 
 function normalizeText(value) {
@@ -130,6 +132,9 @@ function resolveProductImage(product) {
   }
   if (/(map|ggmap|quet data|scan data|data kh)/.test(hint)) {
     return productImageLibrary.map;
+  }
+  if (/(salon manager|hair spa manager|hair spa|salon)/.test(hint)) {
+    return productImageLibrary.salon;
   }
   if (/(bds|website)/.test(productId)) {
     return productImageLibrary.bds;
@@ -591,7 +596,16 @@ function softwareCode(appId) {
   if (!raw) return "APP-UNKNOWN";
   const normalized = raw.toLowerCase();
   if (normalized === "app-study-12") return "APP-CAP01";
+  if (normalized === "hair-spa-manager") return "APP-SALON";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function getCatalogCategory(product) {
+  const appId = String(product?.appId || "").trim().toLowerCase();
+  if (appId === "app-study-12" || appId === "app-cap12") return "hoctap";
+  if (appId === "hair-spa-manager") return "lamviec";
+  if (appId.includes("lamviec") || appId.includes("work")) return "lamviec";
+  return appId;
 }
 
 function softwareIntro(product){
@@ -617,6 +631,12 @@ function softwareIntro(product){
     return lang === "vi"
       ? "Giải pháp giúp tự động hóa tác vụ lặp lại, tiết kiệm thời gian và làm việc chuyên nghiệp hơn."
       : "A workflow solution that automates repetitive tasks and improves professional output.";
+  }
+
+  if (app.includes("hair") || app.includes("salon")) {
+    return lang === "vi"
+      ? "Phần mềm quản lý salon tóc: lịch hẹn, khách hàng, dịch vụ, thu chi và vận hành tại quầy trong một nơi."
+      : "A salon management app for appointments, customers, services, cashier flow, and daily operations.";
   }
 
   return lang === "vi"
@@ -1061,6 +1081,10 @@ function renderPurchased(){
           });
           const d = await res.json();
           if(!res.ok){ alert(d.message||t("error_create")); return; }
+          if (shouldUseSameTabCheckout()) {
+            window.location.assign(d.checkoutUrl);
+            return;
+          }
           window.open(d.checkoutUrl,"_blank");
         } catch{ alert(t("error_create")); }
       });
@@ -1149,7 +1173,7 @@ function renderProducts(){
   const q = (searchInput.value||"").toLowerCase();
   const filtered = allProducts.filter(p => {
     const displayName = canonicalProductName(p).toLowerCase();
-    const matchCat = activeCat==="all" || (p.appId||"").toLowerCase()===activeCat;
+    const matchCat = activeCat==="all" || getCatalogCategory(p)===activeCat;
     const matchQ   = !q || p.name.toLowerCase().includes(q) || displayName.includes(q) || (p.appId||"").toLowerCase().includes(q);
     return matchCat && matchQ;
   });
@@ -1314,6 +1338,13 @@ async function loadCatalog(){
 }
 
 searchInput.addEventListener("input", renderProducts);
+
+function shouldUseSameTabCheckout() {
+  if (typeof window === "undefined") return false;
+  const mobileByWidth = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+  const mobileByUa = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+  return mobileByWidth || mobileByUa;
+}
 
 langToggle.addEventListener("click", ()=>{
   lang = lang==="vi"?"en":"vi";

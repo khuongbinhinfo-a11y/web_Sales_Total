@@ -19,6 +19,7 @@ const {
   getPublicCatalog,
   getAdminCatalog,
   createOrder,
+  applyDiscountToOrder,
   getOrderDetailsById,
   consumeUsage,
   getCustomerSnapshot,
@@ -60,7 +61,10 @@ const {
   listProductKeySummary,
   listProductKeys,
   bulkImportProductKeys,
-  deleteProductKey
+  deleteProductKey,
+  listDiscountCodes,
+  createDiscountCode,
+  updateDiscountCodeActive
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -936,8 +940,8 @@ app.get(
 async function handleCreateOrder(req, res) {
   const session = getCustomerFromSession(req);
   const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
-  const { appId, productId } = req.body;
-  const { order, product } = await createOrder({ customerId, appId, productId });
+  const { appId, productId, discountCode } = req.body;
+  const { order, product } = await createOrder({ customerId, appId, productId, discountCode });
 
   res.status(201).json({
     order,
@@ -958,6 +962,23 @@ app.get(
     }
 
     return res.json(orderDetails);
+  })
+);
+
+app.post(
+  "/api/orders/:orderId/discount",
+  asyncHandler(async (req, res) => {
+    const discountCode = String(req.body?.discountCode || "").trim();
+    if (!discountCode) {
+      return res.status(400).json({ message: "Vui lòng nhập mã giảm giá" });
+    }
+
+    const result = await applyDiscountToOrder({
+      orderId: req.params.orderId,
+      discountCode
+    });
+
+    return res.json({ ok: true, ...result });
   })
 );
 
@@ -2363,6 +2384,49 @@ app.post(
   })
 );
 
+app.get(
+  "/api/admin/discount-codes",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const limit = Number(req.query.limit || 200);
+    const discountCodes = await listDiscountCodes(limit);
+    return res.json({ discountCodes });
+  })
+);
+
+app.post(
+  "/api/admin/discount-codes",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    const discountCode = await createDiscountCode({
+      code: req.body?.code,
+      percentOff: req.body?.percentOff,
+      startsAt: req.body?.startsAt,
+      endsAt: req.body?.endsAt,
+      note: req.body?.note,
+      createdByAdminId: adminSession?.id || null
+    });
+    return res.status(201).json({ ok: true, discountCode });
+  })
+);
+
+app.post(
+  "/api/admin/discount-codes/:discountCodeId/toggle",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const active = Boolean(req.body?.active);
+    const discountCode = await updateDiscountCodeActive({
+      discountCodeId: req.params.discountCodeId,
+      active
+    });
+    if (!discountCode) {
+      return res.status(404).json({ message: "Không tìm thấy mã giảm giá" });
+    }
+    return res.json({ ok: true, discountCode });
+  })
+);
+
 app.patch(
   "/api/admin/admin-users/:adminId",
   requireAdminPermission("admins:write"),
@@ -2914,6 +2978,9 @@ app.get(
   const sepayCheckout = sepayCheckoutEnabled ? buildSepayCheckout(order) : null;
 
   const amountFormatted = Number(order.amount).toLocaleString("vi-VN");
+  const subtotalFormatted = Number(order.subtotalAmount || order.amount).toLocaleString("vi-VN");
+  const discountFormatted = Number(order.discountAmount || 0).toLocaleString("vi-VN");
+  const serializedOrder = JSON.stringify(order).replace(/</g, "\\u003c");
   const sepayPanel = sepayCheckoutEnabled
     ? `<div class="sepay-box">
             <h3>💳 Thông tin chuyển khoản Sepay</h3>
@@ -2950,6 +3017,19 @@ app.get(
         <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
         <p style="font-size:.82rem;color:#64748b">Thông báo trạng thái đơn hàng và key sẽ được gửi qua email hoặc hiển thị trong <b>Sản phẩm đã mua</b>.</p>
+        <div id="orderPriceSummary" style="margin-top:14px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc">
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem"><span>Tạm tính</span><strong>${subtotalFormatted} ${order.currency}</strong></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem;color:#16a34a;margin-top:6px"><span>Giảm giá${order.discountCode ? ` (${order.discountCode})` : ""}</span><strong>- ${discountFormatted} ${order.currency}</strong></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:1rem;font-weight:800;color:#0f172a;margin-top:10px;padding-top:10px;border-top:1px dashed #cbd5e1"><span>Cần thanh toán</span><strong>${amountFormatted} ${order.currency}</strong></div>
+        </div>
+        <div style="margin-top:14px;padding:14px;border:1px solid #dbeafe;border-radius:12px;background:#eff6ff">
+          <label for="discountCodeInput" style="display:block;font-size:.8rem;font-weight:700;color:#1d4ed8;margin-bottom:8px">Mã giảm giá</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="discountCodeInput" value="${order.discountCode || ""}" placeholder="VD: SALE10" style="flex:1;min-width:220px;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:10px;font-size:.9rem;text-transform:uppercase" />
+            <button id="applyDiscountBtn" type="button" style="min-height:44px;padding:0 16px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer">Áp dụng mã</button>
+          </div>
+          <p id="discountCodeMsg" style="margin:8px 0 0;font-size:.82rem;color:#64748b">Mỗi mã chỉ dùng cho 1 đơn. Nếu mã đã bị giữ hoặc đã dùng, hệ thống sẽ báo ngay.</p>
+        </div>
         ${sepayPanel}
         <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
           <button id="payNow" style="flex:1;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;transition:.2s">${mockCheckoutEnabled ? "✅ Xác nhận đã thanh toán" : "🔄 Tôi đã chuyển khoản, kiểm tra ngay"}</button>
@@ -2970,13 +3050,40 @@ app.get(
       </div>
       <script>
         const orderId = '${order.id}';
+        let currentOrder = ${serializedOrder};
         const isMockMode = ${mockCheckoutEnabled ? "true" : "false"};
         const resultEl = document.getElementById('result');
         const payBtn = document.getElementById('payNow');
+        const orderPriceSummary = document.getElementById('orderPriceSummary');
+        const discountInput = document.getElementById('discountCodeInput');
+        const discountMsg = document.getElementById('discountCodeMsg');
+        const discountBtn = document.getElementById('applyDiscountBtn');
         const paidPopup = document.getElementById('paidPopup');
         const paidPopupText = document.getElementById('paidPopupText');
         const paidPopupKey = document.getElementById('paidPopupKey');
         let paidPopupShown = false;
+
+        function formatCurrency(value) {
+          return Number(value || 0).toLocaleString('vi-VN');
+        }
+
+        function renderOrderPriceSummary(orderState) {
+          if (!orderPriceSummary || !orderState) return;
+          const subtotal = Number(orderState.subtotalAmount || orderState.amount || 0);
+          const discount = Number(orderState.discountAmount || 0);
+          const amount = Number(orderState.amount || 0);
+          const currency = orderState.currency || 'VND';
+          const discountCode = orderState.discountCode ? ' (' + orderState.discountCode + ')' : '';
+          orderPriceSummary.innerHTML = ''
+            + '<div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem"><span>Tạm tính</span><strong>' + formatCurrency(subtotal) + ' ' + currency + '</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem;color:#16a34a;margin-top:6px"><span>Giảm giá' + discountCode + '</span><strong>- ' + formatCurrency(discount) + ' ' + currency + '</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;gap:10px;font-size:1rem;font-weight:800;color:#0f172a;margin-top:10px;padding-top:10px;border-top:1px dashed #cbd5e1"><span>Cần thanh toán</span><strong>' + formatCurrency(amount) + ' ' + currency + '</strong></div>';
+          if (discountInput) {
+            discountInput.value = orderState.discountCode || '';
+          }
+        }
+
+        renderOrderPriceSummary(currentOrder);
 
         function showPaidPopup(keyVal) {
           if (paidPopupShown) return;
@@ -3009,6 +3116,10 @@ app.get(
             const r = await fetch('/api/orders/' + orderId);
             if (!r.ok) return false;
             const d = await r.json();
+            if (d.order) {
+              currentOrder = d.order;
+              renderOrderPriceSummary(currentOrder);
+            }
             if (d.order && d.order.status === 'paid') {
               const keyVal = d.keyDelivery && d.keyDelivery.keyValue;
               resultEl.innerHTML = '<div style="background:#f0fdf4;border:1.5px dashed #86efac;border-radius:10px;padding:16px;margin-top:8px">'
@@ -3028,6 +3139,44 @@ app.get(
             return false;
           }
         }
+
+        discountBtn?.addEventListener('click', async () => {
+          const discountCode = (discountInput?.value || '').trim().toUpperCase();
+          if (!discountCode) {
+            discountMsg.textContent = 'Vui lòng nhập mã giảm giá.';
+            discountMsg.style.color = '#b91c1c';
+            return;
+          }
+
+          discountBtn.disabled = true;
+          discountBtn.textContent = 'Đang áp dụng...';
+          discountMsg.textContent = 'Đang kiểm tra mã giảm giá...';
+          discountMsg.style.color = '#64748b';
+
+          try {
+            const response = await fetch('/api/orders/' + orderId + '/discount', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ discountCode })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              discountMsg.textContent = payload.message || 'Không áp dụng được mã giảm giá.';
+              discountMsg.style.color = '#b91c1c';
+              return;
+            }
+            currentOrder = payload.order || currentOrder;
+            renderOrderPriceSummary(currentOrder);
+            discountMsg.textContent = 'Đã áp dụng mã giảm giá thành công.';
+            discountMsg.style.color = '#166534';
+          } catch (error) {
+            discountMsg.textContent = error.message || 'Lỗi kết nối khi áp dụng mã giảm giá.';
+            discountMsg.style.color = '#b91c1c';
+          } finally {
+            discountBtn.disabled = false;
+            discountBtn.textContent = 'Áp dụng mã';
+          }
+        });
 
         payBtn.addEventListener('click', async () => {
           if (!isMockMode) {

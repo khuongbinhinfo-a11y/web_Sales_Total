@@ -57,6 +57,14 @@ function escapeHtml(value){
     .replace(/'/g,"&#39;");
 }
 
+function toDatetimeLocalValue(value){
+  if(!value) return "";
+  const parsed = new Date(value);
+  if(Number.isNaN(parsed.getTime())) return "";
+  const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0,16);
+}
+
 function isPublicWebhookUrl(url){
   const value = String(url || "").trim().toLowerCase();
   if(!value) return false;
@@ -1156,12 +1164,15 @@ function parseLicenseCompensationRows(raw, format){
 
     if(format === "email_license_days"){
       [email, licenseKey, daysText] = parts;
+    } else if (format === "email_days") {
+      [email, daysText] = parts;
     } else {
       [licenseKey, daysText] = parts;
     }
 
     const days = Number.parseInt(String(daysText || "").trim(), 10);
-    if(!licenseKey || !Number.isFinite(days) || days <= 0){
+    const hasLookup = Boolean(licenseKey || email);
+    if(!hasLookup || !Number.isFinite(days) || days <= 0){
       errors.push(`Dòng ${index + 1}: dữ liệu không hợp lệ -> ${line}`);
       return;
     }
@@ -1176,14 +1187,106 @@ function parseLicenseCompensationRows(raw, format){
   return { rows, errors };
 }
 
-function buildSingleCompensationSql(item, mode){
+function buildLicenseCompExpirySql(mode, alias = "expires_at") {
+  return mode === "add_days"
+    ? `GREATEST(COALESCE(${alias}, NOW()), NOW()) + make_interval(days => src.days)`
+    : "NOW() + make_interval(days => src.days)";
+}
+
+function buildLicenseCompSingleExpirySql(mode, daysLiteral, alias = "expires_at") {
+  return mode === "add_days"
+    ? `GREATEST(COALESCE(${alias}, NOW()), NOW()) + INTERVAL '${daysLiteral}'`
+    : `NOW() + INTERVAL '${daysLiteral}'`;
+}
+
+function buildCompareSelectSql(rows, format){
+  if(!rows.length) return "";
+
+  if(format === "license_days"){
+    const keyListSql = rows.map((item)=>`'${escapeSqlString(item.licenseKey)}'`).join(", ");
+    return [
+      `SELECT license_key, status, expires_at`,
+      `FROM app_licenses`,
+      `WHERE license_key IN (${keyListSql})`,
+      `ORDER BY license_key;`
+    ].join("\n");
+  }
+
+  if(format === "email_license_days"){
+    const valuesSql = rows
+      .map((item)=>`    ('${escapeSqlString(item.email)}', '${escapeSqlString(item.licenseKey)}', ${item.days})`)
+      .join(",\n");
+    return [
+      `WITH src(email, license_key, days) AS (`,
+      `  VALUES`,
+      valuesSql,
+      `)`,
+      `SELECT src.email, al.license_key, al.status, al.expires_at`,
+      `FROM src`,
+      `LEFT JOIN customers c ON LOWER(c.email) = LOWER(src.email)`,
+      `LEFT JOIN app_licenses al ON al.customer_id = c.id AND al.license_key = src.license_key`,
+      `ORDER BY src.email, al.license_key;`
+    ].join("\n");
+  }
+
+  const valuesSql = rows
+    .map((item)=>`    ('${escapeSqlString(item.email)}', ${item.days})`)
+    .join(",\n");
+  return [
+    `WITH src(email, days) AS (`,
+    `  VALUES`,
+    valuesSql,
+    `)`,
+    `SELECT src.email, al.license_key, al.status, al.expires_at`,
+    `FROM src`,
+    `LEFT JOIN customers c ON LOWER(c.email) = LOWER(src.email)`,
+    `LEFT JOIN app_licenses al ON al.customer_id = c.id`,
+    `ORDER BY src.email, al.license_key;`
+  ].join("\n");
+}
+
+function buildSingleCompensationSql(item, mode, format){
   if(!item) return "";
   const daysLiteral = `${item.days} days`;
   const safeKey = escapeSqlString(item.licenseKey);
-  const setExpirySql = mode === "add_days"
-    ? `GREATEST(COALESCE(expires_at, NOW()), NOW()) + INTERVAL '${daysLiteral}'`
-    : `NOW() + INTERVAL '${daysLiteral}'`;
+  const safeEmail = escapeSqlString(item.email);
+  const setExpirySql = buildLicenseCompSingleExpirySql(mode, daysLiteral);
   const emailComment = item.email ? `-- Email: ${item.email}\n` : "";
+
+  if(format === "email_days"){
+    return [
+      `${emailComment}UPDATE app_licenses AS al`,
+      `SET expires_at = ${setExpirySql},`,
+      `    updated_at = NOW()`,
+      `FROM customers c`,
+      `WHERE LOWER(c.email) = LOWER('${safeEmail}')`,
+      `  AND al.customer_id = c.id;`,
+      "",
+      `SELECT c.email, al.license_key, al.status, al.expires_at`,
+      `FROM customers c`,
+      `LEFT JOIN app_licenses al ON al.customer_id = c.id`,
+      `WHERE LOWER(c.email) = LOWER('${safeEmail}')`,
+      `ORDER BY al.license_key;`
+    ].join("\n");
+  }
+
+  if(format === "email_license_days"){
+    return [
+      `${emailComment}UPDATE app_licenses AS al`,
+      `SET expires_at = ${setExpirySql},`,
+      `    updated_at = NOW()`,
+      `FROM customers c`,
+      `WHERE LOWER(c.email) = LOWER('${safeEmail}')`,
+      `  AND al.customer_id = c.id`,
+      `  AND al.license_key = '${safeKey}';`,
+      "",
+      `SELECT c.email, al.license_key, al.status, al.expires_at`,
+      `FROM customers c`,
+      `LEFT JOIN app_licenses al ON al.customer_id = c.id`,
+      `WHERE LOWER(c.email) = LOWER('${safeEmail}')`,
+      `  AND al.license_key = '${safeKey}';`
+    ].join("\n");
+  }
 
   return [
     `${emailComment}UPDATE app_licenses`,
@@ -1197,15 +1300,50 @@ function buildSingleCompensationSql(item, mode){
   ].join("\n");
 }
 
-function buildBulkCompensationSql(rows, mode){
+function buildBulkCompensationSql(rows, mode, format){
   if(!rows.length) return "";
+  const expirySql = buildLicenseCompExpirySql(mode, "al.expires_at");
+
+  if(format === "email_license_days"){
+    const valuesSql = rows
+      .map((item)=>`    ('${escapeSqlString(item.email)}', '${escapeSqlString(item.licenseKey)}', ${item.days})`)
+      .join(",\n");
+    return [
+      `WITH src(email, license_key, days) AS (`,
+      `  VALUES`,
+      valuesSql,
+      `)`,
+      `UPDATE app_licenses AS al`,
+      `SET expires_at = ${expirySql},`,
+      `    updated_at = NOW()`,
+      `FROM src`,
+      `JOIN customers c ON LOWER(c.email) = LOWER(src.email)`,
+      `WHERE al.customer_id = c.id`,
+      `  AND al.license_key = src.license_key;`
+    ].join("\n");
+  }
+
+  if(format === "email_days"){
+    const valuesSql = rows
+      .map((item)=>`    ('${escapeSqlString(item.email)}', ${item.days})`)
+      .join(",\n");
+    return [
+      `WITH src(email, days) AS (`,
+      `  VALUES`,
+      valuesSql,
+      `)`,
+      `UPDATE app_licenses AS al`,
+      `SET expires_at = ${expirySql},`,
+      `    updated_at = NOW()`,
+      `FROM src`,
+      `JOIN customers c ON LOWER(c.email) = LOWER(src.email)`,
+      `WHERE al.customer_id = c.id;`
+    ].join("\n");
+  }
+
   const valuesSql = rows
     .map((item)=>`    ('${escapeSqlString(item.licenseKey)}', ${item.days})`)
     .join(",\n");
-  const expirySql = mode === "add_days"
-    ? "GREATEST(COALESCE(al.expires_at, NOW()), NOW()) + make_interval(days => src.days)"
-    : "NOW() + make_interval(days => src.days)";
-  const keyListSql = rows.map((item)=>`'${escapeSqlString(item.licenseKey)}'`).join(", ");
 
   return [
     `UPDATE app_licenses AS al`,
@@ -1215,13 +1353,36 @@ function buildBulkCompensationSql(rows, mode){
     `  VALUES`,
     valuesSql,
     `) AS src(license_key, days)`,
-    `WHERE al.license_key = src.license_key;`,
-    "",
-    `SELECT license_key, status, expires_at`,
-    `FROM app_licenses`,
-    `WHERE license_key IN (${keyListSql})`,
-    `ORDER BY license_key;`
+    `WHERE al.license_key = src.license_key;`
   ].join("\n");
+}
+
+function buildCompareWorkflowSql(rows, mode, format){
+  if(!rows.length) return "";
+  const compareSql = buildCompareSelectSql(rows, format);
+  const bulkSql = buildBulkCompensationSql(rows, mode, format);
+  return [
+    `-- BEFORE UPDATE`,
+    compareSql,
+    "",
+    `-- APPLY UPDATE`,
+    bulkSql,
+    "",
+    `-- AFTER UPDATE`,
+    compareSql
+  ].join("\n\n");
+}
+
+function downloadTextFile(fileName, content){
+  const blob = new Blob([content], { type: "application/sql;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function saveLicenseCompDraft(){
@@ -1272,9 +1433,12 @@ function bindLicenseCompensationTool(){
   const msg = document.getElementById("licenseCompMsg");
   const singleSql = document.getElementById("licenseCompSingleSql");
   const bulkSql = document.getElementById("licenseCompBulkSql");
+  const compareSql = document.getElementById("licenseCompCompareSql");
   const copySingleBtn = document.getElementById("licenseCompCopySingleBtn");
   const copyBulkBtn = document.getElementById("licenseCompCopyBulkBtn");
-  if(!input || !mode || !format || !generateBtn || !clearBtn || !singleSql || !bulkSql) return;
+  const copyCompareBtn = document.getElementById("licenseCompCopyCompareBtn");
+  const exportBtn = document.getElementById("licenseCompExportBtn");
+  if(!input || !mode || !format || !generateBtn || !clearBtn || !singleSql || !bulkSql || !compareSql) return;
 
   loadLicenseCompDraft();
 
@@ -1286,7 +1450,7 @@ function bindLicenseCompensationTool(){
       msg.textContent = parsed.errors[0];
       msg.style.color = "var(--danger)";
     } else if(!parsed.rows.length) {
-      msg.textContent = "Dán danh sách license_key và số ngày để sinh SQL.";
+      msg.textContent = "Dán danh sách license_key hoặc email kèm số ngày để sinh SQL.";
       msg.style.color = "var(--muted)";
     } else {
       const modeLabel = mode.value === "add_days" ? "cộng thêm" : "set còn lại";
@@ -1294,8 +1458,9 @@ function bindLicenseCompensationTool(){
       msg.style.color = "var(--muted)";
     }
 
-    singleSql.value = buildSingleCompensationSql(parsed.rows[0], mode.value);
-    bulkSql.value = buildBulkCompensationSql(parsed.rows, mode.value);
+    singleSql.value = buildSingleCompensationSql(parsed.rows[0], mode.value, format.value);
+    bulkSql.value = buildBulkCompensationSql(parsed.rows, mode.value, format.value);
+    compareSql.value = buildCompareWorkflowSql(parsed.rows, mode.value, format.value);
   }
 
   generateBtn.addEventListener("click", renderSql);
@@ -1303,6 +1468,7 @@ function bindLicenseCompensationTool(){
     input.value = "";
     singleSql.value = "";
     bulkSql.value = "";
+    compareSql.value = "";
     window.localStorage.removeItem(licenseCompDraftStorageKey);
     msg.textContent = "Đã xóa draft bù ngày trong admin.";
     msg.style.color = "var(--muted)";
@@ -1326,6 +1492,25 @@ function bindLicenseCompensationTool(){
       msg.textContent = `Không copy được SQL bulk: ${err.message}`;
       msg.style.color = "var(--danger)";
     }
+  });
+  copyCompareBtn?.addEventListener("click", async ()=>{
+    try {
+      await copyLicenseCompText(compareSql.value, msg, "Đã copy SELECT đối chiếu trước/sau.");
+    } catch(err) {
+      msg.textContent = `Không copy được SELECT đối chiếu: ${err.message}`;
+      msg.style.color = "var(--danger)";
+    }
+  });
+  exportBtn?.addEventListener("click", ()=>{
+    if(!compareSql.value){
+      msg.textContent = "Chưa có SQL để export.";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    downloadTextFile(`license-compensation-${stamp}.sql`, compareSql.value);
+    msg.textContent = "Đã export file .sql để chạy trong PostgreSQL.";
+    msg.style.color = "var(--success,#16a34a)";
   });
 
   renderSql();
@@ -1618,6 +1803,151 @@ function bindKeyLookup(){
   input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLookup(); });
 }
 
+function bindDiscountCodeAdmin(){
+  const form = document.getElementById("discountCodeForm");
+  const msg = document.getElementById("discountCodeMsg");
+  const wrap = document.getElementById("discountCodesWrap");
+  const refreshBtn = document.getElementById("discountRefreshBtn");
+  const codeInput = document.getElementById("discountCodeValue");
+  const percentInput = document.getElementById("discountPercentOff");
+  const startsInput = document.getElementById("discountStartsAt");
+  const endsInput = document.getElementById("discountEndsAt");
+  const noteInput = document.getElementById("discountNote");
+  if(!form || !msg || !wrap || !codeInput || !percentInput || !startsInput || !endsInput || !noteInput) return;
+
+  function seedDefaultWindow(){
+    if(!startsInput.value){
+      startsInput.value = toDatetimeLocalValue(new Date());
+    }
+    if(!endsInput.value){
+      const end = new Date();
+      end.setDate(end.getDate() + 7);
+      endsInput.value = toDatetimeLocalValue(end);
+    }
+  }
+
+  async function loadDiscountCodes(){
+    wrap.innerHTML = `<p style="padding:12px;color:var(--muted)">Đang tải mã giảm giá...</p>`;
+    try {
+      const res = await fetchAdmin("/api/admin/discount-codes?limit=200");
+      if(res.status===401){ redirectToAdminLogin("/api/admin/discount-codes"); return; }
+      const data = await res.json().catch(()=>({ discountCodes: [] }));
+      if(!res.ok){
+        wrap.innerHTML = `<p style="padding:12px;color:var(--danger)">${escapeHtml(data.message || "Không tải được mã giảm giá")}</p>`;
+        return;
+      }
+
+      const rows = Array.isArray(data.discountCodes) ? data.discountCodes : [];
+      if(!rows.length){
+        wrap.innerHTML = `<p style="padding:12px;color:var(--muted)">Chưa có mã giảm giá nào.</p>`;
+        return;
+      }
+
+      wrap.innerHTML = `<table class="data-table"><thead><tr>
+        <th>Mã</th><th>% giảm</th><th>Thời gian áp dụng</th><th>Trạng thái</th><th>Đơn giữ/dùng</th><th>Ghi chú</th><th>Hành động</th>
+      </tr></thead><tbody>${rows.map((item)=>{
+        const statusBadge = item.active
+          ? `<span class="status-badge status-active">active</span>`
+          : `<span class="status-badge" style="background:#fee2e2;color:#991b1b">inactive</span>`;
+        const usageText = item.usageStatus === "used"
+          ? `Đã dùng: ${escapeHtml(item.usedOrderCode || item.usedOrderId || "—")}`
+          : (item.usageStatus === "reserved"
+            ? `Đang giữ: ${escapeHtml(item.reservedOrderCode || item.reservedOrderId || "—")}`
+            : "Sẵn sàng");
+        return `<tr>
+          <td style="font-family:monospace;font-weight:700">${escapeHtml(item.code)}</td>
+          <td>${Number(item.percentOff || 0)}%</td>
+          <td style="font-size:.82rem">${fmtDate(item.startsAt)}<br />→ ${fmtDate(item.endsAt)}</td>
+          <td>${statusBadge}<div style="font-size:.78rem;color:var(--muted);margin-top:4px">${escapeHtml(item.usageStatus || "available")}</div></td>
+          <td style="font-size:.82rem">${usageText}</td>
+          <td style="font-size:.82rem">${escapeHtml(item.note || "—")}</td>
+          <td><button class="btn btn-outline discount-toggle-btn" data-id="${item.id}" data-active="${item.active ? "1" : "0"}" style="min-height:32px;font-size:.8rem;padding:0 10px">${item.active ? "Tắt mã" : "Bật mã"}</button></td>
+        </tr>`;
+      }).join("")}</tbody></table>`;
+
+      wrap.querySelectorAll(".discount-toggle-btn").forEach((button)=>{
+        button.addEventListener("click", async ()=>{
+          const nextActive = button.dataset.active !== "1";
+          button.disabled = true;
+          const original = button.textContent;
+          button.textContent = "Đang lưu...";
+          try {
+            const res = await fetchAdmin(`/api/admin/discount-codes/${encodeURIComponent(button.dataset.id)}/toggle`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ active: nextActive })
+            });
+            const payload = await res.json().catch(()=>({}));
+            if(!res.ok){
+              msg.textContent = payload.message || "Không cập nhật được mã giảm giá";
+              msg.style.color = "var(--danger)";
+              return;
+            }
+            msg.textContent = `Đã ${nextActive ? "bật" : "tắt"} mã ${payload.discountCode?.code || ""}.`;
+            msg.style.color = "var(--success,#16a34a)";
+            await loadDiscountCodes();
+          } catch(err) {
+            msg.textContent = "Lỗi kết nối: " + err.message;
+            msg.style.color = "var(--danger)";
+          } finally {
+            button.disabled = false;
+            button.textContent = original;
+          }
+        });
+      });
+    } catch(err) {
+      wrap.innerHTML = `<p style="padding:12px;color:var(--danger)">Lỗi tải mã giảm giá: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  seedDefaultWindow();
+  refreshBtn?.addEventListener("click", loadDiscountCodes);
+  codeInput.addEventListener("input", ()=>{
+    codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+  });
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const code = codeInput.value.trim().toUpperCase();
+    const percentOff = Number.parseInt(percentInput.value, 10);
+    const startsAt = startsInput.value;
+    const endsAt = endsInput.value;
+    const note = noteInput.value.trim();
+
+    msg.textContent = "Đang tạo mã giảm giá...";
+    msg.style.color = "var(--muted)";
+
+    try {
+      const res = await fetchAdmin("/api/admin/discount-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, percentOff, startsAt, endsAt, note })
+      });
+      const payload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        msg.textContent = payload.message || "Không tạo được mã giảm giá";
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      codeInput.value = "";
+      percentInput.value = "";
+      noteInput.value = "";
+      startsInput.value = "";
+      endsInput.value = "";
+      seedDefaultWindow();
+      msg.textContent = `Đã tạo mã ${payload.discountCode?.code || code}.`;
+      msg.style.color = "var(--success,#16a34a)";
+      await loadDiscountCodes();
+    } catch(err) {
+      msg.textContent = "Lỗi kết nối: " + err.message;
+      msg.style.color = "var(--danger)";
+    }
+  });
+
+  loadDiscountCodes();
+}
+
 // Sidebar nav highlight
 document.querySelectorAll(".admin-sidebar a").forEach(a=>{
   a.addEventListener("click", ()=>{
@@ -1643,6 +1973,7 @@ bindCustomerSearch();
 bindCustomerModal();
 bindKeyLookup();
 bindProductKeyManager();
+bindDiscountCodeAdmin();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();

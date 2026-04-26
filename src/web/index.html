@@ -517,9 +517,13 @@
         if (localStorage.getItem("wst_show_admin_menu") === "1" || new URLSearchParams(location.search).get("admin") === "1")
           al.classList.remove("is-hidden");
       })();
-      document.getElementById("mobileMenuBtn").addEventListener("click", function () {
-        document.getElementById("headerNav").classList.toggle("open");
-      });
+      var mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      var headerNav = document.getElementById("headerNav");
+      if (mobileMenuBtn && headerNav) {
+        mobileMenuBtn.addEventListener("click", function () {
+          headerNav.classList.toggle("open");
+        });
+      }
     </script>
   </body>
 </html>
