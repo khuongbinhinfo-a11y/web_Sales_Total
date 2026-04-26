@@ -1,6 +1,6 @@
 -- Migration: Chuẩn hóa nhận diện và giá bán cho app BĐS
 -- Created: 2026-04-26
--- Purpose: chốt tên thương mại, giá 349k trọn đời và mô hình 1 key / 1 ID máy cho app BĐS
+-- Purpose: chốt tên thương mại, giá 350k trọn đời và mô hình 1 key / 1 ID máy cho app BĐS
 
 INSERT INTO apps (id, name, slug, status, description)
 VALUES (
@@ -20,7 +20,7 @@ UPDATE products
 SET app_id = 'app-bds-website-manager',
     name = 'Phần Mềm Quản Lý Website & Tin Đăng Bất Động Sản',
     cycle = 'one_time',
-    price = 349000,
+    price = 350000,
     currency = 'VND',
     credits = 0,
     active = TRUE
