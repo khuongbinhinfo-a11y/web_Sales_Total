@@ -6,10 +6,10 @@
     <title>Admin Dashboard | Ứng Dụng Thông Minh</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body class="page-shell">
+  <body class="page-shell admin-page">
     <header class="page-header">
       <div class="container">
         <a class="logo" href="/">
@@ -28,24 +28,73 @@
 
     <div class="admin-layout">
       <nav class="admin-sidebar">
-        <a href="#section-kpi" class="active"><span class="icon">📊</span> Tổng quan</a>
-        <a href="#section-orders"><span class="icon">🛒</span> Đơn hàng</a>
-        <a href="#section-transactions"><span class="icon">💳</span> Giao dịch</a>
-        <a href="#section-subs"><span class="icon">🔄</span> Subscription</a>
-        <a href="#section-wallets"><span class="icon">💰</span> Số dư credit</a>
-        <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
-        <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
-        <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
-        <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
-        <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
-        <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
-        <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
-        <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
-        <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
-        <a href="#section-key-lookup"><span class="icon">🔍</span> Tra key</a>
+        <div class="admin-sidebar-brand">
+          <span class="admin-sidebar-kicker">Admin Console</span>
+          <strong>Van hanh nhanh, ro luong, it sai sot</strong>
+          <p>Toi uu cho support key, doi soat thanh toan va cau hinh production trong mot bo cuc doc ro rang.</p>
+        </div>
+
+        <div class="admin-sidebar-links">
+          <div class="admin-sidebar-group-label">Tong quan va ho tro</div>
+          <a href="#section-kpi" class="active"><span class="icon">📊</span> Tổng quan</a>
+          <a href="#section-key-lookup"><span class="icon">🔍</span> Tra key</a>
+          <a href="#section-customers"><span class="icon">👥</span> Khách hàng</a>
+          <a href="#section-orders"><span class="icon">🛒</span> Đơn hàng</a>
+          <a href="#section-transactions"><span class="icon">💳</span> Giao dịch</a>
+          <a href="#section-subs"><span class="icon">🔄</span> Subscription</a>
+          <a href="#section-wallets"><span class="icon">💰</span> Số dư credit</a>
+
+          <div class="admin-sidebar-group-label">Kho key va xu ly</div>
+          <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
+          <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
+          <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
+          <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
+
+          <div class="admin-sidebar-group-label">Cau hinh he thong</div>
+          <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
+          <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
+          <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
+          <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
+        </div>
+
+        <div class="admin-sidebar-hint">
+          <span class="admin-sidebar-hint-label">Quy trinh support nhanh</span>
+          <ol>
+            <li>Tra key va xem lease hien tai.</li>
+            <li>Mo khach hang hoac don hang lien quan.</li>
+            <li>Cap thu cong, revoke, hoac dieu chinh cau hinh neu can.</li>
+          </ol>
+        </div>
       </nav>
 
       <main class="admin-main" id="adminMain">
+        <section class="admin-hero" aria-label="Dieu hanh admin">
+          <div class="admin-hero-copy">
+            <span class="admin-hero-kicker">Bang dieu hanh noi bo</span>
+            <h1>Mot truc doc de xu ly van hanh</h1>
+            <p>Uu tien nhung viec can ra quyet dinh nhanh: tra key loi, doi soat giao dich, cap bu key va quan ly cau hinh dang chay tren production.</p>
+          </div>
+          <div class="admin-hero-panels">
+            <div class="admin-hero-card">
+              <span class="admin-hero-card-label">Tac vu uu tien</span>
+              <div class="admin-hero-links">
+                <a href="#section-key-lookup">Tra key dang bao loi</a>
+                <a href="#section-manual-grant">Cap key thu cong</a>
+                <a href="#section-customers">Mo ho so khach</a>
+                <a href="#section-sepay">Kiem webhook thanh toan</a>
+              </div>
+            </div>
+            <div class="admin-hero-card admin-hero-card--signal">
+              <span class="admin-hero-card-label">Nguyen tac thao tac</span>
+              <ul>
+                <li>Doc tu tren xuong duoi, moi khoi giai mot viec.</li>
+                <li>Uu tien lookup truoc khi grant hoac revoke.</li>
+                <li>Giu cac form quan trong trong tam nhin, giam cuon ngang.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <!-- KPI -->
         <section id="section-kpi" class="admin-section">
           <h3>📊 Tổng quan hệ thống</h3>
@@ -570,10 +619,14 @@
           <h3>🔍 Tra key và phiên đang dùng</h3>
           <p class="admin-section-intro">Mục này giúp nhìn ngay key đang thuộc khách nào, thuộc gói nào, và hiện đang bị giữ bởi web hay desktop. Dùng tốt nhất khi hỗ trợ khách báo “key đúng nhưng không vào được”.</p>
           <div class="info-card admin-lookup-shell">
-            <div class="admin-form-grid admin-form-grid--actions" style="margin-bottom:8px">
+            <div class="admin-form-grid admin-form-grid--lookup" style="margin-bottom:8px">
               <input id="keyLookupInput" placeholder="VD: WSTL-MOBOIF8-E18F2E"
                      class="admin-input admin-code-input" />
-              <button id="keyLookupBtn" class="btn btn-accent" style="min-height:38px">Tra key</button>
+              <div class="admin-inline-actions">
+                <button id="keyLookupPasteBtn" class="btn btn-outline" type="button" style="min-height:38px">Dan clipboard</button>
+                <button id="keyLookupClearBtn" class="btn btn-outline" type="button" style="min-height:38px">Xoa</button>
+                <button id="keyLookupBtn" class="btn btn-accent" type="button" style="min-height:38px">Tra key</button>
+              </div>
             </div>
             <div class="admin-note-box" style="margin-bottom:10px">
               <strong>Cách đọc nhanh</strong>

@@ -1739,6 +1739,8 @@ function bindCustomerModal(){
 function bindKeyLookup(){
   const input = document.getElementById("keyLookupInput");
   const btn = document.getElementById("keyLookupBtn");
+  const pasteBtn = document.getElementById("keyLookupPasteBtn");
+  const clearBtn = document.getElementById("keyLookupClearBtn");
   const msg = document.getElementById("keyLookupMsg");
   const result = document.getElementById("keyLookupResult");
   if(!btn || !input) return;
@@ -1882,6 +1884,32 @@ function bindKeyLookup(){
 
   btn.addEventListener("click", doLookup);
   input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLookup(); });
+
+  pasteBtn?.addEventListener("click", async ()=>{
+    if(!navigator.clipboard?.readText){
+      if(msg){ msg.textContent = "Trình duyệt hiện tại không hỗ trợ đọc clipboard tự động"; msg.style.color = "var(--danger)"; }
+      return;
+    }
+    try {
+      const text = String(await navigator.clipboard.readText() || "").trim().toUpperCase();
+      if(!text){
+        if(msg){ msg.textContent = "Clipboard đang trống"; msg.style.color = "var(--muted)"; }
+        return;
+      }
+      input.value = text;
+      input.focus();
+      if(msg){ msg.textContent = "Da dan key tu clipboard"; msg.style.color = "var(--success,#16a34a)"; }
+    } catch(err){
+      if(msg){ msg.textContent = "Khong doc duoc clipboard: " + err.message; msg.style.color = "var(--danger)"; }
+    }
+  });
+
+  clearBtn?.addEventListener("click", ()=>{
+    input.value = "";
+    if(result) result.innerHTML = "";
+    if(msg){ msg.textContent = "Da xoa ket qua tra key"; msg.style.color = "var(--muted)"; }
+    input.focus();
+  });
 }
 
 function bindDiscountCodeAdmin(){
@@ -2029,13 +2057,43 @@ function bindDiscountCodeAdmin(){
   loadDiscountCodes();
 }
 
-// Sidebar nav highlight
-document.querySelectorAll(".admin-sidebar a").forEach(a=>{
-  a.addEventListener("click", ()=>{
-    document.querySelectorAll(".admin-sidebar a").forEach(x=>x.classList.remove("active"));
-    a.classList.add("active");
+function bindAdminSidebarNav(){
+  const links = Array.from(document.querySelectorAll('.admin-sidebar a[href^="#section-"]'));
+  if(!links.length) return;
+
+  const setActive = (hash)=>{
+    links.forEach((link)=>{
+      link.classList.toggle("active", link.getAttribute("href") === hash);
+    });
+  };
+
+  links.forEach((link)=>{
+    link.addEventListener("click", ()=> setActive(link.getAttribute("href")));
   });
-});
+
+  const sections = links
+    .map((link)=>document.querySelector(link.getAttribute("href")))
+    .filter(Boolean);
+
+  if(sections.length){
+    const observer = new IntersectionObserver((entries)=>{
+      const visible = entries
+        .filter((entry)=>entry.isIntersecting)
+        .sort((left, right)=> right.intersectionRatio - left.intersectionRatio || left.boundingClientRect.top - right.boundingClientRect.top)[0];
+      if(visible?.target?.id){
+        setActive(`#${visible.target.id}`);
+      }
+    }, {
+      rootMargin: "-14% 0px -60% 0px",
+      threshold: [0.15, 0.3, 0.5, 0.75]
+    });
+    sections.forEach((section)=>observer.observe(section));
+  }
+
+  if(window.location.hash){
+    setActive(window.location.hash);
+  }
+}
 
 // Customer lookup
 document.getElementById("lookupBtn")?.addEventListener("click",()=>{
@@ -2053,6 +2111,7 @@ loadManualGrantCatalog();
 bindCustomerSearch();
 bindCustomerModal();
 bindKeyLookup();
+bindAdminSidebarNav();
 bindProductKeyManager();
 bindDiscountCodeAdmin();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
