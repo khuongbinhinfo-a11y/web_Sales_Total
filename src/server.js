@@ -3792,6 +3792,49 @@ function isDatabaseUnavailableError(error) {
   );
 }
 
+function resolveAiAppLicenseApiError(error, req, statusCode) {
+  if (!req?.path || (!req.path.startsWith("/api/ai-app/licenses/") && !req.path.startsWith("/api/v1/ai-app/licenses/"))) {
+    return null;
+  }
+
+  if (statusCode < 500) {
+    return null;
+  }
+
+  const errorCode = String(error?.code || "").toUpperCase();
+  const errorMessage = String(error?.message || "");
+  const errorConstraint = String(error?.constraint || "").toLowerCase();
+
+  if (errorCode === "42P01" && /app_license_runtime_leases/i.test(errorMessage)) {
+    return {
+      statusCode: 503,
+      message: "Cơ sở dữ liệu chưa cập nhật bảng runtime license desktop. Hãy chạy migrate mới nhất rồi thử lại."
+    };
+  }
+
+  if (
+    errorCode === "42703" &&
+    /(app_licenses|app_license_runtime_leases|device_id|device_name|last_verified_at|metadata)/i.test(errorMessage)
+  ) {
+    return {
+      statusCode: 503,
+      message: "Cơ sở dữ liệu chưa cập nhật schema license AI-app. Hãy chạy migrate mới nhất rồi thử lại."
+    };
+  }
+
+  if (
+    errorCode === "23503" &&
+    /(app_licenses_app_id_fkey|app_license_runtime_leases_app_id_fkey|app_licenses_product_id_fkey|app_licenses_order_id_fkey)/i.test(errorConstraint)
+  ) {
+    return {
+      statusCode: 503,
+      message: "Dữ liệu license hoặc catalog app chưa đồng bộ đầy đủ trên production. Hãy sync app, product, order và license rồi thử lại."
+    };
+  }
+
+  return null;
+}
+
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
   const errorCode = String(error?.code || "").toUpperCase();
@@ -3814,6 +3857,12 @@ app.use((error, req, res, next) => {
   if (errorCode === "MISSING_DATABASE_URL") {
     finalStatusCode = 503;
     message = "Hệ thống chưa cấu hình kết nối cơ sở dữ liệu.";
+  }
+
+  const aiAppLicenseApiError = resolveAiAppLicenseApiError(error, req, statusCode);
+  if (aiAppLicenseApiError) {
+    finalStatusCode = aiAppLicenseApiError.statusCode;
+    message = aiAppLicenseApiError.message;
   }
 
   if (statusCode >= 500) {
