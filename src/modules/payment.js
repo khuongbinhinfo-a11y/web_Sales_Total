@@ -149,7 +149,7 @@ function buildTelegramPaidMessage({ order, keyDelivery }) {
   const keyText = env.telegramIncludeKey ? keyValue : maskKeyValue(keyValue);
 
   return [
-    "✅ <b>Thanh toán thành công</b>",
+    "✅ <b>Smart App | Thanh toán thành công</b>",
     `• Order: <code>${orderId}</code>`,
     `• Customer: <code>${customerId}</code>`,
     `• App: <code>${appId}</code>`,
@@ -162,36 +162,55 @@ function _escHtml(str) {
   return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function encodeMimeHeader(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return /[^\x20-\x7E]/.test(normalized)
+    ? `=?UTF-8?B?${Buffer.from(normalized, "utf8").toString("base64")}?=`
+    : normalized;
+}
+
+function buildSenderHeader(senderEmail) {
+  const email = String(senderEmail || "").trim();
+  if (!email) {
+    return "";
+  }
+
+  return `${encodeMimeHeader("Smart App")} <${email}>`;
+}
+
 function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) {
   const orderId = order?.orderCode || order?.id || "(unknown)";
   const appId = order?.appId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
-  const portalUrl = `${websiteUrl}/portal`;
+  const logoUrl = `${websiteUrl}/logo_2.png`;
   const supportEmail = resolveGmailSender() || "support@ungdungthongminh.shop";
   const websiteDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
 
   const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
-  const keyText = env.gmailIncludeKey ? keyValue : maskKeyValue(keyValue);
+  const keyText = keyValue;
   const customerDisplay = customerEmail || order?.customerId || "(unknown)";
 
-  const subject = `Thanh toán thành công - ${orderId}`;
+  const subject = `Smart App | Thanh toán thành công - ${orderId}`;
 
   const text = [
-    "Thanh toán thành công",
-    "Đơn hàng của bạn đã được xác nhận và key bản quyền đã được cấp tự động.",
+    "Smart App - Thanh toán thành công",
+    "Đơn hàng đã được xác nhận.",
     "",
     `Mã đơn: ${orderId}`,
-    `Khách hàng: ${customerDisplay}`,
     `Ứng dụng: ${appId}`,
     `Số tiền: ${amount} ${currency}`,
     "",
-    `Key bản quyền: ${keyText}`,
+    `KEY: ${keyText}`,
     "",
-    `Mở cổng khách hàng: ${portalUrl}`,
+    `Website Smart App: ${websiteUrl}`,
     "",
-    "Ứng Dụng Thông Minh",
+    "Smart App",
     `${supportEmail} | ${websiteUrl}`,
     "Email này được gửi tự động — vui lòng không reply trực tiếp."
   ].join("\n");
@@ -206,8 +225,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <!-- HEADER -->
 <tr>
   <td style="background:linear-gradient(135deg,#6c47ff 0%,#8b5cf6 100%);padding:28px 36px;text-align:center">
-    <div style="font-size:32px;line-height:1;margin-bottom:8px">&#128241;</div>
-    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:.4px">&#7912;ng D&#7909;ng Th&#244;ng Minh</div>
+    <img src="${logoUrl}" alt="Smart App" style="display:block;margin:0 auto 10px;max-width:320px;width:100%;height:auto" />
+    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:.4px">Smart App</div>
     <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:4px">${_escHtml(websiteDomain)}</div>
   </td>
 </tr>
@@ -230,14 +249,10 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
         <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600;font-family:'Courier New',monospace">${_escHtml(orderId)}</td>
       </tr>
       <tr style="background:#ffffff">
-        <td style="padding:7px 16px;font-size:13px;color:#9ca3af">Kh&#225;ch h&#224;ng</td>
-        <td style="padding:7px 16px;font-size:13px;color:#374151">${_escHtml(customerDisplay)}</td>
-      </tr>
-      <tr>
         <td style="padding:7px 16px;font-size:13px;color:#9ca3af">&#7912;ng d&#7909;ng</td>
         <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600">${_escHtml(appId)}</td>
       </tr>
-      <tr style="background:#ffffff">
+      <tr>
         <td style="padding:7px 16px 13px;font-size:13px;color:#9ca3af">S&#7889; ti&#7873;n</td>
         <td style="padding:7px 16px 13px;font-size:14px;color:#059669;font-weight:700">${amount} ${currency}</td>
       </tr>
@@ -253,6 +268,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
       <tr>
         <td style="padding:4px 16px 14px">
           <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#4c1d95;background:#ede9fe;border-radius:6px;padding:10px 14px;word-break:break-all;letter-spacing:.5px;text-align:center">${_escHtml(keyText)}</div>
+          <div style="margin-top:8px;font-size:12px;color:#6b7280;text-align:center">L&#432;u key n&#224;y l&#7841;i &#273;&#7875; s&#7917; d&#7909;ng khi c&#7847;n.</div>
         </td>
       </tr>
     </table>
@@ -262,8 +278,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <!-- CTA BUTTONS -->
 <tr>
   <td style="padding:24px 36px 0;text-align:center">
-    <a href="${portalUrl}" style="display:inline-block;background:#6c47ff;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px">M&#7903; c&#7893;ng kh&#225;ch h&#224;ng</a>
-    <a href="${portalUrl}" style="display:inline-block;background:#ffffff;color:#6c47ff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;border:1.5px solid #6c47ff;margin:4px 5px">Xem chi ti&#7871;t &#273;&#417;n</a>
+    <a href="${websiteUrl}" style="display:inline-block;background:#6c47ff;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px">M&#7903; Smart App</a>
   </td>
 </tr>
 
@@ -271,11 +286,11 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <tr>
   <td style="padding:24px 36px 28px;text-align:center">
     <div style="border-top:1px solid #f3f4f6;padding-top:20px">
-      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:5px">&#7912;ng D&#7909;ng Th&#244;ng Minh</div>
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:5px">Smart App</div>
       <div style="font-size:12px;color:#9ca3af;margin-bottom:4px">
         <a href="mailto:${_escHtml(supportEmail)}" style="color:#6c47ff;text-decoration:none">${_escHtml(supportEmail)}</a>
         &nbsp;&middot;&nbsp;
-        <a href="${portalUrl}" style="color:#6c47ff;text-decoration:none">${_escHtml(websiteDomain)}</a>
+        <a href="${websiteUrl}" style="color:#6c47ff;text-decoration:none">${_escHtml(websiteDomain)}</a>
       </div>
       <div style="font-size:11px;color:#d1d5db;margin-top:8px">Email n&#224;y &#273;&#432;&#7907;c g&#7917;i t&#7921; &#273;&#7897;ng &#8212; vui l&#242;ng kh&#244;ng reply tr&#7921;c ti&#7871;p.</div>
     </div>
@@ -348,21 +363,24 @@ async function sendGmailMessage({ subject, text, html, to }) {
 
   const accessToken = await getGoogleAccessTokenByRefreshToken();
   const boundary = `wst_${Date.now().toString(16)}`;
-  const fromHeader = sender.includes("<") ? sender : `"Smart App" <${sender}>`;
+  const fromHeader = buildSenderHeader(sender);
+  const subjectHeader = encodeMimeHeader(subject);
   const rawEmail = [
     `From: ${fromHeader}`,
     `To: ${recipients.join(", ")}`,
-    `Subject: ${subject}`,
+    `Subject: ${subjectHeader}`,
     "MIME-Version: 1.0",
     `Content-Type: multipart/alternative; boundary=\"${boundary}\"`,
     "",
     `--${boundary}`,
     "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
     "",
     text,
     "",
     `--${boundary}`,
     "Content-Type: text/html; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
     "",
     html,
     "",

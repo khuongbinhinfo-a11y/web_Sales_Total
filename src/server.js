@@ -2793,12 +2793,9 @@ app.get(
     </head>
     <body style="background:var(--bg,#f8fafc);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px">
       <div style="max-width:560px;width:100%;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:32px;border:1px solid #e2e8f0">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-          <span style="font-size:1.6rem">⚡</span>
-          <div>
-            <strong style="font-size:1.1rem">Ứng Dụng Thông Minh</strong>
-            <p style="margin:0;font-size:.78rem;color:#64748b">Checkout</p>
-          </div>
+        <div style="margin-bottom:16px;text-align:left">
+          <img src="/logo_2.png" alt="Ứng Dụng Thông Minh" style="display:block;max-width:280px;width:100%;height:auto;margin-bottom:8px" />
+          <p style="margin:0;font-size:.78rem;color:#64748b">Checkout</p>
         </div>
         <h2 style="margin:0 0 4px;font-size:1.3rem;font-weight:800">Thanh toán đơn hàng</h2>
         <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
@@ -2966,6 +2963,9 @@ app.use((req, res, next) => {
 
 app.use(express.static(webRoot));
 app.use("/og", express.static(ogRoot));
+app.get("/logo_2.png", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "logo_2.png"));
+});
 app.use(
   "/products/image",
   express.static(path.join(__dirname, "..", "products", "image"))

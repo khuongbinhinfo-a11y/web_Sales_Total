@@ -104,32 +104,53 @@ function bodyByPurpose({ purpose, code }) {
 
 async function sendOtpEmail({ to, subject, text }) {
   const html = `<p>${text}</p>`;
-  if (isGmailNotifyEnabled()) {
-    const result = await sendGmailMessage({
-      subject,
-      text,
-      html,
-      to: [to]
-    });
+  let gmailFailureReason = "";
 
-    if (result.ok) {
-      return;
+  if (isGmailNotifyEnabled()) {
+    try {
+      const result = await sendGmailMessage({
+        subject,
+        text,
+        html,
+        to: [to]
+      });
+
+      if (result.ok) {
+        return;
+      }
+
+      gmailFailureReason = String(result.reason || "gmail_send_failed").trim();
+    } catch (error) {
+      gmailFailureReason = String(error?.message || "gmail_send_failed").trim();
     }
   }
 
   const transporter = getTransporter();
   if (transporter) {
-    await transporter.sendMail({
-      from: env.smtpFrom,
-      to,
-      subject,
-      text
-    });
-    return;
+    try {
+      await transporter.sendMail({
+        from: env.smtpFrom,
+        to,
+        subject,
+        text
+      });
+      return;
+    } catch (error) {
+      const smtpFailureReason = String(error?.message || "smtp_send_failed").trim();
+      const err = new Error(
+        `Không gửi được mã xác minh. Gmail: ${gmailFailureReason || "không khả dụng"}. SMTP: ${smtpFailureReason}`
+      );
+      err.statusCode = 503;
+      throw err;
+    }
   }
 
-  const err = new Error("OTP email delivery is not available");
-  err.statusCode = 502;
+  const err = new Error(
+    gmailFailureReason
+      ? `Không gửi được mã xác minh. Gmail: ${gmailFailureReason}`
+      : "OTP email delivery is not available"
+  );
+  err.statusCode = 503;
   throw err;
 }
 

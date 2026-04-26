@@ -429,15 +429,16 @@
           <form id="registerForm" autocomplete="off">
             <label data-i18n="modal_login_email_label">Email</label>
             <input type="email" id="registerEmail" required placeholder="you@example.com" autocomplete="off" inputmode="email" autocapitalize="none" spellcheck="false" />
-            <label data-i18n="modal_register_name_label">Họ tên</label>
-            <input type="text" id="registerName" required placeholder="Nguyễn Văn A" autocomplete="off" />
-            <label data-i18n="modal_register_password_label">Mật khẩu</label>
-            <input type="password" id="registerPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="off" />
             <label>Mã xác minh email</label>
             <div class="otp-row">
               <input type="text" id="registerCode" inputmode="numeric" maxlength="6" placeholder="Nhập 6 số" autocomplete="one-time-code" />
               <button type="button" id="sendRegisterCodeBtn" class="otp-send-btn">Gửi mã</button>
             </div>
+            <p class="otp-help">Nhập email trước, bấm Gửi mã rồi kiểm tra hộp thư để lấy mã xác minh.</p>
+            <label data-i18n="modal_register_name_label">Họ tên</label>
+            <input type="text" id="registerName" required placeholder="Nguyễn Văn A" autocomplete="off" />
+            <label data-i18n="modal_register_password_label">Mật khẩu</label>
+            <input type="password" id="registerPassword" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="off" />
             <button type="submit" class="btn btn-accent modal-btn" data-i18n="modal_register_btn">Đăng ký</button>
           </form>
           <div id="googleRegisterWrap" class="google-auth-wrap" style="display:none">
