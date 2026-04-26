@@ -1984,11 +1984,14 @@ app.get(
   asyncHandler(async (req, res) => {
     const current = getSepayRuntimeSettings();
     const effectiveWebhookUrl = resolveSepayWebhookUrl(current.webhookUrl, env.appBaseUrl);
+    const effectiveWebhookSecret = current.webhookSecret || env.sepayWebhookSecret;
+    const secretSource = current.webhookSecret ? "runtime" : (env.sepayWebhookSecret ? "env" : "");
     return res.json({
       paymentProviderMode: current.paymentProviderMode || env.paymentProviderMode,
-      secretConfigured: Boolean(current.webhookSecret),
+      secretConfigured: Boolean(effectiveWebhookSecret),
+      secretSource,
       sepay: {
-        webhookSecret: current.webhookSecret ? "********" : "",
+        webhookSecret: effectiveWebhookSecret ? "********" : "",
         bankCode: current.bankCode || env.sepayBankCode,
         bankAccountNumber: current.bankAccountNumber || env.sepayBankAccountNumber,
         accountName: current.accountName || env.sepayAccountName,
@@ -2037,7 +2040,8 @@ app.put(
       ok: true,
       message: "Đã lưu cấu hình Sepay runtime",
       paymentProviderMode: next.paymentProviderMode || env.paymentProviderMode,
-      secretConfigured: Boolean(next.sepay?.webhookSecret),
+      secretConfigured: Boolean(next.sepay?.webhookSecret || env.sepayWebhookSecret),
+      secretSource: next.sepay?.webhookSecret ? "runtime" : (env.sepayWebhookSecret ? "env" : ""),
       webhookUrl: resolveSepayWebhookUrl(next.sepay?.webhookUrl, env.appBaseUrl)
     });
   })

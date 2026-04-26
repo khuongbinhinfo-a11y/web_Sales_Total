@@ -478,7 +478,7 @@ async function loadSepayConfig(){
     sepaySecretConfigured = Boolean(data.secretConfigured);
     document.getElementById("sepaySecret").value = "";
     document.getElementById("sepaySecret").placeholder = sepaySecretConfigured
-      ? "Đã lưu secret, bỏ trống nếu không đổi"
+      ? `Đã có secret (${data.secretSource === "env" ? "nguồn env" : "runtime"}), bỏ trống nếu không đổi`
       : "Nhập token webhook từ Sepay";
     document.getElementById("sepayBankCode").value = data.sepay?.bankCode || "";
     document.getElementById("sepayAccount").value = data.sepay?.bankAccountNumber || "";
@@ -532,7 +532,7 @@ function bindSepayForm(){
         return;
       }
       const keyStatusText = data.secretConfigured
-        ? "API key: đã lưu"
+        ? `API key: đã có (${data.secretSource === "env" ? "nguồn env" : "runtime"})`
         : "API key: chưa cấu hình";
       msg.textContent = `${data.message || "Đã lưu cấu hình Sepay"} (${keyStatusText})`;
       msg.style.color = "var(--success)";
@@ -542,7 +542,7 @@ function bindSepayForm(){
       sepaySecretConfigured = Boolean(data.secretConfigured);
       document.getElementById("sepaySecret").value = "";
       document.getElementById("sepaySecret").placeholder = sepaySecretConfigured
-        ? "Đã lưu secret, bỏ trống nếu không đổi"
+        ? `Đã có secret (${data.secretSource === "env" ? "nguồn env" : "runtime"}), bỏ trống nếu không đổi`
         : "Nhập token webhook từ Sepay";
       if(data.webhookUrl && !isPublicWebhookUrl(data.webhookUrl)){
         msg.textContent = "Đã lưu cấu hình, nhưng Webhook URL vẫn là localhost/private nên Sepay chưa gọi được từ bên ngoài.";

@@ -1,5 +1,5 @@
 const { env } = require("../config/env");
-const { recordWebhookEvent, markOrderPaid, getOrderByCode, findCustomerById } = require("./store");
+const { recordWebhookEvent, markOrderPaid, getOrderByCode, getOrderById, findCustomerById } = require("./store");
 const { getSepayRuntimeSettings, readRuntimeSettings } = require("../config/runtimeSettings");
 const { pool } = require("../db/pool");
 
@@ -658,14 +658,34 @@ async function processPaidWebhook(payload) {
   validatePaidWebhookPayload(payload);
 
   let resolvedOrderId = payload.orderId;
-  if (!resolvedOrderId && payload.orderCode) {
-    const foundOrder = await getOrderByCode(payload.orderCode);
-    if (!foundOrder) {
+  let resolvedOrder = null;
+
+  if (resolvedOrderId) {
+    resolvedOrder = await getOrderById(resolvedOrderId);
+    if (!resolvedOrder) {
       const error = new Error("Order khong ton tai");
       error.statusCode = 404;
       throw error;
     }
-    resolvedOrderId = foundOrder.id;
+  } else if (payload.orderCode) {
+    resolvedOrder = await getOrderByCode(payload.orderCode);
+    if (!resolvedOrder) {
+      const error = new Error("Order khong ton tai");
+      error.statusCode = 404;
+      throw error;
+    }
+    resolvedOrderId = resolvedOrder.id;
+  }
+
+  if (payload.provider === "sepay" && payload.verificationMode === "account_match") {
+    const incomingAmount = getIncomingPaymentAmount(payload.payload);
+    const expectedAmount = Number(resolvedOrder?.amount || 0);
+
+    if (!Number.isFinite(incomingAmount) || incomingAmount <= 0 || incomingAmount !== expectedAmount) {
+      const error = new Error("Sepay amount mismatch");
+      error.statusCode = 400;
+      throw error;
+    }
   }
 
   const duplication = await recordWebhookEvent({
@@ -752,7 +772,7 @@ function verifySepayWebhookSignature(payload, signature) {
 
   if (!sepay.webhookSecret) {
     if (matchesConfiguredSepayAccount(payload)) {
-      return;
+      return "account_match";
     }
 
     const error = new Error("Missing SEPAY_WEBHOOK_SECRET");
@@ -762,7 +782,7 @@ function verifySepayWebhookSignature(payload, signature) {
 
   if (!signature) {
     if (matchesConfiguredSepayAccount(payload)) {
-      return;
+      return "account_match";
     }
 
     const error = new Error("Missing Sepay signature");
@@ -770,11 +790,21 @@ function verifySepayWebhookSignature(payload, signature) {
     throw error;
   }
 
+  if (signature === sepay.webhookSecret) {
+    return "secret";
+  }
+
+  if (matchesConfiguredSepayAccount(payload)) {
+    return "account_match";
+  }
+
   if (signature !== sepay.webhookSecret) {
     const error = new Error("Invalid Sepay signature");
     error.statusCode = 401;
     throw error;
   }
+
+  return "secret";
 }
 
 function normalizeSepayWebhookSignature(rawSignature) {
@@ -845,15 +875,21 @@ function extractOrderCodeFromText(text) {
   return compactCodeMatch[0];
 }
 
+function getIncomingPaymentAmount(payload) {
+  const amount = Number(
+    payload?.amountIn ?? payload?.amount_in ?? payload?.transferAmount ?? payload?.amount ?? 0
+  );
+
+  return Number.isFinite(amount) ? amount : 0;
+}
+
 function parseSepayWebhook(payload, signature) {
-  verifySepayWebhookSignature(payload, signature);
+  const verificationMode = verifySepayWebhookSignature(payload, signature);
 
   const rawStatus = String(payload?.status || payload?.transactionStatus || "").toLowerCase();
   const paidStatuses = new Set(["paid", "success", "completed"]);
 
-  const amountIn = Number(
-    payload?.amountIn ?? payload?.amount_in ?? payload?.transferAmount ?? payload?.amount ?? 0
-  );
+  const amountIn = getIncomingPaymentAmount(payload);
 
   const paidByAmount = Number.isFinite(amountIn) && amountIn > 0;
   const isPaid = paidStatuses.has(rawStatus) || paidByAmount;
@@ -903,6 +939,7 @@ function parseSepayWebhook(payload, signature) {
     provider: "sepay",
     providerTransactionId,
     status: "paid",
+    verificationMode,
     source: "sepay_webhook",
     payload
   };

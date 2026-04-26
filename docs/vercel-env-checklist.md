@@ -31,6 +31,11 @@ SEPAY_BANK_ACCOUNT_NUMBER=49312517
 SEPAY_ACCOUNT_NAME=KHUONG VAN BINH
 ```
 
+Luu y quan trong:
+- `SEPAY_WEBHOOK_SECRET` phai trung khop voi token/API key dang cau hinh ben Sepay webhook.
+- Neu Sepay log `401 Invalid Sepay signature`, uu tien kiem tra lai secret tren Vercel va trong man hinh webhook Sepay truoc.
+- Ban va account nhan tien van phai dung: `970416 / 49312517 / KHUONG VAN BINH`.
+
 Neu chi preview giao dien, co the dung:
 
 ```env
