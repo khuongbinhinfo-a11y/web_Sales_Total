@@ -175,6 +175,100 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 
 const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
 
+function MaintenanceNote(shared) {
+  const items = Array.isArray(shared?.maintenance) ? shared.maintenance : [];
+  if (!items.length) return "";
+
+  return `
+    <div class="demo-maintenance-note">
+      <div>
+        <span class="demo-note-icon">DT</span>
+        <strong>${escapeHtml(shared.maintenanceTitle || "Phí duy trì tham khảo")}</strong>
+      </div>
+      <dl>
+        ${items.map(([label, value]) => `
+          <div>
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${escapeHtml(value)}</dd>
+          </div>
+        `).join("")}
+      </dl>
+    </div>
+  `;
+}
+
+function ContentIncludedNote(shared) {
+  if (!shared?.contentNote) return "";
+
+  return `
+    <div class="demo-content-note">
+      <span class="demo-note-icon">ND</span>
+      <p>${escapeHtml(shared.contentNote)}</p>
+    </div>
+  `;
+}
+
+function PricingCard(plan, index, shared) {
+  const features = Array.isArray(plan?.features) ? plan.features : [];
+  const badge = plan?.badge || (index === 1 ? "Khuyên dùng" : index === 2 ? "Mở rộng" : "");
+  const isFeatured = Boolean(plan?.featured) || index === 1;
+  const isExpanded = badge === "Mở rộng" || index === 2;
+  const cardClass = [
+    "demo-pricing-card",
+    isFeatured ? "is-featured" : "",
+    isExpanded ? "is-expanded" : ""
+  ].filter(Boolean).join(" ");
+
+  return `
+    <article class="${cardClass}">
+      <div class="demo-pricing-card-top">
+        <span class="demo-pricing-index">${String(index + 1).padStart(2, "0")}</span>
+        ${badge ? `<span class="demo-pricing-badge">${escapeHtml(badge)}</span>` : ""}
+      </div>
+      <h3>${escapeHtml(plan?.name)}</h3>
+      <p class="demo-pricing-price">${escapeHtml(plan?.price)}</p>
+      <div class="demo-pricing-fit">
+        <strong>Phù hợp</strong>
+        <p>${escapeHtml(plan?.fit)}</p>
+      </div>
+      <ul class="demo-pricing-features">
+        ${features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}
+      </ul>
+      <div class="demo-pricing-plan-note">
+        <strong>Ghi chú nội dung</strong>
+        <p>${escapeHtml(plan?.note)}</p>
+      </div>
+      <a class="demo-pricing-cta" href="#demoContact">${escapeHtml(shared?.cta || "Tư vấn gói này")}</a>
+    </article>
+  `;
+}
+
+function PricingSection(id) {
+  const section = document.getElementById("demoPricing");
+  const data = window.webDemoPricingData?.[id];
+  const shared = window.webDemoPricingShared || {};
+  const plans = Array.isArray(data?.plans) ? data.plans : [];
+
+  if (!section || !plans.length) return;
+
+  section.innerHTML = `
+    <div class="demo-container">
+      <div class="demo-section-head demo-pricing-head">
+        <span>Báo giá theo ngành</span>
+        <h2 id="demoPricingTitle">${escapeHtml(shared.title || "Gói triển khai phù hợp")}</h2>
+        <p>${escapeHtml(shared.description || "")}</p>
+      </div>
+      <div class="demo-pricing-grid">
+        ${plans.map((plan, index) => PricingCard(plan, index, shared)).join("")}
+      </div>
+      <div class="demo-pricing-notes">
+        ${ContentIncludedNote(shared)}
+        ${MaintenanceNote(shared)}
+      </div>
+    </div>
+  `;
+}
+
 function renderShopPreview() {
   const shopItems = [
     { badge: "Ban chay", title: "Tui xach premium", price: "650K", image: "/web-demo-shop-item-bag.png" },
@@ -351,6 +445,12 @@ setText("demoFlowDesc", active.flowDesc);
 setText("demoContactTitle", active.contactTitle);
 setText("demoContactText", active.contactText);
 
+const contactCta = document.getElementById("demoContactCta");
+if (contactCta) {
+  contactCta.href = "#demoPricing";
+  contactCta.textContent = "Xem gói triển khai";
+}
+
 const heroImage = document.getElementById("demoHeroImage");
 if (heroImage) {
   heroImage.src = active.image || "/web-demo-photo.jpg";
@@ -407,3 +507,4 @@ if (flowEl) {
 }
 
 renderLivePreview(active);
+PricingSection(activeId);
