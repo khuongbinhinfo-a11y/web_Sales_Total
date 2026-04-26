@@ -232,11 +232,13 @@ function ContentIncludedNote(shared) {
   `;
 }
 
-function PricingCard(plan, index, shared) {
+function PricingCard(plan, index, shared, industryId) {
   const features = Array.isArray(plan?.features) ? plan.features : [];
   const badge = plan?.badge || (index === 1 ? "Khuyên dùng" : index === 2 ? "Mở rộng" : "");
   const isFeatured = Boolean(plan?.featured) || index === 1;
   const isExpanded = badge === "Mở rộng" || index === 2;
+  const detailUrl = plan?.detailUrl || `/catalog/web-demo/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan?.slug || `goi-${index + 1}`)}`;
+  const consultUrl = shared?.consultUrl || "https://zalo.me/0902964685";
   const cardClass = [
     "demo-pricing-card",
     isFeatured ? "is-featured" : "",
@@ -262,7 +264,10 @@ function PricingCard(plan, index, shared) {
         <strong>Ghi chú nội dung</strong>
         <p>${escapeHtml(plan?.note)}</p>
       </div>
-      <a class="demo-pricing-cta" href="#demoContact">${escapeHtml(shared?.cta || "Tư vấn gói này")}</a>
+      <div class="demo-pricing-actions">
+        <a class="demo-pricing-cta" href="${escapeHtml(detailUrl)}">${escapeHtml(shared?.detailCta || "Xem chi tiết gói")}</a>
+        <a class="demo-pricing-cta is-secondary" href="${escapeHtml(consultUrl)}" target="_blank" rel="noopener">${escapeHtml(shared?.cta || "Tư vấn gói này")}</a>
+      </div>
     </article>
   `;
 }
@@ -283,7 +288,7 @@ function PricingSection(id) {
         <p>${escapeHtml(shared.description || "")}</p>
       </div>
       <div class="demo-pricing-grid">
-        ${plans.map((plan, index) => PricingCard(plan, index, shared)).join("")}
+        ${plans.map((plan, index) => PricingCard(plan, index, shared, id)).join("")}
       </div>
       <div class="demo-pricing-notes">
         ${ContentIncludedNote(shared)}

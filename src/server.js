@@ -2833,6 +2833,10 @@ app.get("/web-demo/:id", (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-detail.html"));
 });
 
+app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
+  res.sendFile(path.join(webRoot, "web-demo-package.html"));
+});
+
 app.get("/portal", requirePortalAuth, (req, res) => {
   res.sendFile(path.join(webRoot, "portal.html"));
 });
