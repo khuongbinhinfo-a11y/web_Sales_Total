@@ -145,6 +145,12 @@ const DEMO_DATA = {
     title: "Trang địa phương giàu hình ảnh để khách ghé quán",
     desc: "Hướng này dành cho nhà hàng, cafe, quán ăn, showroom hoặc local business. Trọng tâm là món nổi bật, menu, không gian, bản đồ và đặt bàn/gọi món.",
     image: "/web-demo-photo.jpg",
+    fullPreview: {
+      title: "Ảnh mẫu đầy đủ cho web Nhà hàng / Local",
+      desc: "Xem tổng thể bố cục demo từ món nổi bật, menu, không gian quán, bản đồ đến form đặt bàn hoặc gọi món.",
+      image: "/web-demo-photo.jpg",
+      cta: "Mở ảnh lớn"
+    },
     primary: "Tư vấn mẫu nhà hàng",
     caption: "Tone ấm, đậm, giàu hình ảnh",
     liveTitle: "Món nổi bật, menu, không gian, bản đồ và đặt bàn",
