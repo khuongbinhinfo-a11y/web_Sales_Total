@@ -1,0 +1,15 @@
+{
+  "latestVersion": "1.0.0",
+  "minimumSupportedVersion": "1.0.0",
+  "required": false,
+  "title": "Ban desktop hien tai dang on dinh",
+  "message": "Manifest mau cho Hair Spa Manager. Khi co ban lon, cap nhat latestVersion, thong diep phat hanh va duong dan installer tai day.",
+  "notes": [
+    "Ban nay duoc dung de noi updater voi Web Tong ma khong nhung logic key vao app",
+    "Khi can khoa quyen update, chi can tra ve updateEntitlement tu backend"
+  ],
+  "downloadPath": "/app-updates/hair-spa-manager/SalonManagerSetup-1.0.0.exe",
+  "releaseNotesPath": "/app-updates/hair-spa-manager/release-notes-1.0.0.txt",
+  "publishedAt": "2026-04-26T10:00:00Z",
+  "sha256": "PUT_REAL_SHA256_HERE"
+}

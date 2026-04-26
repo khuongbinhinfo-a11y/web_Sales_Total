@@ -107,6 +107,7 @@ const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/
 const app = express();
 const webRoot = path.join(__dirname, "web");
 const ogRoot = path.join(__dirname, "..", "public", "og");
+const appUpdatesRoot = path.join(__dirname, "..", "public", "app-updates");
 const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 let prepareServerPromise;
 
@@ -541,6 +542,67 @@ function buildUpdateEntitlement(licenses, appVersion) {
     currentVersionAllowed,
     sourceProductIds
   };
+}
+
+function parseVersionMajor(value) {
+  const major = parseInt(String(value || "").trim().split(".")[0], 10);
+  return !isNaN(major) && Number.isFinite(major) && major > 0 ? major : null;
+}
+
+function isVersionAllowedForEntitlement(version, highestEntitledMajor) {
+  if (highestEntitledMajor === null || highestEntitledMajor === undefined) {
+    return null;
+  }
+
+  const major = parseVersionMajor(version);
+  if (major === null) {
+    return null;
+  }
+
+  return highestEntitledMajor >= major;
+}
+
+function normalizeAppUpdateId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function readAppUpdateManifest(appIdRaw) {
+  const appId = normalizeAppUpdateId(appIdRaw);
+  if (!appId) {
+    return null;
+  }
+
+  const manifestPath = path.join(appUpdatesRoot, appId, "version.json");
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+
+  const raw = await fs.promises.readFile(manifestPath, "utf8");
+  const parsed = JSON.parse(raw);
+  return {
+    appId,
+    manifestPath,
+    manifest: parsed
+  };
+}
+
+function normalizeManifestPublicPaths(manifest) {
+  if (!manifest || typeof manifest !== "object") {
+    return manifest;
+  }
+
+  const normalized = { ...manifest };
+  if (typeof normalized.downloadPath === "string" && normalized.downloadPath.startsWith("/")) {
+    normalized.downloadPath = buildPublicUrl(normalized.downloadPath);
+  }
+  if (typeof normalized.releaseNotesPath === "string" && normalized.releaseNotesPath.startsWith("/")) {
+    normalized.releaseNotesPath = buildPublicUrl(normalized.releaseNotesPath);
+  }
+  return normalized;
 }
 
 const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
@@ -1404,6 +1466,82 @@ app.get(
         amount: orderDetails.order.amount,
         paidAt: orderDetails.order.paidAt || null,
         productId: orderDetails.order.productId || ""
+      }
+    });
+  })
+);
+
+app.get(
+  "/api/v1/app-updates/:appId/manifest",
+  asyncHandler(async (req, res) => {
+    const manifestRecord = await readAppUpdateManifest(req.params.appId);
+    if (!manifestRecord) {
+      return res.status(404).json({ success: false, error: "Update manifest not found" });
+    }
+
+    const currentVersion = String(req.query.version || req.query.appVersion || "").trim() || null;
+    const licenseKey = String(req.query.licenseKey || "").trim() || null;
+    const customerId = String(req.query.customerId || "").trim() || null;
+    const deviceId = String(req.query.deviceId || "").trim() || null;
+    const deviceName = String(req.query.deviceName || "").trim() || null;
+    const manifest = normalizeManifestPublicPaths(manifestRecord.manifest);
+
+    let updateEntitlement = null;
+    if (licenseKey) {
+      const license = await verifyAppLicenseByKey({
+        appId: manifestRecord.appId,
+        licenseKey,
+        customerId,
+        deviceId,
+        deviceName,
+        clientProfile: "desktop"
+      });
+
+      if (!license) {
+        updateEntitlement = {
+          licenseValid: false,
+          reason: "invalid_license",
+          ownsBaseApp: false,
+          highestEntitledMajor: null,
+          currentVersionAllowed: false,
+          latestVersionAllowed: false,
+          updateAllowed: false,
+          sourceProductIds: []
+        };
+      } else if (license.deviceMismatch) {
+        updateEntitlement = {
+          licenseValid: false,
+          reason: "device_mismatch",
+          ownsBaseApp: true,
+          highestEntitledMajor: null,
+          currentVersionAllowed: false,
+          latestVersionAllowed: false,
+          updateAllowed: false,
+          sourceProductIds: [license.productId].filter(Boolean)
+        };
+      } else {
+        const licenses = await listCustomerLicenses({ customerId: license.customerId, appId: manifestRecord.appId });
+        const entitlement = buildUpdateEntitlement(licenses, currentVersion);
+        const latestVersionAllowed = entitlement.highestEntitledMajor === null
+          ? entitlement.ownsBaseApp
+          : isVersionAllowedForEntitlement(manifest.latestVersion, entitlement.highestEntitledMajor);
+
+        updateEntitlement = {
+          ...entitlement,
+          licenseValid: true,
+          latestVersionAllowed,
+          updateAllowed: latestVersionAllowed !== false,
+          reason: latestVersionAllowed === false ? "update_not_entitled" : "entitled"
+        };
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        appId: manifestRecord.appId,
+        manifest,
+        updateEntitlement
       }
     });
   })
@@ -2963,6 +3101,7 @@ app.use((req, res, next) => {
 
 app.use(express.static(webRoot));
 app.use("/og", express.static(ogRoot));
+app.use("/app-updates", express.static(appUpdatesRoot));
 app.get("/logo_2.png", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "logo_2.png"));
 });
