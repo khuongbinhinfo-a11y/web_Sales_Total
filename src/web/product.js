@@ -30,6 +30,8 @@ const productImageLibrary = {
   bds: imagePathByName("Quản_lý_website_BDS-2.jpeg")
 };
 
+const SUPPORT_CHAT_URL = "https://zalo.me/0902964685";
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -179,7 +181,7 @@ const productContent = {
       { title:"Mua gói test", detail:"Chọn gói test 2K và tạo đơn hàng." },
       { title:"Thanh toán", detail:"Quét QR và chuyển khoản đúng số tiền hiển thị." },
       { title:"Chờ webhook", detail:"Hệ thống nhận webhook và tự động cập nhật paid." },
-      { title:"Nhận key", detail:"Key test sẽ hiển thị trong portal sau vài giây." },
+      { title:"Nhận key", detail:"Key test sẽ hiển thị ngay trên trang thanh toán sau vài giây." },
     ]
   },
   "demo-hoc01": {
@@ -529,20 +531,48 @@ function softwareCode(appId) {
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
 }
 
-function resolveDownloadLink(product, content) {
+function isExternalLink(value) {
+  return /^(https?:)?\/\//i.test(String(value || "").trim()) || /^tel:/i.test(String(value || "").trim());
+}
+
+function resolveDownloadAction(product, content) {
   const customLink = String(content?.downloadUrl || "").trim();
-  if (customLink) return customLink;
+  if (customLink) {
+    return {
+      href: customLink,
+      label: "⬇ Tải app",
+      external: isExternalLink(customLink)
+    };
+  }
 
   const appId = String(product?.appId || "").trim().toLowerCase();
   if (appId === "app-study-12") {
-    return "https://hoctap-cap-01.vercel.app/";
+    return {
+      href: "https://hoctap-cap-01.vercel.app/",
+      label: "⬇ Mở app học tập",
+      external: true
+    };
   }
 
-  const app = normalizeText(product?.appId);
-  if (app.includes("hoc") || app.includes("study")) {
-    return "/portal";
+  return {
+    href: SUPPORT_CHAT_URL,
+    label: "💬 Liên hệ nhận app",
+    external: true
+  };
+}
+
+function openDownloadAction(product, content) {
+  const action = resolveDownloadAction(product, content);
+  if (!action?.href) {
+    return;
   }
-  return "/portal";
+
+  if (action.external) {
+    window.open(action.href, "_blank", "noopener");
+    return;
+  }
+
+  window.location.href = action.href;
 }
 
 function escapeHtml(value) {
@@ -1036,7 +1066,7 @@ function renderPlanZone(product) {
           loginModal.classList.add("show");
           return;
         }
-        window.location.href = "/portal";
+        openDownloadAction(target || currentProduct || product, productContent[(target || currentProduct || product)?.id] || null);
       });
     });
   }
@@ -1184,7 +1214,7 @@ function updateBuyBtn(){
 
   btn.disabled = false;
   if(!currentUser){
-    btn.textContent = "🔐 Đăng nhập để mua";
+    btn.textContent = "🛒 Mua ngay";
     if(note) note.textContent = "Cần đăng nhập để tiến hành mua hàng";
   } else {
     btn.textContent = "🛒 Mua ngay";
@@ -1277,7 +1307,16 @@ function renderProduct(p){
 
   const downloadBtn = document.getElementById("pdDownloadAppBtn");
   if (downloadBtn) {
-    downloadBtn.href = resolveDownloadLink(p, content);
+    const action = resolveDownloadAction(p, content);
+    downloadBtn.href = action.href;
+    downloadBtn.textContent = action.label;
+    if (action.external) {
+      downloadBtn.target = "_blank";
+      downloadBtn.rel = "noopener";
+    } else {
+      downloadBtn.removeAttribute("target");
+      downloadBtn.removeAttribute("rel");
+    }
   }
 
   // desc tab

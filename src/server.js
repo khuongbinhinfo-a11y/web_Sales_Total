@@ -2259,7 +2259,7 @@ app.patch(
 );
 
 app.get("/portal/login", (req, res) => {
-  res.send(portalLoginPage());
+  res.redirect("/");
 });
 
 /* ── Customer account auth ── */
@@ -2742,7 +2742,7 @@ app.post(
 
 app.post("/auth/portal/logout", (req, res) => {
   clearAuthCookie(res, "wst_portal_session", req);
-  res.redirect("/portal/login");
+  res.redirect("/");
 });
 
 app.post("/auth/admin/logout", (req, res) => {
@@ -2941,8 +2941,8 @@ app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-package.html"));
 });
 
-app.get("/portal", requirePortalAuth, (req, res) => {
-  res.sendFile(path.join(webRoot, "portal.html"));
+app.get("/portal", (req, res) => {
+  res.redirect("/");
 });
 
 app.get("/admin", requireAdminAuth, (req, res) => {
@@ -2951,7 +2951,7 @@ app.get("/admin", requireAdminAuth, (req, res) => {
 
 app.use((req, res, next) => {
   if (req.path === "/portal.html") {
-    return res.redirect("/portal");
+    return res.redirect("/");
   }
 
   if (req.path === "/admin.html") {
