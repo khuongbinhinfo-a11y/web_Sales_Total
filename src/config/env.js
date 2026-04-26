@@ -170,7 +170,6 @@ const env = {
   sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || "dev-session-secret",
   sessionCookieDomain: resolveSessionCookieDomain(process.env.APP_BASE_URL || "http://localhost:3900"),
   customerSessionDays: Math.max(1, Number(process.env.CUSTOMER_SESSION_DAYS) || 30),
-  portalAccessKey: process.env.PORTAL_ACCESS_KEY || "portal-demo",
   aiAppSharedKey: String(
     process.env.AI_APP_SHARED_KEY || process.env.WEB_TOTAL_AI_APP_KEY || ""
   ).trim(),

@@ -19,6 +19,7 @@ const {
 const {
   getPublicCatalog,
   getAdminCatalog,
+  updateProductCardControl,
   createOrder,
   applyDiscountToOrder,
   getOrderDetailsById,
@@ -81,12 +82,9 @@ const {
   isSepayPaymentMode
 } = require("./modules/payment");
 const {
-  requirePortalAuth,
+  requireCustomerOrAdmin,
   requireAdminAuth,
   requireAdminPermission,
-  requirePortalOrAdmin,
-  handlePortalLogin,
-  portalLoginPage,
   adminLoginPage,
   clearAuthCookie,
   setAuthCookie,
@@ -675,6 +673,318 @@ function normalizeManifestPublicPaths(manifest) {
   return normalized;
 }
 
+const ACCOUNT_DOWNLOAD_TICKET_TTL_SECONDS = 5 * 60;
+const ACCOUNT_SUPPORT_URL = "https://zalo.me/0902964685";
+const ACCOUNT_STUDY_APP_URL = "https://hoctap-cap-01.vercel.app/";
+const ACCOUNT_DOWNLOAD_APP_META = {
+  "app-study-12": {
+    appName: "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học",
+    icon: "📚",
+    deliveryType: "website",
+    websiteUrl: ACCOUNT_STUDY_APP_URL,
+    actionLabel: "Mở website học tập"
+  },
+  "hair-spa-manager": {
+    appName: "Salon Manager",
+    icon: "✂️",
+    deliveryType: "manifest_download",
+    actionLabel: "Tải app"
+  },
+  "app-bds-website-manager": {
+    appName: "Phần Mềm Quản Lý Website & Tin Đăng Bất Động Sản",
+    icon: "🏠",
+    deliveryType: "manifest_download",
+    actionLabel: "Tải app"
+  },
+  "app-prompt-image-video": {
+    appName: "Video Creator",
+    icon: "🎬",
+    deliveryType: "manifest_download",
+    actionLabel: "Tải app"
+  },
+  "app-cap12": {
+    appName: "Phần mềm học tập khối cấp 12",
+    icon: "🎓",
+    deliveryType: "manifest_download",
+    actionLabel: "Tải app"
+  },
+  lamviec: {
+    appName: "Công cụ làm việc",
+    icon: "💼",
+    deliveryType: "manual_delivery",
+    actionLabel: "Nhận bộ cài"
+  }
+};
+
+function getAccountAppMeta(appIdRaw) {
+  const appId = normalizeAppUpdateId(appIdRaw);
+  return {
+    appId,
+    appName: ACCOUNT_DOWNLOAD_APP_META[appId]?.appName || appId || "Sản phẩm đã mua",
+    icon: ACCOUNT_DOWNLOAD_APP_META[appId]?.icon || "🧩",
+    deliveryType: ACCOUNT_DOWNLOAD_APP_META[appId]?.deliveryType || "manual_delivery",
+    websiteUrl: ACCOUNT_DOWNLOAD_APP_META[appId]?.websiteUrl || "",
+    actionLabel: ACCOUNT_DOWNLOAD_APP_META[appId]?.actionLabel || "Nhận bộ cài"
+  };
+}
+
+function base64UrlEncode(input) {
+  return Buffer.from(input)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function base64UrlDecode(input) {
+  const normalized = String(input || "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+  return Buffer.from(normalized + padding, "base64").toString("utf8");
+}
+
+function createAccountDownloadTicket(payload) {
+  const body = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac("sha256", env.sessionSigningSecret)
+    .update(body)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+  return `${body}.${signature}`;
+}
+
+function verifyAccountDownloadTicket(ticket) {
+  const [body, signature] = String(ticket || "").split(".");
+  if (!body || !signature) {
+    return null;
+  }
+
+  const expected = crypto
+    .createHmac("sha256", env.sessionSigningSecret)
+    .update(body)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+  const signatureBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(body));
+    if (!payload || Number(payload.expiresAt || 0) < Date.now()) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function isLicenseEntitledForAccountDownload(license) {
+  if (!license || String(license.status || "").toLowerCase() === "revoked") {
+    return false;
+  }
+
+  if (!license.expiresAt) {
+    return true;
+  }
+
+  const expiresAt = new Date(license.expiresAt).getTime();
+  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+}
+
+function uniqueStrings(values) {
+  return [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
+}
+
+function resolveManifestDownloadAsset(manifestRecord) {
+  const rawDownloadPath = String(manifestRecord?.manifest?.downloadPath || "").trim();
+  if (!rawDownloadPath) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(rawDownloadPath)) {
+    try {
+      const parsed = new URL(rawDownloadPath);
+      return {
+        type: "external",
+        href: rawDownloadPath,
+        fileName: path.basename(parsed.pathname) || `${manifestRecord.appId}.bin`
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  if (!rawDownloadPath.startsWith("/app-updates/")) {
+    return null;
+  }
+
+  const relativePath = rawDownloadPath.slice("/app-updates/".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
+  if (!relativePath.startsWith(`${manifestRecord.appId}/`)) {
+    return null;
+  }
+
+  const absolutePath = path.resolve(appUpdatesRoot, relativePath);
+  const rootPath = `${path.resolve(appUpdatesRoot)}${path.sep}`;
+  if (!absolutePath.startsWith(rootPath)) {
+    return null;
+  }
+
+  if (!fs.existsSync(absolutePath)) {
+    return null;
+  }
+
+  return {
+    type: "local",
+    absolutePath,
+    relativePath,
+    fileName: path.basename(absolutePath)
+  };
+}
+
+function resolveAccountCustomerId(req) {
+  const customerSession = getCustomerFromSession(req);
+  if (customerSession?.customerId) {
+    return customerSession.customerId;
+  }
+
+  const adminSession = getAdminFromSession(req);
+  if (adminSession) {
+    return String(req.query.customerId || req.body?.customerId || "").trim();
+  }
+
+  return "";
+}
+
+async function buildAccountDownloadableApp({ customerId, appId, snapshot }) {
+  const normalizedAppId = normalizeAppUpdateId(appId);
+  if (!normalizedAppId) {
+    return null;
+  }
+
+  const meta = getAccountAppMeta(normalizedAppId);
+  const paidOrders = (snapshot.orders || []).filter(
+    (order) => normalizeAppUpdateId(order.appId) === normalizedAppId && String(order.status || "").toLowerCase() === "paid"
+  );
+  const appLicenses = (snapshot.licenses || []).filter(
+    (license) => normalizeAppUpdateId(license.appId) === normalizedAppId
+  );
+  const entitledLicenses = appLicenses.filter(isLicenseEntitledForAccountDownload);
+  const updateEntitlement = buildUpdateEntitlement(appLicenses, null);
+  const sourceProductIds = uniqueStrings([
+    ...paidOrders.map((order) => order.productId),
+    ...entitledLicenses.map((license) => license.productId),
+    ...updateEntitlement.sourceProductIds
+  ]);
+  const ownsApp = paidOrders.length > 0 || entitledLicenses.length > 0 || updateEntitlement.ownsBaseApp || sourceProductIds.length > 0;
+
+  if (!ownsApp) {
+    return null;
+  }
+
+  const latestOrder = paidOrders[0] || null;
+  const latestLicense = entitledLicenses[0] || appLicenses[0] || null;
+  const latestKeyDelivery = (snapshot.keyDeliveries || []).find((delivery) => sourceProductIds.includes(String(delivery.productId || "")));
+
+  let manifest = null;
+  let manifestRecord = null;
+  let artifact = null;
+  let action = null;
+  let deliveryState = meta.deliveryType;
+  let note = "";
+
+  if (meta.deliveryType === "website") {
+    action = {
+      type: "website",
+      href: meta.websiteUrl,
+      label: meta.actionLabel,
+      external: true
+    };
+    note = "Sản phẩm này vận hành bằng website riêng, không cần tải file cài đặt.";
+  } else {
+    manifestRecord = await readAppUpdateManifest(normalizedAppId);
+    manifest = manifestRecord ? normalizeManifestPublicPaths(manifestRecord.manifest) : null;
+    artifact = manifestRecord ? resolveManifestDownloadAsset(manifestRecord) : null;
+
+    const latestVersionAllowed = manifest?.latestVersion && updateEntitlement.highestEntitledMajor !== null
+      ? isVersionAllowedForEntitlement(manifest.latestVersion, updateEntitlement.highestEntitledMajor)
+      : ownsApp;
+
+    if (latestVersionAllowed === false) {
+      deliveryState = "version_not_entitled";
+      note = "Gói hiện tại chưa có quyền tải bản mới nhất đang phát hành.";
+    } else if (artifact?.type === "local" || artifact?.type === "external") {
+      deliveryState = "download_ready";
+      note = manifest?.message || "Bộ cài đã sẵn sàng trong khu vực tài khoản.";
+    } else if (manifestRecord) {
+      deliveryState = "artifact_missing";
+      note = "Anh/chị đã có quyền tải app, nhưng bộ cài chưa được publish vào kho download.";
+    } else {
+      deliveryState = "manual_delivery";
+      note = "App này đang được bàn giao thủ công sau mua. Bấm nút bên dưới để lấy bộ cài đúng entitlement.";
+    }
+
+    action = {
+      type: "account_download_api",
+      endpoint: `/api/account/downloads/${encodeURIComponent(normalizedAppId)}`,
+      label: deliveryState === "download_ready" ? meta.actionLabel : "Nhận bộ cài",
+      external: false
+    };
+  }
+
+  return {
+    appId: normalizedAppId,
+    appName: meta.appName,
+    icon: meta.icon,
+    deliveryType: meta.deliveryType,
+    deliveryState,
+    note,
+    orderStatus: latestOrder?.status || null,
+    paidAt: latestOrder?.paidAt || latestOrder?.createdAt || null,
+    productId: latestOrder?.productId || latestLicense?.productId || sourceProductIds[0] || "",
+    licenseStatus: latestLicense?.status || null,
+    licenseKey: latestLicense?.licenseKey || latestKeyDelivery?.keyValue || "",
+    sourceProductIds,
+    updateEntitlement,
+    manifest,
+    action,
+    supportUrl: ACCOUNT_SUPPORT_URL,
+    latestActivityAt: latestOrder?.paidAt || latestOrder?.createdAt || latestLicense?.updatedAt || latestLicense?.createdAt || null
+  };
+}
+
+async function buildAccountOverview(snapshot) {
+  const appIds = uniqueStrings([
+    ...(snapshot.orders || [])
+      .filter((order) => String(order.status || "").toLowerCase() === "paid")
+      .map((order) => order.appId),
+    ...(snapshot.licenses || []).map((license) => license.appId)
+  ]);
+
+  const downloadableApps = (await Promise.all(
+    appIds.map((appId) => buildAccountDownloadableApp({
+      customerId: snapshot.customer?.id,
+      appId,
+      snapshot
+    }))
+  ))
+    .filter(Boolean)
+    .sort((left, right) => new Date(right.latestActivityAt || 0) - new Date(left.latestActivityAt || 0));
+
+  return {
+    ...snapshot,
+    downloadableApps
+  };
+}
+
 const aiGatesDir = path.join(process.cwd(), "docs", "ai-gates");
 const aiGateFileByApp = {
   default: "definition-ready-done.yaml",
@@ -1003,6 +1313,18 @@ app.get(
   })
 );
 
+app.patch(
+  "/api/admin/catalog/products/:productId/card-control",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const product = await updateProductCardControl(req.params.productId, {
+      saleStatus: req.body?.saleStatus,
+      saleNote: req.body?.saleNote
+    });
+    res.json({ ok: true, product });
+  })
+);
+
 async function handleCreateOrder(req, res) {
   const session = getCustomerFromSession(req);
   const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
@@ -1091,7 +1413,7 @@ app.post(
 
 app.post(
   "/api/usage/consume",
-  requirePortalOrAdmin,
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
     const {
       customerId = "cus-demo",
@@ -1122,11 +1444,132 @@ app.post(
 );
 
 app.get(
-  "/api/portal/:customerId",
-  requirePortalOrAdmin,
+  "/api/account/overview",
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
-    const snapshot = await getCustomerSnapshot(req.params.customerId);
-    res.json(snapshot);
+    const customerId = resolveAccountCustomerId(req);
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const snapshot = await getCustomerSnapshot(customerId);
+    const overview = await buildAccountOverview(snapshot);
+    res.json(overview);
+  })
+);
+
+app.post(
+  "/api/account/downloads/:appId",
+  requireCustomerOrAdmin,
+  asyncHandler(async (req, res) => {
+    const customerId = resolveAccountCustomerId(req);
+    if (!customerId) {
+      return res.status(400).json({ message: "customerId is required for admin requests" });
+    }
+
+    const snapshot = await getCustomerSnapshot(customerId);
+    const app = await buildAccountDownloadableApp({
+      customerId,
+      appId: req.params.appId,
+      snapshot
+    });
+
+    if (!app) {
+      return res.status(404).json({ message: "Không tìm thấy app đã mua hoặc entitlement tương ứng." });
+    }
+
+    if (app.action?.type === "website") {
+      return res.json({
+        ok: true,
+        action: "website",
+        href: app.action.href,
+        label: app.action.label,
+        appId: app.appId,
+        appName: app.appName
+      });
+    }
+
+    if (app.deliveryState === "version_not_entitled") {
+      return res.status(403).json({
+        ok: false,
+        message: app.note,
+        appId: app.appId,
+        appName: app.appName,
+        highestEntitledMajor: app.updateEntitlement?.highestEntitledMajor ?? null,
+        supportUrl: app.supportUrl
+      });
+    }
+
+    if (app.manifest?.downloadPath) {
+      const manifestRecord = await readAppUpdateManifest(app.appId);
+      const artifact = manifestRecord ? resolveManifestDownloadAsset(manifestRecord) : null;
+
+      if (artifact?.type === "external") {
+        return res.json({
+          ok: true,
+          action: "redirect",
+          href: artifact.href,
+          fileName: artifact.fileName,
+          appId: app.appId,
+          appName: app.appName
+        });
+      }
+
+      if (artifact?.type === "local") {
+        const expiresAt = Date.now() + ACCOUNT_DOWNLOAD_TICKET_TTL_SECONDS * 1000;
+        const ticket = createAccountDownloadTicket({
+          customerId,
+          appId: app.appId,
+          relativePath: artifact.relativePath,
+          fileName: artifact.fileName,
+          expiresAt
+        });
+
+        return res.json({
+          ok: true,
+          action: "download",
+          href: `/api/account/download-tickets/${ticket}`,
+          expiresAt,
+          fileName: artifact.fileName,
+          appId: app.appId,
+          appName: app.appName
+        });
+      }
+    }
+
+    return res.json({
+      ok: true,
+      action: "manual_delivery",
+      message: app.note,
+      supportUrl: app.supportUrl,
+      appId: app.appId,
+      appName: app.appName
+    });
+  })
+);
+
+app.get(
+  "/api/account/download-tickets/:ticket",
+  asyncHandler(async (req, res) => {
+    const payload = verifyAccountDownloadTicket(req.params.ticket);
+    if (!payload) {
+      return res.status(410).json({ message: "Link tải đã hết hạn hoặc không hợp lệ." });
+    }
+
+    const session = getCustomerFromSession(req);
+    const admin = getAdminFromSession(req);
+    if (!admin && (!session || session.customerId !== payload.customerId)) {
+      return res.status(403).json({ message: "Bạn không có quyền dùng link tải này." });
+    }
+
+    const absolutePath = path.resolve(appUpdatesRoot, payload.relativePath);
+    const rootPath = `${path.resolve(appUpdatesRoot)}${path.sep}`;
+    if (!absolutePath.startsWith(rootPath) || !fs.existsSync(absolutePath)) {
+      return res.status(404).json({ message: "Không tìm thấy bộ cài hoặc bộ cài chưa được publish." });
+    }
+
+    res.setHeader("Cache-Control", "no-store");
+    return res.download(absolutePath, payload.fileName || path.basename(absolutePath));
   })
 );
 
@@ -1141,18 +1584,9 @@ app.get(
 
 app.get(
   "/api/customer/licenses",
-  requirePortalOrAdmin,
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
-    const portalSession = getCustomerFromSession(req);
-    const admin = getAdminFromSession(req);
-
-    const requestedCustomerId = String(req.query.customerId || "").trim();
-    const customerId = portalSession
-      ? portalSession.customerId
-      : admin
-        ? requestedCustomerId
-        : "";
-
+    const customerId = resolveAccountCustomerId(req);
     if (!customerId) {
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
@@ -1165,18 +1599,9 @@ app.get(
 
 app.post(
   "/api/licenses/:licenseId/activate",
-  requirePortalOrAdmin,
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
-    const portalSession = getCustomerFromSession(req);
-    const admin = getAdminFromSession(req);
-    const requestedCustomerId = String(req.body?.customerId || "").trim();
-
-    const customerId = portalSession
-      ? portalSession.customerId
-      : admin
-        ? requestedCustomerId
-        : "";
-
+    const customerId = resolveAccountCustomerId(req);
     if (!customerId) {
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
@@ -1208,18 +1633,9 @@ app.post(
 
 app.post(
   "/api/licenses/:licenseId/verify",
-  requirePortalOrAdmin,
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
-    const portalSession = getCustomerFromSession(req);
-    const admin = getAdminFromSession(req);
-    const requestedCustomerId = String(req.body?.customerId || "").trim();
-
-    const customerId = portalSession
-      ? portalSession.customerId
-      : admin
-        ? requestedCustomerId
-        : "";
-
+    const customerId = resolveAccountCustomerId(req);
     if (!customerId) {
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
@@ -1251,18 +1667,9 @@ app.post(
 
 app.post(
   "/api/licenses/:licenseId/deactivate",
-  requirePortalOrAdmin,
+  requireCustomerOrAdmin,
   asyncHandler(async (req, res) => {
-    const portalSession = getCustomerFromSession(req);
-    const admin = getAdminFromSession(req);
-    const requestedCustomerId = String(req.body?.customerId || "").trim();
-
-    const customerId = portalSession
-      ? portalSession.customerId
-      : admin
-        ? requestedCustomerId
-        : "";
-
+    const customerId = resolveAccountCustomerId(req);
     if (!customerId) {
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
@@ -2555,10 +2962,6 @@ app.patch(
   })
 );
 
-app.get("/portal/login", (req, res) => {
-  res.redirect("/");
-});
-
 /* ── Customer account auth ── */
 app.post(
   "/api/auth/customer/login",
@@ -2745,7 +3148,6 @@ app.get("/auth/admin/login", (req, res) => {
   res.redirect("/admin/login");
 });
 
-app.post("/auth/portal/login", handlePortalLogin);
 app.post(
   "/auth/admin/login",
   asyncHandler(async (req, res) => {
@@ -3037,11 +3439,6 @@ app.post(
   })
 );
 
-app.post("/auth/portal/logout", (req, res) => {
-  clearAuthCookie(res, "wst_portal_session", req);
-  res.redirect("/");
-});
-
 app.post("/auth/admin/logout", (req, res) => {
   clearAuthCookie(res, "wst_admin_session", req);
   clearAuthCookie(res, "wst_admin_otp_challenge", req);
@@ -3101,7 +3498,7 @@ app.get(
         <p style="color:#64748b;font-size:.88rem;margin:0 0 8px">Mã đơn: <code style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:.82rem;font-weight:700">${orderRef}</code></p>
         <p style="color:#94a3b8;font-size:.78rem;margin:0 0 16px">Mã này dùng để đối soát khi thanh toán/chăm sóc khách hàng.</p>
         <p style="font-size:.85rem;color:#64748b">${mockCheckoutEnabled ? "Bấm xác nhận để giả lập thanh toán (mock mode)." : "Chuyển khoản theo hướng dẫn bên dưới. Hệ thống tự động cấp key khi nhận được CK qua Sepay."}</p>
-        <p style="font-size:.82rem;color:#64748b">Thông báo trạng thái đơn hàng và key sẽ được gửi qua email hoặc hiển thị trong <b>Sản phẩm đã mua</b>.</p>
+        <p style="font-size:.82rem;color:#64748b">Thông báo trạng thái đơn hàng và key sẽ được gửi qua email hoặc hiển thị trong <b>Tài khoản</b>.</p>
         <div id="orderPriceSummary" style="margin-top:14px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc">
           <div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem"><span>Tạm tính</span><strong>${subtotalFormatted} ${order.currency}</strong></div>
           <div style="display:flex;justify-content:space-between;gap:10px;font-size:.88rem;color:#16a34a;margin-top:6px"><span>Giảm giá${order.discountCode ? ` (${order.discountCode})` : ""}</span><strong>- ${discountFormatted} ${order.currency}</strong></div>
@@ -3128,7 +3525,7 @@ app.get(
           <p id="paidPopupText" style="margin:0 0 14px;color:#0f172a;font-size:.92rem">Hệ thống đã xác nhận đơn hàng của bạn.</p>
           <div id="paidPopupKey" style="display:none;margin:0 0 14px;padding:10px 12px;background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;font-family:monospace;color:#166534;font-weight:700"></div>
           <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-            <a href="/?myproducts=1" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;background:#16a34a;color:#fff;font-weight:700">Xem sản phẩm đã mua</a>
+            <a href="/account?tab=downloads" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;background:#16a34a;color:#fff;font-weight:700">Mở tài khoản</a>
             <button id="paidPopupClose" style="min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:600;cursor:pointer">Đóng</button>
           </div>
         </div>
@@ -3323,8 +3720,13 @@ app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-package.html"));
 });
 
-app.get("/portal", (req, res) => {
-  res.redirect("/");
+app.get("/account", (req, res) => {
+  const session = getCustomerFromSession(req);
+  if (!session) {
+    return res.redirect(`/?auth=login&next=${encodeURIComponent(req.originalUrl || "/account")}`);
+  }
+
+  return res.sendFile(path.join(webRoot, "account.html"));
 });
 
 app.get("/admin", requireAdminAuth, (req, res) => {
@@ -3332,8 +3734,8 @@ app.get("/admin", requireAdminAuth, (req, res) => {
 });
 
 app.use((req, res, next) => {
-  if (req.path === "/portal.html") {
-    return res.redirect("/");
+  if (req.path === "/account.html") {
+    return res.redirect("/account");
   }
 
   if (req.path === "/admin.html") {

@@ -36,6 +36,41 @@ const productImageLibrary = {
 
 const SUPPORT_CHAT_URL = "https://zalo.me/0902964685";
 
+function normalizeProductSaleStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["live", "locked", "coming_soon"].includes(normalized) ? normalized : "live";
+}
+
+function getProductSalePresentation(product) {
+  const saleStatus = normalizeProductSaleStatus(product?.saleStatus);
+  const saleNote = String(product?.saleNote || "").trim();
+  if (saleStatus === "locked") {
+    return {
+      saleStatus,
+      badge: "Tạm khóa",
+      buttonLabel: "🔒 Tạm khóa",
+      disabled: true,
+      note: saleNote || "Sản phẩm này đang tạm khóa để cập nhật hoặc xử lý lỗi."
+    };
+  }
+  if (saleStatus === "coming_soon") {
+    return {
+      saleStatus,
+      badge: "Coming soon",
+      buttonLabel: "⏳ Sắp mở bán",
+      disabled: true,
+      note: saleNote || "Sản phẩm này đang được đưa lên trước để quảng cáo, chưa mở bán."
+    };
+  }
+  return {
+    saleStatus,
+    badge: "",
+    buttonLabel: "🛒 Mua ngay",
+    disabled: false,
+    note: ""
+  };
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -571,7 +606,17 @@ function isExternalLink(value) {
 
 function resolveDownloadAction(product, content) {
   const customLink = String(content?.downloadUrl || "").trim();
-  if (customLink) {
+  const appId = String(product?.appId || "").trim().toLowerCase();
+
+  if (appId === "app-study-12") {
+    return {
+      href: customLink || "https://hoctap-cap-01.vercel.app/",
+      label: "⬇ Mở app học tập",
+      external: true
+    };
+  }
+
+  if (customLink && !/(hair-spa-manager|app-bds-website-manager|app-prompt-image-video|lamviec|app-cap12)/i.test(appId)) {
     return {
       href: customLink,
       label: "⬇ Tải app",
@@ -579,19 +624,10 @@ function resolveDownloadAction(product, content) {
     };
   }
 
-  const appId = String(product?.appId || "").trim().toLowerCase();
-  if (appId === "app-study-12") {
-    return {
-      href: "https://hoctap-cap-01.vercel.app/",
-      label: "⬇ Mở app học tập",
-      external: true
-    };
-  }
-
   return {
-    href: SUPPORT_CHAT_URL,
-    label: "💬 Liên hệ nhận app",
-    external: true
+    href: "/account?tab=downloads",
+    label: "🔐 Xem tải app sau mua",
+    external: false
   };
 }
 
@@ -813,6 +849,12 @@ function renderPlanCompare(blueprint, variant = null) {
 async function startCheckoutForProduct(product) {
   if (!product) {
     alert("Gói này chưa mở bán ở chu kỳ bạn chọn.");
+    return;
+  }
+
+  const salePresentation = getProductSalePresentation(product);
+  if (salePresentation.disabled) {
+    alert(salePresentation.note);
     return;
   }
 
@@ -1243,6 +1285,13 @@ function updateBuyBtn(){
   const hasPlanBlueprint = !!getPlanBlueprint(currentProduct);
   const active = hasPlanBlueprint ? selectedCheckoutProduct : (selectedCheckoutProduct || currentProduct);
   if(!btn||!currentProduct) return;
+  const salePresentation = getProductSalePresentation(active || currentProduct);
+  if (salePresentation.disabled) {
+    btn.textContent = salePresentation.buttonLabel;
+    btn.disabled = true;
+    if(note) note.textContent = salePresentation.note;
+    return;
+  }
   if (hasPlanBlueprint && selectedPlanUnavailable) {
     btn.textContent = "⏳ Sắp mở bán";
     btn.disabled = true;
@@ -1260,10 +1309,10 @@ function updateBuyBtn(){
 
   btn.disabled = false;
   if(!currentUser){
-    btn.textContent = "🛒 Mua ngay";
+    btn.textContent = salePresentation.buttonLabel;
     if(note) note.textContent = "Cần đăng nhập để tiến hành mua hàng";
   } else {
-    btn.textContent = "🛒 Mua ngay";
+    btn.textContent = salePresentation.buttonLabel;
     if(note) note.textContent = "Key giao tự động sau thanh toán thành công";
   }
 }
@@ -1327,7 +1376,10 @@ function renderProduct(p){
   }
 
   // buy box
-  document.getElementById("pdCatBadge").textContent = softwareCode(p.appId);
+  const salePresentation = getProductSalePresentation(p);
+  document.getElementById("pdCatBadge").textContent = salePresentation.badge
+    ? `${softwareCode(p.appId)} · ${salePresentation.badge}`
+    : softwareCode(p.appId);
   document.getElementById("pdTitle").textContent = productName;
   document.getElementById("pdCycle").textContent = `Loại: ${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}`;
   document.getElementById("pdPrice").textContent = fmtVnd(p.price);

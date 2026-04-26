@@ -18,7 +18,7 @@ tags:
   - name: Orders
   - name: Payments
   - name: Telegram
-  - name: Portal
+  - name: Account
   - name: AI App
   - name: Usage
   - name: Admin
@@ -547,17 +547,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/GenericObject"
 
-  /api/portal/{customerId}:
+  /api/account/overview:
     get:
-      tags: [Portal]
-      summary: Get customer snapshot by customerId
+      tags: [Account]
+      summary: Get account overview for current customer or admin-selected customer
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       parameters:
-        - in: path
+        - in: query
           name: customerId
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -567,6 +567,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CustomerSnapshotResponse"
+
+  /api/account/downloads/{appId}:
+    post:
+      tags: [Account]
+      summary: Resolve account download action for a purchased app
+      security:
+        - customerCookieAuth: []
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: appId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: customerId
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Download action resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        "403":
+          description: Entitlement does not allow current download target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Purchased app or entitlement not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/customers/{customerId}/snapshot:
     get:
@@ -590,10 +628,10 @@ paths:
 
   /api/customer/licenses:
     get:
-      tags: [Portal]
-      summary: List customer licenses (portal/admin)
+      tags: [Account]
+      summary: List customer licenses (account/admin)
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       parameters:
         - in: query
@@ -616,10 +654,10 @@ paths:
 
   /api/licenses/{licenseId}/activate:
     post:
-      tags: [Portal]
+      tags: [Account]
       summary: Activate a license by id
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       parameters:
         - in: path
@@ -643,10 +681,10 @@ paths:
 
   /api/licenses/{licenseId}/verify:
     post:
-      tags: [Portal]
+      tags: [Account]
       summary: Verify a license by id
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       parameters:
         - in: path
@@ -670,10 +708,10 @@ paths:
 
   /api/licenses/{licenseId}/deactivate:
     post:
-      tags: [Portal]
+      tags: [Account]
       summary: Deactivate a license by id
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       parameters:
         - in: path
@@ -754,7 +792,7 @@ paths:
       tags: [Usage]
       summary: Consume usage credits
       security:
-        - portalCookieAuth: []
+        - customerCookieAuth: []
         - adminCookieAuth: []
       requestBody:
         required: true
@@ -1030,10 +1068,6 @@ components:
       type: apiKey
       in: cookie
       name: wst_customer_session
-    portalCookieAuth:
-      type: apiKey
-      in: cookie
-      name: wst_portal_session
     adminCookieAuth:
       type: apiKey
       in: cookie

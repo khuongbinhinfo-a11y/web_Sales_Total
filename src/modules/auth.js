@@ -525,28 +525,12 @@ function wantsHtml(req) {
   return accept.includes("text/html");
 }
 
-function isPortalAuthenticated(req) {
-  const cookies = parseCookies(req);
-  return verifySessionToken(cookies.wst_portal_session, "portal");
+function isCustomerAuthenticated(req) {
+  return getCustomerFromSession(req) !== null;
 }
 
 function isAdminAuthenticated(req) {
   return getAdminFromSession(req) !== null;
-}
-
-function requireAuth(scope, loginPath) {
-  return (req, res, next) => {
-    const isAllowed = scope === "admin" ? isAdminAuthenticated(req) : isPortalAuthenticated(req);
-    if (isAllowed) {
-      return next();
-    }
-
-    if (wantsHtml(req)) {
-      return res.redirect(loginPath);
-    }
-
-    return res.status(401).json({ message: "Unauthorized" });
-  };
 }
 
 async function requireAdminAuth(req, res, next) {
@@ -564,8 +548,8 @@ async function requireAdminAuth(req, res, next) {
   return next();
 }
 
-async function requirePortalOrAdmin(req, res, next) {
-  if (isPortalAuthenticated(req)) {
+async function requireCustomerOrAdmin(req, res, next) {
+  if (isCustomerAuthenticated(req)) {
     return next();
   }
 
@@ -576,20 +560,10 @@ async function requirePortalOrAdmin(req, res, next) {
   }
 
   if (wantsHtml(req)) {
-    return res.redirect("/portal/login");
+    return res.redirect("/?auth=login");
   }
 
   return res.status(401).json({ message: "Unauthorized" });
-}
-
-function handlePortalLogin(req, res) {
-  const { accessKey } = req.body;
-  if (!accessKey || accessKey !== env.portalAccessKey) {
-    return res.status(401).send("Invalid portal key");
-  }
-
-  setAuthCookie(res, "wst_portal_session", createSessionToken("portal"), req);
-  return res.redirect("/portal");
 }
 
 function handleAdminLogin(req, res) {
@@ -614,33 +588,6 @@ function handleAdminLogin(req, res) {
   });
   setAuthCookie(res, "wst_admin_session", token, req);
   return res.redirect("/admin");
-}
-
-function portalLoginPage() {
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Portal Login</title>
-    <style>
-      body{font-family:Segoe UI,sans-serif;background:#f5f7fa;padding:24px}
-      .card{max-width:420px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;border:1px solid #dce3ea}
-      input{width:100%;padding:10px;border:1px solid #c8d2dd;border-radius:8px;margin:10px 0}
-      button{border:0;background:#1864ab;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h2>Portal Login</h2>
-      <form method="post" action="/auth/portal/login">
-        <label>Portal access key</label>
-        <input type="password" name="accessKey" autocomplete="off" required />
-        <button type="submit">Login Portal</button>
-      </form>
-    </div>
-  </body>
-</html>`;
 }
 
 function adminLoginPage() {
@@ -905,12 +852,9 @@ function adminLoginPage() {
 }
 
 module.exports = {
-  requirePortalAuth: requireAuth("portal", "/portal/login"),
+  requireCustomerOrAdmin,
   requireAdminAuth,
-  requirePortalOrAdmin,
-  handlePortalLogin,
   handleAdminLogin,
-  portalLoginPage,
   adminLoginPage,
   clearAuthCookie,
   setAuthCookie,

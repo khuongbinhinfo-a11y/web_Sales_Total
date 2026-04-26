@@ -57,6 +57,34 @@ function escapeHtml(value){
     .replace(/'/g,"&#39;");
 }
 
+function normalizeProductSaleStatus(value){
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["live","locked","coming_soon"].includes(normalized) ? normalized : "live";
+}
+
+function productSaleStatusMeta(value){
+  const status = normalizeProductSaleStatus(value);
+  if(status === "locked"){
+    return {
+      label: "Tạm khóa",
+      badgeClass: "is-locked",
+      hint: "Card vẫn hiện ngoài web nhưng người dùng không tạo đơn được."
+    };
+  }
+  if(status === "coming_soon"){
+    return {
+      label: "Coming soon",
+      badgeClass: "is-coming-soon",
+      hint: "Card dùng để quảng cáo trước mở bán, checkout bị chặn."
+    };
+  }
+  return {
+    label: "Đang bán",
+    badgeClass: "is-live",
+    hint: "Người dùng thấy card và tạo đơn bình thường."
+  };
+}
+
 function toDatetimeLocalValue(value){
   if(!value) return "";
   const parsed = new Date(value);
@@ -2112,6 +2140,7 @@ bindCustomerSearch();
 bindCustomerModal();
 bindKeyLookup();
 bindAdminSidebarNav();
+bindProductCardManager();
 bindProductKeyManager();
 bindDiscountCodeAdmin();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
@@ -2238,4 +2267,135 @@ async function pkDeleteKey(keyId, keyValue) {
   } catch(err) {
     alert("Lỗi: "+err.message);
   }
+}
+
+function bindProductCardManager() {
+  const wrap = document.getElementById("productCardWrap");
+  const msg = document.getElementById("productCardMsg");
+  const refreshBtn = document.getElementById("productCardRefreshBtn");
+  if (!wrap) return;
+
+  async function loadCards() {
+    wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Đang tải danh sách sản phẩm...</p>`;
+    if(msg){ msg.textContent = ""; }
+    try {
+      const res = await fetchAdmin("/api/admin/catalog");
+      if(res.status === 401){ redirectToAdminLogin("/api/admin/catalog"); return; }
+      const data = await res.json().catch(()=>({ products: [] }));
+      if(!res.ok){
+        wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">${escapeHtml(data.message || "Không tải được catalog admin")}</p>`;
+        return;
+      }
+
+      const products = Array.isArray(data.products) ? data.products.slice() : [];
+      if(!products.length){
+        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm nào.</p>`;
+        return;
+      }
+
+      products.sort((left, right) => {
+        const appCompare = String(left.appId || "").localeCompare(String(right.appId || ""), "vi");
+        if(appCompare !== 0) return appCompare;
+        return String(left.name || "").localeCompare(String(right.name || ""), "vi");
+      });
+
+      wrap.innerHTML = `<table class="data-table admin-product-card-table"><thead><tr>
+        <th>App / sản phẩm</th>
+        <th>Hiển thị</th>
+        <th>Trạng thái card</th>
+        <th>Ghi chú ngoài web</th>
+        <th>Lưu</th>
+      </tr></thead><tbody>${products.map((product) => {
+        const normalizedStatus = normalizeProductSaleStatus(product.saleStatus);
+        const meta = productSaleStatusMeta(normalizedStatus);
+        return `<tr data-product-id="${escapeHtml(product.id)}">
+          <td>
+            <strong>${escapeHtml(product.name || product.id)}</strong>
+            <div class="admin-product-card-subline">${escapeHtml(product.appId || "")} · ${escapeHtml(product.id || "")} · ${escapeHtml(product.cycle || "")}</div>
+          </td>
+          <td>
+            <div class="admin-inline-actions">
+              <span class="status-badge ${product.active === false ? "" : "status-active"}">${product.active === false ? "inactive" : "active"}</span>
+              <span class="status-badge ${product.visibility === "hidden" ? "" : "status-active"}">${escapeHtml(product.visibility || "public")}</span>
+            </div>
+          </td>
+          <td>
+            <select class="admin-input product-card-status">
+              <option value="live" ${normalizedStatus === "live" ? "selected" : ""}>Đang bán</option>
+              <option value="locked" ${normalizedStatus === "locked" ? "selected" : ""}>Tạm khóa</option>
+              <option value="coming_soon" ${normalizedStatus === "coming_soon" ? "selected" : ""}>Coming soon</option>
+            </select>
+            <div class="admin-product-state-preview">
+              <span class="admin-product-state-chip ${meta.badgeClass}">${meta.label}</span>
+              <span>${meta.hint}</span>
+            </div>
+          </td>
+          <td>
+            <input class="admin-input product-card-note" maxlength="280" placeholder="VD: Tạm khóa để cập nhật bản cài / Mở bán ngày 15-05" value="${escapeHtml(product.saleNote || "")}" />
+          </td>
+          <td>
+            <button class="btn btn-accent product-card-save" style="min-height:38px">Lưu</button>
+          </td>
+        </tr>`;
+      }).join("")}</tbody></table>`;
+
+      wrap.querySelectorAll(".product-card-status").forEach((select) => {
+        select.addEventListener("change", () => {
+          const row = select.closest("tr");
+          const preview = row?.querySelector(".admin-product-state-preview");
+          const meta = productSaleStatusMeta(select.value);
+          if(preview){
+            preview.innerHTML = `<span class="admin-product-state-chip ${meta.badgeClass}">${meta.label}</span><span>${meta.hint}</span>`;
+          }
+        });
+      });
+
+      wrap.querySelectorAll(".product-card-save").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const row = button.closest("tr[data-product-id]");
+          const productId = row?.dataset.productId;
+          const statusEl = row?.querySelector(".product-card-status");
+          const noteEl = row?.querySelector(".product-card-note");
+          if(!productId || !statusEl || !noteEl) return;
+
+          button.disabled = true;
+          button.textContent = "Đang lưu...";
+          if(msg){ msg.textContent = ""; }
+          try {
+            const res = await fetchAdmin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                saleStatus: statusEl.value,
+                saleNote: noteEl.value
+              })
+            });
+            if(res.status === 401){ redirectToAdminLogin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`); return; }
+            const data = await res.json().catch(()=>({}));
+            if(!res.ok){
+              if(msg){ msg.textContent = data.message || "Lưu trạng thái card thất bại"; msg.style.color = "var(--danger)"; }
+              return;
+            }
+            if(msg){ msg.textContent = `Đã cập nhật trạng thái card cho ${data.product?.name || productId}`; msg.style.color = "var(--success)"; }
+            const meta = productSaleStatusMeta(data.product?.saleStatus);
+            const preview = row.querySelector(".admin-product-state-preview");
+            if(preview){
+              preview.innerHTML = `<span class="admin-product-state-chip ${meta.badgeClass}">${meta.label}</span><span>${meta.hint}</span>`;
+            }
+            noteEl.value = data.product?.saleNote || "";
+          } catch(err) {
+            if(msg){ msg.textContent = `Lỗi lưu trạng thái: ${err.message}`; msg.style.color = "var(--danger)"; }
+          } finally {
+            button.disabled = false;
+            button.textContent = "Lưu";
+          }
+        });
+      });
+    } catch (err) {
+      wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">Lỗi tải danh sách sản phẩm: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  refreshBtn?.addEventListener("click", loadCards);
+  loadCards();
 }

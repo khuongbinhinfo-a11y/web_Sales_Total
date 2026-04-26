@@ -69,6 +69,29 @@ function createStoreError(message, statusCode = 400) {
   return error;
 }
 
+const PRODUCT_SALE_STATUSES = new Set(["live", "locked", "coming_soon"]);
+
+function normalizeProductSaleStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return PRODUCT_SALE_STATUSES.has(normalized) ? normalized : "live";
+}
+
+function mapProductRow(row) {
+  return {
+    id: row.id,
+    appId: row.app_id,
+    name: row.name,
+    cycle: row.cycle,
+    price: Number(row.price),
+    currency: row.currency,
+    credits: Number(row.credits),
+    active: row.active,
+    visibility: row.visibility,
+    saleStatus: normalizeProductSaleStatus(row.sale_status),
+    saleNote: String(row.sale_note || "").trim()
+  };
+}
+
 function computeDiscountAmount(amount, percentOff) {
   const safeAmount = Math.max(0, Number(amount) || 0);
   const safePercent = Math.max(0, Math.min(100, Number(percentOff) || 0));
@@ -389,15 +412,17 @@ function computePeriod(cycle) {
   return { startAt, endAt };
 }
 
-async function getCatalog({ includeHidden = false } = {}) {
+async function getCatalog({ includeHidden = false, includeInactive = false } = {}) {
   const appsResult = await pool.query(
     "SELECT id, name, slug, status, description FROM apps ORDER BY created_at ASC"
   );
   const visibilityWhere = includeHidden ? "" : "AND visibility = 'public'";
+  const activeWhere = includeInactive ? "" : "AND active = TRUE";
   const productsResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, currency, credits, active, visibility
+    `SELECT id, app_id, name, cycle, price, currency, credits, active, visibility, sale_status, sale_note
      FROM products
-     WHERE active = TRUE
+     WHERE 1 = 1
+       ${activeWhere}
        ${visibilityWhere}
      ORDER BY created_at ASC`
   );
@@ -410,17 +435,7 @@ async function getCatalog({ includeHidden = false } = {}) {
       status: row.status,
       description: row.description
     })),
-    products: productsResult.rows.map((row) => ({
-      id: row.id,
-      appId: row.app_id,
-      name: row.name,
-      cycle: row.cycle,
-      price: Number(row.price),
-      currency: row.currency,
-      credits: Number(row.credits),
-      active: row.active,
-      visibility: row.visibility
-    }))
+    products: productsResult.rows.map(mapProductRow)
   };
 }
 
@@ -429,7 +444,33 @@ async function getPublicCatalog() {
 }
 
 async function getAdminCatalog() {
-  return getCatalog({ includeHidden: true });
+  return getCatalog({ includeHidden: true, includeInactive: true });
+}
+
+async function updateProductCardControl(productId, { saleStatus, saleNote }) {
+  const safeProductId = String(productId || "").trim();
+  if (!safeProductId) {
+    throw createStoreError("Thiếu productId", 400);
+  }
+
+  const normalizedSaleStatus = normalizeProductSaleStatus(saleStatus);
+  const normalizedSaleNote = String(saleNote || "").trim().slice(0, 280);
+
+  const result = await pool.query(
+    `UPDATE products
+     SET sale_status = $2,
+         sale_note = $3,
+         updated_at = NOW()
+     WHERE id = $1
+     RETURNING id, app_id, name, cycle, price, currency, credits, active, visibility, sale_status, sale_note`,
+    [safeProductId, normalizedSaleStatus, normalizedSaleNote]
+  );
+
+  if (result.rowCount === 0) {
+    throw createStoreError("Không tìm thấy sản phẩm để cập nhật", 404);
+  }
+
+  return mapProductRow(result.rows[0]);
 }
 
 async function applyDiscountToOrderWithClient({ client, orderId, discountCode }) {
@@ -538,7 +579,7 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `SELECT id, app_id, name, cycle, price, currency, credits
+      `SELECT id, app_id, name, cycle, price, currency, credits, sale_status, sale_note
        FROM products
        WHERE id = $1 AND app_id = $2 AND active = TRUE`,
       [productId, appId]
@@ -553,6 +594,16 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     }
 
     const product = productResult.rows[0];
+    const saleStatus = normalizeProductSaleStatus(product.sale_status);
+    if (saleStatus !== "live") {
+      const saleNote = String(product.sale_note || "").trim();
+      const message =
+        saleStatus === "coming_soon"
+          ? saleNote || "Sản phẩm này đang ở trạng thái coming soon, chưa thể tạo đơn"
+          : saleNote || "Sản phẩm này đang tạm khóa bán, chưa thể tạo đơn";
+      throw createStoreError(message, 409);
+    }
+
     let orderRow = null;
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const orderCode = generateReadableOrderCode();
@@ -2860,6 +2911,7 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
 module.exports = {
   getPublicCatalog,
   getAdminCatalog,
+  updateProductCardControl,
   createOrder,
   applyDiscountToOrder,
   getOrderById,

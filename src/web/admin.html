@@ -46,6 +46,7 @@
 
           <div class="admin-sidebar-group-label">Kho key va xu ly</div>
           <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
+          <a href="#section-product-cards"><span class="icon">🧱</span> Card sản phẩm</a>
           <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
           <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
           <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
@@ -355,6 +356,22 @@
           <div class="info-card">
             <p style="color:var(--muted);font-size:.88rem">Quản trị key theo profile giúp tách quyền giữa web/desktop. Nên dùng 2 key riêng cho 1 app có 2 client; giữ shared key làm fallback khi cần chuyển đổi.</p>
             <div class="table-wrap" id="aiAppKeyManagerWrap"><p style="padding:16px;color:var(--muted)">Đang tải trạng thái key...</p></div>
+          </div>
+        </section>
+
+        <section id="section-product-cards" class="admin-section">
+          <h3>🧱 Khóa / mở card sản phẩm</h3>
+          <p class="admin-section-intro">Dùng khi cần đưa sản phẩm lên trước để chạy quảng cáo nhưng chưa bán, hoặc tạm khóa vì đang lỗi. Card vẫn hiện ngoài storefront, nhưng checkout sẽ bị chặn theo trạng thái anh chọn.</p>
+          <div class="info-card">
+            <div class="admin-card-head">
+              <div>
+                <b class="admin-card-title">Điều khiển trạng thái bán theo từng sản phẩm</b>
+                <p class="admin-inline-note">Đang bán cho phép mua. Tạm khóa vẫn hiện card nhưng khóa tạo đơn. Coming soon dùng cho sản phẩm chuẩn bị mở bán.</p>
+              </div>
+              <button id="productCardRefreshBtn" class="btn btn-outline admin-compact-btn">🔄 Làm mới</button>
+            </div>
+            <p id="productCardMsg" style="margin:0 0 10px;font-size:.82rem;color:var(--muted)"></p>
+            <div class="table-wrap" id="productCardWrap"><p style="padding:16px;color:var(--muted)">Đang tải danh sách sản phẩm...</p></div>
           </div>
         </section>
 

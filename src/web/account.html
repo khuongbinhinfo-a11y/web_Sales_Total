@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tai khoan cua toi | Ung Dung Thong Minh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="page-shell account-page">
+    <header class="page-header">
+      <div class="container">
+        <a class="logo" href="/">
+          <img class="logo-img" src="/logo_2.png" alt="Logo" />
+          <span class="logo-wordmark"><span>Ung Dung</span><span>Thong Minh</span></span>
+        </a>
+        <nav class="page-header-nav account-header-nav">
+          <a href="/#catalog">San pham</a>
+          <a href="/#web-demo">Thiet ke Web</a>
+          <a href="/account" class="is-active">Tai khoan cua toi</a>
+          <button type="button" id="accountLogoutBtn" class="btn-logout">Dang xuat</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="container account-shell">
+        <section class="account-hero">
+          <div class="account-hero-copy">
+            <span class="account-kicker">Khong gian khach hang</span>
+            <h1 id="accountName">Dang tai tai khoan...</h1>
+            <p id="accountEmail">He thong dang dong bo san pham, key va cac quyen dang su dung cua ban.</p>
+            <div class="account-hero-actions">
+              <a href="#accountDownloads" class="btn btn-accent">Tai app cua toi</a>
+              <a href="#accountSupport" class="btn btn-outline">Can ho tro</a>
+            </div>
+          </div>
+          <div class="account-hero-summary" id="accountSummaryCards">
+            <div class="account-summary-card">
+              <span>App san sang</span>
+              <strong id="summaryAppsReady">0</strong>
+            </div>
+            <div class="account-summary-card">
+              <span>Key da nhan</span>
+              <strong id="summaryKeys">0</strong>
+            </div>
+            <div class="account-summary-card">
+              <span>Don da thanh toan</span>
+              <strong id="summaryPaidOrders">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="account-tabs-shell">
+          <div class="account-tabs" id="accountTabs">
+            <button type="button" class="account-tab is-active" data-tab="downloads">Tai app cua toi</button>
+            <button type="button" class="account-tab" data-tab="keys">Key cua toi</button>
+            <button type="button" class="account-tab" data-tab="subscriptions">Goi dang dung</button>
+            <button type="button" class="account-tab" data-tab="orders">Don hang</button>
+            <button type="button" class="account-tab" data-tab="support">Ho tro</button>
+          </div>
+
+          <div class="account-panels">
+            <section class="account-panel is-active" data-panel="downloads" id="accountDownloads">
+              <div class="account-panel-head">
+                <div>
+                  <h2>Tai app cua toi</h2>
+                  <p>Chi nhung app da mua hop le moi hien nut tai hoac mo website tai day.</p>
+                </div>
+              </div>
+              <div class="account-card-grid" id="downloadCards"></div>
+            </section>
+
+            <section class="account-panel" data-panel="keys">
+              <div class="account-panel-head">
+                <div>
+                  <h2>Key cua toi</h2>
+                  <p>Danh sach key da duoc giao. Co the copy nhanh va doi chieu voi san pham vua mua.</p>
+                </div>
+              </div>
+              <div class="account-list" id="accountKeys"></div>
+            </section>
+
+            <section class="account-panel" data-panel="subscriptions">
+              <div class="account-panel-head">
+                <div>
+                  <h2>Goi dang dung</h2>
+                  <p>Theo doi cac goi dang hoat dong, tinh trang lifetime va trang thai kich hoat.</p>
+                </div>
+              </div>
+              <div class="account-list" id="accountSubscriptions"></div>
+            </section>
+
+            <section class="account-panel" data-panel="orders">
+              <div class="account-panel-head">
+                <div>
+                  <h2>Don hang</h2>
+                  <p>Lich su thanh toan va doi chieu trang thai don cua ban.</p>
+                </div>
+              </div>
+              <div class="table-wrap" id="accountOrders"></div>
+            </section>
+
+            <section class="account-panel" data-panel="support" id="accountSupport">
+              <div class="account-panel-head">
+                <div>
+                  <h2>Ho tro</h2>
+                  <p>Nen di theo thu tu nay neu ban vua mua xong ma chua thay app hoac key.</p>
+                </div>
+              </div>
+              <div class="account-support-grid">
+                <article class="account-support-card">
+                  <h3>1. Kiem tra thanh toan</h3>
+                  <p>Vao tab Don hang de xem don da chuyen sang paid chua.</p>
+                </article>
+                <article class="account-support-card">
+                  <h3>2. Kiem tra key</h3>
+                  <p>Neu da paid ma chua thay key, chup man hinh don va gui ho tro.</p>
+                </article>
+                <article class="account-support-card">
+                  <h3>3. Nhan bo cai</h3>
+                  <p>Voi app desktop, nut tai hoac nhan bo cai chi hien trong tab Tai app cua toi.</p>
+                </article>
+                <article class="account-support-card">
+                  <h3>4. Ho tro nhanh</h3>
+                  <p><a href="https://zalo.me/0902964685" target="_blank" rel="noopener">Lien he Zalo ho tro</a></p>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="./account.js"></script>
+  </body>
+</html>

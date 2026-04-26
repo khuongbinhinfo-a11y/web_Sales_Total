@@ -23,13 +23,13 @@
         <nav class="header-nav" id="headerNav">
           <a href="#catalog" data-i18n="nav_products">Sản phẩm</a>
           <a href="#web-demo" data-i18n="nav_web_design">Thiết kế Web</a>
-          <a href="#" id="navMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
+          <a href="/account" id="navMyProducts" class="nav-account-link" data-i18n="nav_my_products">Tài khoản của tôi</a>
           <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
           <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register" data-i18n="nav_register">Đăng ký</a>
           <div id="userMenu" class="user-menu is-hidden">
             <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
             <div class="user-dropdown" id="userDropdown">
-              <a href="#" id="dropMyProducts" data-i18n="nav_my_products">Sản phẩm đã mua</a>
+              <a href="/account?tab=downloads" id="dropMyProducts" data-i18n="nav_my_products">Tải app & key của tôi</a>
               <a href="#how" data-i18n="how_title">Hướng dẫn mua hàng</a>
               <a href="#" id="dropLogout" class="dd-logout" data-i18n="nav_logout">Đăng xuất</a>
             </div>
@@ -481,30 +481,6 @@
         </div>
 
         <p id="loginError" class="modal-error"></p>
-      </div>
-    </div>
-
-    <!-- Purchased Products Drawer -->
-    <div class="drawer-overlay" id="purchasedDrawer">
-      <div class="drawer-panel">
-        <div class="drawer-head">
-          <h2 data-i18n="purchased_title">Sản phẩm đã mua</h2>
-          <button class="modal-close" id="purchasedDrawerClose">✕</button>
-        </div>
-        <div class="drawer-body" id="purchasedContent">
-          <div class="drawer-section">
-            <h3 data-i18n="purchased_subs_title">📋 Gói đang sử dụng</h3>
-            <div id="drawerSubs"></div>
-          </div>
-          <div class="drawer-section">
-            <h3 data-i18n="purchased_keys_title">🔑 Key đã nhận</h3>
-            <div id="drawerKeys"></div>
-          </div>
-          <div class="drawer-section">
-            <h3 data-i18n="purchased_orders_title">🛒 Lịch sử đơn hàng</h3>
-            <div id="drawerOrders"></div>
-          </div>
-        </div>
       </div>
     </div>
 

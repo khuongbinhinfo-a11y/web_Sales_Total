@@ -280,10 +280,18 @@
       "name": "Snapshot & Usage",
       "item": [
         {
-          "name": "GET /api/portal/{customerId}",
+          "name": "GET /api/account/overview",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/portal/{{customerId}}"
+            "url": "{{baseUrl}}/api/account/overview"
+          }
+        },
+        {
+          "name": "POST /api/account/downloads/{appId}",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/account/downloads/{{appId}}"
           }
         },
         {

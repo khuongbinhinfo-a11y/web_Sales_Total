@@ -25,8 +25,6 @@ const registerCodeInput = document.getElementById("registerCode");
 const sendRegisterCodeBtn = document.getElementById("sendRegisterCodeBtn");
 const supportDock = document.getElementById("supportDock");
 const supportDockToggle = document.getElementById("supportDockToggle");
-const purchasedDrawer  = document.getElementById("purchasedDrawer");
-const purchasedClose   = document.getElementById("purchasedDrawerClose");
 const dropMyProducts   = document.getElementById("dropMyProducts");
 const dropLogout       = document.getElementById("dropLogout");
 
@@ -211,6 +209,12 @@ const T = {
     footer_desc:"Nền tảng bán key phần mềm bản quyền tự động. Thanh toán linh hoạt, giao key ngay.",
     footer_quick:"Truy cập nhanh", footer_policy:"Chính sách", footer_contact:"Liên hệ",
     card_buy:"Mua ngay", card_sold:"đã bán",
+    card_status_locked:"Tạm khóa",
+    card_status_coming_soon:"Coming soon",
+    card_cta_locked:"Xem lý do tạm khóa",
+    card_cta_coming_soon:"Xem trước sản phẩm",
+    card_note_locked:"Sản phẩm đang tạm khóa để cập nhật hoặc xử lý lỗi.",
+    card_note_coming_soon:"Sản phẩm đang được đưa lên trước để quảng cáo, chưa mở bán.",
     tag_best:"NÊN CHỌN",
     cycle_monthly:"Tháng", cycle_yearly:"Năm", cycle_one_time:"Một lần",
     error_create:"Không tạo được đơn hàng",
@@ -309,6 +313,12 @@ const T = {
     footer_desc:"Automated software key marketplace. Pay with Sepay, get key instantly.",
     footer_quick:"Quick links", footer_policy:"Policies", footer_contact:"Contact",
     card_buy:"Buy now", card_sold:"sold",
+    card_status_locked:"Locked",
+    card_status_coming_soon:"Coming soon",
+    card_cta_locked:"See lock reason",
+    card_cta_coming_soon:"Preview product",
+    card_note_locked:"This product is temporarily locked while being updated or fixed.",
+    card_note_coming_soon:"This product is being teased before sales open.",
     tag_best:"RECOMMENDED",
     cycle_monthly:"Monthly", cycle_yearly:"Yearly", cycle_one_time:"One-time",
     error_create:"Unable to create order",
@@ -374,11 +384,12 @@ let lang = localStorage.getItem("wst_lang") || "vi";
 let allProducts = [];
 let activeCat = "all";
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
-let pendingOpenPurchasedAfterAuth = false;
+let pendingPostAuthRedirect = null;
 let googleAuthInitialized = false;
 let googleAuthClientId = "";
 let googleAuthInitAttempts = 0;
 let catalogMode = "loading";
+const ACCOUNT_DOWNLOADS_PATH = "/account?tab=downloads";
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
@@ -666,6 +677,41 @@ function canonicalProductName(product) {
   return String(product?.name || "").trim();
 }
 
+function normalizeProductSaleStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["live", "locked", "coming_soon"].includes(normalized) ? normalized : "live";
+}
+
+function getProductSaleMeta(product) {
+  const saleStatus = normalizeProductSaleStatus(product?.saleStatus);
+  const saleNote = String(product?.saleNote || "").trim();
+  if (saleStatus === "locked") {
+    return {
+      saleStatus,
+      badge: t("card_status_locked"),
+      badgeClass: "is-locked",
+      cta: t("card_cta_locked"),
+      note: saleNote || t("card_note_locked")
+    };
+  }
+  if (saleStatus === "coming_soon") {
+    return {
+      saleStatus,
+      badge: t("card_status_coming_soon"),
+      badgeClass: "is-coming-soon",
+      cta: t("card_cta_coming_soon"),
+      note: saleNote || t("card_note_coming_soon")
+    };
+  }
+  return {
+    saleStatus,
+    badge: "",
+    badgeClass: "is-live",
+    cta: lang === "vi" ? "Xem sản phẩm" : "View product",
+    note: saleNote
+  };
+}
+
 function pickStudyCap01Representative(products) {
   const preferredIds = [
     "prod-study-month",
@@ -732,9 +778,11 @@ function seedAuthState(snapshot){
 async function finalizeAuthFlow(snapshot){
   if(seedAuthState(snapshot)){
     loginModal.classList.remove("show");
-    if(pendingOpenPurchasedAfterAuth){
-      pendingOpenPurchasedAfterAuth = false;
-      openPurchasedDrawer();
+    if(pendingPostAuthRedirect){
+      const redirectPath = pendingPostAuthRedirect;
+      pendingPostAuthRedirect = null;
+      window.location.assign(redirectPath);
+      return;
     }
 
     // Refresh from the server in the background after the session cookie lands.
@@ -753,9 +801,11 @@ async function finalizeAuthFlow(snapshot){
 
   if(currentUser){
     loginModal.classList.remove("show");
-    if(pendingOpenPurchasedAfterAuth){
-      pendingOpenPurchasedAfterAuth = false;
-      openPurchasedDrawer();
+    if(pendingPostAuthRedirect){
+      const redirectPath = pendingPostAuthRedirect;
+      pendingPostAuthRedirect = null;
+      window.location.assign(redirectPath);
+      return;
     }
     return;
   }
@@ -1038,91 +1088,29 @@ dropLogout.addEventListener("click", async (e)=>{
   setLoggedOut();
 });
 
-/* ═══════════════ PURCHASED PRODUCTS DRAWER ═══════════════ */
-function openPurchasedDrawer(e){ if(e) e.preventDefault(); purchasedDrawer.classList.add("show"); renderPurchased(); }
-navMyProducts.addEventListener("click", (e)=>{ if(!currentUser){ e.preventDefault(); pendingOpenPurchasedAfterAuth = true; showLoginTab(); loginModal.classList.add("show"); return; } openPurchasedDrawer(e); });
-dropMyProducts.addEventListener("click", (e)=>{ userDropdown.classList.remove("show"); openPurchasedDrawer(e); });
-purchasedClose.addEventListener("click", ()=> purchasedDrawer.classList.remove("show"));
-purchasedDrawer.addEventListener("click", (e)=>{ if(e.target===purchasedDrawer) purchasedDrawer.classList.remove("show"); });
-
-function expiryStatus(endAt){
-  if(!endAt) return { cls:"", label:"" };
-  const diff = new Date(endAt) - new Date();
-  const days = Math.ceil(diff / 86400000);
-  if(days < 0) return { cls:"expiry-expired", label:t("expired") };
-  if(days <= 7) return { cls:"expiry-warn", label:t("expiring_soon")+" ("+days+"d)" };
-  return { cls:"expiry-ok", label:t("status_active") };
-}
-
-function renderPurchased(){
-  if(!currentUser){ return; }
-  const { subscriptions, keyDeliveries, orders } = currentUser;
-
-  // Subscriptions
-  const sEl = document.getElementById("drawerSubs");
-  if(subscriptions && subscriptions.length){
-    sEl.innerHTML = subscriptions.map(s=>{
-      const exp = expiryStatus(s.endAt);
-      const autoRenew = s.renewalMode === "auto";
-      return `<div class="sub-card ${exp.cls}">
-        <div class="sub-card-head">
-          <strong>${iconFor(s.appId)} ${s.appId}</strong>
-          <span class="sub-status-tag ${exp.cls}">${exp.label}</span>
-        </div>
-        <p class="sub-dates">${t("active_until")} ${fmtDate(s.endAt)}</p>
-        <div class="sub-actions">
-          <span class="auto-renew-label ${autoRenew?"on":"off"}">${autoRenew?t("auto_renew_on"):t("auto_renew_off")}</span>
-          <button class="btn-renew" data-app="${s.appId}" data-product="${s.productId}">${t("renewal_btn")}</button>
-        </div>
-      </div>`;
-    }).join("");
-    sEl.querySelectorAll(".btn-renew").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        if(!currentUser){ alert(t("alert_preview")); return; }
-        try{
-          const res = await fetch("/api/orders",{
-            method:"POST", headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({ appId:btn.dataset.app, productId:btn.dataset.product })
-          });
-          const d = await res.json();
-          if(!res.ok){ alert(d.message||t("error_create")); return; }
-          if (shouldUseSameTabCheckout()) {
-            window.location.assign(d.checkoutUrl);
-            return;
-          }
-          window.open(d.checkoutUrl,"_blank");
-        } catch{ alert(t("error_create")); }
-      });
-    });
-  } else { sEl.innerHTML = `<p class="empty-text">${t("purchased_empty")}</p>`; }
-
-  // Keys
-  const kEl = document.getElementById("drawerKeys");
-  if(keyDeliveries && keyDeliveries.length){
-    kEl.innerHTML = keyDeliveries.map(k=>
-      `<div class="key-delivery-card">
-        <p class="key-delivery-meta">${iconFor(k.productId)} ${k.productId} · ${fmtDate(k.deliveredAt)}</p>
-        <div class="key-box">🔑 ${k.keyValue}</div>
-      </div>`
-    ).join("");
-  } else { kEl.innerHTML = `<p class="empty-text">${t("purchased_empty")}</p>`; }
-
-  // Orders
-  const oEl = document.getElementById("drawerOrders");
-  if(orders && orders.length){
-    oEl.innerHTML = `<table class="data-table"><thead><tr><th>ID</th><th>App</th><th>${lang==="vi"?"Số tiền":"Amount"}</th><th>Status</th><th>${lang==="vi"?"Ngày":"Date"}</th></tr></thead><tbody>`+
-      orders.map(o=>{
-        const badge = o.status==="paid"?"status-paid":o.status==="pending"?"status-pending":"";
-        return `<tr>
-          <td style="font-family:monospace;font-size:.78rem">${o.id.slice(0,8)}…</td>
-          <td>${o.appId}</td>
-          <td>${fmtVnd(o.amount)}</td>
-          <td><span class="status-badge ${badge}">${o.status}</span></td>
-          <td style="font-size:.8rem">${fmtDate(o.createdAt)}</td>
-        </tr>`;
-      }).join("")+`</tbody></table>`;
-  } else { oEl.innerHTML = `<p class="empty-text">${t("purchased_empty")}</p>`; }
-}
+navMyProducts.addEventListener("click", (e)=>{
+  e.preventDefault();
+  if(!currentUser){
+    pendingPostAuthRedirect = ACCOUNT_DOWNLOADS_PATH;
+    showLoginTab();
+    loginModal.classList.add("show");
+    ensureGoogleAuthInit();
+    return;
+  }
+  window.location.assign(ACCOUNT_DOWNLOADS_PATH);
+});
+dropMyProducts.addEventListener("click", (e)=>{
+  e.preventDefault();
+  userDropdown.classList.remove("show");
+  if(!currentUser){
+    pendingPostAuthRedirect = ACCOUNT_DOWNLOADS_PATH;
+    showLoginTab();
+    loginModal.classList.add("show");
+    ensureGoogleAuthInit();
+    return;
+  }
+  window.location.assign(ACCOUNT_DOWNLOADS_PATH);
+});
 
 /* ═══════════════ RENDER CATALOG ═══════════════ */
 function escapeHtml(value) {
@@ -1193,6 +1181,7 @@ function renderProducts(){
     const productName = canonicalProductName(p);
     const isFeat = p.cycle === "yearly";
     const intro = softwareIntro(p);
+    const saleMeta = getProductSaleMeta(p);
     const resolvedImage = resolveProductImage(p);
     const visual = resolvedImage
       ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${productName}">`
@@ -1207,15 +1196,19 @@ function renderProducts(){
       ${isFeat ? `<span class="p-badge">${t("tag_best")}</span>` : ""}
       <div class="p-card-img">${visual}</div>
       <div class="p-card-body">
-        <span class="p-card-cat">${softwareCode(p.appId)}</span>
+        <div class="p-card-topline">
+          <span class="p-card-cat">${softwareCode(p.appId)}</span>
+          ${saleMeta.badge ? `<span class="p-sale-chip ${saleMeta.badgeClass}">${saleMeta.badge}</span>` : ""}
+        </div>
         <h3 class="p-card-name">${productName}</h3>
         <p class="p-card-intro">${intro}</p>
         <p class="p-card-meta">${fmtCycle(p.cycle)}</p>
         <div class="p-card-price-row">
           <span class="p-card-price">${fmtVnd(p.price)}</span>
         </div>
+        ${saleMeta.note ? `<p class="p-card-sale-note">${escapeHtml(saleMeta.note)}</p>` : ""}
       </div>
-      <a class="p-card-btn" href="/product/${p.id}">${lang==="vi"?"Xem sản phẩm":"View product"}</a>`;
+      <a class="p-card-btn ${saleMeta.saleStatus !== "live" ? "is-muted" : ""}" href="/product/${p.id}">${saleMeta.cta}</a>`;
 
     card.querySelector(".p-card-btn").addEventListener("click", (e)=>{
       // navigation handled by <a href>
@@ -1355,19 +1348,28 @@ langToggle.addEventListener("click", ()=>{
   lang = lang==="vi"?"en":"vi";
   localStorage.setItem("wst_lang",lang);
   applyLang(); buildTabs(); renderProducts();
-  if(currentUser) renderPurchased();
 });
 
 applyLang();
 loadCatalog();
 checkAuth().then(() => {
-  // Auto-open purchased drawer when redirected from payment success page
-  if (new URLSearchParams(location.search).get("myproducts") === "1") {
+  const params = new URLSearchParams(location.search);
+  const nextPath = params.get("next");
+  if (params.get("auth") === "login") {
+    pendingPostAuthRedirect = nextPath && nextPath.startsWith("/") ? nextPath : ACCOUNT_DOWNLOADS_PATH;
+    history.replaceState(null, "", location.pathname);
+    showLoginTab();
+    loginModal.classList.add("show");
+    ensureGoogleAuthInit();
+    return;
+  }
+
+  if (params.get("myproducts") === "1") {
     history.replaceState(null, "", location.pathname);
     if (currentUser) {
-      openPurchasedDrawer();
+      window.location.assign(ACCOUNT_DOWNLOADS_PATH);
     } else {
-      pendingOpenPurchasedAfterAuth = true;
+      pendingPostAuthRedirect = ACCOUNT_DOWNLOADS_PATH;
       showLoginTab();
       loginModal.classList.add("show");
       ensureGoogleAuthInit();
