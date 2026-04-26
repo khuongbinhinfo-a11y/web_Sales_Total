@@ -312,46 +312,53 @@
         <!-- Product Key Stock -->
         <section id="section-product-keys" class="admin-section">
           <h3>📦 Kho key sản phẩm (user key)</h3>
+          <p class="admin-section-intro">Quản lý tồn kho theo từng sản phẩm. Đi theo thứ tự: xem tồn kho, nhập thêm key mới, rồi mới tra chi tiết hoặc xóa key chưa giao.</p>
 
           <!-- Summary -->
           <div class="info-card" style="margin-bottom:12px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <b style="font-size:.9rem">Tổng quan kho key theo sản phẩm</b>
-              <button id="pkRefreshSummaryBtn" class="btn btn-outline" style="font-size:.8rem;padding:4px 12px;min-height:0">🔄 Làm mới</button>
+            <div class="admin-card-head">
+              <div>
+                <b class="admin-card-title">1. Tổng quan tồn kho theo sản phẩm</b>
+                <p class="admin-inline-note">Nếu cột còn lại xuống thấp, nên nhập thêm key trước khi chạy sale hoặc bàn giao khách.</p>
+              </div>
+              <button id="pkRefreshSummaryBtn" class="btn btn-outline admin-compact-btn">🔄 Làm mới</button>
             </div>
             <div class="table-wrap" id="pkSummaryWrap"><p style="padding:8px;color:var(--muted);font-size:.85rem">Đang tải...</p></div>
           </div>
 
           <!-- Import -->
           <div class="info-card" style="margin-bottom:12px">
-            <b style="font-size:.9rem;display:block;margin-bottom:10px">📥 Import key mới vào kho</b>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+            <b class="admin-card-title">2. Nhập thêm key mới</b>
+            <p class="admin-inline-note">Dán mỗi key trên một dòng. Hệ thống tự bỏ qua key trùng để tránh nhập nhầm.</p>
+            <div class="admin-form-grid admin-form-grid--actions" style="margin-bottom:8px">
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Sản phẩm</label>
-                <select id="pkImportProduct" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+                <label class="admin-field-label">Sản phẩm</label>
+                <select id="pkImportProduct" class="admin-input" style="margin-top:4px">
                   <option value="">-- Đang tải sản phẩm... --</option>
                 </select>
               </div>
               <button id="pkImportBtn" class="btn btn-accent" style="min-height:38px">Import</button>
             </div>
-            <label style="font-size:.75rem;color:var(--muted);font-weight:700">Danh sách key (mỗi key 1 dòng, tối đa 1000 key)</label>
+            <label class="admin-field-label">Danh sách key (mỗi key 1 dòng, tối đa 1000 key)</label>
             <textarea id="pkImportKeys" rows="6" placeholder="AAAA-BBBB-CCCC&#10;DDDD-EEEE-FFFF&#10;..."
-                      style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.83rem;margin-top:4px;resize:vertical;box-sizing:border-box"></textarea>
+                      class="admin-textarea admin-code-input" style="margin-top:4px"></textarea>
             <p id="pkImportMsg" style="margin:6px 0 0;font-size:.82rem;color:var(--muted)"></p>
           </div>
 
           <!-- Key list detail -->
           <div class="info-card">
-            <div style="display:flex;gap:8px;align-items:end;margin-bottom:10px">
-              <div style="flex:1">
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Xem chi tiết key theo sản phẩm</label>
-                <select id="pkDetailProduct" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+            <b class="admin-card-title">3. Tra chi tiết và dọn key chưa giao</b>
+            <p class="admin-inline-note">Chỉ xóa được key còn ở trạng thái <b>available</b>. Key đã giao cho khách phải giữ để còn lần theo đơn hàng.</p>
+            <div class="admin-form-grid admin-form-grid--triple" style="margin-bottom:10px">
+              <div>
+                <label class="admin-field-label">Sản phẩm</label>
+                <select id="pkDetailProduct" class="admin-input" style="margin-top:4px">
                   <option value="">-- Chọn sản phẩm --</option>
                 </select>
               </div>
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Lọc trạng thái</label>
-                <select id="pkDetailStatus" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;margin-top:4px">
+                <label class="admin-field-label">Lọc trạng thái</label>
+                <select id="pkDetailStatus" class="admin-input" style="margin-top:4px">
                   <option value="">Tất cả</option>
                   <option value="available">available</option>
                   <option value="delivered">delivered</option>
@@ -367,29 +374,30 @@
         <!-- Manual grant -->
         <section id="section-manual-grant" class="admin-section">
           <h3>🎁 Cấp key kích hoạt thủ công</h3>
+          <p class="admin-section-intro">Chỉ dùng khi đã xác nhận khách hợp lệ nhưng luồng tự động chưa cấp được key. Mục này ưu tiên thao tác ngắn gọn, dễ kiểm tra lại.</p>
           <div class="info-card">
-            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">
+            <p class="admin-inline-note" style="margin-bottom:10px">
               Dùng khi khách đã thanh toán nhưng webhook lỗi, hoặc cần cấp key đặc biệt.
               Hệ thống sẽ tạo order ảo (amount=0) và cấp license key tự động.
             </p>
-            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+            <div class="admin-form-grid admin-form-grid--triple" style="margin-bottom:8px">
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Email khách hàng</label>
+                <label class="admin-field-label">Email khách hàng</label>
                 <input id="mgEmail" type="email" placeholder="customer@example.com"
-                       style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem" />
+                       class="admin-input" />
               </div>
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Sản phẩm</label>
-                <select id="mgProductId" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem">
+                <label class="admin-field-label">Sản phẩm</label>
+                <select id="mgProductId" class="admin-input">
                   <option value="">-- Đang tải sản phẩm... --</option>
                 </select>
               </div>
               <button id="mgGrantBtn" type="button" class="btn btn-accent" style="min-height:38px">Cấp key ngay</button>
             </div>
             <div>
-              <label style="font-size:.75rem;color:var(--muted);font-weight:700">Ghi chú nội bộ (tùy chọn)</label>
+              <label class="admin-field-label">Ghi chú nội bộ (tùy chọn)</label>
               <input id="mgNote" placeholder="VD: Webhook lỗi ngày 2026-04-23, đã xác nhận CK"
-                     style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.85rem;margin-top:4px" />
+                     class="admin-input" style="margin-top:4px" />
             </div>
             <p id="mgMsg" style="margin:10px 0 0;font-size:.82rem;color:var(--muted)"></p>
             <div id="mgResult" style="display:none;margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:.85rem"></div>
@@ -559,12 +567,21 @@
 
         <!-- Key Lookup -->
         <section id="section-key-lookup" class="admin-section">
-          <h3>🔍 Tra cứu license key</h3>
-          <div class="info-card">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <h3>🔍 Tra key và phiên đang dùng</h3>
+          <p class="admin-section-intro">Mục này giúp nhìn ngay key đang thuộc khách nào, thuộc gói nào, và hiện đang bị giữ bởi web hay desktop. Dùng tốt nhất khi hỗ trợ khách báo “key đúng nhưng không vào được”.</p>
+          <div class="info-card admin-lookup-shell">
+            <div class="admin-form-grid admin-form-grid--actions" style="margin-bottom:8px">
               <input id="keyLookupInput" placeholder="VD: WSTL-MOBOIF8-E18F2E"
-                     style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.88rem;font-family:monospace" />
+                     class="admin-input admin-code-input" />
               <button id="keyLookupBtn" class="btn btn-accent" style="min-height:38px">Tra key</button>
+            </div>
+            <div class="admin-note-box" style="margin-bottom:10px">
+              <strong>Cách đọc nhanh</strong>
+              <ul class="admin-helper-list">
+                <li><b>Desktop</b>: key đang được app desktop giữ phiên.</li>
+                <li><b>Web</b>: key đang được trình duyệt hoặc phiên web giữ.</li>
+                <li><b>Hết hạn lease</b>: khi qua mốc này mà không renew, thiết bị khác có thể vào.</li>
+              </ul>
             </div>
             <p id="keyLookupMsg" style="margin:4px 0 8px;font-size:.82rem;color:var(--muted)"></p>
             <div id="keyLookupResult"></div>

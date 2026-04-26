@@ -1743,6 +1743,73 @@ function bindKeyLookup(){
   const result = document.getElementById("keyLookupResult");
   if(!btn || !input) return;
 
+  function fmtLeaseRemaining(expiresAt){
+    if(!expiresAt){
+      return "Chưa có thời điểm hết hạn lease";
+    }
+    const diffMs = new Date(expiresAt).getTime() - Date.now();
+    if(Number.isNaN(diffMs)){
+      return fmtDate(expiresAt);
+    }
+    if(diffMs <= 0){
+      return "Đã hết hạn";
+    }
+    const totalSeconds = Math.ceil(diffMs / 1000);
+    if(totalSeconds < 60){
+      return `${totalSeconds} giây nữa`;
+    }
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return seconds ? `${minutes} phút ${seconds} giây nữa` : `${minutes} phút nữa`;
+  }
+
+  function renderLeaseCard(activeLease){
+    if(!activeLease){
+      return `<div class="admin-note-box">
+        <strong>Lease hiện tại</strong>
+        <p style="margin:6px 0 0;color:var(--muted)">Key này hiện chưa bị thiết bị nào giữ phiên. Nếu khách vẫn báo lỗi, thường là phiên cũ vừa hết hạn hoặc nhập nhầm key.</p>
+      </div>`;
+    }
+
+    const typeLabel = activeLease.clientType === "desktop" ? "Desktop" : "Web";
+    const statusClass = activeLease.clientType === "desktop" ? "is-desktop" : "is-web";
+    return `<div class="admin-lease-card ${statusClass}">
+      <div class="admin-lease-head">
+        <div>
+          <div class="admin-lease-label">Lease hiện tại</div>
+          <div class="admin-lease-type">${escapeHtml(typeLabel)}</div>
+        </div>
+        <span class="admin-pill ${statusClass}">${escapeHtml(typeLabel)}</span>
+      </div>
+      <div class="admin-lease-grid">
+        <div>
+          <div class="admin-field-label">Thiết bị / phiên</div>
+          <div class="admin-code-text">${escapeHtml(activeLease.clientId || "—")}</div>
+        </div>
+        <div>
+          <div class="admin-field-label">Tên hiển thị</div>
+          <div>${escapeHtml(activeLease.clientName || "Không gửi tên thiết bị")}</div>
+        </div>
+        <div>
+          <div class="admin-field-label">Bắt đầu giữ</div>
+          <div>${activeLease.acquiredAt ? fmtDate(activeLease.acquiredAt) : "—"}</div>
+        </div>
+        <div>
+          <div class="admin-field-label">Gia hạn lần cuối</div>
+          <div>${activeLease.lastSeenAt ? fmtDate(activeLease.lastSeenAt) : "—"}</div>
+        </div>
+        <div>
+          <div class="admin-field-label">Lease hết hạn lúc</div>
+          <div>${activeLease.expiresAt ? fmtDate(activeLease.expiresAt) : "—"}</div>
+        </div>
+        <div>
+          <div class="admin-field-label">Còn hiệu lực</div>
+          <div>${escapeHtml(fmtLeaseRemaining(activeLease.expiresAt))}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   async function doLookup(){
     const key = input.value.trim().toUpperCase();
     if(!key){ if(msg){ msg.textContent="Nhập license key để tra cứu"; msg.style.color="var(--muted)"; } return; }
@@ -1756,26 +1823,40 @@ function bindKeyLookup(){
       if(!res.ok){ if(msg){ msg.textContent=data.message||"Lỗi tra cứu"; msg.style.color="var(--danger)"; } return; }
       if(msg){ msg.textContent="Tìm thấy"; msg.style.color="var(--success,#16a34a)"; }
       const l = data.license || {};
+      const activeLease = l.activeLease || null;
       const tier = data.resolvedTier || "—";
       const resolvedFeatures = Array.isArray(data.resolvedFeatures) ? data.resolvedFeatures : [];
       const tierColor = tier==="premium" ? "#7c3aed" : tier==="standard" ? "#2563eb" : "#64748b";
       const meta = l.metadata ? JSON.stringify(l.metadata, null, 2) : "{}";
       result.innerHTML = `<div class="info-card" style="margin-top:8px">
-        <table class="data-table" style="font-size:.84rem">
-          <tbody>
-            <tr><th style="width:140px;text-align:left">License key</th><td style="font-family:monospace">${escapeHtml(l.licenseKey||"—")}</td></tr>
-            <tr><th style="text-align:left">App</th><td>${escapeHtml(l.appId||"—")}</td></tr>
-            <tr><th style="text-align:left">Product ID</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.productId||"—")}</td></tr>
-            <tr><th style="text-align:left">Plan code</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(l.planCode||"—")}</td></tr>
-            <tr><th style="text-align:left">Tier</th><td><span style="font-weight:700;color:${tierColor}">${escapeHtml(tier)}</span></td></tr>
-            <tr><th style="text-align:left">Features gửi app</th><td style="font-family:monospace;font-size:.78rem">${escapeHtml(resolvedFeatures.join(", ") || "—")}</td></tr>
-            <tr><th style="text-align:left">Trạng thái</th><td>${badge(l.status||"—")}</td></tr>
-            <tr><th style="text-align:left">Hết hạn</th><td>${l.expiresAt ? fmtDate(l.expiresAt) : "∞ Lifetime"}</td></tr>
-            <tr><th style="text-align:left">Customer ID</th><td style="font-family:monospace;font-size:.75rem">${escapeHtml(l.customerId||"—")}</td></tr>
-            <tr><th style="text-align:left">Kích hoạt</th><td>${l.activatedAt ? fmtDate(l.activatedAt) : "Chưa kích hoạt"}</td></tr>
-            <tr><th style="text-align:left;vertical-align:top">Metadata</th><td><pre style="font-size:.73rem;white-space:pre-wrap;margin:0">${escapeHtml(meta)}</pre></td></tr>
-          </tbody>
-        </table>
+        <div class="admin-result-grid">
+          <div class="admin-result-card">
+            <div class="admin-card-title">Thông tin key</div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row"><span>License key</span><strong class="admin-code-text">${escapeHtml(l.licenseKey||"—")}</strong></div>
+              <div class="admin-kv-row"><span>App</span><strong>${escapeHtml(l.appId||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Product ID</span><strong class="admin-code-text">${escapeHtml(l.productId||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Plan code</span><strong class="admin-code-text">${escapeHtml(l.planCode||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Tier</span><strong style="color:${tierColor}">${escapeHtml(tier)}</strong></div>
+              <div class="admin-kv-row"><span>Trạng thái</span><strong>${badge(l.status||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Hết hạn</span><strong>${l.expiresAt ? fmtDate(l.expiresAt) : "∞ Lifetime"}</strong></div>
+              <div class="admin-kv-row"><span>Customer ID</span><strong class="admin-code-text">${escapeHtml(l.customerId||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Kích hoạt</span><strong>${l.activatedAt ? fmtDate(l.activatedAt) : "Chưa kích hoạt"}</strong></div>
+            </div>
+          </div>
+          <div class="admin-result-card">
+            <div class="admin-card-title">Quyền gửi xuống app</div>
+            <div class="admin-note-box" style="margin-bottom:12px">
+              <strong>Features</strong>
+              <div class="admin-code-text" style="margin-top:6px">${escapeHtml(resolvedFeatures.join(", ") || "—")}</div>
+            </div>
+            ${renderLeaseCard(activeLease)}
+          </div>
+        </div>
+        <div class="admin-note-box" style="margin-top:12px">
+          <strong>Metadata</strong>
+          <pre style="font-size:.73rem;white-space:pre-wrap;margin:8px 0 0">${escapeHtml(meta)}</pre>
+        </div>
         ${l.status !== "revoked" && l.id ? `<div style="margin-top:10px"><button id="keyRevokeBtn" class="btn" style="background:#dc2626;color:#fff;font-size:.83rem;padding:6px 14px">🔒 Vô hiệu hóa key này</button></div>` : `<div style="margin-top:8px;font-size:.82rem;color:#dc2626;font-weight:600">⛔ Key này đã bị vô hiệu hóa</div>`}
       </div>`;
       if (l.status !== "revoked" && l.id) {

@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
@@ -145,6 +146,71 @@ function getRequestIp(req) {
   const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
   const socketIp = String(req?.socket?.remoteAddress || "").trim();
   return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
+}
+
+function parseCookieHeader(cookieHeader) {
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return String(cookieHeader)
+    .split(";")
+    .reduce((accumulator, pair) => {
+      const [name, ...rest] = pair.trim().split("=");
+      if (!name) {
+        return accumulator;
+      }
+      accumulator[name] = decodeURIComponent(rest.join("=") || "");
+      return accumulator;
+    }, {});
+}
+
+function buildRuntimeLeaseClient(req) {
+  const deviceId = String(req.body?.deviceId || req.query?.deviceId || "").trim() || null;
+  const deviceName = String(req.body?.deviceName || req.query?.deviceName || "").trim() || null;
+  const requestedProfile = String(req.body?.clientProfile || req.query?.clientProfile || "").trim().toLowerCase();
+
+  if (deviceId) {
+    return {
+      clientId: deviceId,
+      clientType: requestedProfile === "web" ? "web" : "desktop",
+      clientName: deviceName,
+      deviceId,
+      deviceName,
+    };
+  }
+
+  const cookies = parseCookieHeader(req.headers?.cookie);
+  const customerSessionToken = String(cookies.wst_customer_session || "").trim();
+  if (customerSessionToken) {
+    const sessionHash = crypto.createHash("sha256").update(customerSessionToken).digest("hex").slice(0, 24);
+    return {
+      clientId: `web-session:${sessionHash}`,
+      clientType: "web",
+      clientName: deviceName || "Trình duyệt web",
+      deviceId: null,
+      deviceName,
+    };
+  }
+
+  const adminSession = getAdminFromSession(req);
+  if (adminSession?.id) {
+    return {
+      clientId: `admin:${adminSession.id}`,
+      clientType: "web",
+      clientName: adminSession.username ? `Admin ${adminSession.username}` : "Admin",
+      deviceId: null,
+      deviceName,
+    };
+  }
+
+  return {
+    clientId: null,
+    clientType: requestedProfile === "desktop" ? "desktop" : "web",
+    clientName: deviceName,
+    deviceId: null,
+    deviceName,
+  };
 }
 
 const AI_APP_KEY_PROFILES = ["shared", "web", "desktop"];
@@ -1115,20 +1181,25 @@ app.post(
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
 
-    const deviceId = String(req.body?.deviceId || "").trim() || null;
-    const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const runtimeClient = buildRuntimeLeaseClient(req);
     const license = await activateCustomerLicense({
       licenseId: req.params.licenseId,
       customerId,
-      deviceId,
-      deviceName
+      deviceId: runtimeClient.deviceId,
+      deviceName: runtimeClient.deviceName,
+      clientId: runtimeClient.clientId,
+      clientType: runtimeClient.clientType,
     });
 
     if (!license) {
       return res.status(404).json({ message: "License not found or not activeable" });
     }
-    if (license.deviceMismatch) {
-      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác. Vui lòng huỷ kích hoạt (deactivate) trước khi đăng ký thiết bị mới." });
+    if (license.concurrentUsage) {
+      return res.status(409).json({
+        ok: false,
+        message: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại.",
+        activeLease: license.activeLease || null,
+      });
     }
 
     return res.json({ ok: true, license });
@@ -1153,20 +1224,25 @@ app.post(
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
 
-    const deviceId = String(req.body?.deviceId || "").trim() || null;
-    const deviceName = String(req.body?.deviceName || "").trim() || null;
+    const runtimeClient = buildRuntimeLeaseClient(req);
     const license = await verifyCustomerLicense({
       licenseId: req.params.licenseId,
       customerId,
-      deviceId,
-      deviceName
+      deviceId: runtimeClient.deviceId,
+      deviceName: runtimeClient.deviceName,
+      clientId: runtimeClient.clientId,
+      clientType: runtimeClient.clientType,
     });
 
     if (!license) {
       return res.status(404).json({ message: "License not found, revoked or expired" });
     }
-    if (license.deviceMismatch) {
-      return res.status(409).json({ ok: false, message: "Key này đã được kích hoạt trên một thiết bị khác." });
+    if (license.concurrentUsage) {
+      return res.status(409).json({
+        ok: false,
+        message: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại.",
+        activeLease: license.activeLease || null,
+      });
     }
 
     return res.json({ ok: true, license });
@@ -1191,13 +1267,23 @@ app.post(
       return res.status(400).json({ message: "customerId is required for admin requests" });
     }
 
+    const runtimeClient = buildRuntimeLeaseClient(req);
     const license = await deactivateCustomerLicense({
       licenseId: req.params.licenseId,
-      customerId
+      customerId,
+      clientId: runtimeClient.clientId,
+      enforceRuntimeLease: true,
     });
 
     if (!license) {
       return res.status(404).json({ message: "License not found or already revoked" });
+    }
+    if (license.leaseMismatch) {
+      return res.status(403).json({
+        ok: false,
+        message: "Phiên đang dùng key nằm trên một thiết bị khác. Chỉ thiết bị đang giữ phiên mới được deactivate.",
+        activeLease: license.activeLease || null,
+      });
     }
 
     return res.json({ ok: true, license });
@@ -1973,7 +2059,6 @@ app.get(
     if (!key) return res.status(400).json({ message: "Thiếu tham số key" });
     const license = await findAppLicenseByKeyAdmin(key);
     if (!license) return res.status(404).json({ message: "Không tìm thấy key trong hệ thống" });
-    const { inferPlanTierFromLicense, resolveLicenseFeatures } = require("./modules/licenseFeatures");
     const resolvedTier = inferPlanTierFromLicense(license);
     const resolvedFeatures = resolveLicenseFeatures(license);
     return res.json({ license, resolvedTier, resolvedFeatures });

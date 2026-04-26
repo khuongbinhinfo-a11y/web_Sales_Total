@@ -494,6 +494,38 @@ button{font-family:inherit;cursor:pointer}
 .admin-section .table-wrap{border-radius:var(--radius);border:1px solid var(--line);overflow:auto;background:#fff}
 .admin-section #pkSummaryWrap{max-height:460px;overflow-y:auto}
 .admin-section #pkDetailWrap{max-height:460px;overflow-y:auto}
+.admin-section-intro{max-width:78ch;margin:-4px 0 12px;color:var(--muted);font-size:.88rem;line-height:1.65}
+.admin-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.admin-card-title{display:block;font-size:.98rem;font-weight:700;color:var(--ink)}
+.admin-inline-note{margin:6px 0 0;color:var(--muted);font-size:.83rem;line-height:1.6}
+.admin-compact-btn{font-size:.8rem;padding:4px 12px;min-height:0}
+.admin-field-label{font-size:.75rem;color:var(--muted);font-weight:700;display:block}
+.admin-input,.admin-textarea{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.85rem;box-sizing:border-box}
+.admin-textarea{resize:vertical}
+.admin-code-input,.admin-code-text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.admin-form-grid{display:grid;grid-template-columns:1fr;gap:10px;align-items:end}
+.admin-form-grid--actions{grid-template-columns:minmax(0,1fr) auto}
+.admin-form-grid--triple{grid-template-columns:repeat(2,minmax(0,1fr)) auto}
+.admin-note-box{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}
+.admin-note-box strong{display:block;font-size:.84rem;color:var(--ink)}
+.admin-helper-list{margin:8px 0 0 18px;color:var(--muted);font-size:.82rem;line-height:1.6}
+.admin-lookup-shell{display:flex;flex-direction:column;gap:0}
+.admin-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-result-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fffaf5}
+.admin-kv-list{display:grid;gap:10px}
+.admin-kv-row{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:start;font-size:.84rem}
+.admin-kv-row span{color:var(--muted);font-weight:600}
+.admin-kv-row strong{font-weight:700;color:var(--ink);word-break:break-word}
+.admin-pill{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;border-radius:999px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.admin-pill.is-desktop{background:#dbeafe;color:#1d4ed8}
+.admin-pill.is-web{background:#dcfce7;color:#15803d}
+.admin-lease-card{padding:14px;border-radius:14px;border:1px solid var(--line);background:#fff}
+.admin-lease-card.is-desktop{border-color:#bfdbfe;background:#eff6ff}
+.admin-lease-card.is-web{border-color:#bbf7d0;background:#f0fdf4}
+.admin-lease-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.admin-lease-label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.admin-lease-type{font-size:1rem;font-weight:800;color:var(--ink);margin-top:4px}
+.admin-lease-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:.84rem;color:var(--ink)}
 
 /* ═══════════════════ CHECKOUT (PAY PAGE) ═══════════════════ */
 .pay-page{min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:32px 16px}
@@ -713,6 +745,9 @@ button{font-family:inherit;cursor:pointer}
   .admin-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--line);padding:12px 0;display:flex;overflow-x:auto;gap:0}
   .admin-sidebar a{white-space:nowrap;padding:8px 16px}
   .admin-main{padding:16px}
+  .admin-card-head{flex-direction:column}
+  .admin-form-grid--actions,.admin-form-grid--triple,.admin-result-grid,.admin-lease-grid{grid-template-columns:1fr}
+  .admin-kv-row{grid-template-columns:1fr;gap:4px}
   .kpi-row{grid-template-columns:1fr 1fr}
   .drawer-panel{width:100%}
   .user-dropdown{right:-60px}
