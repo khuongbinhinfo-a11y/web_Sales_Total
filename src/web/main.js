@@ -23,10 +23,47 @@ const googleRegisterWrap = document.getElementById("googleRegisterWrap");
 const googleRegisterBtn  = document.getElementById("googleRegisterBtn");
 const registerCodeInput = document.getElementById("registerCode");
 const sendRegisterCodeBtn = document.getElementById("sendRegisterCodeBtn");
+const supportDock = document.getElementById("supportDock");
+const supportDockToggle = document.getElementById("supportDockToggle");
 const purchasedDrawer  = document.getElementById("purchasedDrawer");
 const purchasedClose   = document.getElementById("purchasedDrawerClose");
 const dropMyProducts   = document.getElementById("dropMyProducts");
 const dropLogout       = document.getElementById("dropLogout");
+
+const SUPPORT_DOCK_STORAGE_KEY = "wst_support_dock_collapsed";
+
+function syncSupportDockState(collapsed) {
+  if (!supportDock || !supportDockToggle) {
+    return;
+  }
+
+  supportDock.classList.toggle("is-collapsed", collapsed);
+  supportDockToggle.setAttribute("aria-expanded", String(!collapsed));
+  const icon = supportDockToggle.querySelector(".support-dock-toggle-icon");
+  const text = supportDockToggle.querySelector(".support-dock-toggle-text");
+  if (icon) {
+    icon.textContent = collapsed ? "?" : "✕";
+  }
+  if (text) {
+    text.textContent = collapsed ? "Hỗ trợ" : "Thu gọn";
+  }
+}
+
+function initSupportDock() {
+  if (!supportDock || !supportDockToggle) {
+    return;
+  }
+
+  const collapsed = localStorage.getItem(SUPPORT_DOCK_STORAGE_KEY) === "1";
+  syncSupportDockState(collapsed);
+  supportDockToggle.addEventListener("click", () => {
+    const nextCollapsed = !supportDock.classList.contains("is-collapsed");
+    syncSupportDockState(nextCollapsed);
+    localStorage.setItem(SUPPORT_DOCK_STORAGE_KEY, nextCollapsed ? "1" : "0");
+  });
+}
+
+initSupportDock();
 
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [

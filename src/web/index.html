@@ -391,10 +391,42 @@
       </div>
     </footer>
 
-    <a class="fab fab-zalo" href="https://zalo.me/0902964685" target="_blank" rel="noopener" title="Chat Zalo">
-      <svg width="26" height="26" viewBox="0 0 48 48" fill="none"><path d="M24 2C11.85 2 2 11.07 2 22.27c0 6.07 3.13 11.49 8.02 15.07-.2 1.97-.73 4.89-2.02 7.22 0 0 4.48-.86 8.32-3.52 2.44.7 5.05 1.08 7.68 1.08C36.15 42.12 46 33.05 46 22.27 46 11.07 36.15 2 24 2z" fill="#fff"/><text x="12" y="30" font-size="18" font-weight="900" fill="#0068ff" font-family="Arial">Z</text></svg>
-    </a>
-    <a class="fab fab-buy" href="#catalog">🛒</a>
+    <aside class="support-dock" id="supportDock" aria-label="Hỗ trợ nhanh">
+      <button class="support-dock-toggle" id="supportDockToggle" type="button" aria-expanded="true" aria-controls="supportDockBody">
+        <span class="support-dock-toggle-icon">✕</span>
+        <span class="support-dock-toggle-text">Thu gọn</span>
+      </button>
+      <div class="support-dock-body" id="supportDockBody">
+        <p class="support-dock-eyebrow">Hỗ trợ nhanh</p>
+        <strong>Khách cần gì, bấm ngay ở đây</strong>
+        <p class="support-dock-copy">Giữ cố định ở mọi vị trí để khách không rành công nghệ vẫn dễ liên hệ.</p>
+        <div class="support-dock-actions">
+          <a class="support-chip support-chip-zalo" href="https://zalo.me/0902964685" target="_blank" rel="noopener" title="Chat Zalo">
+            <span class="support-chip-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 48 48" fill="none"><path d="M24 2C11.85 2 2 11.07 2 22.27c0 6.07 3.13 11.49 8.02 15.07-.2 1.97-.73 4.89-2.02 7.22 0 0 4.48-.86 8.32-3.52 2.44.7 5.05 1.08 7.68 1.08C36.15 42.12 46 33.05 46 22.27 46 11.07 36.15 2 24 2z" fill="#fff"/><text x="12" y="30" font-size="18" font-weight="900" fill="#0068ff" font-family="Arial">Z</text></svg>
+            </span>
+            <span>
+              <strong>Zalo hỗ trợ</strong>
+              <small>Nhắn tư vấn trực tiếp</small>
+            </span>
+          </a>
+          <a class="support-chip support-chip-phone" href="tel:0902964685" title="Gọi hỗ trợ">
+            <span class="support-chip-icon" aria-hidden="true">☎</span>
+            <span>
+              <strong>Gọi 0902 96 46 85</strong>
+              <small>Hỗ trợ khách nhanh</small>
+            </span>
+          </a>
+          <a class="support-chip support-chip-buy" href="#catalog" title="Xem sản phẩm">
+            <span class="support-chip-icon" aria-hidden="true">🛒</span>
+            <span>
+              <strong>Xem sản phẩm</strong>
+              <small>Đi tới danh mục ngay</small>
+            </span>
+          </a>
+        </div>
+      </div>
+    </aside>
 
     <!-- Login / Register Modal -->
     <div class="modal-overlay" id="loginModal">
