@@ -2109,6 +2109,15 @@ app.post(
       return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
     }
 
+    console.log("[ai-app-verify-route] request", {
+      appId,
+      customerId,
+      licenseKeyMasked: maskLicenseKeyForLog(licenseKey),
+      deviceId,
+      deviceName,
+      clientProfile,
+    });
+
     const license = await verifyAppLicenseByKey({
       appId,
       licenseKey,
@@ -2116,6 +2125,14 @@ app.post(
       deviceId,
       deviceName,
       clientProfile
+    });
+
+    console.log("[ai-app-verify-route] verify-result", {
+      hasLicense: Boolean(license),
+      concurrentUsage: Boolean(license?.concurrentUsage),
+      licenseId: license?.id || null,
+      resolvedCustomerId: license?.customerId || null,
+      status: license?.status || null,
     });
 
     if (!license) {
@@ -2126,8 +2143,23 @@ app.post(
     }
 
     const aiLicense = buildAiAppLicenseView(license);
+    console.log("[ai-app-verify-route] license-view", {
+      licenseId: aiLicense?.id || null,
+      tier: aiLicense?.tier || null,
+      planId: aiLicense?.planId || null,
+      featuresCount: Array.isArray(aiLicense?.features) ? aiLicense.features.length : null,
+    });
+
     const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
+    console.log("[ai-app-verify-route] all-licenses", {
+      customerId: license.customerId,
+      appId,
+      count: Array.isArray(allLicenses) ? allLicenses.length : null,
+    });
+
     const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
+    console.log("[ai-app-verify-route] entitlement", updateEntitlement);
+
     return res.json({
       success: true,
       data: {

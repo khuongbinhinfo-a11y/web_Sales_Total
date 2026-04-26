@@ -1385,16 +1385,44 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
     return null;
   }
 
+  console.log("[verify-app-license] start", {
+    appId,
+    customerId: customerId || null,
+    licenseKeyMasked: `${normalizedLicenseKey.slice(0, 4)}***${normalizedLicenseKey.slice(-4)}`,
+    deviceId: deviceId || null,
+    deviceName: deviceName || null,
+    clientProfile: clientProfile || null,
+  });
+
   const existingLicense = await findAppLicenseByKey({ appId, licenseKey: normalizedLicenseKey, customerId });
   if (!existingLicense) {
+    console.log("[verify-app-license] license-not-found", {
+      appId,
+      customerId: customerId || null,
+      licenseKeyMasked: `${normalizedLicenseKey.slice(0, 4)}***${normalizedLicenseKey.slice(-4)}`,
+    });
     return null;
   }
+
+  console.log("[verify-app-license] license-found", {
+    licenseId: existingLicense.id,
+    customerId: existingLicense.customerId,
+    appId: existingLicense.appId,
+    productId: existingLicense.productId,
+    status: existingLicense.status,
+  });
 
   const normalizedClientProfile = normalizeRuntimeClientProfile(clientProfile);
   const runtimeClientId = normalizeRuntimeClientId(deviceId);
   const runtimeClientName = String(deviceName || "").trim() || null;
 
   if (runtimeClientId) {
+    console.log("[verify-app-license] lease-attempt", {
+      licenseId: existingLicense.id,
+      runtimeClientId,
+      normalizedClientProfile,
+      runtimeClientName,
+    });
     const lease = await claimOrRenewLicenseRuntimeLease({
       license: existingLicense,
       clientId: runtimeClientId,
@@ -1403,11 +1431,20 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
     });
 
     if (!lease.ok) {
+      console.warn("[verify-app-license] lease-conflict", {
+        licenseId: existingLicense.id,
+        activeLease: lease.activeLease || null,
+      });
       return {
         concurrentUsage: true,
         activeLease: lease.activeLease,
       };
     }
+
+    console.log("[verify-app-license] lease-ok", {
+      licenseId: existingLicense.id,
+      lease: lease.lease || null,
+    });
   }
 
   const result = await pool.query(
@@ -1434,8 +1471,19 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
   );
 
   if (result.rowCount === 0) {
+    console.warn("[verify-app-license] update-no-rows", {
+      appId,
+      licenseKeyMasked: `${normalizedLicenseKey.slice(0, 4)}***${normalizedLicenseKey.slice(-4)}`,
+    });
     return null;
   }
+
+  console.log("[verify-app-license] update-ok", {
+    licenseId: result.rows[0].id,
+    status: result.rows[0].status,
+    deviceId: result.rows[0].device_id || null,
+    deviceName: result.rows[0].device_name || null,
+  });
 
   return mapAppLicense(result.rows[0]);
 }
