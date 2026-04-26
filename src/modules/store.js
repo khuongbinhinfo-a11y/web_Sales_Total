@@ -1453,11 +1453,11 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, 
          activated_at = CASE WHEN activated_at IS NULL THEN NOW() ELSE activated_at END,
          last_verified_at = NOW(),
          device_id = CASE
-           WHEN $5 = 'desktop' AND $3 IS NOT NULL THEN $3
+           WHEN $5::text = 'desktop' AND $3::text IS NOT NULL THEN $3::text
            ELSE device_id
          END,
          device_name = CASE
-           WHEN $5 = 'desktop' AND $4 IS NOT NULL THEN $4
+           WHEN $5::text = 'desktop' AND $4::text IS NOT NULL THEN $4::text
            ELSE device_name
          END,
          updated_at = NOW()
