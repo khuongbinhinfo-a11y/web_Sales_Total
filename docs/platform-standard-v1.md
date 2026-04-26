@@ -86,8 +86,9 @@ Tai lieu nay la bo chuan v1 de dong bo giua web tong, desktop app va webapp.
 - POST /api/payments/webhooks/stripe
 - POST /api/payments/mock/confirm
 
-## 6.4 Snapshot, portal, usage
-- GET /api/portal/:customerId
+## 6.4 Snapshot, account, usage
+- GET /api/account/overview
+- POST /api/account/downloads/:appId
 - GET /api/customers/:customerId/snapshot (admin permission)
 - POST /api/usage/consume
 

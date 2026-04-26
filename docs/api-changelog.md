@@ -169,7 +169,7 @@ Impact:
   - Dashboard KPI: AdminDashboardResponse, DashboardKpi va cac item schema lien quan
 - Cap nhat response schema cho cac endpoint:
   - GET /api/auth/me
-  - GET /api/portal/:customerId
+  - GET /api/account/overview
   - GET /api/customers/:customerId/snapshot
   - GET /api/admin/dashboard
 
@@ -214,7 +214,7 @@ Impact:
   - POST /api/auth/customer/password-reset/confirm
   - GET /api/auth/google/config
   - POST /api/auth/customer/google
-  - GET /api/portal/:customerId
+  - GET /api/account/overview
   - GET /api/customers/:customerId/snapshot
   - POST /api/usage/consume
   - GET /api/admin/dashboard

@@ -128,7 +128,7 @@ Quy tac de xuat:
 1. Order thanh cong.
 2. Web tong tao/refresh entitlement.
 3. Web tong phat hanh 1 hoac nhieu license tuong ung.
-4. Customer thay license trong portal va app co the doc qua API.
+4. Customer thay license trong account va app co the doc qua API.
 
 ### 5.2 Khi app dang nhap
 
@@ -303,7 +303,7 @@ Nhu vay da du de desktop app:
 
 - them bang `licenses`
 - phat hanh license sau thanh toan
-- portal hien duoc danh sach license
+- account hien duoc danh sach license
 
 ### Phase 2
 

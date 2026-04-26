@@ -26,7 +26,7 @@ curl -X POST "http://localhost:3900/api/ai-app/licenses/verify" \
 
 ## 2b) Deactivate license tu AI-app (chuyen may)
 
-Dung khi user muon chuyen may ngay trong app ma khong vao portal:
+Dung khi user muon chuyen may ngay trong app ma khong vao account web:
 
 ```bash
 curl -X POST "http://localhost:3900/api/ai-app/licenses/deactivate" \
@@ -42,13 +42,13 @@ curl -X POST "http://localhost:3900/api/ai-app/licenses/deactivate" \
 - Flow chuyen may: `deactivate (may cu)` → `verify (may moi, deviceId moi)`.
 ```
 
-## 3) API cho Portal/Admin (human flow)
+## 3) API cho Account/Admin (human flow)
 
 - List license:
 
 ```bash
 curl -X GET "http://localhost:3900/api/customer/licenses?customerId=cus-demo&appId=app_cap01" \
-  -H "Cookie: <portal_or_admin_session_cookie>"
+  -H "Cookie: <customer_or_admin_session_cookie>"
 ```
 
 - Activate by licenseId:
@@ -56,7 +56,7 @@ curl -X GET "http://localhost:3900/api/customer/licenses?customerId=cus-demo&app
 ```bash
 curl -X POST "http://localhost:3900/api/licenses/<licenseId>/activate" \
   -H "Content-Type: application/json" \
-  -H "Cookie: <portal_or_admin_session_cookie>" \
+  -H "Cookie: <customer_or_admin_session_cookie>" \
   -d "{\"customerId\":\"cus-demo\",\"deviceId\":\"DESKTOP-ABC123\",\"deviceName\":\"KHUONG-LAPTOP\"}"
 ```
 
@@ -65,7 +65,7 @@ curl -X POST "http://localhost:3900/api/licenses/<licenseId>/activate" \
 ```bash
 curl -X POST "http://localhost:3900/api/licenses/<licenseId>/verify" \
   -H "Content-Type: application/json" \
-  -H "Cookie: <portal_or_admin_session_cookie>" \
+  -H "Cookie: <customer_or_admin_session_cookie>" \
   -d "{\"customerId\":\"cus-demo\",\"deviceId\":\"DESKTOP-ABC123\",\"deviceName\":\"KHUONG-LAPTOP\"}"
 ```
 
@@ -74,7 +74,7 @@ curl -X POST "http://localhost:3900/api/licenses/<licenseId>/verify" \
 ```bash
 curl -X POST "http://localhost:3900/api/licenses/<licenseId>/deactivate" \
   -H "Content-Type: application/json" \
-  -H "Cookie: <portal_or_admin_session_cookie>" \
+  -H "Cookie: <customer_or_admin_session_cookie>" \
   -d "{\"customerId\":\"cus-demo\"}"
 ```
 

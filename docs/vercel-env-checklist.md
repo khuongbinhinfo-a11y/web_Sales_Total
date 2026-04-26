@@ -12,7 +12,6 @@ APP_BASE_URL=https://websalestotal.vercel.app
 DATABASE_URL=<postgres-connection-string>
 SESSION_SIGNING_SECRET=<mot-secret-manh-toi-thieu-32-ky-tu>
 WEBHOOK_SIGNATURE_SECRET=<mot-secret-rieng>
-PORTAL_ACCESS_KEY=<mot-key-rieng>
 ADMIN_OWNER_KEY_LOGIN_ENABLED=false
 ```
 
@@ -88,7 +87,6 @@ APP_BASE_URL=https://websalestotal.vercel.app
 DATABASE_URL=<postgres-connection-string>
 SESSION_SIGNING_SECRET=<mot-secret-manh-toi-thieu-32-ky-tu>
 WEBHOOK_SIGNATURE_SECRET=<mot-secret-rieng>
-PORTAL_ACCESS_KEY=<mot-key-rieng>
 ADMIN_OWNER_KEY_LOGIN_ENABLED=false
 PAYMENT_PROVIDER_MODE=mock
 ```
@@ -101,7 +99,6 @@ APP_BASE_URL=https://websalestotal.vercel.app
 DATABASE_URL=<postgres-connection-string>
 SESSION_SIGNING_SECRET=<mot-secret-manh-toi-thieu-32-ky-tu>
 WEBHOOK_SIGNATURE_SECRET=<mot-secret-rieng>
-PORTAL_ACCESS_KEY=<mot-key-rieng>
 ADMIN_OWNER_KEY_LOGIN_ENABLED=false
 PAYMENT_PROVIDER_MODE=sepay
 SEPAY_WEBHOOK_SECRET=<sepay-secret>
@@ -120,3 +117,4 @@ AI_APP_OFFLINE_GRACE_DAYS=7
 2. Neu tot, phai thay `ok: true` va `database: connected`
 3. Mo `/api/catalog`
 4. Mo homepage, notice fallback phai bien mat hoac chuyen sang trang thai live
+5. Dang nhap customer va mo `/account?tab=downloads` de xac nhan luong account hoat dong

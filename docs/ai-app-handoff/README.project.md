@@ -8,7 +8,7 @@ Muc tieu ban nay:
 - Xac nhan thanh toan qua webhook idempotent (Sepay/Stripe/mock)
 - Cap subscription, entitlement, wallet, ledger sau thanh toan
 - Tu dong cap key ngay sau khi don paid (neu con key ton kho)
-- Co route rieng cho homepage, portal va admin
+- Co route rieng cho homepage, account va admin
 - San sang deploy theo monolith Node.js + Express + PostgreSQL
 
 ## Kien truc
@@ -36,7 +36,6 @@ SEPAY_BANK_ACCOUNT_NUMBER=
 SEPAY_ACCOUNT_NAME=
 SEPAY_QR_TEMPLATE_URL=
 SESSION_SIGNING_SECRET=replace-with-strong-secret
-PORTAL_ACCESS_KEY=portal-demo
 ADMIN_ACCESS_KEY=
 ADMIN_OWNER_KEY_LOGIN_ENABLED=false
 ADMIN_LOGIN_WINDOW_MS=900000
@@ -55,7 +54,7 @@ Ghi chu:
 - `PAYMENT_PROVIDER_MODE=mock` dung cho MVP test end-to-end
 - `PAYMENT_PROVIDER_MODE=stripe` dung adapter webhook Stripe
 - Sepay webhook se xac thuc bang `SEPAY_WEBHOOK_SECRET`
-- Portal/Admin dang duoc bao ve boi session cookie ky so (muc toi thieu)
+- Customer account/Admin dang duoc bao ve boi session cookie ky so (muc toi thieu)
 
 ## Chay local
 1. Cai package:
@@ -80,7 +79,7 @@ npm run dev
 
 5. Mo cac route:
 - Homepage: `http://localhost:3900/`
-- Portal: `http://localhost:3900/portal`
+- Account: `http://localhost:3900/account`
 - Admin: `http://localhost:3900/admin`
 
 ## Scripts
@@ -100,7 +99,8 @@ npm run dev
 - `POST /api/payments/webhooks/sepay`
 - `POST /api/payments/mock/confirm`
 - `POST /api/usage/consume`
-- `GET /api/portal/:customerId`
+- `GET /api/account/overview`
+- `POST /api/account/downloads/:appId`
 - `GET /api/customers/:customerId/snapshot`
 - `GET /api/admin/dashboard`
 
@@ -113,18 +113,18 @@ Legacy alias van hoat dong:
 2. Trang `/pay/:orderId` hien thong tin chuyen khoan Sepay (hoac mock mode).
 3. Thanh toan that: Sepay callback vao `/api/payments/webhooks/sepay` de paid + cap key tu dong.
 4. Mock mode: bam `Xac nhan da thanh toan` de goi endpoint mock confirm.
-5. Vao `/portal` de xem wallet, ledger, subscriptions cap nhat.
+5. Vao `/account?tab=downloads` de xem app, key va quyen truy cap da cap nhat.
 6. Vao `/admin` de xem KPI va giao dich moi.
 
-## Auth toi thieu cho Portal/Admin
-- Login portal: `GET /portal/login` (dung `PORTAL_ACCESS_KEY`)
+## Auth toi thieu cho Account/Admin
+- Customer account: dang nhap qua `/?auth=login` hoac `/account` neu chua co session
 - Login admin: `GET /admin/login` (uu tien username/password tu `admin_users`)
 - Owner key login qua `ADMIN_ACCESS_KEY` mac dinh bi tat, chi bat khi set `ADMIN_OWNER_KEY_LOGIN_ENABLED=true`
 - Dang nhap admin co gioi han brute-force theo IP (429 + lockout tam thoi neu sai nhieu lan)
 - Role `owner` va `manager` bat buoc OTP email khi login thanh cong password (2FA)
 - Tu dong guard theo 3 lop: `ip`, `username`, va cap `ip|username` de chan tan cong phan tan
 - Audit day du login admin vao DB (success, failure, blocked, challenge OTP): bang `admin_login_audits`
-- API portal va admin yeu cau cookie session hop le
+- API account/customer va admin yeu cau cookie session hop le
 - Canh bao bao mat: production bat buoc `SESSION_SIGNING_SECRET` manh; neu bat owner key login thi `ADMIN_ACCESS_KEY` phai dai >= 16 ky tu va khong dung gia tri demo.
 
 ## Stripe webhook adapter
@@ -156,7 +156,7 @@ gcloud run deploy web-sales-total \
   --platform managed \
   --region asia-southeast1 \
   --allow-unauthenticated \
-  --set-env-vars PORT=8080,NODE_ENV=production,PAYMENT_PROVIDER_MODE=mock,APP_BASE_URL=https://<your-service-url>,WEBHOOK_SIGNATURE_SECRET=<strong-secret>,SESSION_SIGNING_SECRET=<strong-secret>,PORTAL_ACCESS_KEY=<portal-key>,ADMIN_OWNER_KEY_LOGIN_ENABLED=false,DATABASE_URL=<postgres-url>
+  --set-env-vars PORT=8080,NODE_ENV=production,PAYMENT_PROVIDER_MODE=mock,APP_BASE_URL=https://<your-service-url>,WEBHOOK_SIGNATURE_SECRET=<strong-secret>,SESSION_SIGNING_SECRET=<strong-secret>,ADMIN_OWNER_KEY_LOGIN_ENABLED=false,DATABASE_URL=<postgres-url>
 ```
 
 3. Cloud Run se cap `PORT`, app da su dung `process.env.PORT`.

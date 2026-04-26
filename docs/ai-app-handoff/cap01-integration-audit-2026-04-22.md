@@ -21,9 +21,9 @@ Tai lieu nay tong hop 2 viec:
 | Reset password qua OTP | Chua noi | TODO | `POST /api/auth/customer/password-reset/send-code`, `POST /api/auth/customer/password-reset/confirm` | Moi o backlog |
 | Dong bo license list cho AI-app | Da co contract, chua thay bang chung goi that tu Cap01 | AI-app connect commands | `GET /api/ai-app/customers/:customerId/licenses` | Web tong da implement |
 | Verify license key cho AI-app | Da co contract, chua thay bang chung goi that tu Cap01 | AI-app connect commands | `POST /api/ai-app/licenses/verify` | Web tong da implement |
-| Activate license qua human flow | Da co contract | Portal/Admin | `POST /api/licenses/:licenseId/activate` | Da implement tren Web tong |
-| Verify license qua human flow | Da co contract | Portal/Admin | `POST /api/licenses/:licenseId/verify` | Da implement tren Web tong |
-| Deactivate license qua human flow | Da co contract | Portal/Admin | `POST /api/licenses/:licenseId/deactivate` | Da implement tren Web tong |
+| Activate license qua human flow | Da co contract | Account/Admin | `POST /api/licenses/:licenseId/activate` | Da implement tren Web tong |
+| Verify license qua human flow | Da co contract | Account/Admin | `POST /api/licenses/:licenseId/verify` | Da implement tren Web tong |
+| Deactivate license qua human flow | Da co contract | Account/Admin | `POST /api/licenses/:licenseId/deactivate` | Da implement tren Web tong |
 | Device binding desktop | Chua noi | TODO | Dung trong license activate/verify | Web tong nhan `deviceId/deviceName`, AI-app chua hoan tat |
 | Offline grace mode | Chua noi | TODO | Phu thuoc response verify license | Moi o backlog |
 | Session persistence | Chua noi | TODO | Khong phu thuoc endpoint moi | Bridge session AI-app hien in-memory |
