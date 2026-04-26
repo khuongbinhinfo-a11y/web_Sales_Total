@@ -12,6 +12,7 @@ let currentGateApp = "desktop";
 let currentGateData = null;
 let aiAppSecretConfigured = false;
 let adminListFocusUsername = "";
+const licenseCompDraftStorageKey = "admin_license_compensation_draft_v1";
 
 function wait(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1117,6 +1118,219 @@ function bindManualGrant(){
   });
 }
 
+function escapeSqlString(value){
+  return String(value || "").replace(/'/g, "''");
+}
+
+function splitCompensationLine(line){
+  const raw = String(line || "").trim();
+  if(!raw) return [];
+  if(raw.includes("\t")) return raw.split("\t");
+  if(raw.includes(";")) return raw.split(";");
+  if(raw.includes(",")) return raw.split(",");
+  return raw.split(/\s+/);
+}
+
+function isCompensationHeader(parts){
+  const text = parts.map((item)=>String(item || "").trim().toLowerCase()).join(" ");
+  return text.includes("license") || text.includes("key") || text.includes("days") || text.includes("email");
+}
+
+function parseLicenseCompensationRows(raw, format){
+  const lines = String(raw || "")
+    .split(/\r?\n/)
+    .map((line)=>line.trim())
+    .filter(Boolean);
+
+  const rows = [];
+  const errors = [];
+
+  lines.forEach((line, index)=>{
+    const parts = splitCompensationLine(line).map((item)=>String(item || "").trim()).filter(Boolean);
+    if(!parts.length) return;
+    if(index === 0 && isCompensationHeader(parts)) return;
+
+    let email = "";
+    let licenseKey = "";
+    let daysText = "";
+
+    if(format === "email_license_days"){
+      [email, licenseKey, daysText] = parts;
+    } else {
+      [licenseKey, daysText] = parts;
+    }
+
+    const days = Number.parseInt(String(daysText || "").trim(), 10);
+    if(!licenseKey || !Number.isFinite(days) || days <= 0){
+      errors.push(`Dòng ${index + 1}: dữ liệu không hợp lệ -> ${line}`);
+      return;
+    }
+
+    rows.push({
+      email,
+      licenseKey: licenseKey.toUpperCase(),
+      days
+    });
+  });
+
+  return { rows, errors };
+}
+
+function buildSingleCompensationSql(item, mode){
+  if(!item) return "";
+  const daysLiteral = `${item.days} days`;
+  const safeKey = escapeSqlString(item.licenseKey);
+  const setExpirySql = mode === "add_days"
+    ? `GREATEST(COALESCE(expires_at, NOW()), NOW()) + INTERVAL '${daysLiteral}'`
+    : `NOW() + INTERVAL '${daysLiteral}'`;
+  const emailComment = item.email ? `-- Email: ${item.email}\n` : "";
+
+  return [
+    `${emailComment}UPDATE app_licenses`,
+    `SET expires_at = ${setExpirySql},`,
+    `    updated_at = NOW()`,
+    `WHERE license_key = '${safeKey}';`,
+    "",
+    `SELECT license_key, status, expires_at`,
+    `FROM app_licenses`,
+    `WHERE license_key = '${safeKey}';`
+  ].join("\n");
+}
+
+function buildBulkCompensationSql(rows, mode){
+  if(!rows.length) return "";
+  const valuesSql = rows
+    .map((item)=>`    ('${escapeSqlString(item.licenseKey)}', ${item.days})`)
+    .join(",\n");
+  const expirySql = mode === "add_days"
+    ? "GREATEST(COALESCE(al.expires_at, NOW()), NOW()) + make_interval(days => src.days)"
+    : "NOW() + make_interval(days => src.days)";
+  const keyListSql = rows.map((item)=>`'${escapeSqlString(item.licenseKey)}'`).join(", ");
+
+  return [
+    `UPDATE app_licenses AS al`,
+    `SET expires_at = ${expirySql},`,
+    `    updated_at = NOW()`,
+    `FROM (`,
+    `  VALUES`,
+    valuesSql,
+    `) AS src(license_key, days)`,
+    `WHERE al.license_key = src.license_key;`,
+    "",
+    `SELECT license_key, status, expires_at`,
+    `FROM app_licenses`,
+    `WHERE license_key IN (${keyListSql})`,
+    `ORDER BY license_key;`
+  ].join("\n");
+}
+
+function saveLicenseCompDraft(){
+  const input = document.getElementById("licenseCompInput");
+  const mode = document.getElementById("licenseCompMode");
+  const format = document.getElementById("licenseCompFormat");
+  if(!input || !mode || !format) return;
+  const payload = {
+    raw: input.value || "",
+    mode: mode.value || "set_remaining",
+    format: format.value || "license_days"
+  };
+  window.localStorage.setItem(licenseCompDraftStorageKey, JSON.stringify(payload));
+}
+
+function loadLicenseCompDraft(){
+  const input = document.getElementById("licenseCompInput");
+  const mode = document.getElementById("licenseCompMode");
+  const format = document.getElementById("licenseCompFormat");
+  if(!input || !mode || !format) return;
+  try {
+    const raw = window.localStorage.getItem(licenseCompDraftStorageKey);
+    if(!raw) return;
+    const payload = JSON.parse(raw);
+    input.value = String(payload?.raw || "");
+    if(payload?.mode) mode.value = payload.mode;
+    if(payload?.format) format.value = payload.format;
+  } catch {
+    // ignore broken local draft
+  }
+}
+
+async function copyLicenseCompText(text, successMessageHost, successMessage){
+  if(!text) return;
+  await navigator.clipboard.writeText(text);
+  if(successMessageHost){
+    successMessageHost.textContent = successMessage;
+    successMessageHost.style.color = "var(--success,#16a34a)";
+  }
+}
+
+function bindLicenseCompensationTool(){
+  const input = document.getElementById("licenseCompInput");
+  const mode = document.getElementById("licenseCompMode");
+  const format = document.getElementById("licenseCompFormat");
+  const generateBtn = document.getElementById("licenseCompGenerateBtn");
+  const clearBtn = document.getElementById("licenseCompClearBtn");
+  const msg = document.getElementById("licenseCompMsg");
+  const singleSql = document.getElementById("licenseCompSingleSql");
+  const bulkSql = document.getElementById("licenseCompBulkSql");
+  const copySingleBtn = document.getElementById("licenseCompCopySingleBtn");
+  const copyBulkBtn = document.getElementById("licenseCompCopyBulkBtn");
+  if(!input || !mode || !format || !generateBtn || !clearBtn || !singleSql || !bulkSql) return;
+
+  loadLicenseCompDraft();
+
+  function renderSql(){
+    const parsed = parseLicenseCompensationRows(input.value, format.value);
+    saveLicenseCompDraft();
+
+    if(parsed.errors.length){
+      msg.textContent = parsed.errors[0];
+      msg.style.color = "var(--danger)";
+    } else if(!parsed.rows.length) {
+      msg.textContent = "Dán danh sách license_key và số ngày để sinh SQL.";
+      msg.style.color = "var(--muted)";
+    } else {
+      const modeLabel = mode.value === "add_days" ? "cộng thêm" : "set còn lại";
+      msg.textContent = `Đã nhận ${parsed.rows.length} dòng hợp lệ, chế độ ${modeLabel}.`;
+      msg.style.color = "var(--muted)";
+    }
+
+    singleSql.value = buildSingleCompensationSql(parsed.rows[0], mode.value);
+    bulkSql.value = buildBulkCompensationSql(parsed.rows, mode.value);
+  }
+
+  generateBtn.addEventListener("click", renderSql);
+  clearBtn.addEventListener("click", ()=>{
+    input.value = "";
+    singleSql.value = "";
+    bulkSql.value = "";
+    window.localStorage.removeItem(licenseCompDraftStorageKey);
+    msg.textContent = "Đã xóa draft bù ngày trong admin.";
+    msg.style.color = "var(--muted)";
+  });
+  input.addEventListener("input", saveLicenseCompDraft);
+  mode.addEventListener("change", renderSql);
+  format.addEventListener("change", renderSql);
+
+  copySingleBtn?.addEventListener("click", async ()=>{
+    try {
+      await copyLicenseCompText(singleSql.value, msg, "Đã copy SQL test 1 khách.");
+    } catch(err) {
+      msg.textContent = `Không copy được SQL test: ${err.message}`;
+      msg.style.color = "var(--danger)";
+    }
+  });
+  copyBulkBtn?.addEventListener("click", async ()=>{
+    try {
+      await copyLicenseCompText(bulkSql.value, msg, "Đã copy SQL bulk.");
+    } catch(err) {
+      msg.textContent = `Không copy được SQL bulk: ${err.message}`;
+      msg.style.color = "var(--danger)";
+    }
+  });
+
+  renderSql();
+}
+
 // ── Customer management ──
 function bindCustomerSearch(){
   const input = document.getElementById("custSearchInput");
@@ -1423,6 +1637,7 @@ bindSepayForm();
 bindAiAppSecretControls();
 bindAiGateControls();
 bindManualGrant();
+bindLicenseCompensationTool();
 loadManualGrantCatalog();
 bindCustomerSearch();
 bindCustomerModal();
