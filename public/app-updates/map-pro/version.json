@@ -9,8 +9,8 @@
     "File Save_data/ui_cao_map_license_server.json chứa URL server kích hoạt – không xóa",
     "1 key kích hoạt được 1 máy (ID máy). Muốn chuyển máy liên hệ hỗ trợ"
   ],
-  "downloadPath": "REPLACE_WITH_EXTERNAL_DOWNLOAD_URL",
+  "downloadPath": "/app-updates/map-pro/Setup_MapPro.exe",
   "releaseNotesPath": "/app-updates/map-pro/release-notes-7.9.txt",
   "publishedAt": "2026-04-27T00:00:00Z",
-  "sha256": "PUT_REAL_SHA256_OF_ZIP_HERE"
+  "sha256": "4C280E4C3EB043DEAA5B413B394A8D252EAB9F7A0762B9D2E33750FA0F08D509"
 }
