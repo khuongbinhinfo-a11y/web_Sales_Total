@@ -76,13 +76,54 @@ function normalizeProductSaleStatus(value) {
   return PRODUCT_SALE_STATUSES.has(normalized) ? normalized : "live";
 }
 
+function toSafeMoneyValue(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  return Math.max(0, Math.round(parsed));
+}
+
+function resolveProductPricing(row) {
+  const basePrice = Math.max(0, Number(row.price) || 0);
+  const comparePriceRaw = toSafeMoneyValue(row.compare_price);
+  const comparePrice = comparePriceRaw !== null ? comparePriceRaw : basePrice;
+  const salePrice = toSafeMoneyValue(row.sale_price);
+  const saleEnabled = row.sale_enabled === true;
+  const allowCouponStack = row.allow_coupon_stack !== false;
+  const hasDirectSale =
+    saleEnabled
+    && Number.isFinite(salePrice)
+    && salePrice >= 0
+    && comparePrice > salePrice;
+  const effectivePrice = hasDirectSale ? salePrice : basePrice;
+
+  return {
+    basePrice,
+    comparePrice,
+    salePrice,
+    saleEnabled,
+    allowCouponStack,
+    hasDirectSale,
+    effectivePrice
+  };
+}
+
 function mapProductRow(row) {
+  const pricing = resolveProductPricing(row);
   return {
     id: row.id,
     appId: row.app_id,
     name: row.name,
     cycle: row.cycle,
-    price: Number(row.price),
+    price: pricing.basePrice,
+    basePrice: pricing.basePrice,
+    comparePrice: pricing.comparePrice,
+    salePrice: pricing.salePrice,
+    effectivePrice: pricing.effectivePrice,
+    saleEnabled: pricing.saleEnabled,
+    allowCouponStack: pricing.allowCouponStack,
+    hasDirectSale: pricing.hasDirectSale,
     currency: row.currency,
     credits: Number(row.credits),
     active: row.active,
@@ -419,7 +460,8 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
   const visibilityWhere = includeHidden ? "" : "AND visibility = 'public'";
   const activeWhere = includeInactive ? "" : "AND active = TRUE";
   const productsResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, currency, credits, active, visibility, sale_status, sale_note
+    `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
+            currency, credits, active, visibility, sale_status, sale_note
      FROM products
      WHERE 1 = 1
        ${activeWhere}
@@ -447,7 +489,7 @@ async function getAdminCatalog() {
   return getCatalog({ includeHidden: true, includeInactive: true });
 }
 
-async function updateProductCardControl(productId, { saleStatus, saleNote }) {
+async function updateProductCardControl(productId, { saleStatus, saleNote, saleEnabled, salePrice, comparePrice, allowCouponStack }) {
   const safeProductId = String(productId || "").trim();
   if (!safeProductId) {
     throw createStoreError("Thiếu productId", 400);
@@ -455,15 +497,53 @@ async function updateProductCardControl(productId, { saleStatus, saleNote }) {
 
   const normalizedSaleStatus = normalizeProductSaleStatus(saleStatus);
   const normalizedSaleNote = String(saleNote || "").trim().slice(0, 280);
+  const safeSaleEnabled = saleEnabled === undefined || saleEnabled === null
+    ? null
+    : (saleEnabled === true || String(saleEnabled).toLowerCase() === "true");
+  const safeAllowCouponStack = allowCouponStack === undefined || allowCouponStack === null
+    ? null
+    : (allowCouponStack === true || String(allowCouponStack).toLowerCase() === "true");
+  const hasSalePriceInput = !(salePrice === undefined || salePrice === null || salePrice === "");
+  const safeSalePrice = hasSalePriceInput ? toSafeMoneyValue(salePrice) : null;
+  const hasComparePriceInput = !(comparePrice === undefined || comparePrice === null || comparePrice === "");
+  const safeComparePrice = hasComparePriceInput ? toSafeMoneyValue(comparePrice) : null;
+
+  if (safeSalePrice !== null && safeSalePrice < 0) {
+    throw createStoreError("Giá sale không hợp lệ", 400);
+  }
+  if (hasSalePriceInput && safeSalePrice === null) {
+    throw createStoreError("Giá sale không hợp lệ", 400);
+  }
+  if (safeComparePrice !== null && safeComparePrice < 0) {
+    throw createStoreError("Giá gốc không hợp lệ", 400);
+  }
+  if (hasComparePriceInput && safeComparePrice === null) {
+    throw createStoreError("Giá gốc không hợp lệ", 400);
+  }
 
   const result = await pool.query(
     `UPDATE products
      SET sale_status = $2,
          sale_note = $3,
+         sale_enabled = COALESCE($4, sale_enabled),
+         sale_price = CASE WHEN $8 THEN $5 ELSE sale_price END,
+         compare_price = CASE WHEN $9 THEN COALESCE($6, price) ELSE compare_price END,
+         allow_coupon_stack = COALESCE($7, allow_coupon_stack),
          updated_at = NOW()
      WHERE id = $1
-     RETURNING id, app_id, name, cycle, price, currency, credits, active, visibility, sale_status, sale_note`,
-    [safeProductId, normalizedSaleStatus, normalizedSaleNote]
+     RETURNING id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
+               currency, credits, active, visibility, sale_status, sale_note`,
+    [
+      safeProductId,
+      normalizedSaleStatus,
+      normalizedSaleNote,
+      safeSaleEnabled,
+      safeSalePrice,
+      safeComparePrice,
+      safeAllowCouponStack,
+      hasSalePriceInput,
+      hasComparePriceInput
+    ]
   );
 
   if (result.rowCount === 0) {
@@ -495,6 +575,20 @@ async function applyDiscountToOrderWithClient({ client, orderId, discountCode })
   const order = orderResult.rows[0];
   if (String(order.status || "").toLowerCase() !== "pending") {
     throw createStoreError("Chỉ áp dụng mã cho đơn hàng đang chờ thanh toán", 400);
+  }
+
+  const productResult = await client.query(
+    `SELECT price, compare_price, sale_price, sale_enabled, allow_coupon_stack
+     FROM products
+     WHERE id = $1
+     LIMIT 1`,
+    [order.product_id]
+  );
+  if (productResult.rowCount > 0) {
+    const pricing = resolveProductPricing(productResult.rows[0]);
+    if (pricing.hasDirectSale && !pricing.allowCouponStack) {
+      throw createStoreError("Sản phẩm này đã giảm trực tiếp và không cho cộng thêm mã giảm giá", 400);
+    }
   }
 
   const codeResult = await client.query(
@@ -579,7 +673,8 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `SELECT id, app_id, name, cycle, price, currency, credits, sale_status, sale_note
+      `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
+              currency, credits, sale_status, sale_note
        FROM products
        WHERE id = $1 AND app_id = $2 AND active = TRUE`,
       [productId, appId]
@@ -594,6 +689,7 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     }
 
     const product = productResult.rows[0];
+    const pricing = resolveProductPricing(product);
     const saleStatus = normalizeProductSaleStatus(product.sale_status);
     if (saleStatus !== "live") {
       const saleNote = String(product.sale_note || "").trim();
@@ -602,6 +698,10 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
           ? saleNote || "Sản phẩm này đang ở trạng thái coming soon, chưa thể tạo đơn"
           : saleNote || "Sản phẩm này đang tạm khóa bán, chưa thể tạo đơn";
       throw createStoreError(message, 409);
+    }
+
+    if (discountCode && pricing.hasDirectSale && !pricing.allowCouponStack) {
+      throw createStoreError("Sản phẩm này đã giảm trực tiếp và không cho cộng thêm mã giảm giá", 400);
     }
 
     let orderRow = null;
@@ -618,7 +718,7 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
            RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
                      discount_amount, discount_percent, discount_code, discount_code_id,
                      currency, status, created_at, paid_at`,
-          [orderCode, customerId, appId, productId, product.price, product.currency]
+          [orderCode, customerId, appId, productId, pricing.effectivePrice, product.currency]
         );
         orderRow = orderResult.rows[0];
         break;
@@ -665,7 +765,13 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
         appId: product.app_id,
         name: product.name,
         cycle: product.cycle,
-        price: Number(product.price),
+        price: pricing.basePrice,
+        effectivePrice: pricing.effectivePrice,
+        comparePrice: pricing.comparePrice,
+        salePrice: pricing.salePrice,
+        saleEnabled: pricing.saleEnabled,
+        allowCouponStack: pricing.allowCouponStack,
+        hasDirectSale: pricing.hasDirectSale,
         currency: product.currency,
         credits: Number(product.credits)
       }

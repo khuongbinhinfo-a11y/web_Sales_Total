@@ -71,6 +71,27 @@ function getProductSalePresentation(product) {
   };
 }
 
+function getProductDisplayPrice(product) {
+  const basePrice = Math.max(0, Number(product?.basePrice ?? product?.comparePrice ?? product?.price ?? 0));
+  const comparePrice = Math.max(0, Number(product?.comparePrice ?? basePrice));
+  const effectivePrice = Math.max(0, Number(product?.effectivePrice ?? product?.salePrice ?? product?.price ?? 0));
+  const hasDirectSale = Boolean(product?.saleEnabled) && comparePrice > effectivePrice;
+  return {
+    basePrice,
+    comparePrice,
+    effectivePrice,
+    hasDirectSale
+  };
+}
+
+function renderProductPriceHtml(product) {
+  const pricing = getProductDisplayPrice(product);
+  if (!pricing.hasDirectSale) {
+    return fmtVnd(pricing.effectivePrice);
+  }
+  return `${fmtVnd(pricing.effectivePrice)} <span class="p-card-old-price" style="font-size:.95rem">${fmtVnd(pricing.comparePrice)}</span>`;
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -1033,9 +1054,12 @@ function renderPlanZone(product) {
     const selectedPrice = Number(prices?.[selectedPlanTier] || 0);
     const selectedTargetPrice = Number(selectedTarget?.price || 0);
     const selectedPriceMatched = selectedTarget && selectedTargetPrice === selectedPrice;
+    const selectedDisplayPrice = selectedTarget ? getProductDisplayPrice(selectedTarget) : getProductDisplayPrice({ price: selectedPrice });
     selectedPlanUnavailable = selectedPlanTier !== "free" && !selectedPriceMatched;
     selectedCheckoutProduct = (selectedPlanTier === "free" || selectedPlanUnavailable) ? null : selectedTarget;
-    document.getElementById("pdPrice").textContent = fmtVnd(selectedPrice);
+    document.getElementById("pdPrice").innerHTML = selectedDisplayPrice.hasDirectSale
+      ? `${fmtVnd(selectedDisplayPrice.effectivePrice)} <span class="p-card-old-price" style="font-size:.95rem">${fmtVnd(selectedDisplayPrice.comparePrice)}</span>`
+      : fmtVnd(selectedDisplayPrice.effectivePrice);
     document.getElementById("pdCycle").textContent = `Loại: ${labelFromPeriod(selectedPlanPeriod)}`;
     updateBuyBtn();
 
@@ -1382,7 +1406,7 @@ function renderProduct(p){
     : softwareCode(p.appId);
   document.getElementById("pdTitle").textContent = productName;
   document.getElementById("pdCycle").textContent = `Loại: ${fmtCycle(p.cycle)} · ${p.credits} credit${p.credits>1?"s":""}`;
-  document.getElementById("pdPrice").textContent = fmtVnd(p.price);
+  document.getElementById("pdPrice").innerHTML = renderProductPriceHtml(p);
   updateBuyBtn();
   renderPlanZone(p);
 

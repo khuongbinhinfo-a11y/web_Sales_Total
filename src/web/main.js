@@ -712,6 +712,19 @@ function getProductSaleMeta(product) {
   };
 }
 
+function getProductDisplayPrice(product) {
+  const basePrice = Math.max(0, Number(product?.basePrice ?? product?.comparePrice ?? product?.price ?? 0));
+  const comparePrice = Math.max(0, Number(product?.comparePrice ?? basePrice));
+  const effectivePrice = Math.max(0, Number(product?.effectivePrice ?? product?.salePrice ?? product?.price ?? 0));
+  const hasDirectSale = Boolean(product?.saleEnabled) && comparePrice > effectivePrice;
+  return {
+    basePrice,
+    comparePrice,
+    effectivePrice,
+    hasDirectSale
+  };
+}
+
 function pickStudyCap01Representative(products) {
   const preferredIds = [
     "prod-study-month",
@@ -1182,6 +1195,7 @@ function renderProducts(){
     const isFeat = p.cycle === "yearly";
     const intro = softwareIntro(p);
     const saleMeta = getProductSaleMeta(p);
+    const pricing = getProductDisplayPrice(p);
     const resolvedImage = resolveProductImage(p);
     const visual = resolvedImage
       ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${productName}">`
@@ -1204,7 +1218,8 @@ function renderProducts(){
         <p class="p-card-intro">${intro}</p>
         <p class="p-card-meta">${fmtCycle(p.cycle)}</p>
         <div class="p-card-price-row">
-          <span class="p-card-price">${fmtVnd(p.price)}</span>
+          <span class="p-card-price">${fmtVnd(pricing.effectivePrice)}</span>
+          ${pricing.hasDirectSale ? `<span class="p-card-old-price">${fmtVnd(pricing.comparePrice)}</span>` : ""}
         </div>
         ${saleMeta.note ? `<p class="p-card-sale-note">${escapeHtml(saleMeta.note)}</p>` : ""}
       </div>
@@ -1244,12 +1259,13 @@ function renderBanner(){
     const productName = canonicalProductName(p);
     const fallbackBg = moonPurpleGradients[i % moonPurpleGradients.length];
     const imgSrc = p.image || bannerImagePool[i % bannerImagePool.length];
+    const pricing = getProductDisplayPrice(p);
     return `<a class="banner-card" href="/product/${encodeURIComponent(p.id)}" style="background:${fallbackBg}">
       <img class="banner-card-bg" src="${imgSrc}" alt="" loading="lazy">
       <div class="banner-card-shine"></div>
       <div class="banner-card-content">
         <div class="banner-card-title">${productName}</div>
-        <div class="banner-card-sub">${fmtVnd(p.price)} · ${fmtCycle(p.cycle)}</div>
+        <div class="banner-card-sub">${fmtVnd(pricing.effectivePrice)}${pricing.hasDirectSale ? ` (gốc ${fmtVnd(pricing.comparePrice)})` : ""} · ${fmtCycle(p.cycle)}</div>
       </div>
     </a>`;
   });

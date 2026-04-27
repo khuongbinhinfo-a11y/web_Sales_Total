@@ -1319,7 +1319,11 @@ app.patch(
   asyncHandler(async (req, res) => {
     const product = await updateProductCardControl(req.params.productId, {
       saleStatus: req.body?.saleStatus,
-      saleNote: req.body?.saleNote
+      saleNote: req.body?.saleNote,
+      saleEnabled: req.body?.saleEnabled,
+      salePrice: req.body?.salePrice,
+      comparePrice: req.body?.comparePrice,
+      allowCouponStack: req.body?.allowCouponStack
     });
     res.json({ ok: true, product });
   })

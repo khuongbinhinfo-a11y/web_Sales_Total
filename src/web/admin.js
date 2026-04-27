@@ -2302,11 +2302,15 @@ function bindProductCardManager() {
         <th>App / sản phẩm</th>
         <th>Hiển thị</th>
         <th>Trạng thái card</th>
-        <th>Ghi chú ngoài web</th>
+        <th>Giá & ghi chú ngoài web</th>
         <th>Lưu</th>
       </tr></thead><tbody>${products.map((product) => {
         const normalizedStatus = normalizeProductSaleStatus(product.saleStatus);
         const meta = productSaleStatusMeta(normalizedStatus);
+        const basePrice = Number(product.basePrice ?? product.price ?? 0);
+        const comparePrice = Number(product.comparePrice ?? basePrice);
+        const salePrice = Number(product.salePrice ?? 0);
+        const hasDirectSale = Boolean(product.hasDirectSale) && comparePrice > salePrice;
         return `<tr data-product-id="${escapeHtml(product.id)}">
           <td>
             <strong>${escapeHtml(product.name || product.id)}</strong>
@@ -2330,6 +2334,29 @@ function bindProductCardManager() {
             </div>
           </td>
           <td>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px">
+              <div>
+                <label class="admin-field-label" style="font-size:.66rem">Giá gốc hiển thị</label>
+                <input class="admin-input product-card-compare-price" type="number" min="0" step="1000" value="${comparePrice}" />
+              </div>
+              <div>
+                <label class="admin-field-label" style="font-size:.66rem">Giá giảm trực tiếp</label>
+                <input class="admin-input product-card-sale-price" type="number" min="0" step="1000" value="${product.salePrice === null ? "" : salePrice}" placeholder="VD: 299000" />
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:.78rem;color:var(--muted)">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input class="product-card-sale-enabled" type="checkbox" ${product.saleEnabled ? "checked" : ""} />
+                <span>Bật giảm trực tiếp</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input class="product-card-allow-coupon-stack" type="checkbox" ${product.allowCouponStack !== false ? "checked" : ""} />
+                <span>Cho cộng thêm mã giảm giá</span>
+              </label>
+            </div>
+            <div style="font-size:.76rem;color:var(--muted);margin-bottom:8px">
+              Giá hiện tại: <b>${fmtVnd(basePrice)}</b>${hasDirectSale ? ` · Sau giảm: <b style="color:var(--success,#16a34a)">${fmtVnd(salePrice)}</b>` : ""}
+            </div>
             <input class="admin-input product-card-note" maxlength="280" placeholder="VD: Tạm khóa để cập nhật bản cài / Mở bán ngày 15-05" value="${escapeHtml(product.saleNote || "")}" />
           </td>
           <td>
@@ -2355,18 +2382,28 @@ function bindProductCardManager() {
           const productId = row?.dataset.productId;
           const statusEl = row?.querySelector(".product-card-status");
           const noteEl = row?.querySelector(".product-card-note");
-          if(!productId || !statusEl || !noteEl) return;
+          const comparePriceEl = row?.querySelector(".product-card-compare-price");
+          const salePriceEl = row?.querySelector(".product-card-sale-price");
+          const saleEnabledEl = row?.querySelector(".product-card-sale-enabled");
+          const allowCouponStackEl = row?.querySelector(".product-card-allow-coupon-stack");
+          if(!productId || !statusEl || !noteEl || !comparePriceEl || !salePriceEl || !saleEnabledEl || !allowCouponStackEl) return;
 
           button.disabled = true;
           button.textContent = "Đang lưu...";
           if(msg){ msg.textContent = ""; }
           try {
+            const salePriceRaw = String(salePriceEl.value || "").trim();
+            const comparePriceRaw = String(comparePriceEl.value || "").trim();
             const res = await fetchAdmin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 saleStatus: statusEl.value,
-                saleNote: noteEl.value
+                saleNote: noteEl.value,
+                saleEnabled: saleEnabledEl.checked,
+                salePrice: salePriceRaw === "" ? null : Number.parseInt(salePriceRaw, 10),
+                comparePrice: comparePriceRaw === "" ? null : Number.parseInt(comparePriceRaw, 10),
+                allowCouponStack: allowCouponStackEl.checked
               })
             });
             if(res.status === 401){ redirectToAdminLogin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`); return; }
@@ -2382,6 +2419,10 @@ function bindProductCardManager() {
               preview.innerHTML = `<span class="admin-product-state-chip ${meta.badgeClass}">${meta.label}</span><span>${meta.hint}</span>`;
             }
             noteEl.value = data.product?.saleNote || "";
+            comparePriceEl.value = String(Number(data.product?.comparePrice ?? data.product?.basePrice ?? 0));
+            salePriceEl.value = data.product?.salePrice === null ? "" : String(Number(data.product?.salePrice || 0));
+            saleEnabledEl.checked = data.product?.saleEnabled === true;
+            allowCouponStackEl.checked = data.product?.allowCouponStack !== false;
           } catch(err) {
             if(msg){ msg.textContent = `Lỗi lưu trạng thái: ${err.message}`; msg.style.color = "var(--danger)"; }
           } finally {
