@@ -1,6 +1,6 @@
 {
-  "latestVersion": "2026.04.27",
-  "minimumSupportedVersion": "2026.04.27",
+  "latestVersion": "1.0.2",
+  "minimumSupportedVersion": "1.0.2",
   "required": false,
   "title": "Ban Video Creator moi da san sang",
   "message": "Ban cai dat moi nhat cho Video Creator da san sang trong khu vuc tai khoan.",
@@ -10,6 +10,6 @@
   ],
   "downloadPath": "/app-updates/app-prompt-image-video/Setup_VideoCreator.exe",
   "releaseNotesPath": "/app-updates/app-prompt-image-video/release-notes-2026.04.27.txt",
-  "publishedAt": "2026-04-27T00:00:00Z",
-  "sha256": ""
+  "publishedAt": "2026-04-27T03:27:51Z",
+  "sha256": "076C61C3F5DA016CCA503224602480E8F40623884C3915EF16458FF09FC9E28F"
 }
