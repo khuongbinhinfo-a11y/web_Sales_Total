@@ -4,3 +4,4 @@ backups/
 .env
 .vercel
 .env*.local
+_external/

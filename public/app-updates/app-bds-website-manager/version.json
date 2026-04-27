@@ -1,0 +1,15 @@
+{
+  "latestVersion": "2026.04.27",
+  "minimumSupportedVersion": "2026.04.27",
+  "required": false,
+  "title": "Ban desktop BDS hien tai dang on dinh",
+  "message": "Ban cai dat moi nhat cho Phan Mem Quan Ly Website & Tin Dang Bat Dong San da san sang trong khu vuc tai khoan.",
+  "notes": [
+    "Ban desktop BDS duoc phat hanh qua Web Tong va kich hoat bang key trung tam",
+    "Neu khong thay nut tai hoac key, vui long lien he ho tro de doi chieu entitlement"
+  ],
+  "downloadPath": "/app-updates/app-bds-website-manager/Setup_BDS.exe",
+  "releaseNotesPath": "/app-updates/app-bds-website-manager/release-notes-2026.04.27.txt",
+  "publishedAt": "2026-04-27T08:00:00Z",
+  "sha256": "5D8375C849A920B716B848C468533AE63A6229AD9C4EF8FE98F7239A19BB74E1"
+}

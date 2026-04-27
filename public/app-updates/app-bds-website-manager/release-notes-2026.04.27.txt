@@ -1,0 +1,11 @@
+Phan Mem Quan Ly Website & Tin Dang Bat Dong San - ban 2026.04.27
+
+Noi dung phat hanh:
+- Dong goi bo cai chinh thuc Setup_BDS.exe
+- Cai dat theo kieu per-user, tu dong tao shortcut desktop
+- Dong bo kich hoat key ve he thong license trung tam tai ungdungthongminh.shop
+- San sang phat hanh qua khu vuc Tai khoan cua toi tren Web Tong
+
+Luu y:
+- Moi key duoc su dung theo mo hinh 1 key / 1 ID may
+- Neu can doi may hoac gap loi kich hoat, lien he ho tro de doi chieu key va entitlement
