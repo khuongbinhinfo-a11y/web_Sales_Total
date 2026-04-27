@@ -66,7 +66,8 @@ const {
   deleteProductKey,
   listDiscountCodes,
   createDiscountCode,
-  updateDiscountCodeActive
+  updateDiscountCodeActive,
+  activateProductKeyForMachine
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -713,6 +714,12 @@ const ACCOUNT_DOWNLOAD_APP_META = {
     icon: "💼",
     deliveryType: "manual_delivery",
     actionLabel: "Nhận bộ cài"
+  },
+  "map-pro": {
+    appName: "Phần Mềm Quét Data Khách Hàng Trên Google Map",
+    icon: "🗺️",
+    deliveryType: "manifest_download",
+    actionLabel: "Tải bộ cài"
   }
 };
 
@@ -1344,6 +1351,44 @@ async function handleCreateOrder(req, res) {
 
 app.post("/api/orders", asyncHandler(handleCreateOrder));
 app.post("/api/checkout", asyncHandler(handleCreateOrder));
+
+// ── Desktop app license activation endpoint (Google Apps Script-compatible format)
+// Used by map-pro (GG Map Pro) Python desktop app.  Request/response format
+// intentionally mirrors the GAS web-app schema so the app needs no modification.
+app.post(
+  "/api/apps/:appId/activate",
+  asyncHandler(async (req, res) => {
+    const appId  = String(req.params.appId || "").trim().toLowerCase();
+    const action = String(req.body?.action || "").trim().toLowerCase().replace(/_/g, "");
+
+    if (action === "health") {
+      return res.json({ ok: true, code: "healthy", message: "License server is ready." });
+    }
+
+    if (action !== "activatelicense") {
+      return res.json({ ok: false, code: "unsupported_action", message: "Action không được hỗ trợ." });
+    }
+
+    const licenseKey       = String(req.body?.license_key       || "").trim();
+    const machineId        = String(req.body?.machine_id        || "").trim();
+    const machineDisplayId = String(req.body?.machine_display_id|| "").trim();
+
+    if (!licenseKey || !machineId) {
+      return res.json({ ok: false, code: "bad_request", message: "Thiếu license_key hoặc machine_id." });
+    }
+
+    const result = await activateProductKeyForMachine({
+      licenseKey,
+      machineId,
+      machineDisplayId,
+      appName:     String(req.body?.app_name    || "").trim(),
+      appVersion:  String(req.body?.app_version || "").trim(),
+      targetAppId: appId
+    });
+
+    return res.json(result);
+  })
+);
 
 app.get(
   "/api/orders/:orderId",

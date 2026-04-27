@@ -1,0 +1,12 @@
+Phan Mem Quet Data Khach Hang Tren Google Map - ban 7.9
+
+Noi dung phat hanh:
+- Ket noi he thong kich hoat key ve ungdungthongminh.shop
+- Mo hinh: 1 key / 1 ID may / vinh vien / cap nhat mien phi 12 thang
+- Quy trinh: Khach mua -> nhan key trong don hang -> mo phan mem -> nhap key -> kich hoat
+- Yeu cau: ket noi internet khi kich hoat lan dau; cac lan sau co the chay offline
+
+Luu y:
+- Giai nen toan bo folder truoc khi chay (khong chay .exe tu trong zip)
+- Khong xoa folder Save_data/ (chua trang thai kich hoat local)
+- Neu can doi may, lien he ho tro Zalo: 0902964685

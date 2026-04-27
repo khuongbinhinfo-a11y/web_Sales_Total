@@ -1,0 +1,16 @@
+{
+  "latestVersion": "7.9",
+  "minimumSupportedVersion": "7.9",
+  "required": false,
+  "title": "Phần Mềm Quét Data Khách Hàng Trên Google Map – bản 7.9",
+  "message": "Bản cài đặt mới nhất của GG Map Pro đã sẵn sàng. Tải về và giải nén toàn bộ thư mục trước khi chạy.",
+  "notes": [
+    "Giải nén toàn bộ folder (không chạy thẳng file .exe từ trong zip)",
+    "File Save_data/ui_cao_map_license_server.json chứa URL server kích hoạt – không xóa",
+    "1 key kích hoạt được 1 máy (ID máy). Muốn chuyển máy liên hệ hỗ trợ"
+  ],
+  "downloadPath": "REPLACE_WITH_EXTERNAL_DOWNLOAD_URL",
+  "releaseNotesPath": "/app-updates/map-pro/release-notes-7.9.txt",
+  "publishedAt": "2026-04-27T00:00:00Z",
+  "sha256": "PUT_REAL_SHA256_OF_ZIP_HERE"
+}

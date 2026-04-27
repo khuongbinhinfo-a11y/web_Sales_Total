@@ -3014,10 +3014,81 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
   }
 }
 
+// ── Product key machine-lock activation (used by desktop apps that call the
+//    /api/apps/:appId/activate endpoint with a Google Apps Script-compatible
+//    request format) ──────────────────────────────────────────────────────────
+async function activateProductKeyForMachine({ licenseKey, machineId, machineDisplayId, appName, appVersion, targetAppId }) {
+  const safeKey     = String(licenseKey      || "").trim();
+  const safeMachine = String(machineId       || "").trim();
+  const safeDisplay = String(machineDisplayId|| "").trim();
+  const safeAppId   = String(targetAppId     || "").trim();
+
+  if (!safeKey || !safeMachine || !safeAppId) {
+    return { ok: false, code: "bad_request", message: "Thiếu license_key, machine_id hoặc appId." };
+  }
+
+  const keyResult = await pool.query(
+    `SELECT pk.id, pk.status, pk.machine_id, pk.machine_display_id, pk.machine_locked_at,
+            c.full_name AS customer_name
+     FROM product_keys pk
+     JOIN products p ON p.id = pk.product_id
+     LEFT JOIN order_key_deliveries okd ON okd.key_id = pk.id
+     LEFT JOIN customers c ON c.id = okd.delivered_to_customer
+     WHERE pk.key_value = $1
+       AND p.app_id    = $2
+     LIMIT 1`,
+    [safeKey, safeAppId]
+  );
+
+  if (!keyResult.rows.length) {
+    return { ok: false, code: "license_not_found", message: "Mã kích hoạt không hợp lệ hoặc không thuộc sản phẩm này." };
+  }
+
+  const row = keyResult.rows[0];
+
+  if (row.machine_id) {
+    if (row.machine_id !== safeMachine) {
+      return {
+        ok: false,
+        code: "machine_mismatch",
+        message: "Key đã được kích hoạt trên máy khác. Liên hệ hỗ trợ qua Zalo 0902964685 để chuyển máy."
+      };
+    }
+    // Same machine – refresh last_seen_at
+    await pool.query(
+      `UPDATE product_keys SET machine_last_seen_at = NOW() WHERE id = $1`,
+      [row.id]
+    );
+  } else {
+    // First activation – lock to this machine
+    await pool.query(
+      `UPDATE product_keys
+       SET machine_id           = $1,
+           machine_display_id   = $2,
+           machine_locked_at    = NOW(),
+           machine_last_seen_at = NOW(),
+           status               = 'delivered',
+           updated_at           = NOW()
+       WHERE id = $3`,
+      [safeMachine, safeDisplay, row.id]
+    );
+  }
+
+  return {
+    ok: true,
+    code: "activated",
+    message: "Kích hoạt thành công.",
+    status: "active",
+    customer_name: String(row.customer_name || ""),
+    machine_id: safeMachine
+  };
+}
+
 module.exports = {
   getPublicCatalog,
   getAdminCatalog,
   updateProductCardControl,
+  activateProductKeyForMachine,
   createOrder,
   applyDiscountToOrder,
   getOrderById,
