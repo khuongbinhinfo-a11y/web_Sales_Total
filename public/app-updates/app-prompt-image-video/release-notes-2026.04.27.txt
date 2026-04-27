@@ -1,0 +1,5 @@
+Video Creator 2026.04.27
+
+- Phat hanh ban dau cho kenh tai qua Web Tong
+- Ho tro kich hoat key trung tam
+- Chuan bi san co cho co che thong bao cap nhat
