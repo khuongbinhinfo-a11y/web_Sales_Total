@@ -1,4 +1,4 @@
-﻿{
+{
   "latestVersion": "2026.04.27",
   "minimumSupportedVersion": "2026.04.27",
   "required": false,
@@ -10,6 +10,6 @@
   ],
   "downloadPath": "/app-updates/app-bds-website-manager/Setup_BDS.exe",
   "releaseNotesPath": "/app-updates/app-bds-website-manager/release-notes-2026.04.27.txt",
-  "publishedAt": "2026-04-27T08:00:00Z",
-  "sha256": "5D8375C849A920B716B848C468533AE63A6229AD9C4EF8FE98F7239A19BB74E1"
+  "publishedAt": "2026-04-27T02:27:24Z",
+  "sha256": "D7ADB80B83E832A66CE5AED5343BBE901BD29E440974DC87B151ACE208C386F3"
 }
