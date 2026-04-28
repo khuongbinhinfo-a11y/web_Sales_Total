@@ -1,0 +1,6 @@
+Video Creator 1.0.3
+
+- Sua loi luu anh/video tai tu Flow vao dung thu muc da chon trong app
+- Tang do on dinh khi ten file hoac mime tu website tra ve khong dong nhat
+- Phat hanh bo cai moi qua Web Tong cho kenh tai trong khu vuc tai khoan
+- Luu y: app hien chua co popup thong bao update tu dong, user cap nhat qua Web Tong
