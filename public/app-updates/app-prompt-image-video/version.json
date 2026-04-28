@@ -1,16 +1,16 @@
 {
-  "latestVersion": "1.0.3",
-  "minimumSupportedVersion": "1.0.3",
+  "latestVersion": "1.0.4",
+  "minimumSupportedVersion": "1.0.4",
   "required": false,
-  "title": "Ban Video Creator 1.0.3 da san sang",
-  "message": "Ban cai dat Video Creator 1.0.3 da san sang trong khu vuc tai khoan voi ban sua loi luu anh va video.",
+  "title": "Ban Video Creator 1.0.4 da san sang",
+  "message": "Ban cai dat Video Creator 1.0.4 da san sang voi ban fix chan popup hoi quyen push trong browser nhung.",
   "notes": [
     "Ban nay duoc phat hanh qua Web Tong va kich hoat bang key trung tam",
     "Neu khong thay nut tai hoac key, vui long lien he ho tro de doi chieu entitlement",
     "App hien tai phat hanh update qua Web Tong, chua co popup thong bao update tu dong trong app"
   ],
   "downloadPath": "/app-updates/app-prompt-image-video/Setup_VideoCreator.exe",
-  "releaseNotesPath": "/app-updates/app-prompt-image-video/release-notes-2026.04.28.txt",
-  "publishedAt": "2026-04-28T06:36:53Z",
-  "sha256": "C51374ED1EA2CC5368D6FEE8D8BB7D60C50529696965BAE8E2FE62C872D2B76C"
+  "releaseNotesPath": "/app-updates/app-prompt-image-video/release-notes-2026.04.28-v2.txt",
+  "publishedAt": "2026-04-28T06:45:02Z",
+  "sha256": "AD06095AB1C0318F3C08C22C64C79841EB2FC812FECF9F358743CCD963AF08E2"
 }

@@ -1,0 +1,6 @@
+Video Creator 1.0.4
+
+- Chan dut diem cac permission popup hoi quyen push/notification trong browser nhung
+- Giu browser trong app it bi lam phien khi mo cac trang AI
+- Van giu luong tai file anh/video va kich hoat key qua Web Tong
+- Neu can dang nhap hay xu ly yeu cau dac biet cua website, co the mo qua nut Chrome ngoai
