@@ -3137,6 +3137,25 @@ async function loadCatalog(){
 function renderHomeBanner(){
   const track = document.getElementById("bannerTrack");
   if(!track) return;
+  const bannerCopyMap = {
+    vi: {
+      hub: { title: "Toàn hệ", meta: "Đi nhanh các nhánh" },
+      web: { title: "Thiết kế Web", meta: "Demo theo ngành" },
+      software: { title: "Phần mềm", meta: "App, key, công cụ" },
+      branch: { title: "Học tập & Làm việc", meta: "2 nhánh bên trong" },
+      guide: { title: "Hướng dẫn", meta: "Mua và nhận app" },
+      contact: { title: "Liên hệ", meta: "Zalo, điện thoại" }
+    },
+    en: {
+      hub: { title: "Hub", meta: "Jump across sections" },
+      web: { title: "Web Design", meta: "Industry demos" },
+      software: { title: "Software", meta: "Apps, keys, tools" },
+      branch: { title: "Study & Work", meta: "Two sub-branches" },
+      guide: { title: "Guide", meta: "Buy and receive apps" },
+      contact: { title: "Contact", meta: "Zalo and phone" }
+    }
+  };
+  const localeBannerCopy = bannerCopyMap[lang] || bannerCopyMap.vi;
   const bannerItems = (getPublicContent().home?.banner || []).map((item) => `
     <a class="banner-pill-card is-${escapeHtml(item.tone || "default")}" href="${escapeHtml(item.href)}">
       <span class="banner-pill-media" aria-hidden="true">
@@ -3153,8 +3172,8 @@ function renderHomeBanner(){
       </span>
       <span class="banner-pill-copy">
         <span class="banner-pill-label">${escapeHtml(item.tag || item.label || "")}</span>
-        <strong>${escapeHtml(item.title || item.label || "")}</strong>
-        <small>${escapeHtml(item.meta || item.sub || "")}</small>
+        <strong>${escapeHtml(localeBannerCopy[item.tone]?.title || item.title || item.label || "")}</strong>
+        <small>${escapeHtml(localeBannerCopy[item.tone]?.meta || item.meta || item.sub || "")}</small>
       </span>
     </a>
   `);
