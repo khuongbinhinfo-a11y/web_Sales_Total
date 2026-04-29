@@ -1485,13 +1485,33 @@ async function deactivateCustomerLicense({ licenseId, customerId, clientId = nul
   return mapAppLicense(result.rows[0]);
 }
 
-async function verifyAppLicenseByKey({ appId, licenseKey, customerId, deviceId, deviceName, clientProfile }) {
+async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEmail, deviceId, deviceName, clientProfile }) {
   const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
   if (!normalizedLicenseKey) {
     return null;
   }
 
-  const existingLicense = await findAppLicenseByKey({ appId, licenseKey: normalizedLicenseKey, customerId });
+  let resolvedCustomerId = String(customerId || "").trim() || null;
+  const normalizedCustomerEmail = String(customerEmail || "").trim().toLowerCase();
+
+  if (normalizedCustomerEmail) {
+    const matchedCustomer = await findCustomerByEmail(normalizedCustomerEmail);
+    if (!matchedCustomer?.id) {
+      return null;
+    }
+
+    if (resolvedCustomerId && resolvedCustomerId !== matchedCustomer.id) {
+      return null;
+    }
+
+    resolvedCustomerId = matchedCustomer.id;
+  }
+
+  const existingLicense = await findAppLicenseByKey({
+    appId,
+    licenseKey: normalizedLicenseKey,
+    ...(resolvedCustomerId ? { customerId: resolvedCustomerId } : {})
+  });
   if (!existingLicense) {
     return null;
   }

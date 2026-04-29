@@ -188,6 +188,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
   const currency = order?.currency || "VND";
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
+  const webAppUrl = "https://hoctap-cap-01.vercel.app/";
   const logoUrl = `${websiteUrl}/logo_2.png`;
   const supportEmail = resolveGmailSender() || "support@ungdungthongminh.shop";
   const websiteDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
@@ -196,21 +197,32 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
   const keyText = keyValue;
   const customerDisplay = customerEmail || order?.customerId || "(unknown)";
 
-  const subject = `Smart App | Thanh toán thành công - ${orderId}`;
+  const subject = `Học Tập Cấp 01 | Thông tin sử dụng - ${orderId}`;
 
   const text = [
-    "Smart App - Thanh toán thành công",
-    "Đơn hàng đã được xác nhận.",
+    "Học Tập Cấp 01 - Thông tin sử dụng",
+    "Đơn hàng của bạn đã được xác nhận thành công.",
+    "",
+    "1. THÔNG TIN CHÍNH",
+    `Email sử dụng: ${customerDisplay}`,
+    `License key: ${keyText}`,
+    `Web app: ${webAppUrl}`,
+    "",
+    "2. VÀO WEB APP",
+    `Truy cập ${webAppUrl}`,
+    "Đăng nhập bằng email mua hàng và license key ở trên.",
+    "",
+    "3. DESKTOP APP",
+    `Đăng nhập tài khoản tại ${websiteUrl} để xem lại key và tải app desktop khi cần.`,
+    "Web Tổng chỉ dùng để mua hàng và quản lý tài khoản, không tính vào quota sử dụng sản phẩm.",
+    "Web app chỉ cho phép 1 phiên hoạt động đồng thời.",
+    "Desktop app dùng trên 1 thiết bị và có thể tiếp tục dùng tối đa 7 ngày nếu key hết hạn hoặc bị vô hiệu hóa theo chính sách.",
     "",
     `Mã đơn: ${orderId}`,
     `Ứng dụng: ${appId}`,
     `Số tiền: ${amount} ${currency}`,
     "",
-    `KEY: ${keyText}`,
-    "",
-    `Website Smart App: ${websiteUrl}`,
-    "",
-    "Smart App",
+    "Học Tập Cấp 01",
     `${supportEmail} | ${websiteUrl}`,
     "Email này được gửi tự động — vui lòng không reply trực tiếp."
   ].join("\n");
@@ -225,8 +237,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <!-- HEADER -->
 <tr>
   <td style="background:linear-gradient(135deg,#6c47ff 0%,#8b5cf6 100%);padding:28px 36px;text-align:center">
-    <img src="${logoUrl}" alt="Smart App" style="display:block;margin:0 auto 10px;max-width:320px;width:100%;height:auto" />
-    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:.4px">Smart App</div>
+    <img src="${logoUrl}" alt="Học Tập Cấp 01" style="display:block;margin:0 auto 10px;max-width:320px;width:100%;height:auto" />
+    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:.4px">Học Tập Cấp 01</div>
     <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:4px">${_escHtml(websiteDomain)}</div>
   </td>
 </tr>
@@ -234,27 +246,27 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <!-- MAIN TITLE -->
 <tr>
   <td style="padding:28px 36px 0">
-    <div style="font-size:22px;font-weight:700;color:#111827;margin-bottom:8px">&#9989; Thanh to&#225;n th&#224;nh c&#244;ng</div>
-    <div style="font-size:14px;color:#6b7280;line-height:1.65">&#272;&#417;n h&#224;ng c&#7911;a b&#7841;n &#273;&#227; &#273;&#432;&#7907;c x&#225;c nh&#7853;n v&#224; key b&#7843;n quy&#7873;n &#273;&#227; &#273;&#432;&#7907;c c&#7845;p t&#7921; &#273;&#7897;ng.</div>
+    <div style="font-size:22px;font-weight:700;color:#111827;margin-bottom:8px">Thông tin sử dụng của bạn đã sẵn sàng</div>
+    <div style="font-size:14px;color:#6b7280;line-height:1.65">Giữ lại email này để đăng nhập web app, xem lại key và dùng bản desktop khi cần.</div>
   </td>
 </tr>
 
-<!-- ORDER BOX -->
+<!-- MAIN INFO BOX -->
 <tr>
   <td style="padding:20px 36px 0">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
-      <tr><td colspan="2" style="padding:12px 16px 6px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase">Th&#244;ng tin &#273;&#417;n h&#224;ng</td></tr>
+      <tr><td colspan="2" style="padding:12px 16px 6px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase">1. Thông tin chính</td></tr>
       <tr>
-        <td style="padding:7px 16px;font-size:13px;color:#9ca3af;width:38%">M&#227; &#273;&#417;n</td>
-        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600;font-family:'Courier New',monospace">${_escHtml(orderId)}</td>
+        <td style="padding:7px 16px;font-size:13px;color:#9ca3af;width:38%">Email sử dụng</td>
+        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600">${_escHtml(customerDisplay)}</td>
       </tr>
       <tr style="background:#ffffff">
-        <td style="padding:7px 16px;font-size:13px;color:#9ca3af">&#7912;ng d&#7909;ng</td>
-        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600">${_escHtml(appId)}</td>
+        <td style="padding:7px 16px;font-size:13px;color:#9ca3af">Web app</td>
+        <td style="padding:7px 16px;font-size:13px;color:#111827;font-weight:600"><a href="${webAppUrl}" style="color:#6c47ff;text-decoration:none">${_escHtml(webAppUrl)}</a></td>
       </tr>
       <tr>
-        <td style="padding:7px 16px 13px;font-size:13px;color:#9ca3af">S&#7889; ti&#7873;n</td>
-        <td style="padding:7px 16px 13px;font-size:14px;color:#059669;font-weight:700">${amount} ${currency}</td>
+        <td style="padding:7px 16px 13px;font-size:13px;color:#9ca3af">Mã đơn</td>
+        <td style="padding:7px 16px 13px;font-size:13px;color:#111827;font-weight:600;font-family:'Courier New',monospace">${_escHtml(orderId)}</td>
       </tr>
     </table>
   </td>
@@ -264,13 +276,42 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <tr>
   <td style="padding:16px 36px 0">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:8px">
-      <tr><td style="padding:13px 16px 6px;font-size:11px;font-weight:700;color:#7c3aed;letter-spacing:1px;text-transform:uppercase">&#128273; Key b&#7843;n quy&#7873;n</td></tr>
+      <tr><td style="padding:13px 16px 6px;font-size:11px;font-weight:700;color:#7c3aed;letter-spacing:1px;text-transform:uppercase">2. License key</td></tr>
       <tr>
         <td style="padding:4px 16px 14px">
           <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#4c1d95;background:#ede9fe;border-radius:6px;padding:10px 14px;word-break:break-all;letter-spacing:.5px;text-align:center">${_escHtml(keyText)}</div>
-          <div style="margin-top:8px;font-size:12px;color:#6b7280;text-align:center">L&#432;u key n&#224;y l&#7841;i &#273;&#7875; s&#7917; d&#7909;ng khi c&#7847;n.</div>
+          <div style="margin-top:8px;font-size:12px;color:#6b7280;text-align:center">Dùng email mua hàng + key này để vào web app.</div>
         </td>
       </tr>
+    </table>
+  </td>
+</tr>
+
+<!-- WEB APP GUIDE -->
+<tr>
+  <td style="padding:16px 36px 0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px">
+      <tr><td style="padding:13px 16px 6px;font-size:11px;font-weight:700;color:#1d4ed8;letter-spacing:1px;text-transform:uppercase">3. Vào web app</td></tr>
+      <tr><td style="padding:0 16px 14px;font-size:13px;color:#1f2937;line-height:1.7">
+        <div>Truy cập <a href="${webAppUrl}" style="color:#2563eb;text-decoration:none;font-weight:700">${_escHtml(webAppUrl)}</a>.</div>
+        <div>Dùng <strong>email mua hàng</strong> và <strong>license key</strong> ở trên để đăng nhập.</div>
+        <div style="margin-top:8px;color:#475569">Web Tổng chỉ dùng để mua hàng, xem key và quản lý tài khoản. App desktop luôn nằm trong khu vực tài khoản của bạn khi cần tải lại.</div>
+      </td></tr>
+    </table>
+  </td>
+</tr>
+
+<!-- DESKTOP AND POLICY -->
+<tr>
+  <td style="padding:16px 36px 0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px">
+      <tr><td style="padding:13px 16px 6px;font-size:11px;font-weight:700;color:#b45309;letter-spacing:1px;text-transform:uppercase">Desktop và lưu ý</td></tr>
+      <tr><td style="padding:0 16px 14px;font-size:13px;color:#1f2937;line-height:1.7">
+        <div>Desktop app dùng key này để kích hoạt và gắn với 1 thiết bị.</div>
+        <div>Mỗi lúc chỉ dùng 1 web app đồng thời. Phiên đăng nhập trên Web Tổng không tính vào quota sử dụng sản phẩm.</div>
+        <div>Desktop app có thể tiếp tục dùng tối đa 7 ngày nếu key hết hạn hoặc bị vô hiệu hóa theo chính sách.</div>
+        <div style="margin-top:8px;color:#475569">Tổng thanh toán: <strong style="color:#059669">${amount} ${currency}</strong> cho <strong>${_escHtml(appId)}</strong>.</div>
+      </td></tr>
     </table>
   </td>
 </tr>
@@ -278,7 +319,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <!-- CTA BUTTONS -->
 <tr>
   <td style="padding:24px 36px 0;text-align:center">
-    <a href="${websiteUrl}" style="display:inline-block;background:#6c47ff;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px">M&#7903; Smart App</a>
+    <a href="${webAppUrl}" style="display:inline-block;background:#6c47ff;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px">Mở web app</a>
+    <a href="${websiteUrl}" style="display:inline-block;background:#ffffff;color:#6c47ff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:4px 5px;border:1px solid #d8b4fe">Vào Web Tổng</a>
   </td>
 </tr>
 
@@ -286,7 +328,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
 <tr>
   <td style="padding:24px 36px 28px;text-align:center">
     <div style="border-top:1px solid #f3f4f6;padding-top:20px">
-      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:5px">Smart App</div>
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:5px">Học Tập Cấp 01</div>
       <div style="font-size:12px;color:#9ca3af;margin-bottom:4px">
         <a href="mailto:${_escHtml(supportEmail)}" style="color:#6c47ff;text-decoration:none">${_escHtml(supportEmail)}</a>
         &nbsp;&middot;&nbsp;
