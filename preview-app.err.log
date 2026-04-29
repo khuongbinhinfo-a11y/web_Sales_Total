@@ -1,2 +1,0 @@
-[env] DATABASE_URL is missing. Database-backed routes will return errors until it is configured.
-⚠️ Skipping schema bootstrap because DATABASE_URL is not configured.
