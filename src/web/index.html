@@ -33,7 +33,12 @@
             <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
             <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register">Đăng ký</a>
             <div id="userMenu" class="user-menu is-hidden">
-              <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
+              <button class="user-menu-btn" id="userMenuBtn" type="button" aria-label="Mở menu tài khoản" title="Tài khoản">
+                <svg class="user-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M12 12.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Zm0 2.1c-4.2 0-7.6 2.4-7.6 5.4 0 .4.3.7.7.7h13.8c.4 0 .7-.3.7-.7 0-3-3.4-5.4-7.6-5.4Z"></path>
+                </svg>
+                <span id="userEmail" class="sr-only">user</span>
+              </button>
               <div class="user-dropdown" id="userDropdown">
                 <a href="/account?tab=downloads" id="dropMyProducts">Tài khoản & tải app</a>
                 <a href="/huong-dan">Hướng dẫn</a>

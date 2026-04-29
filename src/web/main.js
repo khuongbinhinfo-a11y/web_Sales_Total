@@ -2523,7 +2523,11 @@ function setLoggedIn(snapshot){
   navLoginBtn.classList.add("is-hidden");
   navRegisterBtn.classList.add("is-hidden");
   userMenu.classList.remove("is-hidden");
-  userEmail.textContent = snapshot.customer?.email || "user";
+  const currentEmail = snapshot.customer?.email || "user";
+  userEmail.textContent = currentEmail;
+  if (userMenuBtn) {
+    userMenuBtn.setAttribute("aria-label", `Mở menu tài khoản (${currentEmail})`);
+  }
 }
 
 function setLoggedOut(){
@@ -2532,6 +2536,9 @@ function setLoggedOut(){
   navRegisterBtn.classList.remove("is-hidden");
   userMenu.classList.add("is-hidden");
   userDropdown.classList.remove("show");
+  if (userMenuBtn) {
+    userMenuBtn.setAttribute("aria-label", "Mở menu tài khoản");
+  }
 }
 
 async function checkAuth(){
