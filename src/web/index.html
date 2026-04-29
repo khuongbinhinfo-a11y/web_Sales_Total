@@ -314,17 +314,17 @@
         </div>
         <div class="footer-links">
           <h4>Điều hướng</h4>
-          <a href="/">Trang chủ</a>
-          <a href="/thiet-ke-web">Thiết kế Web</a>
-          <a href="/phan-mem">Phần mềm</a>
-          <a href="/huong-dan">Hướng dẫn</a>
-          <a href="/lien-he">Liên hệ</a>
+           <a class="footer-contact-item" href="/"><span class="footer-contact-icon" aria-hidden="true">⌂</span>Trang chủ</a>
+           <a class="footer-contact-item" href="/thiet-ke-web"><span class="footer-contact-icon" aria-hidden="true">W</span>Thiết kế Web</a>
+           <a class="footer-contact-item" href="/phan-mem"><span class="footer-contact-icon" aria-hidden="true">⚙</span>Phần mềm</a>
+           <a class="footer-contact-item" href="/huong-dan"><span class="footer-contact-icon" aria-hidden="true">?</span>Hướng dẫn</a>
+           <a class="footer-contact-item" href="/lien-he"><span class="footer-contact-icon" aria-hidden="true">✉</span>Liên hệ</a>
         </div>
         <div class="footer-links">
           <h4>Nhánh phần mềm</h4>
-          <a href="/phan-mem/hoc-tap">Học tập</a>
-          <a href="/phan-mem/lam-viec">Làm việc</a>
-          <a href="/account?tab=downloads">Tải app & key</a>
+           <a class="footer-contact-item" href="/phan-mem/hoc-tap"><span class="footer-contact-icon" aria-hidden="true">H</span>Học tập</a>
+           <a class="footer-contact-item" href="/phan-mem/lam-viec"><span class="footer-contact-icon" aria-hidden="true">L</span>Làm việc</a>
+           <a class="footer-contact-item" href="/account?tab=downloads"><span class="footer-contact-icon" aria-hidden="true">↓</span>Tải app & key</a>
         </div>
         <div class="footer-links footer-contact-links">
           <h4>Liên hệ</h4>
@@ -442,9 +442,73 @@
       var mobileMenuBtn = document.getElementById("mobileMenuBtn");
       var headerNav = document.getElementById("headerNav");
       if (mobileMenuBtn && headerNav) {
+        var lastScrollY = 0;
+        var desktopQuery = window.matchMedia("(min-width: 769px)");
+        var closeMobileMenu = function () {
+          if (!headerNav.classList.contains("open")) return;
+          headerNav.classList.remove("open");
+          mobileMenuBtn.setAttribute("aria-expanded", "false");
+          document.body.classList.remove("mobile-menu-open");
+          document.body.style.top = "";
+          document.body.style.position = "";
+          document.body.style.width = "";
+          window.scrollTo(0, lastScrollY || 0);
+        };
+
+        var openMobileMenu = function () {
+          if (headerNav.classList.contains("open")) return;
+          lastScrollY = window.scrollY || window.pageYOffset || 0;
+          headerNav.classList.add("open");
+          mobileMenuBtn.setAttribute("aria-expanded", "true");
+          document.body.classList.add("mobile-menu-open");
+          document.body.style.position = "fixed";
+          document.body.style.top = "-" + lastScrollY + "px";
+          document.body.style.width = "100%";
+        };
+
+        mobileMenuBtn.setAttribute("aria-controls", "headerNav");
+        mobileMenuBtn.setAttribute("aria-expanded", "false");
+
         mobileMenuBtn.addEventListener("click", function () {
-          headerNav.classList.toggle("open");
+          if (headerNav.classList.contains("open")) {
+            closeMobileMenu();
+            return;
+          }
+          openMobileMenu();
         });
+
+        headerNav.addEventListener("click", function (event) {
+          var target = event.target;
+          if (target && target.closest && target.closest("a")) {
+            closeMobileMenu();
+          }
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!headerNav.classList.contains("open")) return;
+          if (headerNav.contains(event.target) || mobileMenuBtn.contains(event.target)) return;
+          closeMobileMenu();
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape") {
+            closeMobileMenu();
+          }
+        });
+
+        var syncMenuOnViewportChange = function () {
+          if (desktopQuery.matches) {
+            closeMobileMenu();
+          }
+        };
+
+        if (desktopQuery.addEventListener) {
+          desktopQuery.addEventListener("change", syncMenuOnViewportChange);
+        } else if (desktopQuery.addListener) {
+          desktopQuery.addListener(syncMenuOnViewportChange);
+        }
+
+        window.addEventListener("resize", syncMenuOnViewportChange);
       }
     </script>
   </body>
