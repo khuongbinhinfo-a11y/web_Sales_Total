@@ -27,6 +27,56 @@ const supportDock = document.getElementById("supportDock");
 const supportDockToggle = document.getElementById("supportDockToggle");
 const dropMyProducts   = document.getElementById("dropMyProducts");
 const dropLogout       = document.getElementById("dropLogout");
+const headerSearchWrap = document.getElementById("headerSearchWrap");
+const routeLinks = Array.from(document.querySelectorAll("[data-route-link]"));
+const routedSections = Array.from(document.querySelectorAll("[data-views]"));
+const homeHeroBadge = document.getElementById("homeHeroBadge");
+const homeHeroTitleMain = document.getElementById("homeHeroTitleMain");
+const homeHeroTitleSub = document.getElementById("homeHeroTitleSub");
+const homeHeroTitleTail = document.getElementById("homeHeroTitleTail");
+const homeHeroDesc = document.getElementById("homeHeroDesc");
+const homeHeroPrimaryCta = document.getElementById("homeHeroPrimaryCta");
+const homeHeroSecondaryCta = document.getElementById("homeHeroSecondaryCta");
+const homePathwaysEyebrow = document.getElementById("homePathwaysEyebrow");
+const homePathwaysTitle = document.getElementById("homePathwaysTitle");
+const homePathwaysSub = document.getElementById("homePathwaysSub");
+const homePathwayGrid = document.getElementById("homePathwayGrid");
+const homeBenefitsEyebrow = document.getElementById("homeBenefitsEyebrow");
+const homeBenefitsTitle = document.getElementById("homeBenefitsTitle");
+const homeBenefitsSub = document.getElementById("homeBenefitsSub");
+const homeBenefitsGrid = document.getElementById("homeBenefitsGrid");
+const pageHeroKicker = document.getElementById("pageHeroKicker");
+const pageHeroTitle = document.getElementById("pageHeroTitle");
+const pageHeroDesc = document.getElementById("pageHeroDesc");
+const pageHeroTags = document.getElementById("pageHeroTags");
+const pageHeroActions = document.getElementById("pageHeroActions");
+const pageHeroSide = document.getElementById("pageHeroSide");
+const pageHeroVideo = document.querySelector(".page-hero-video");
+const pageHeroVideoSource = document.querySelector(".page-hero-video source");
+const routeStoryContent = document.getElementById("routeStoryContent");
+const webBuildContent = document.getElementById("webBuildContent");
+const catalogEyebrow = document.getElementById("catalogEyebrow");
+const catalogTitle = document.getElementById("catalogTitle");
+const catalogSub = document.getElementById("catalogSub");
+const productsTitle = document.getElementById("productsTitle");
+const howEyebrow = document.getElementById("howEyebrow");
+const howTitle = document.getElementById("howTitle");
+const howSub = document.getElementById("howSub");
+const webDemoEyebrow = document.getElementById("webDemoEyebrow");
+const webDemoSectionTitle = document.getElementById("webDemoSectionTitle");
+const webDemoSectionSub = document.getElementById("webDemoSectionSub");
+const footerCtaTitle = document.getElementById("footerCtaTitle");
+const footerCtaDesc = document.getElementById("footerCtaDesc");
+const supportDockEyebrow = document.getElementById("supportDockEyebrow");
+const supportDockTitle = document.getElementById("supportDockTitle");
+const supportDockCopy = document.getElementById("supportDockCopy");
+const supportZaloTitle = document.getElementById("supportZaloTitle");
+const supportZaloSub = document.getElementById("supportZaloSub");
+const supportPhoneTitle = document.getElementById("supportPhoneTitle");
+const supportPhoneSub = document.getElementById("supportPhoneSub");
+const supportRouteAction = document.getElementById("supportRouteAction");
+const supportRouteTitle = document.getElementById("supportRouteTitle");
+const supportRouteSub = document.getElementById("supportRouteSub");
 
 const SUPPORT_DOCK_STORAGE_KEY = "wst_support_dock_collapsed";
 
@@ -189,77 +239,14 @@ const T = {
     hero_logo_app:"AI chat & form",
     hero_logo_pro:"Biểu đồ rõ",
     hero_logo_web_tile:"Checkout gọn",
-    hero_logo_web:"Thiết kế website chuyên nghiệp",
-    hero_logo_web_sub:"Landing page, web bán hàng, web thương hiệu",
-    web_spotlight_badge:"Thiết kế web",
-    web_spotlight_title:"Thiết kế website chuyên nghiệp",
-    web_spotlight_sub:"Landing page, web bán hàng, web thương hiệu triển khai gọn.",
-    web_demo_eyebrow:"Web Demo",
-    web_demo_title:"Thiết Kế Web Chuyên Nghiệp",
-    web_demo_sub:"Xem mẫu web demo theo từng ngành phổ biến.",
-    web_demo_view:"Xem mẫu web demo",
-    trust_products:"Sản phẩm", trust_orders:"Đơn đã giao", trust_rating:"Đánh giá", trust_support:"Hỗ trợ",
-    cat_title:"Danh mục sản phẩm", cat_sub:"Chọn danh mục hoặc xem tất cả sản phẩm bên dưới", cat_all:"Tất cả",
-    cat_hoctap:"Học tập", cat_lamviec:"Làm việc",
-    products_title:"Sản phẩm bán chạy",
-    how_title:"Hướng dẫn mua hàng", how_sub:"Chỉ 3 bước đơn giản để nhận key tự động",
-    step1_t:"Chọn sản phẩm", step1_d:"Duyệt danh mục, chọn gói phù hợp và bấm Mua ngay.",
-    step2_t:"Thanh toán", step2_d:"Quét QR tự động, nhanh chóng.",
-    step3_t:"Nhận key tự động", step3_d:"Key hiển thị ngay trên trang thanh toán và email sau khi thanh toán thành công.",
-    footer_desc:"Nền tảng bán key phần mềm bản quyền tự động. Thanh toán linh hoạt, giao key ngay.",
-    footer_quick:"Truy cập nhanh", footer_policy:"Chính sách", footer_contact:"Liên hệ",
-    card_buy:"Mua ngay", card_sold:"đã bán",
-    card_status_locked:"Tạm khóa",
-    card_status_coming_soon:"Coming soon",
-    card_cta_locked:"Xem lý do tạm khóa",
-    card_cta_coming_soon:"Xem trước sản phẩm",
-    card_note_locked:"Sản phẩm đang tạm khóa để cập nhật hoặc xử lý lỗi.",
-    card_note_coming_soon:"Sản phẩm đang được đưa lên trước để quảng cáo, chưa mở bán.",
-    tag_best:"NÊN CHỌN",
-    cycle_monthly:"Tháng", cycle_yearly:"Năm", cycle_one_time:"Một lần",
-    error_create:"Không tạo được đơn hàng",
-    notice_fallback:"Đang hiển thị dữ liệu demo — API/DB chưa sẵn sàng.",
-    notice_empty:"Catalog đang trống, hãy seed dữ liệu.",
-    notice_preview_title:"Đang chạy ở chế độ preview",
-    notice_preview_detail:"Vẫn hiển thị danh sách sản phẩm demo để trang chủ không bị trắng. Muốn tạo đơn thật trên Vercel, hãy cấu hình DATABASE_URL.",
-    notice_db_down_detail:"API đang chạy nhưng cơ sở dữ liệu chưa kết nối. Trang chủ đang dùng dữ liệu demo tạm thời.",
-    notice_live_title:"Kết nối catalog thành công",
-    notice_live_detail:"Dữ liệu sản phẩm đang lấy trực tiếp từ API live.",
-    notice_search_empty:"Không có sản phẩm phù hợp với bộ lọc hiện tại.",
-    alert_preview:"Preview mode: API/DB chưa sẵn sàng. Vui lòng bật PostgreSQL để tạo đơn thật.",
-    modal_login_title:"Đăng nhập",
-    modal_login_desc:"Nhập email để đăng nhập.",
-    modal_login_email_label:"Email",
-    modal_login_password_label:"Mật khẩu",
-    modal_login_btn:"Đăng nhập",
-    modal_login_error_email:"Vui lòng nhập email hợp lệ",
-    modal_login_error_password:"Mật khẩu tối thiểu 8 ký tự",
-    modal_login_error_db:"Không thể đăng nhập. Vui lòng thử lại.",
-    modal_auth_error_network:"Không kết nối được máy chủ. Vui lòng thử lại.",
-    modal_login_no_account:"Chưa có tài khoản?",
-    modal_register_link:"Đăng ký ngay",
-    modal_register_title:"Đăng ký",
-    modal_register_desc:"Nhập email và họ tên để tạo tài khoản mới.",
-    modal_register_name_label:"Họ tên",
-    modal_register_password_label:"Mật khẩu",
-    modal_register_btn:"Đăng ký",
-    modal_register_error_name:"Vui lòng nhập họ tên",
-    modal_register_error_password:"Mật khẩu tối thiểu 8 ký tự",
-    modal_register_has_account:"Đã có tài khoản?",
-    modal_login_link:"Đăng nhập ngay",
-    modal_google_or:"Hoặc tiếp tục với Google",
-    modal_google_not_ready:"Đăng nhập Google chưa được bật.",
-    modal_google_failed:"Không thể đăng nhập bằng Google. Vui lòng thử lại.",
-    nav_register:"Đăng ký",
-    testimonials_title:"Đánh giá từ khách hàng",
-    testimonials_sub:"Hơn 10,000 khách hàng hài lòng",
-    testimonial_1:"\"Key giao rất nhanh, dùng thử ngay được, chất lượng tốt. Sẽ quay lại.\"",
-    testimonial_author_1:"Dũng LÊ",
-    testimonial_2:"\"Tư vấn tận tình, hỗ trợ 24/7. Rất uy tín. Giá cả hợp lý.\"",
-    testimonial_author_2:"Nga Trương",
-    testimonial_3:"\"Mua lần thứ 5 rồi. Luôn ổn định. Đặc biệt hỗ trợ nhanh.\"",
-    testimonial_author_3:"Trần NGọc Hải",
-    purchased_title:"Sản phẩm đã mua",
+    how_title:"Hướng dẫn mua hàng",
+    how_sub:"3 bước nhanh để mua và nhận key/app",
+    step1_t:"Chọn sản phẩm",
+    step1_d:"Chọn app hoặc key phù hợp với nhu cầu của bạn.",
+    step2_t:"Thanh toán",
+    step2_d:"Quét QR và hoàn tất thanh toán nhanh.",
+    step3_t:"Nhận key / quyền dùng",
+    step3_d:"Hệ thống trả key hoặc quyền tải app ngay sau thanh toán.",
     wallet_title:"💰 Số dư Credit",
     wallet_empty:"Chưa có credit",
     purchased_subs_title:"📋 Gói đang sử dụng",
@@ -392,6 +379,1786 @@ let catalogMode = "loading";
 const ACCOUNT_DOWNLOADS_PATH = "/account?tab=downloads";
 
 function t(k){ return (T[lang]||T.vi)[k] || k; }
+
+function getRouteName(pathname = window.location.pathname) {
+  const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
+  if (cleaned === "/" || cleaned === "/pricing") return "home";
+  if (cleaned === "/thiet-ke-web") return "web";
+  if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo") return "demo";
+  if (cleaned === "/phan-mem" || cleaned === "/san-pham") return "software";
+  if (cleaned === "/phan-mem/hoc-tap" || cleaned === "/san-pham/hoc-tap") return "study";
+  if (cleaned === "/phan-mem/lam-viec" || cleaned === "/san-pham/lam-viec") return "work";
+  if (cleaned === "/huong-dan") return "guide";
+  if (cleaned === "/lien-he") return "contact";
+  return "home";
+}
+
+const currentRoute = getRouteName();
+
+function routeNeedsCatalog(route = currentRoute) {
+  return route === "software" || route === "study" || route === "work";
+}
+
+function getForcedCatalogCategory(route = currentRoute) {
+  if (route === "study") return "hoctap";
+  if (route === "work") return "lamviec";
+  return null;
+}
+
+function getPrimaryNavRoute(route = currentRoute) {
+  if (route === "demo") return "web";
+  if (route === "study" || route === "work") return "software";
+  return route;
+}
+
+const PUBLIC_PAGE_CONTENT = {
+  vi: {
+    baseTitle: "Ứng Dụng Thông Minh",
+    supportStatic: {
+      zaloTitle: "Zalo tư vấn",
+      zaloSub: "Nhắn hỗ trợ trực tiếp",
+      phoneTitle: "Gọi 0902 96 46 85",
+      phoneSub: "Trao đổi nhanh nhu cầu"
+    },
+    home: {
+      pageTitle: "Ứng Dụng Thông Minh | Trang mẹ giải pháp số",
+      hero: {
+        badge: "Trang mẹ giải pháp số",
+        titleMain: "Từ website đến phần mềm,",
+        titleSub: "đi thẳng vào đúng nhánh",
+        desc: "Home mới chỉ giữ vai trò định hướng. Bạn chọn đúng nhánh trước, rồi xem nội dung sâu hơn ở trang con thay vì bị cuốn vào một trang bán hàng lẫn lộn.",
+        primary: { label: "Đi vào nhánh Thiết kế Web", href: "/thiet-ke-web" },
+        secondary: { label: "Đi vào nhánh Phần mềm", href: "/phan-mem" }
+      },
+      banner: [
+        { label: "Hero video định vị", sub: "Trang mẹ rõ vai trò", href: "/" },
+        { label: "Thiết kế Web", sub: "Landing page, web công ty, web bán hàng", href: "/thiet-ke-web" },
+        { label: "Mẫu demo", sub: "Xem nhanh web theo ngành", href: "/mau-demo" },
+        { label: "Phần mềm", sub: "App học tập và công cụ làm việc", href: "/phan-mem" },
+        { label: "Học tập", sub: "Nhánh con cho học sinh và ôn luyện", href: "/phan-mem/hoc-tap" },
+        { label: "Làm việc", sub: "Nhánh con cho video, quản lý, AI tool", href: "/phan-mem/lam-viec" },
+        { label: "Hướng dẫn", sub: "Mua, nhận key, tải app", href: "/huong-dan" },
+        { label: "Liên hệ", sub: "Zalo, điện thoại, fanpage", href: "/lien-he" }
+      ],
+      pathways: {
+        eyebrow: "Hai nhánh chính",
+        title: "Home chỉ làm nhiệm vụ dẫn đường",
+        sub: "Khách vào trang chủ sẽ thấy rất rõ hai hướng đi chính: làm web hoặc tìm phần mềm. Các khối chi tiết được chuyển xuống trang con để bớt rối và dễ chốt nhu cầu hơn.",
+        cards: [
+          {
+            eyebrow: "Nhánh 01",
+            title: "Thiết kế Web",
+            text: "Dành cho người cần landing page, web công ty, web bán hàng và muốn xem mẫu demo theo ngành trước khi trao đổi.",
+            href: "/thiet-ke-web",
+            cta: "Mở nhánh web",
+            meta: ["Landing page", "Mẫu demo", "Tư vấn theo ngành"]
+          },
+          {
+            eyebrow: "Nhánh 02",
+            title: "Phần mềm",
+            text: "Dành cho người cần app học tập, công cụ làm việc, AI mini app và khu tải phần mềm có key rõ ràng.",
+            href: "/phan-mem",
+            cta: "Mở nhánh phần mềm",
+            meta: ["Học tập", "Làm việc", "Tải app & key"]
+          }
+        ]
+      },
+      benefits: {
+        eyebrow: "Ba lợi ích",
+        title: "Gọn hơn nhưng định vị rõ hơn",
+        sub: "Không đổi chức năng cốt lõi, chỉ sắp xếp lại để khách dễ hiểu site đang có gì và nên đi đâu tiếp theo.",
+        items: [
+          {
+            title: "Đi đúng nhánh ngay từ đầu",
+            text: "Khách mới không còn phải lướt qua danh mục sản phẩm dày đặc trước khi hiểu site đang bán web hay phần mềm."
+          },
+          {
+            title: "Trang con có chiều sâu riêng",
+            text: "Mỗi khu vực được nói đúng việc của nó: web có demo và hướng triển khai, phần mềm có catalog và hướng dẫn mua."
+          },
+          {
+            title: "Giữ nguyên logic đang chạy",
+            text: "Luồng đăng nhập, account, mua sản phẩm, product detail và admin vẫn giữ nguyên; chỉ thay phần trình bày public."
+          }
+        ]
+      },
+      support: {
+        eyebrow: "Đi nhanh hơn",
+        title: "Cần người chỉ đúng nhánh?",
+        copy: "Nếu bạn chưa chắc nên làm web hay tìm phần mềm, chỉ cần mở đúng nhánh hoặc nhắn Zalo để được gợi ý nhanh.",
+        routeAction: { href: "/thiet-ke-web", label: "Mở nhánh Thiết kế Web", sub: "Hoặc sang Phần mềm nếu bạn cần app", icon: "GO" }
+      },
+      footerCta: {
+        title: "Chọn công cụ phù hợp cho công việc của bạn",
+        desc: "Đi nhanh đến nhóm giải pháp cần dùng hoặc liên hệ để được tư vấn rõ ràng."
+      }
+    },
+    routes: {
+      web: {
+        pageTitle: "Thiết kế Web | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "Thiết kế Web",
+          title: "Website theo ngành, xem demo trước rồi mới chốt",
+          desc: "Trang này gom lại những gì khách cần khi hỏi làm web: định hướng, mẫu demo và điểm chạm tư vấn, thay vì trộn lẫn với catalog phần mềm.",
+          tags: ["Landing page", "Web công ty", "Web bán hàng", "Tư vấn theo ngành"],
+          actions: [
+            { label: "Xem mẫu demo", href: "/mau-demo", variant: "accent" },
+            { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+          ]
+        },
+        side: {
+          label: "Nhánh này dành cho",
+          title: "Khi bạn cần lên website mới",
+          items: [
+            "Muốn có trang giới thiệu rõ ràng để lấy lead hoặc chốt đơn.",
+            "Muốn xem mẫu demo theo ngành trước khi trao đổi phạm vi.",
+            "Muốn khu web tách riêng khỏi khu phần mềm để đỡ rối."
+          ]
+        },
+        story: {
+          eyebrow: "Cấu trúc mới",
+          title: "Nhánh web giờ có không gian riêng",
+          copy: "Tất cả nội dung mang tính giới thiệu dịch vụ web được gom về một khu rõ ràng hơn: có hướng chọn ngành, khu demo và CTA tư vấn.",
+          cards: [
+            { title: "Xem theo ngành", text: "Công ty, shop, giáo dục, spa và local business đều có chỗ xem nhanh.", linkLabel: "Mở kho mẫu demo", linkHref: "/mau-demo" },
+            { title: "Đi từ mục tiêu", text: "Khách có thể chọn web để lấy lead, bán hàng, đặt lịch hay xây thương hiệu.", linkLabel: "Xem nhánh web", linkHref: "/thiet-ke-web" },
+            { title: "Chốt trao đổi gọn", text: "Sau khi có hướng, khách nhắn Zalo để nhận tư vấn sát ngành và phạm vi hơn.", linkLabel: "Nhắn Zalo", linkHref: "https://zalo.me/0902964685", external: true }
+          ],
+          checklistTitle: "Phù hợp nếu",
+          checklist: [
+            "Bạn đang cần website mới cho kinh doanh hoặc dịch vụ.",
+            "Bạn muốn xem demo trước khi chốt hướng triển khai.",
+            "Bạn muốn giao diện public nói rõ site có làm web."
+          ]
+        },
+        support: {
+          eyebrow: "Nhánh web",
+          title: "Muốn chốt nhanh hướng website?",
+          copy: "Xem demo rồi nhắn Zalo để trao đổi theo ngành, mục tiêu chốt lead hoặc bán hàng.",
+          routeAction: { href: "/mau-demo", label: "Mở kho mẫu demo", sub: "Xem nhanh từng nhóm ngành", icon: "WEB" }
+        },
+        sections: {
+          webDemo: {
+            eyebrow: "Kho mẫu web",
+            title: "Mẫu demo website theo từng nhóm ngành",
+            sub: "Từ dịch vụ, shop đến giáo dục và spa, bạn có thể xem phong cách trước khi triển khai."
+          },
+          footerCta: {
+            title: "Muốn có website gọn, rõ và chốt lead tốt hơn?",
+            desc: "Đi qua khu mẫu demo để chọn hướng trước, hoặc nhắn Zalo để được gợi ý layout phù hợp với ngành của bạn."
+          }
+        }
+      },
+      demo: {
+        pageTitle: "Mẫu Demo Website | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "Mẫu Demo",
+          title: "Kho mẫu để chọn phong cách web nhanh hơn",
+          desc: "Trang này dành cho bước xem nhanh trước khi tư vấn: nhìn bố cục, tone nội dung và cách website phù hợp với từng ngành.",
+          tags: ["Demo theo ngành", "Xem trước giao diện", "Dễ chọn hướng", "Không lẫn catalog"],
+          actions: [
+            { label: "Quay lại nhánh web", href: "/thiet-ke-web", variant: "outline" },
+            { label: "Nhắn Zalo để chốt mẫu", href: "https://zalo.me/0902964685", variant: "accent", external: true }
+          ]
+        },
+        side: {
+          label: "Cách dùng",
+          title: "Xem demo để rút ngắn trao đổi",
+          items: [
+            "Chọn ngành gần nhu cầu nhất để xem tone và bố cục.",
+            "Ghi lại mẫu bạn thích để trao đổi nhanh hơn.",
+            "Nếu cần, đi tiếp sang Zalo để chốt phạm vi triển khai."
+          ]
+        },
+        story: {
+          eyebrow: "Lợi ích",
+          title: "Demo không còn nằm lẫn ở home",
+          copy: "Khối demo được chuyển về đúng chỗ để homepage không giống một trang bán template, nhưng khách vẫn xem mẫu rất nhanh khi cần.",
+          cards: [
+            { title: "Ít nhiễu hơn", text: "Home chỉ định vị. Demo nằm ở trang con nên luồng nhìn gọn hơn." },
+            { title: "Dễ so ngành", text: "Mỗi mẫu đại diện cho một kiểu nhu cầu khác nhau: dịch vụ, shop, giáo dục, spa, local." },
+            { title: "Đi thẳng tư vấn", text: "Khi đã chọn được hướng, khách nhắn hỗ trợ để chốt chi tiết triển khai.", linkLabel: "Liên hệ nhanh", linkHref: "/lien-he" }
+          ],
+          checklistTitle: "Bạn nên vào trang này khi",
+          checklist: [
+            "Đang cân nhắc kiểu trình bày phù hợp với ngành.",
+            "Muốn xem cách một trang web có thể chốt lead hoặc chốt đơn.",
+            "Muốn giảm thời gian mô tả ý tưởng ban đầu."
+          ]
+        },
+        support: {
+          eyebrow: "Khu demo",
+          title: "Đã thấy mẫu gần đúng với nhu cầu?",
+          copy: "Bạn có thể quay lại nhánh web hoặc nhắn trực tiếp để chốt layout gần nhất.",
+          routeAction: { href: "/thiet-ke-web", label: "Quay lại nhánh web", sub: "Đọc phần định hướng triển khai", icon: "DEMO" }
+        },
+        sections: {
+          webDemo: {
+            eyebrow: "Mẫu tham chiếu",
+            title: "So nhanh demo theo từng dạng kinh doanh",
+            sub: "Chọn một ngành gần nhất với nhu cầu thực tế để rút ngắn bước định hướng."
+          },
+          footerCta: {
+            title: "Đã chọn được phong cách gần đúng?",
+            desc: "Hãy quay lại nhánh web hoặc liên hệ trực tiếp để chốt trang nào cần làm trước và cách triển khai phù hợp."
+          }
+        }
+      },
+      software: {
+        pageTitle: "Phần mềm | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "Phần mềm",
+          title: "Nhóm app và công cụ được gom theo đúng nhu cầu sử dụng",
+          desc: "Khu phần mềm là trang con riêng cho catalog tải về, chia thành hai nhánh nhỏ là Học tập và Làm việc để khách vào đúng nhóm nhanh hơn.",
+          tags: ["Catalog rõ nhóm", "App học tập", "Công cụ làm việc", "Tải app & key"],
+          actions: [
+            { label: "Xem nhánh Học tập", href: "/phan-mem/hoc-tap", variant: "outline" },
+            { label: "Xem nhánh Làm việc", href: "/phan-mem/lam-viec", variant: "accent" }
+          ]
+        },
+        side: {
+          label: "Cấu trúc mới",
+          title: "Một nhánh cha, hai nhánh con",
+          items: [
+            "Trang /phan-mem là khu tổng hợp và định hướng.",
+            "Trang /phan-mem/hoc-tap lọc đúng nhóm học tập.",
+            "Trang /phan-mem/lam-viec lọc đúng nhóm công cụ làm việc."
+          ]
+        },
+        story: {
+          eyebrow: "Catalog gọn hơn",
+          title: "Không còn đẩy toàn bộ sản phẩm lên home",
+          copy: "Khối danh mục, card sản phẩm và hướng dẫn mua được chuyển về khu phần mềm để đúng bối cảnh hơn, còn logic checkout vẫn giữ nguyên.",
+          cards: [
+            { title: "Nhánh Học tập", text: "Tập trung các phần mềm ôn tập, luyện kiến thức và gói liên quan đến học sinh.", linkLabel: "Mở nhánh Học tập", linkHref: "/phan-mem/hoc-tap" },
+            { title: "Nhánh Làm việc", text: "Tập trung các app phục vụ video, quản lý, tự động hóa và vận hành hằng ngày.", linkLabel: "Mở nhánh Làm việc", linkHref: "/phan-mem/lam-viec" },
+            { title: "Tải app & key", text: "Sau khi mua, người dùng vẫn vào tài khoản để xem tải xuống và thông tin key/app.", linkLabel: "Mở tài khoản", linkHref: "/account?tab=downloads" }
+          ],
+          checklistTitle: "Khi nào nên vào trang này",
+          checklist: [
+            "Bạn đã xác định đang cần phần mềm thay vì website.",
+            "Bạn muốn xem toàn bộ app đang có trên site.",
+            "Bạn muốn đọc hướng dẫn mua và nhận key trong đúng ngữ cảnh."
+          ]
+        },
+        support: {
+          eyebrow: "Nhánh phần mềm",
+          title: "Cần đi đúng nhóm app ngay?",
+          copy: "Nếu bạn đã biết mình cần app học tập hay công cụ làm việc, dùng nút dẫn đường để vào thẳng khu phù hợp.",
+          routeAction: { href: "/phan-mem/hoc-tap", label: "Đi tới nhánh Học tập", sub: "Hoặc chuyển sang Làm việc từ menu", icon: "APP" }
+        },
+        sections: {
+          catalog: {
+            eyebrow: "Catalog phần mềm",
+            title: "Kho Ứng Dụng và Key Phần Mềm",
+            sub: ""
+          },
+          productsTitle: "Phần mềm và công cụ",
+          how: {
+            eyebrow: "Hướng dẫn",
+            title: "Các Bước Chọn Sản Phẩm",
+            sub: ""
+          },
+          footerCta: {
+            title: "Cần chọn app đúng nhóm trước khi mua?",
+            desc: "Bạn có thể đi sâu vào Học tập hoặc Làm việc, hoặc nhắn hỗ trợ để được chỉ đúng sản phẩm phù hợp nhu cầu."
+          }
+        }
+      },
+      study: {
+        pageTitle: "Phần mềm Học tập | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "Nhánh Học tập",
+          title: "Khu phần mềm dành cho học sinh, ôn tập và luyện kiến thức",
+          desc: "Trang này lọc sẵn đúng nhóm học tập để phụ huynh hoặc học sinh không phải lướt qua các công cụ làm việc không liên quan.",
+          tags: ["Ôn tập", "Học sinh", "Luyện kiến thức", "Lọc đúng nhóm"],
+          actions: [
+            { label: "Xem tất cả phần mềm", href: "/phan-mem", variant: "outline" },
+            { label: "Xem tài khoản & tải app", href: "/account?tab=downloads", variant: "accent" }
+          ]
+        },
+        side: {
+          label: "Điểm mạnh",
+          title: "Một trang con chỉ nói về học tập",
+          items: [
+            "Không bị lẫn với công cụ video, quản lý hay app vận hành.",
+            "Danh mục được lọc sẵn để người xem quyết định nhanh hơn.",
+            "Giữ nguyên luồng mua, tải và xem quyền sử dụng sau thanh toán."
+          ]
+        },
+        story: {
+          eyebrow: "Nhánh con",
+          title: "Tập trung hơn cho người mua phần mềm học tập",
+          copy: "Khi đã đi vào nhánh này, khách chỉ còn thấy phần mềm liên quan đến ôn tập, luyện kiến thức và mục tiêu học hành.",
+          cards: [
+            { title: "Lọc đúng sản phẩm", text: "Danh sách chỉ hiển thị nhóm học tập, giảm nhiễu cho phụ huynh và học sinh." },
+            { title: "Dễ giải thích hơn", text: "Nếu nhân viên gửi link, chỉ cần gửi đúng nhánh học tập là người xem hiểu ngay khu vực cần xem." },
+            { title: "Giữ nguyên checkout", text: "Card sản phẩm, product detail và tài khoản tải app vẫn hoạt động theo logic cũ." }
+          ],
+          checklistTitle: "Phù hợp khi",
+          checklist: [
+            "Bạn đang tìm phần mềm ôn tập cho học sinh.",
+            "Bạn muốn gửi đúng link nhánh học tập cho khách.",
+            "Bạn muốn loại bỏ các app làm việc khỏi trải nghiệm xem."
+          ]
+        },
+        support: {
+          eyebrow: "Học tập",
+          title: "Cần hỗ trợ chọn phần mềm học tập?",
+          copy: "Nếu chưa rõ nên chọn gói nào, hãy vào tài khoản hoặc nhắn hỗ trợ để được hướng dẫn theo nhu cầu học.",
+          routeAction: { href: "/phan-mem", label: "Quay về trang Phần mềm", sub: "Xem lại toàn bộ hai nhánh", icon: "STUDY" }
+        },
+        sections: {
+          catalog: {
+            eyebrow: "Nhóm học tập",
+            title: "Các phần mềm học tập đang có trên site",
+            sub: "Danh sách đã được lọc theo nhánh học tập để phụ huynh và học sinh xem gọn hơn."
+          },
+          productsTitle: "Phần mềm học tập",
+          how: {
+            eyebrow: "Cách mua",
+            title: "Mua, thanh toán và nhận quyền sử dụng",
+            sub: "Luồng cũ được giữ nguyên, chỉ tách trang để nội dung phù hợp hơn với người đang tìm app học tập."
+          },
+          footerCta: {
+            title: "Muốn xem thêm app ngoài nhóm học tập?",
+            desc: "Bạn có thể quay lại khu Phần mềm để xem đầy đủ hai nhánh, hoặc mở tài khoản để quản lý các app đã mua."
+          }
+        }
+      },
+      work: {
+        pageTitle: "Phần mềm Làm việc | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "Nhánh Làm việc",
+          title: "Công cụ giúp làm việc nhanh hơn, gọn hơn và bớt thao tác lặp",
+          desc: "Trang này lọc riêng cho nhóm app phục vụ công việc: video, quản lý, bán hàng, vận hành và các tiện ích tải về.",
+          tags: ["Video Creator", "Quản lý", "Tự động hóa", "App vận hành"],
+          actions: [
+            { label: "Xem tất cả phần mềm", href: "/phan-mem", variant: "outline" },
+            { label: "Liên hệ hỗ trợ chọn app", href: "/lien-he", variant: "accent" }
+          ]
+        },
+        side: {
+          label: "Nhóm này hợp khi",
+          title: "Bạn đang cần app cho công việc thực tế",
+          items: [
+            "Cần công cụ tạo video, quản lý hoặc hỗ trợ bán hàng.",
+            "Muốn tách riêng khu phần mềm làm việc khỏi app học tập.",
+            "Muốn gửi link đúng khu vực cho khách hoặc cộng tác viên."
+          ]
+        },
+        story: {
+          eyebrow: "Nhánh con",
+          title: "Tập trung hơn cho công cụ phục vụ công việc",
+          copy: "Các sản phẩm mang tính vận hành, sáng tạo nội dung và hỗ trợ làm việc được gom lại ở đây để đúng bối cảnh hơn với người dùng kinh doanh.",
+          cards: [
+            { title: "Video và sáng tạo nội dung", text: "Những app như Video Creator phù hợp để sản xuất nội dung và điều phối quy trình nhanh hơn." },
+            { title: "Quản lý và vận hành", text: "Các công cụ quản lý website, bán hàng hoặc chăm sóc khách có thể nằm chung trong nhánh làm việc." },
+            { title: "Giữ nguyên tải xuống", text: "Sau khi mua, người dùng vẫn nhận link tải và thông tin app trong tài khoản như cũ." }
+          ],
+          checklistTitle: "Phù hợp khi",
+          checklist: [
+            "Bạn đang tìm app phục vụ vận hành hoặc sáng tạo nội dung.",
+            "Bạn muốn catalog bớt nhiễu so với việc trộn chung với app học tập.",
+            "Bạn muốn gửi đúng nhánh công cụ làm việc cho khách."
+          ]
+        },
+        support: {
+          eyebrow: "Làm việc",
+          title: "Muốn đi đúng app cho công việc?",
+          copy: "Nếu bạn cần công cụ làm video, quản lý hoặc hỗ trợ bán hàng, đây là khu nên xem trước khi mua.",
+          routeAction: { href: "/phan-mem", label: "Quay về trang Phần mềm", sub: "Xem lại cả hai nhánh", icon: "WORK" }
+        },
+        sections: {
+          catalog: {
+            eyebrow: "Nhóm làm việc",
+            title: "Các app phục vụ công việc và vận hành",
+            sub: "Danh sách dưới đây được lọc riêng theo nhánh làm việc để người xem ra quyết định nhanh hơn."
+          },
+          productsTitle: "Phần mềm làm việc",
+          how: {
+            eyebrow: "Cách mua",
+            title: "Mua app, thanh toán và nhận tải xuống như cũ",
+            sub: "Bạn vẫn dùng quy trình hiện tại, chỉ khác là giao diện public đã gom đúng ngữ cảnh cho nhóm làm việc."
+          },
+          footerCta: {
+            title: "Cần app đúng việc hơn là một danh sách dàn trải?",
+            desc: "Ở nhánh này bạn chỉ nhìn thấy công cụ phục vụ công việc. Nếu cần so thêm, quay lại khu Phần mềm tổng hợp."
+          }
+        }
+      },
+      guide: {
+        pageTitle: "Hướng dẫn | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "",
+          title: "Hướng dẫn mua phần mềm và nhận key nhanh",
+          desc: "",
+          tags: [],
+          actions: []
+        },
+        side: null,
+        story: {
+          eyebrow: "Cách sử dụng",
+          title: "Làm đúng 3 bước là nhận được key/app",
+          copy: "Bạn chỉ cần đi đúng thứ tự dưới đây. Hệ thống giữ nguyên logic hiện tại, chỉ trình bày lại để dễ thao tác hơn cho user.",
+          cards: [
+            { title: "Bước 1 - Chọn sản phẩm", text: "Vào đúng nhóm phần mềm, mở card sản phẩm và kiểm tra gói phù hợp trước khi bấm mua." },
+            { title: "Bước 2 - Thanh toán", text: "Thực hiện thanh toán theo QR/chuyển khoản như hướng dẫn trên màn hình, không cần thao tác phức tạp." },
+            { title: "Bước 3 - Nhận key / tải app", text: "Sau khi thanh toán thành công, key hoặc quyền tải sẽ hiển thị trong tài khoản để bạn sử dụng ngay." }
+          ],
+          checklistTitle: "",
+          checklist: []
+        },
+        support: {
+          eyebrow: "Hướng dẫn",
+          title: "Cần người hỗ trợ ngay trong lúc thao tác?",
+          copy: "Nếu bạn đang mua mà chưa rõ bước nào, hãy liên hệ ngay để được hướng dẫn trực tiếp theo đúng trạng thái đơn hiện tại.",
+          routeAction: { href: "/lien-he", label: "Mở trang Liên hệ", sub: "Gọi hoặc nhắn Zalo ngay", icon: "GUIDE" }
+        },
+        sections: {
+          footerCta: {
+            title: "Sẵn sàng mua hoặc kiểm tra key/app đã nhận?",
+            desc: "Đi thẳng sang khu Phần mềm để chọn sản phẩm, hoặc mở tài khoản để xem key và danh sách tải xuống của bạn."
+          }
+        }
+      },
+      contact: {
+        pageTitle: "Liên hệ | Ứng Dụng Thông Minh",
+        hero: {
+          kicker: "",
+          title: "Liên hệ hỗ trợ nhanh cho user và đơn hàng",
+          desc: "",
+          tags: [],
+          actions: []
+        },
+        side: null,
+        story: {
+          eyebrow: "Kênh hỗ trợ",
+          title: "Chọn đúng kênh theo nhu cầu hỗ trợ",
+          copy: "Mỗi kênh liên hệ phù hợp một mục tiêu khác nhau. Chọn đúng kênh sẽ giúp xử lý nhanh hơn và giảm thời gian chờ.",
+          cards: [
+            { title: "Zalo", text: "Ưu tiên khi cần gửi ảnh lỗi, mã đơn hoặc trao đổi trực tiếp để xử lý nhanh từng bước.", linkLabel: "Mở Zalo", linkHref: "https://zalo.me/0902964685", external: true },
+            { title: "Điện thoại", text: "Dùng khi cần xác nhận gấp về thanh toán, trạng thái đơn hoặc hướng xử lý ngay lập tức.", linkLabel: "Gọi ngay", linkHref: "tel:0902964685" },
+            { title: "Email / Fanpage", text: "Phù hợp khi cần để lại nội dung dài, gửi yêu cầu tổng hợp hoặc theo dõi trao đổi sau đó.", linkLabel: "Mở fanpage", linkHref: "https://www.facebook.com/share/1BFbrsX3UK/?mibextid=wwXIfr", external: true }
+          ],
+          checklistTitle: "",
+          checklist: []
+        },
+        support: {
+          eyebrow: "Liên hệ nhanh",
+          title: "Cần hỗ trợ ngay bây giờ?",
+          copy: "Nhắn Zalo hoặc gọi trực tiếp để được xử lý nhanh theo tình huống thực tế của bạn.",
+          routeAction: { href: "https://zalo.me/0902964685", label: "Mở Zalo tư vấn", sub: "Trao đổi trực tiếp ngay", icon: "CHAT", external: true }
+        },
+        sections: {
+          footerCta: {
+            title: "Muốn quay lại đúng khu trước khi liên hệ?",
+            desc: "Bạn có thể quay về Thiết kế Web hoặc Phần mềm để xác định nhu cầu rõ hơn, rồi liên hệ để được xử lý nhanh và đúng trọng tâm."
+          }
+        }
+      }
+    }
+  },
+  en: {
+    baseTitle: "Ung Dung Thong Minh",
+    supportStatic: {
+      zaloTitle: "Zalo support",
+      zaloSub: "Chat with us directly",
+      phoneTitle: "Call 0902 96 46 85",
+      phoneSub: "Talk through your needs fast"
+    },
+    home: {
+      pageTitle: "Ung Dung Thong Minh | Digital solution hub",
+      hero: {
+        badge: "Parent digital hub",
+        titleMain: "From websites to software,",
+        titleSub: "move into the right branch first",
+        desc: "The new homepage only sets direction. Pick the right branch first, then read deeper content on the child page instead of scrolling through a mixed storefront.",
+        primary: { label: "Open Web Design", href: "/thiet-ke-web" },
+        secondary: { label: "Open Software", href: "/phan-mem" }
+      },
+      banner: [
+        { label: "Hero positioning", sub: "Homepage as a clear parent page", href: "/" },
+        { label: "Web Design", sub: "Landing pages, company sites, shop sites", href: "/thiet-ke-web" },
+        { label: "Demo library", sub: "Preview industry-based samples", href: "/mau-demo" },
+        { label: "Software", sub: "Study apps and work tools", href: "/phan-mem" },
+        { label: "Study branch", sub: "Focused learning apps", href: "/phan-mem/hoc-tap" },
+        { label: "Work branch", sub: "Focused work tools", href: "/phan-mem/lam-viec" },
+        { label: "Guide", sub: "How to buy and download", href: "/huong-dan" },
+        { label: "Contact", sub: "Zalo, phone, fanpage", href: "/lien-he" }
+      ],
+      pathways: {
+        eyebrow: "Two main branches",
+        title: "The homepage now acts as a guide",
+        sub: "Visitors see two clear directions first: web design or software. Deeper sections move to child pages so the public experience feels cleaner and easier to understand.",
+        cards: [
+          {
+            eyebrow: "Branch 01",
+            title: "Web Design",
+            text: "For people who need landing pages, company websites, online shop sites, and want to preview industry demos first.",
+            href: "/thiet-ke-web",
+            cta: "Open web branch",
+            meta: ["Landing pages", "Demo library", "Industry guidance"]
+          },
+          {
+            eyebrow: "Branch 02",
+            title: "Software",
+            text: "For people looking for study apps, work tools, AI mini apps, and downloads with clear key or access delivery.",
+            href: "/phan-mem",
+            cta: "Open software branch",
+            meta: ["Study", "Work", "App downloads"]
+          }
+        ]
+      },
+      benefits: {
+        eyebrow: "Three gains",
+        title: "Cleaner structure, clearer positioning",
+        sub: "Core logic stays the same. Only the public-facing structure changes so people know what the site offers faster.",
+        items: [
+          { title: "The right direction sooner", text: "New visitors do not need to parse a full product catalog before understanding what the site is about." },
+          { title: "Deeper child pages", text: "Each branch now speaks about the right thing: demos for web, catalog and buying flow for software." },
+          { title: "Existing logic stays intact", text: "Login, account, checkout, product pages, and admin are all preserved." }
+        ]
+      },
+      support: {
+        eyebrow: "Move faster",
+        title: "Need help choosing a branch?",
+        copy: "If you are not sure whether you need a website or software, jump into the right branch or message us on Zalo.",
+        routeAction: { href: "/thiet-ke-web", label: "Open Web Design", sub: "Or switch to Software if you need apps", icon: "GO" }
+      },
+      footerCta: {
+        title: "Choose the right tool for your work",
+        desc: "Go straight to the solution group you need or contact us for clear guidance."
+      }
+    },
+    routes: JSON.parse(JSON.stringify({}))
+  }
+};
+
+PUBLIC_PAGE_CONTENT.en.routes = JSON.parse(JSON.stringify(PUBLIC_PAGE_CONTENT.vi.routes));
+
+PUBLIC_PAGE_CONTENT.en.routes.web.pageTitle = "Web Design | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.web.hero = {
+  kicker: "Web Design",
+  title: "Industry-focused websites with demos before consultation",
+  desc: "This page groups the web-design story in one place so visitors do not need to navigate through software cards first.",
+  tags: ["Landing pages", "Company sites", "Shop sites", "Industry guidance"],
+  actions: [
+    { label: "View demos", href: "/mau-demo", variant: "accent" },
+    { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+  ]
+};
+PUBLIC_PAGE_CONTENT.en.routes.demo.pageTitle = "Website Demos | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.software.pageTitle = "Software | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.study.pageTitle = "Study Software | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.work.pageTitle = "Work Software | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.guide.pageTitle = "Guide | Ung Dung Thong Minh";
+PUBLIC_PAGE_CONTENT.en.routes.contact.pageTitle = "Contact | Ung Dung Thong Minh";
+
+Object.assign(PUBLIC_PAGE_CONTENT.vi.home.hero, {
+  badge: "Trang mẹ giải pháp số",
+  titleMain: "Giải Pháp Số",
+  titleSub: "Tiện Dụng Cho Người Kinh Doanh Nhỏ",
+  titleTail: "",
+  desc: ""
+});
+
+PUBLIC_PAGE_CONTENT.vi.home.banner = [
+  { tag: "Trang mẹ", title: "Định vị gọn", meta: "Giải pháp số cho người kinh doanh nhỏ", href: "/", tone: "hub" },
+  { tag: "Thiết kế Web", title: "Website theo ngành", meta: "Landing page, web công ty, web bán hàng", href: "/thiet-ke-web", tone: "web" },
+  { tag: "Phần mềm", title: "App tiện dụng", meta: "Tải app, quản lý key và công cụ vận hành", href: "/phan-mem", tone: "software" },
+  { tag: "Bên trong", title: "Học tập & Làm việc", meta: "Hai nhánh con nằm bên trong khu Phần mềm", href: "/phan-mem", tone: "branch" },
+  { tag: "Hướng dẫn", title: "Mua và nhận app", meta: "Đọc luồng mua, nhận key và tải xuống", href: "/huong-dan", tone: "guide" },
+  { tag: "Liên hệ", title: "Chạm hỗ trợ nhanh", meta: "Zalo, điện thoại và fanpage khi cần", href: "/lien-he", tone: "contact" }
+];
+
+PUBLIC_PAGE_CONTENT.vi.home.pathways = {
+  eyebrow: "",
+  title: "Chọn Giải Pháp Cho Bạn",
+  sub: "",
+  cards: [
+    {
+      eyebrow: "Nhánh chính 01",
+      title: "Thiết kế Web",
+      text: "Website theo ngành, có mẫu demo sẵn, dễ chỉnh sửa và dễ triển khai.",
+      href: "/thiet-ke-web",
+      cta: "Xem nhánh Thiết kế Web",
+      meta: ["Demo ngành", "Landing page", "Web bán hàng"],
+      previewTag: "Website",
+      previewTitle: "Thiết kế Web",
+      previewSub: "",
+      previewItems: [],
+      tone: "web"
+    },
+    {
+      eyebrow: "Nhánh chính 02",
+      title: "Phần mềm",
+      text: "Phần mềm mini, công cụ học tập, làm việc và AI hỗ trợ xử lý công việc nhanh hơn.",
+      href: "/phan-mem",
+      cta: "Xem nhánh Phần mềm",
+      meta: ["Học tập", "Làm việc", "Công cụ"],
+      previewTag: "Phần mềm",
+      previewTitle: "Phần mềm",
+      previewSub: "",
+      previewItems: [],
+      tone: "software"
+    }
+  ]
+};
+
+PUBLIC_PAGE_CONTENT.vi.home.benefits = {
+  eyebrow: "",
+  title: "Chọn đúng giải pháp, Hiệu Quả Nâng Cao",
+  sub: "",
+  items: [
+    {
+      kicker: "Nhu cầu",
+      title: "Xác định việc cần làm",
+      text: "Cần website để giới thiệu, bán hàng hoặc lấy khách thì chọn Thiết kế Web."
+    },
+    {
+      kicker: "Công cụ",
+      title: "Chọn phần mềm phù hợp",
+      text: "Cần app mini, công cụ học tập, làm việc hoặc AI thì vào nhánh Phần mềm."
+    },
+    {
+      kicker: "Hỗ trợ",
+      title: "Đi tiếp rõ ràng",
+      text: "Mỗi nhánh dẫn tới nội dung riêng: demo, sản phẩm, hướng dẫn và liên hệ."
+    }
+  ]
+};
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.home.hero, {
+  badge: "Parent digital hub",
+  titleMain: "Digital Solutions",
+  titleSub: "Useful For Small Business Owners",
+  titleTail: "",
+  desc: ""
+});
+
+PUBLIC_PAGE_CONTENT.en.home.banner = [
+  { tag: "Parent page", title: "Clear positioning", meta: "Digital solutions for small business owners", href: "/", tone: "hub" },
+  { tag: "Web Design", title: "Industry-focused websites", meta: "Landing pages, company sites, sales websites", href: "/thiet-ke-web", tone: "web" },
+  { tag: "Software", title: "Useful apps", meta: "Downloads, access management, practical tools", href: "/phan-mem", tone: "software" },
+  { tag: "Inside", title: "Study & Work", meta: "Two child branches live inside Software", href: "/phan-mem", tone: "branch" },
+  { tag: "Guide", title: "Buy and receive apps", meta: "Read the flow for buying, key delivery, and downloads", href: "/huong-dan", tone: "guide" },
+  { tag: "Contact", title: "Reach support fast", meta: "Zalo, phone, and fanpage when needed", href: "/lien-he", tone: "contact" }
+];
+
+PUBLIC_PAGE_CONTENT.en.home.pathways = {
+  eyebrow: "",
+  title: "Choose The Right Solution",
+  sub: "",
+  cards: [
+    {
+      eyebrow: "Main branch 01",
+      title: "Web Design",
+      text: "Industry-based websites with ready demo samples, easy customization, and straightforward deployment.",
+      href: "/thiet-ke-web",
+      cta: "View the Web Design branch",
+      meta: ["Industry demos", "Landing pages", "Sales websites"],
+      previewTag: "Website",
+      previewTitle: "Web Design",
+      previewSub: "",
+      previewItems: [],
+      tone: "web"
+    },
+    {
+      eyebrow: "Main branch 02",
+      title: "Software",
+      text: "Mini software, study tools, work tools, and AI helpers that speed up practical tasks.",
+      href: "/phan-mem",
+      cta: "View the Software branch",
+      meta: ["Study", "Work", "Tools"],
+      previewTag: "Software",
+      previewTitle: "Software",
+      previewSub: "",
+      previewItems: [],
+      tone: "software"
+    }
+  ]
+};
+
+PUBLIC_PAGE_CONTENT.en.home.benefits = {
+  eyebrow: "",
+  title: "Choose The Right Solution, Higher Efficiency",
+  sub: "",
+  items: [
+    {
+      kicker: "Need",
+      title: "Identify the task first",
+      text: "Choose Web Design when you need a website for presence, sales, or leads."
+    },
+    {
+      kicker: "Tools",
+      title: "Pick the right software",
+      text: "Choose Software when you need mini apps, study tools, work tools, or AI support."
+    },
+    {
+      kicker: "Next",
+      title: "Continue with clarity",
+      text: "Each branch leads to its own demos, products, guide, and contact path."
+    }
+  ]
+};
+
+Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
+  pageTitle: "Thiết kế Web | Ứng Dụng Thông Minh",
+  hero: {
+    kicker: "",
+    title: "Thiết Kế Website Theo Ngành",
+    desc: "",
+    tags: [],
+    actions: []
+  },
+  side: null,
+  story: {
+    eyebrow: "Giới thiệu nhanh",
+    title: "Thiết kế Web và Web triển khai nhanh",
+    copy: "Thiết kế web theo yêu cầu của bạn hoặc có thể chọn mua các mẫu web có sẵn (dùng ngay và tự chỉnh sửa nội dung).",
+    cards: [],
+    checklistTitle: "",
+    checklist: []
+  },
+  support: {
+    eyebrow: "Nhánh web",
+    title: "Muốn chọn mẫu nhanh?",
+    copy: "Xem demo theo ngành trước, sau đó nhắn Zalo để chốt hướng triển khai.",
+    routeAction: { href: "/mau-demo", label: "Mở kho mẫu web", sub: "Xem demo theo từng nhóm ngành", icon: "WEB" }
+  },
+  sections: {
+    webDemo: {
+      eyebrow: "Demo theo ngành",
+      title: "Xem mẫu website trước khi triển khai",
+      sub: "Card nhỏ điều hướng và preview card lớn là cấu trúc chính cần giữ."
+    },
+    footerCta: {
+      title: "Bạn muốn có một website dễ dùng cho ngành của mình?",
+      desc: "Chọn mẫu demo có sẵn, chỉnh theo thương hiệu và triển khai theo nhu cầu thực tế của bạn."
+    }
+  },
+  webBuild: {
+    summary: {
+      eyebrow: "Web mẫu triển khai nhanh",
+      title: "Giải pháp triển khai nhanh cho nhu cầu cần web sớm",
+      copy: "Bạn có thể chọn gói web mẫu triển khai nhanh để dùng ngay, sau đó tự chỉnh nội dung theo hướng dẫn. Phần chi tiết sẽ tiếp tục được mở rộng ở phase sau.",
+      actions: [
+        { label: "Xem mẫu web", href: "/mau-demo", variant: "accent" },
+        { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+      ]
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.software, {
+  hero: {
+    kicker: "",
+    title: "Phần Mềm Tiện Dụng Cho Công Việc",
+    desc: "",
+    tags: [],
+    actions: [],
+    videoSrc: "/Video/hero-phamem.mp4"
+  },
+  side: null,
+  story: {
+    eyebrow: "",
+    title: "Chọn sản phẩm phù hợp",
+    copy: "",
+    cards: [],
+    checklistTitle: "",
+    checklist: [],
+    previewCluster: {
+      defaultId: "study",
+      cards: [
+        {
+          id: "study",
+          label: "Học tập",
+          kind: "Luyện tập, đề thi, lộ trình",
+          pill: "STUDY",
+          title: "Bộ công cụ học tập",
+          desc: "Nhóm phần mềm hỗ trợ ôn luyện, theo dõi tiến độ và tối ưu hiệu quả học mỗi ngày.",
+          features: ["Lộ trình", "Theo dõi tiến độ", "Ôn luyện nhanh"],
+          tone: "study"
+        },
+        {
+          id: "work",
+          label: "Làm việc",
+          kind: "Tự động hóa, quy trình, vận hành",
+          pill: "WORK",
+          title: "Bộ công cụ làm việc",
+          desc: "Nhóm phần mềm giúp giảm thao tác lặp, tăng tốc vận hành và chuẩn hóa quy trình công việc.",
+          features: ["Tự động hóa", "Quy trình", "Năng suất"],
+          tone: "work"
+        },
+        {
+          id: "key",
+          label: "Key phần mềm",
+          kind: "Kích hoạt, gia hạn, cấp quyền",
+          pill: "KEY",
+          title: "Nhóm key phần mềm",
+          desc: "Khu nội dung định hướng cho nhu cầu key phần mềm: kích hoạt, gia hạn và quản lý quyền dùng tạm thời.",
+          features: ["Kích hoạt", "Gia hạn", "Cấp quyền"],
+          tone: "key"
+        }
+      ]
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
+  pageTitle: "Web Design | Smart Apps",
+  hero: {
+    kicker: "",
+    title: "Industry-Focused Website Design",
+    desc: "",
+    tags: [],
+    actions: []
+  },
+  side: null,
+  story: {
+    eyebrow: "Quick intro",
+    title: "Web Design and Fast Deployment Web",
+    copy: "This page prioritizes industry-demo browsing with a small-card navigator and large preview. The fast-deployment branch stays summary-only for now to keep the layout clean and premium.",
+    cards: [],
+    checklistTitle: "",
+    checklist: []
+  },
+  support: {
+    eyebrow: "Web branch",
+    title: "Want to choose a sample quickly?",
+    copy: "Review industry demos first, then contact us to lock the implementation direction.",
+    routeAction: { href: "/mau-demo", label: "Open demo library", sub: "Browse by industry", icon: "WEB" }
+  },
+  sections: {
+    webDemo: {
+      eyebrow: "Industry demos",
+      title: "Preview website samples before implementation",
+      sub: "Small card navigation with a large preview card is the required structure."
+    },
+    footerCta: {
+      title: "Want an easy-to-use website for your industry?",
+      desc: "Choose a ready demo, adapt to your brand, then deploy based on real business needs."
+    }
+  },
+  webBuild: {
+    summary: {
+      eyebrow: "Fast web templates",
+      title: "Quick-launch option when you need a website sooner",
+      copy: "You can pick a fast web template package to go live quickly, then edit content based on guided steps. Detailed expansion will continue in the next phase.",
+      actions: [
+        { label: "View website samples", href: "/mau-demo", variant: "accent" },
+        { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+      ]
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.demo, {
+  hero: {
+    kicker: "Demo Library",
+    title: "Preview web styles before you talk scope",
+    desc: "This page is for fast comparison: layout direction, content tone, and industry fit before consultation.",
+    tags: ["Industry demos", "Fast comparison", "Preview first", "Separate from catalog"],
+    actions: [
+      { label: "Back to Web Design", href: "/thiet-ke-web", variant: "outline" },
+      { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "accent", external: true }
+    ]
+  },
+  side: {
+    label: "How to use it",
+    title: "Use demos to shorten the back-and-forth",
+    items: [
+      "Pick the industry that is closest to your real need.",
+      "Save the sample you like so consultation starts faster.",
+      "Move to Zalo once the direction looks close enough."
+    ]
+  },
+  story: {
+    eyebrow: "Why this page exists",
+    title: "Demos no longer sit inside the homepage",
+    copy: "The demo block now lives in its own page so the homepage can stay focused on direction instead of looking like a template marketplace.",
+    cards: [
+      { title: "Less noise", text: "The homepage positions the site. Demo browsing happens here." },
+      { title: "Better comparisons", text: "Each sample maps to a different business need, from services to local stores." },
+      { title: "Move to contact faster", text: "After you choose a direction, move straight to contact or Zalo.", linkLabel: "Open contact page", linkHref: "/lien-he" }
+    ],
+    checklistTitle: "Open this page when",
+    checklist: [
+      "You are comparing presentation styles by industry.",
+      "You want to see how a site could close leads or orders.",
+      "You want a faster starting point for discussion."
+    ]
+  },
+  support: {
+    eyebrow: "Demo area",
+    title: "Have you found a close enough sample?",
+    copy: "Go back to the web branch or message directly to lock the layout direction in.",
+    routeAction: { href: "/thiet-ke-web", label: "Back to Web Design", sub: "Review the implementation direction", icon: "DEMO" }
+  },
+  sections: {
+    webDemo: {
+      eyebrow: "Reference demos",
+      title: "Compare business-focused demo directions",
+      sub: "Choose the industry that is closest to your real-world use case."
+    },
+    footerCta: {
+      title: "Already found a close visual direction?",
+      desc: "Go back to the web branch or contact us directly to decide what should be built first."
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.software, {
+  hero: {
+    kicker: "",
+    title: "Software Tools For Daily Work",
+    desc: "",
+    tags: [],
+    actions: [],
+    videoSrc: "/Video/hero-phamem.mp4"
+  },
+  side: null,
+  story: {
+    eyebrow: "",
+    title: "Choose the right product",
+    copy: "",
+    cards: [],
+    checklistTitle: "",
+    checklist: [],
+    previewCluster: {
+      defaultId: "study",
+      cards: [
+        {
+          id: "study",
+          label: "Study",
+          kind: "Practice, exam prep, roadmap",
+          pill: "STUDY",
+          title: "Study toolkit",
+          desc: "Software group for learning acceleration, progress tracking, and everyday study efficiency.",
+          features: ["Roadmap", "Tracking", "Fast practice"],
+          tone: "study"
+        },
+        {
+          id: "work",
+          label: "Work",
+          kind: "Automation, workflows, operations",
+          pill: "WORK",
+          title: "Work toolkit",
+          desc: "Software group that reduces repetitive tasks, improves team flow, and supports practical operations.",
+          features: ["Automation", "Workflow", "Productivity"],
+          tone: "work"
+        },
+        {
+          id: "key",
+          label: "Software Keys",
+          kind: "Activation, renewals, access",
+          pill: "KEY",
+          title: "Software key group",
+          desc: "Temporary directional content for software-key needs: activation, renewals, and access handling.",
+          features: ["Activation", "Renewals", "Access"],
+          tone: "key"
+        }
+      ]
+    }
+  },
+  support: {
+    eyebrow: "Software branch",
+    title: "Need to jump into the right app group fast?",
+    copy: "If you already know whether you need learning software or work tools, use the route action to jump straight in.",
+    routeAction: { href: "/phan-mem/hoc-tap", label: "Open Study branch", sub: "Or switch to Work from the menu", icon: "APP" }
+  },
+  sections: {
+    catalog: {
+      eyebrow: "Software catalog",
+      title: "Choose a group first, then browse the product cards",
+      sub: "Products now live in the software branch so the homepage no longer feels like a full storefront."
+    },
+    productsTitle: "Software and tools",
+    how: {
+      eyebrow: "Guide",
+      title: "The same buying flow, presented in the right branch",
+      sub: "It is still the same three-step flow for buying, paying, and receiving access or downloads."
+    },
+    footerCta: {
+      title: "Need to choose the right app group before buying?",
+      desc: "Go deeper into the Study or Work branches, or contact support to get pointed at the most suitable product."
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.study, {
+  hero: {
+    kicker: "Study branch",
+    title: "Learning software for students and practice flow",
+    desc: "This page filters directly to study products so parents and students do not need to scroll through unrelated work tools.",
+    tags: ["Study", "Learning", "Students", "Filtered catalog"],
+    actions: [
+      { label: "View all software", href: "/phan-mem", variant: "outline" },
+      { label: "Account and downloads", href: "/account?tab=downloads", variant: "accent" }
+    ]
+  },
+  side: {
+    label: "What it improves",
+    title: "A child page focused only on learning tools",
+    items: [
+      "No mixing with video, management, or work apps.",
+      "The list is already filtered to reduce decision friction.",
+      "The buying and download flow stays unchanged."
+    ]
+  },
+  story: {
+    eyebrow: "Focused child page",
+    title: "A better fit for visitors shopping for study software",
+    copy: "Once users enter this branch, they only see products related to learning, review, and study support.",
+    cards: [
+      { title: "Correct filtering", text: "Only study-related products are shown, which cuts noise for parents and students." },
+      { title: "Easier to share", text: "Teams can send the exact study branch link instead of asking users to filter manually." },
+      { title: "Same checkout", text: "Product cards, detail pages, and the download account area still work the same way." }
+    ],
+    checklistTitle: "Best used when",
+    checklist: [
+      "You are looking for learning or review software.",
+      "You want to share a focused branch with a customer.",
+      "You want a cleaner browsing experience for study products."
+    ]
+  },
+  support: {
+    eyebrow: "Study",
+    title: "Need help choosing study software?",
+    copy: "If you are unsure which package fits the learning need, move to the account area or message support directly.",
+    routeAction: { href: "/phan-mem", label: "Back to Software", sub: "Review both branches again", icon: "STUDY" }
+  },
+  sections: {
+    catalog: {
+      eyebrow: "Study group",
+      title: "Study software currently available",
+      sub: "The list below is filtered to the study branch for a cleaner experience."
+    },
+    productsTitle: "Study software",
+    how: {
+      eyebrow: "How to buy",
+      title: "Buy, pay, and receive access",
+      sub: "The flow stays the same. Only the public structure is cleaner for study-focused visitors."
+    },
+    footerCta: {
+      title: "Want to compare beyond study tools?",
+      desc: "Go back to the Software branch to see both groups, or open the account area to manage purchased apps."
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.work, {
+  hero: {
+    kicker: "Work branch",
+    title: "Tools for daily work, operations, and content flow",
+    desc: "This page filters to apps used for work: video, management, selling support, operations, and downloadable utilities.",
+    tags: ["Video Creator", "Management", "Automation", "Work tools"],
+    actions: [
+      { label: "View all software", href: "/phan-mem", variant: "outline" },
+      { label: "Contact to choose an app", href: "/lien-he", variant: "accent" }
+    ]
+  },
+  side: {
+    label: "This branch fits when",
+    title: "You need apps for practical work",
+    items: [
+      "You need video, management, or selling-support tools.",
+      "You want work tools separated from study apps.",
+      "You want a focused link to share with customers or teammates."
+    ]
+  },
+  story: {
+    eyebrow: "Focused child page",
+    title: "A cleaner place for work and operations tools",
+    copy: "Products used for daily operations, content production, and practical work support are grouped here for a clearer business context.",
+    cards: [
+      { title: "Video and content flow", text: "Apps like Video Creator fit this branch because they support production and coordination tasks." },
+      { title: "Management and operations", text: "Tools for website management, selling support, or customer handling can sit together in this branch." },
+      { title: "Same downloads", text: "After purchase, users still receive download links and app access in the same account area." }
+    ],
+    checklistTitle: "Best used when",
+    checklist: [
+      "You are looking for apps that support operations or content work.",
+      "You want less catalog noise than a mixed study/work page.",
+      "You want to share a focused work-tools branch."
+    ]
+  },
+  support: {
+    eyebrow: "Work",
+    title: "Want to jump to the right app faster?",
+    copy: "If you need tools for video, management, or sales support, this is the branch to review first.",
+    routeAction: { href: "/phan-mem", label: "Back to Software", sub: "Review both child branches again", icon: "WORK" }
+  },
+  sections: {
+    catalog: {
+      eyebrow: "Work group",
+      title: "Apps for work and operations",
+      sub: "The list below is filtered to the work branch so visitors can decide faster."
+    },
+    productsTitle: "Work software",
+    how: {
+      eyebrow: "How to buy",
+      title: "Buy the app, pay, and receive the download",
+      sub: "The underlying flow is unchanged. Only the public presentation is cleaner for work-focused visitors."
+    },
+    footerCta: {
+      title: "Need the right app rather than a mixed list?",
+      desc: "This branch keeps the focus on work tools. If you need broader comparison, go back to the Software parent page."
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.guide, {
+  hero: {
+    kicker: "",
+    title: "Buying, key delivery, and app downloads in one place",
+    desc: "",
+    tags: [],
+    actions: []
+  },
+  side: null,
+  story: {
+    eyebrow: "New layout",
+    title: "The buying guide is no longer mixed into the homepage",
+    copy: "The guide now sits on its own page so people who need process information can read it in one place, while the homepage stays focused on direction.",
+    cards: [
+      { title: "Step 1", text: "Choose the right branch, then select the product or package that fits." },
+      { title: "Step 2", text: "Pay through the existing flow. The backend logic does not change." },
+      { title: "Step 3", text: "After payment, users receive access, keys, or download details in the account area." }
+    ],
+    checklistTitle: "Useful when",
+    checklist: [
+      "You need to share a guide with a new customer.",
+      "You want fewer repeated questions about key delivery and downloads.",
+      "You want support content separated from the homepage."
+    ]
+  },
+  support: {
+    eyebrow: "Guide",
+    title: "Need help while buying?",
+    copy: "If the guide still leaves questions open, contact support directly while choosing the right product.",
+    routeAction: { href: "/lien-he", label: "Open Contact page", sub: "Call or message on Zalo", icon: "GUIDE" }
+  },
+  sections: {
+    how: {
+      eyebrow: "Three main steps",
+      title: "From choosing a product to receiving the download",
+      sub: "The process is unchanged. It now simply lives on the right child page instead of in the middle of the homepage."
+    },
+    footerCta: {
+      title: "Want to jump into the software branch or the download account now?",
+      desc: "Move straight to the Software branch, or sign in to open the account area and review available downloads."
+    }
+  }
+});
+
+Object.assign(PUBLIC_PAGE_CONTENT.en.routes.contact, {
+  hero: {
+    kicker: "",
+    title: "A dedicated page for direct support",
+    desc: "",
+    tags: [],
+    actions: []
+  },
+  side: null,
+  story: {
+    eyebrow: "Support channels",
+    title: "Choose the contact channel that matches your pace",
+    copy: "The contact page gathers the main support channels so visitors do not need to search through the footer or support dock first.",
+    cards: [
+      { title: "Zalo", text: "Best when you want to describe the need quickly, send images, or decide on the next step.", linkLabel: "Open Zalo", linkHref: "https://zalo.me/0902964685", external: true },
+      { title: "Phone", text: "Best for a quick direct conversation to clarify the need and confirm what comes next.", linkLabel: "Call now", linkHref: "tel:0902964685" },
+      { title: "Email / Fanpage", text: "Useful when you want to leave details or review the discussion later.", linkLabel: "Open fanpage", linkHref: "https://www.facebook.com/share/1BFbrsX3UK/?mibextid=wwXIfr", external: true }
+    ],
+    checklistTitle: "You can contact us to",
+    checklist: [
+      "Ask for help choosing the right branch or product.",
+      "Get support when you are stuck during payment or download.",
+      "Move from browsing to direct discussion faster."
+    ]
+  },
+  support: {
+    eyebrow: "Fast contact",
+    title: "Need support right now?",
+    copy: "Use Zalo or phone to talk directly. The support dock still stays available everywhere for quick access.",
+    routeAction: { href: "https://zalo.me/0902964685", label: "Open Zalo support", sub: "Talk directly now", icon: "CHAT", external: true }
+  },
+  sections: {
+    footerCta: {
+      title: "Want to go back to the right branch before contacting us?",
+      desc: "You can return to Web Design or Software first if the need is already clear, then contact us in the final step."
+    }
+  }
+});
+
+function getPublicContent() {
+  return PUBLIC_PAGE_CONTENT[lang] || PUBLIC_PAGE_CONTENT.vi;
+}
+
+function toClassToken(value) {
+  return String(value || "default").toLowerCase().replace(/[^a-z0-9-]/g, "") || "default";
+}
+
+function isExternalHref(href) {
+  return /^https?:\/\//i.test(String(href || ""));
+}
+
+function buildActionButtonHtml(action) {
+  if (!action) return "";
+  const className = action.variant === "outline" ? "btn btn-outline" : "btn btn-accent";
+  const target = action.external ? ' target="_blank" rel="noopener"' : "";
+  return `<a class="${className}" href="${escapeHtml(action.href)}"${target}>${escapeHtml(action.label)}</a>`;
+}
+
+function buildStoryCardHtml(card) {
+  if (!card) return "";
+  const tone = toClassToken(card.tone);
+  const visual = card.visual
+    ? `<div class="story-card-visual" aria-hidden="true">
+        <div class="story-visual-browser">
+          <span></span>
+          <span></span>
+          <span></span>
+          <i></i>
+          <i></i>
+        </div>
+      </div>`
+    : "";
+  const badge = card.badge ? `<span class="story-card-badge">${escapeHtml(card.badge)}</span>` : "";
+  const tags = card.tags?.length
+    ? `<div class="story-card-tags">${card.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>`
+    : "";
+  const link = card.linkHref && card.linkLabel
+    ? `<a class="story-link" href="${escapeHtml(card.linkHref)}"${card.external ? ' target="_blank" rel="noopener"' : ""}>${escapeHtml(card.linkLabel)}</a>`
+    : "";
+  return `<article class="story-card is-${escapeHtml(tone)}${card.visual ? " has-visual" : ""}">${visual}${badge}<h3>${escapeHtml(card.title)}</h3><p>${escapeHtml(card.text)}</p>${tags}${link}</article>`;
+}
+
+function renderHomeContent(homeContent) {
+  if (!homeContent) return;
+  if (homeHeroBadge) homeHeroBadge.textContent = homeContent.hero.badge;
+  if (homeHeroTitleMain) homeHeroTitleMain.textContent = homeContent.hero.titleMain;
+  if (homeHeroTitleSub) {
+    const heroSub = String(homeContent.hero.titleSub || "").trim();
+    homeHeroTitleSub.textContent = heroSub;
+    homeHeroTitleSub.hidden = !heroSub;
+  }
+  if (homeHeroTitleTail) {
+    const heroTail = String(homeContent.hero.titleTail || "").trim();
+    homeHeroTitleTail.textContent = heroTail;
+    homeHeroTitleTail.hidden = !heroTail;
+  }
+  if (homeHeroDesc) {
+    const heroDesc = String(homeContent.hero.desc || "").trim();
+    homeHeroDesc.textContent = heroDesc;
+    homeHeroDesc.hidden = !heroDesc;
+  }
+  if (homeHeroPrimaryCta && homeContent.hero.primary) {
+    homeHeroPrimaryCta.textContent = homeContent.hero.primary.label;
+    homeHeroPrimaryCta.href = homeContent.hero.primary.href;
+  }
+  if (homeHeroSecondaryCta && homeContent.hero.secondary) {
+    homeHeroSecondaryCta.textContent = homeContent.hero.secondary.label;
+    homeHeroSecondaryCta.href = homeContent.hero.secondary.href;
+  }
+  if (homePathwaysEyebrow) {
+    const pathwaysEyebrow = String(homeContent.pathways.eyebrow || "").trim();
+    homePathwaysEyebrow.textContent = pathwaysEyebrow;
+    homePathwaysEyebrow.hidden = !pathwaysEyebrow;
+  }
+  if (homePathwaysTitle) homePathwaysTitle.textContent = homeContent.pathways.title;
+  if (homePathwaysSub) {
+    const pathwaysSub = String(homeContent.pathways.sub || "").trim();
+    homePathwaysSub.textContent = pathwaysSub;
+    homePathwaysSub.hidden = !pathwaysSub;
+  }
+  if (homePathwayGrid) {
+    homePathwayGrid.innerHTML = homeContent.pathways.cards.map((card) => `
+      <article class="pathway-card is-${escapeHtml(card.tone || "default")}">
+        <div class="pathway-card-visual">
+          <div class="pathway-preview">
+            <span class="pathway-preview-tag">${escapeHtml(card.previewTag || card.eyebrow || "")}</span>
+            <div class="pathway-preview-window">
+              <div class="pathway-preview-top">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="pathway-preview-main">
+                <strong>${escapeHtml(card.previewTitle || card.title)}</strong>
+                <small>${escapeHtml(card.previewSub || card.text)}</small>
+              </div>
+              <div class="pathway-preview-strip">
+                ${(card.previewItems || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pathway-card-body">
+          <span class="pathway-card-eyebrow">${escapeHtml(card.eyebrow)}</span>
+          <h3>${escapeHtml(card.title)}</h3>
+          <p>${escapeHtml(card.text)}</p>
+          <div class="pathway-card-meta">${card.meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
+          <a class="pathway-card-link" href="${escapeHtml(card.href)}">${escapeHtml(card.cta)}</a>
+        </div>
+      </article>
+    `).join("");
+  }
+  if (homeBenefitsEyebrow) {
+    const benefitsEyebrow = String(homeContent.benefits.eyebrow || "").trim();
+    homeBenefitsEyebrow.textContent = benefitsEyebrow;
+    homeBenefitsEyebrow.hidden = !benefitsEyebrow;
+  }
+  if (homeBenefitsTitle) homeBenefitsTitle.textContent = homeContent.benefits.title;
+  if (homeBenefitsSub) {
+    const benefitsSub = String(homeContent.benefits.sub || "").trim();
+    homeBenefitsSub.textContent = benefitsSub;
+    homeBenefitsSub.hidden = !benefitsSub;
+  }
+  if (homeBenefitsGrid) {
+    homeBenefitsGrid.innerHTML = homeContent.benefits.items.map((item, index) => `
+      <article class="value-card">
+        <div class="value-card-top">
+          <span class="value-card-index">0${index + 1}</span>
+          <span class="value-card-kicker">${escapeHtml(item.kicker || "")}</span>
+        </div>
+        <h3>${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.text)}</p>
+      </article>
+    `).join("");
+  }
+}
+
+function renderPageHero(routeContent) {
+  if (!routeContent?.hero) return;
+  const hero = routeContent.hero;
+  if (pageHeroVideo && pageHeroVideoSource) {
+    const nextVideoSrc = String(hero.videoSrc || "/Video/hero-web-brand.mp4").trim();
+    if (pageHeroVideoSource.getAttribute("src") !== nextVideoSrc) {
+      pageHeroVideoSource.setAttribute("src", nextVideoSrc);
+      pageHeroVideo.load();
+    }
+    pageHeroVideo.play().catch(() => {});
+  }
+  if (pageHeroKicker) {
+    const kicker = String(hero.kicker || "").trim();
+    pageHeroKicker.textContent = kicker;
+    pageHeroKicker.hidden = !kicker;
+  }
+  if (pageHeroTitle) pageHeroTitle.textContent = hero.title;
+  if (pageHeroDesc) {
+    const desc = String(hero.desc || "").trim();
+    pageHeroDesc.textContent = desc;
+    pageHeroDesc.hidden = !desc;
+  }
+  if (pageHeroTags) {
+    const tagsHtml = (hero.tags || []).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+    pageHeroTags.innerHTML = tagsHtml;
+    pageHeroTags.hidden = !tagsHtml;
+  }
+  if (pageHeroActions) {
+    const actionsHtml = (hero.actions || []).map(buildActionButtonHtml).join("");
+    pageHeroActions.innerHTML = actionsHtml;
+    pageHeroActions.hidden = !actionsHtml;
+  }
+  if (pageHeroSide) {
+    pageHeroSide.innerHTML = routeContent.side
+      ? `<div class="page-hero-side-panel">
+          <span class="page-hero-side-label">${escapeHtml(routeContent.side.label || "")}</span>
+          <strong>${escapeHtml(routeContent.side.title || "")}</strong>
+          <ul class="page-hero-side-list">${(routeContent.side.items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </div>`
+      : "";
+  }
+}
+
+function renderRouteStory(routeContent) {
+  if (!routeStoryContent) return;
+  const story = routeContent?.story;
+  if (!story) {
+    routeStoryContent.innerHTML = "";
+    return;
+  }
+  if (story.previewCluster?.cards?.length) {
+    const previewItems = story.previewCluster.cards;
+    const defaultId = story.previewCluster.defaultId || previewItems[0].id;
+    routeStoryContent.innerHTML = `
+      <div class="software-preview-heading-wrap">
+        <h2 class="software-preview-heading">${escapeHtml(story.title || "")}</h2>
+      </div>
+      <div class="software-preview-layout">
+        <div class="software-preview-list" role="listbox" aria-label="Software preview groups">
+          ${previewItems.map((item) => `
+            <button class="software-preview-item" data-preview-id="${escapeHtml(item.id)}" role="option" aria-selected="false">
+              <span class="software-preview-item-mini is-${escapeHtml(item.tone || "default")}" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="software-preview-item-copy">
+                <strong>${escapeHtml(item.label || "")}</strong>
+                <small>${escapeHtml(item.kind || "")}</small>
+              </span>
+            </button>
+          `).join("")}
+        </div>
+        <article class="software-preview-card" id="softwarePreviewCard">
+          <div class="software-preview-browser" id="softwarePreviewBrowser">
+            <div class="software-preview-browser-top"><span></span><span></span><span></span></div>
+            <div class="software-preview-page">
+              <div class="software-preview-page-copy">
+                <span id="softwarePreviewPill"></span>
+                <strong id="softwarePreviewTitle"></strong>
+                <small id="softwarePreviewDesc"></small>
+              </div>
+              <div class="software-preview-page-media"><i></i><i></i></div>
+              <div class="software-preview-page-strip"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="software-preview-summary">
+            <h3 id="softwarePreviewLabel"></h3>
+            <p id="softwarePreviewKind"></p>
+            <div class="software-preview-features" id="softwarePreviewFeatures"></div>
+          </div>
+        </article>
+      </div>
+    `;
+
+    const buttons = Array.from(routeStoryContent.querySelectorAll(".software-preview-item"));
+    const pillEl = routeStoryContent.querySelector("#softwarePreviewPill");
+    const titleEl = routeStoryContent.querySelector("#softwarePreviewTitle");
+    const descEl = routeStoryContent.querySelector("#softwarePreviewDesc");
+    const labelEl = routeStoryContent.querySelector("#softwarePreviewLabel");
+    const kindEl = routeStoryContent.querySelector("#softwarePreviewKind");
+    const featuresEl = routeStoryContent.querySelector("#softwarePreviewFeatures");
+    const browserEl = routeStoryContent.querySelector("#softwarePreviewBrowser");
+
+    const renderPreview = (id) => {
+      const item = previewItems.find((entry) => entry.id === id) || previewItems[0];
+      buttons.forEach((btn) => {
+        const active = btn.dataset.previewId === item.id;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      if (pillEl) pillEl.textContent = item.pill || "";
+      if (titleEl) titleEl.textContent = item.title || "";
+      if (descEl) descEl.textContent = item.desc || "";
+      if (labelEl) labelEl.textContent = item.label || "";
+      if (kindEl) kindEl.textContent = item.kind || "";
+      if (featuresEl) featuresEl.innerHTML = (item.features || []).map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
+      if (browserEl) {
+        browserEl.className = `software-preview-browser is-${toClassToken(item.tone || "default")}`;
+      }
+    };
+
+    buttons.forEach((btn) => {
+      const id = btn.dataset.previewId;
+      btn.addEventListener("mouseenter", () => renderPreview(id));
+      btn.addEventListener("focus", () => renderPreview(id));
+      btn.addEventListener("click", () => renderPreview(id));
+    });
+
+    renderPreview(defaultId);
+    return;
+  }
+
+  const cards = story.cards || [];
+  const storyGridClass = cards.length === 1 ? "story-grid story-grid--single" : "story-grid";
+  routeStoryContent.innerHTML = `
+    <div class="story-shell">
+      <div class="story-main">
+        <span class="section-eyebrow">${escapeHtml(story.eyebrow || "")}</span>
+        <h2>${escapeHtml(story.title || "")}</h2>
+        <p>${escapeHtml(story.copy || "")}</p>
+      </div>
+      ${story.checklist?.length ? `<aside class="story-side-card"><strong>${escapeHtml(story.checklistTitle || "")}</strong><ul class="story-checklist">${story.checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></aside>` : ""}
+    </div>
+    ${cards.length ? `<div class="${storyGridClass}">${cards.map(buildStoryCardHtml).join("")}</div>` : ""}
+  `;
+}
+
+function buildWebTemplateCardHtml(card) {
+  if (!card) return "";
+  const tone = toClassToken(card.tone);
+  const demoTarget = isExternalHref(card.demoHref) ? ' target="_blank" rel="noopener"' : "";
+  const buyTarget = isExternalHref(card.buyHref) ? ' target="_blank" rel="noopener"' : "";
+  const meta = card.meta?.length
+    ? `<ul class="web-template-meta">${card.meta.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+    : "";
+  const demoLabel = lang === "en" ? "View demo" : "Xem demo";
+  const buyLabel = lang === "en" ? "Buy this sample" : "Mua mẫu này";
+
+  return `
+    <article class="web-template-card is-${escapeHtml(tone)}">
+      <div class="web-template-preview" aria-hidden="true">
+        <div class="web-template-browser">
+          <span></span>
+          <span></span>
+          <span></span>
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+      </div>
+      <div class="web-template-body">
+        <span class="web-template-label">${escapeHtml(card.label || "")}</span>
+        <h3>${escapeHtml(card.title || "")}</h3>
+        <strong class="web-template-price">${escapeHtml(card.price || "")}</strong>
+        <p>${escapeHtml(card.text || "")}</p>
+        ${meta}
+        <div class="web-template-actions">
+          <a href="${escapeHtml(card.demoHref || "/mau-demo")}"${demoTarget}>${demoLabel}</a>
+          <a class="is-buy" href="${escapeHtml(card.buyHref || "https://zalo.me/0902964685")}"${buyTarget}>${buyLabel}</a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function buildWebInfoCardHtml(card) {
+  if (!card) return "";
+  return `
+    <article class="web-info-card">
+      <h3>${escapeHtml(card.title || "")}</h3>
+      <p>${escapeHtml(card.text || "")}</p>
+      ${card.note ? `<span>${escapeHtml(card.note)}</span>` : ""}
+    </article>
+  `;
+}
+
+function buildWebPriceCardHtml(card) {
+  if (!card) return "";
+  const items = card.items?.length
+    ? `<ul>${card.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+    : "";
+  return `
+    <article class="web-price-card">
+      <h3>${escapeHtml(card.title || "")}</h3>
+      <strong>${escapeHtml(card.price || "")}</strong>
+      <p>${escapeHtml(card.text || "")}</p>
+      ${items}
+    </article>
+  `;
+}
+
+function renderWebBuild(routeContent) {
+  if (!webBuildContent) return;
+  const build = routeContent?.webBuild;
+  if (!build) {
+    webBuildContent.innerHTML = "";
+    return;
+  }
+
+  const templates = build.templates || {};
+  const zero = build.zero || {};
+  const process = build.process || {};
+  const pricing = build.pricing || {};
+  const domain = build.domain || {};
+  const admin = build.admin || {};
+  const final = build.final || {};
+
+  if (build.summary) {
+    const summary = build.summary;
+    webBuildContent.innerHTML = `
+      <div class="web-build-stack">
+        <section class="web-build-summary-card">
+          <div class="web-build-summary-preview" aria-hidden="true">
+            <div class="web-build-summary-browser">
+              <div class="web-build-summary-browser-top"><span></span><span></span><span></span></div>
+              <div class="web-build-summary-page">
+                <div class="web-build-summary-copy">
+                  <span>FAST WEB</span>
+                  <strong>Web mẫu<br/>triển khai nhanh</strong>
+                  <small>Dùng ngay, tự chỉnh nội dung, tối ưu cho nhu cầu triển khai sớm.</small>
+                </div>
+                <div class="web-build-summary-media">
+                  <i></i>
+                  <i></i>
+                </div>
+                <div class="web-build-summary-strip"><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="web-build-summary-content">
+            <span class="section-eyebrow">${escapeHtml(summary.eyebrow || "")}</span>
+            <h2>${escapeHtml(summary.title || "")}</h2>
+            <p>${escapeHtml(summary.copy || "")}</p>
+          </div>
+          <div class="web-final-actions">${(summary.actions || []).map(buildActionButtonHtml).join("")}</div>
+        </section>
+      </div>
+    `;
+    return;
+  }
+
+  webBuildContent.innerHTML = `
+    <div class="web-build-stack">
+      <section class="web-build-block web-template-block">
+        <div class="web-build-head">
+          <span class="section-eyebrow">${escapeHtml(templates.eyebrow || "")}</span>
+          <h2>${escapeHtml(templates.title || "")}</h2>
+          <p>${escapeHtml(templates.copy || "")}</p>
+        </div>
+        <div class="web-template-grid">${(templates.cards || []).map(buildWebTemplateCardHtml).join("")}</div>
+      </section>
+
+      <section class="web-zero-panel">
+        <div>
+          <span class="section-eyebrow">${escapeHtml(zero.eyebrow || "")}</span>
+          <h2>${escapeHtml(zero.title || "")}</h2>
+          <p>${escapeHtml(zero.copy || "")}</p>
+        </div>
+        <div class="web-zero-list">${(zero.items || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
+      </section>
+
+      <section class="web-process-block">
+        <div class="web-build-head center">
+          <span class="section-eyebrow">${escapeHtml(process.eyebrow || "")}</span>
+          <h2>${escapeHtml(process.title || "")}</h2>
+        </div>
+        <div class="web-process-grid">${(process.steps || []).map((step, index) => `
+          <article class="web-process-step">
+            <span>${String(index + 1).padStart(2, "0")}</span>
+            <h3>${escapeHtml(step.title || "")}</h3>
+            <p>${escapeHtml(step.text || "")}</p>
+          </article>
+        `).join("")}</div>
+      </section>
+
+      <section class="web-pricing-block">
+        <div class="web-build-head">
+          <span class="section-eyebrow">${escapeHtml(pricing.eyebrow || "")}</span>
+          <h2>${escapeHtml(pricing.title || "")}</h2>
+        </div>
+        <div class="web-price-grid">${(pricing.cards || []).map(buildWebPriceCardHtml).join("")}</div>
+      </section>
+
+      <section class="web-domain-block">
+        <div class="web-build-head">
+          <span class="section-eyebrow">${escapeHtml(domain.eyebrow || "")}</span>
+          <h2>${escapeHtml(domain.title || "")}</h2>
+        </div>
+        <div class="web-info-grid">${(domain.cards || []).map(buildWebInfoCardHtml).join("")}</div>
+      </section>
+
+      <section class="web-admin-panel">
+        <div class="web-admin-copy">
+          <span class="section-eyebrow">${escapeHtml(admin.eyebrow || "")}</span>
+          <h2>${escapeHtml(admin.title || "")}</h2>
+          <p>${escapeHtml(admin.copy || "")}</p>
+        </div>
+        <div class="web-admin-lists">
+          <div>
+            <strong>${escapeHtml(admin.allowTitle || "")}</strong>
+            ${(admin.allow || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+          </div>
+          <div>
+            <strong>${escapeHtml(admin.limitTitle || "")}</strong>
+            ${(admin.limit || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+          </div>
+        </div>
+      </section>
+
+      <section class="web-final-panel">
+        <div>
+          <h2>${escapeHtml(final.title || "")}</h2>
+          <p>${escapeHtml(final.copy || "")}</p>
+        </div>
+        <div class="web-final-actions">${(final.actions || []).map(buildActionButtonHtml).join("")}</div>
+      </section>
+    </div>
+  `;
+}
+
+function renderSupportDockContent(content) {
+  if (!supportDock) return;
+  const support = content?.support;
+  const staticCopy = getPublicContent().supportStatic || PUBLIC_PAGE_CONTENT.vi.supportStatic;
+  if (supportDockEyebrow) supportDockEyebrow.textContent = support?.eyebrow || "";
+  if (supportDockTitle) supportDockTitle.textContent = support?.title || "";
+  if (supportDockCopy) supportDockCopy.textContent = support?.copy || "";
+  if (supportZaloTitle) supportZaloTitle.textContent = staticCopy.zaloTitle;
+  if (supportZaloSub) supportZaloSub.textContent = staticCopy.zaloSub;
+  if (supportPhoneTitle) supportPhoneTitle.textContent = staticCopy.phoneTitle;
+  if (supportPhoneSub) supportPhoneSub.textContent = staticCopy.phoneSub;
+  if (supportRouteAction && support?.routeAction) {
+    supportRouteAction.href = support.routeAction.href;
+    if (support.routeAction.external) {
+      supportRouteAction.target = "_blank";
+      supportRouteAction.rel = "noopener";
+    } else {
+      supportRouteAction.removeAttribute("target");
+      supportRouteAction.removeAttribute("rel");
+    }
+    supportRouteAction.title = support.routeAction.label;
+    const icon = supportRouteAction.querySelector(".support-chip-icon");
+    if (icon) icon.textContent = support.routeAction.icon || "GO";
+  }
+  if (supportRouteTitle) supportRouteTitle.textContent = support?.routeAction?.label || "";
+  if (supportRouteSub) supportRouteSub.textContent = support?.routeAction?.sub || "";
+}
+
+function renderSectionCopy(routeContent) {
+  const sections = routeContent?.sections || {};
+  if (webDemoEyebrow) webDemoEyebrow.textContent = sections.webDemo?.eyebrow || t("web_demo_eyebrow");
+  if (webDemoSectionTitle) webDemoSectionTitle.textContent = sections.webDemo?.title || t("web_demo_title");
+  if (webDemoSectionSub) webDemoSectionSub.textContent = sections.webDemo?.sub || t("web_demo_sub");
+  if (catalogEyebrow) catalogEyebrow.textContent = sections.catalog?.eyebrow || t("cat_title");
+  if (catalogTitle) catalogTitle.textContent = sections.catalog?.title || t("cat_title");
+  if (catalogSub) {
+    const catalogSubText = sections.catalog?.sub ?? t("cat_sub");
+    catalogSub.textContent = catalogSubText;
+    catalogSub.hidden = !String(catalogSubText || "").trim();
+  }
+  if (productsTitle) productsTitle.textContent = sections.productsTitle || t("products_title");
+  if (howEyebrow) howEyebrow.textContent = sections.how?.eyebrow || t("how_title");
+  if (howTitle) howTitle.textContent = sections.how?.title || t("how_title");
+  if (howSub) {
+    const howSubText = sections.how?.sub ?? t("how_sub");
+    howSub.textContent = howSubText;
+    howSub.hidden = !String(howSubText || "").trim();
+  }
+  const footerCopy = sections.footerCta || getPublicContent().home.footerCta;
+  if (footerCtaTitle) footerCtaTitle.textContent = footerCopy?.title || "";
+  if (footerCtaDesc) footerCtaDesc.textContent = footerCopy?.desc || "";
+}
+
+function syncRouteVisibility() {
+  routedSections.forEach((section) => {
+    const views = String(section.dataset.views || "").split(",").map((item) => item.trim()).filter(Boolean);
+    section.hidden = views.length ? !views.includes(currentRoute) : false;
+  });
+}
+
+function syncHeaderState() {
+  document.body.dataset.route = currentRoute;
+  if (headerSearchWrap) headerSearchWrap.hidden = !routeNeedsCatalog();
+  routeLinks.forEach((link) => {
+    const isActive = link.dataset.routeLink === getPrimaryNavRoute();
+    link.classList.toggle("is-active", isActive);
+    link.setAttribute("aria-current", isActive ? "page" : "false");
+  });
+}
+
+function syncCatalogRouteState() {
+  const forcedCategory = getForcedCatalogCategory();
+  activeCat = forcedCategory || activeCat || "all";
+  if (!forcedCategory && !["all", "hoctap", "lamviec"].includes(activeCat)) {
+    activeCat = "all";
+  }
+}
+
+function renderPublicPage() {
+  const content = getPublicContent();
+  const routeContent = currentRoute === "home" ? null : (content.routes[currentRoute] || content.routes.software || null);
+  syncRouteVisibility();
+  syncHeaderState();
+  syncCatalogRouteState();
+  renderHomeContent(content.home);
+  renderPageHero(routeContent);
+  renderRouteStory(routeContent);
+  renderWebBuild(routeContent);
+  renderSectionCopy(routeContent || { sections: { footerCta: content.home.footerCta } });
+  renderSupportDockContent(currentRoute === "home" ? content.home : routeContent);
+  document.title = routeContent?.pageTitle || content.home.pageTitle || content.baseTitle || t("meta_title");
+}
 
 const WEB_DEMOS = {
   vi: {
@@ -576,10 +2343,11 @@ webDemoButtons.forEach((button) => {
 
 function applyLang(){
   document.documentElement.lang = lang;
-  document.title = t("meta_title");
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.getAttribute("data-i18n-placeholder")); });
   langToggle.textContent = lang === "vi" ? "VI / EN" : "EN / VI";
+  renderPublicPage();
+  renderHomeBanner();
   renderWebDemo();
 }
 
@@ -1166,6 +2934,14 @@ async function getApiHealthHint() {
 }
 
 function buildTabs(){
+  if (!catTabs) return;
+
+  const forcedCategory = getForcedCatalogCategory();
+  if (forcedCategory) {
+    catTabs.innerHTML = `<button class="cat-tab active is-locked" data-cat="${forcedCategory}" disabled>${t("cat_" + forcedCategory)}</button>`;
+    return;
+  }
+
   catTabs.innerHTML = `<button class="cat-tab ${activeCat==="all"?"active":""}" data-cat="all">${t("cat_all")}</button>`;
   fixedCategories.forEach(key => {
     catTabs.innerHTML += `<button class="cat-tab ${activeCat===key?"active":""}" data-cat="${key}">${t("cat_"+key)}</button>`;
@@ -1252,7 +3028,7 @@ const bannerImagePool = [
   imagePathByName("Quản_lý_website_BDS.jpeg"),
   imagePathByName("phần mềm quét data KH_1.jpeg")
 ];
-function renderBanner(){
+function renderBannerLegacy(){
   const track = document.getElementById("bannerTrack");
   if(!track || !allProducts.length) return;
   const items = allProducts.map((p,i)=>{
@@ -1348,10 +3124,37 @@ async function loadCatalog(){
   allProducts = buildStorefrontProducts(allProducts);
   buildTabs();
   renderProducts();
-  renderBanner();
+  renderHomeBanner();
 }
 
-searchInput.addEventListener("input", renderProducts);
+function renderHomeBanner(){
+  const track = document.getElementById("bannerTrack");
+  if(!track) return;
+  const bannerItems = (getPublicContent().home?.banner || []).map((item) => `
+    <a class="banner-pill-card is-${escapeHtml(item.tone || "default")}" href="${escapeHtml(item.href)}">
+      <span class="banner-pill-media" aria-hidden="true">
+        <span class="banner-pill-media-top">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span class="banner-pill-media-main"></span>
+        <span class="banner-pill-media-foot">
+          <span></span>
+          <span></span>
+        </span>
+      </span>
+      <span class="banner-pill-copy">
+        <span class="banner-pill-label">${escapeHtml(item.tag || item.label || "")}</span>
+        <strong>${escapeHtml(item.title || item.label || "")}</strong>
+        <small>${escapeHtml(item.meta || item.sub || "")}</small>
+      </span>
+    </a>
+  `);
+  track.innerHTML = bannerItems.concat(bannerItems).join("");
+}
+
+searchInput?.addEventListener("input", renderProducts);
 
 function shouldUseSameTabCheckout() {
   if (typeof window === "undefined") return false;
@@ -1363,11 +3166,17 @@ function shouldUseSameTabCheckout() {
 langToggle.addEventListener("click", ()=>{
   lang = lang==="vi"?"en":"vi";
   localStorage.setItem("wst_lang",lang);
-  applyLang(); buildTabs(); renderProducts();
+  applyLang();
+  if (routeNeedsCatalog()) {
+    buildTabs();
+    renderProducts();
+  }
 });
 
 applyLang();
-loadCatalog();
+if (routeNeedsCatalog()) {
+  loadCatalog();
+}
 checkAuth().then(() => {
   const params = new URLSearchParams(location.search);
   const nextPath = params.get("next");

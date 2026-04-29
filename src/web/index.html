@@ -3,46 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="meta_title">Ứng Dụng Thông Minh - Mua key phần mềm bản quyền giá tốt</title>
+    <title>Ứng Dụng Thông Minh - Giải pháp số cho người kinh doanh nhỏ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-
     <header class="header" id="top">
       <div class="container header-inner">
-        <a class="logo" href="#top">
-          <img class="logo-img" src="/logo_2.png" alt="Logo" />
+        <a class="logo" href="/">
+          <img class="logo-img" src="/logo_2.png" alt="Logo Ứng Dụng Thông Minh" />
           <span class="logo-wordmark"><span>Ứng Dụng</span><span>Thông Minh</span></span>
         </a>
-        <div class="header-search">
-          <input type="text" id="searchInput" placeholder="Tìm sản phẩm..." data-i18n-placeholder="search_placeholder" />
+        <div class="header-search" id="headerSearchWrap">
+          <input type="text" id="searchInput" placeholder="Tìm phần mềm..." data-i18n-placeholder="search_placeholder" />
         </div>
-        <nav class="header-nav" id="headerNav">
-          <a href="#catalog" data-i18n="nav_products">Sản phẩm</a>
-          <a href="#web-demo" data-i18n="nav_web_design">Thiết kế Web</a>
-          <a href="/account" id="navMyProducts" class="nav-account-link" data-i18n="nav_my_products">Tài khoản của tôi</a>
-          <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
-          <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register" data-i18n="nav_register">Đăng ký</a>
-          <div id="userMenu" class="user-menu is-hidden">
-            <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
-            <div class="user-dropdown" id="userDropdown">
-              <a href="/account?tab=downloads" id="dropMyProducts" data-i18n="nav_my_products">Tải app & key của tôi</a>
-              <a href="#how" data-i18n="how_title">Hướng dẫn mua hàng</a>
-              <a href="#" id="dropLogout" class="dd-logout" data-i18n="nav_logout">Đăng xuất</a>
+        <div class="header-nav-shell">
+          <nav class="header-nav" id="headerNav">
+            <a href="/" data-route-link="home">Trang chủ</a>
+            <a href="/thiet-ke-web" data-route-link="web">Thiết kế Web</a>
+            <a href="/phan-mem" data-route-link="software">Phần mềm</a>
+            <a href="/huong-dan" data-route-link="guide">Hướng dẫn</a>
+            <a href="/lien-he" data-route-link="contact">Liên hệ</a>
+            <a href="/account" class="nav-mobile-account-link">Tài khoản</a>
+          </nav>
+          <div class="header-utilities">
+            <a href="/account" id="navMyProducts" class="nav-account-link header-utility-link">Tài khoản</a>
+            <a href="#" id="navLoginBtn" class="nav-btn" data-i18n="nav_login">Đăng nhập</a>
+            <a href="#" id="navRegisterBtn" class="nav-btn nav-btn-register">Đăng ký</a>
+            <div id="userMenu" class="user-menu is-hidden">
+              <button class="user-menu-btn" id="userMenuBtn"><span id="userEmail">user</span> ▾</button>
+              <div class="user-dropdown" id="userDropdown">
+                <a href="/account?tab=downloads" id="dropMyProducts">Tài khoản & tải app</a>
+                <a href="/huong-dan">Hướng dẫn</a>
+                <a href="#" id="dropLogout" class="dd-logout" data-i18n="nav_logout">Đăng xuất</a>
+              </div>
             </div>
+            <button id="langToggle" class="lang-btn" type="button">VI / EN</button>
           </div>
-          <a class="admin-link is-hidden" href="/admin" data-i18n="nav_admin">Admin</a>
-          <button id="langToggle" class="lang-btn" type="button">VI / EN</button>
-        </nav>
+        </div>
+        <a class="admin-link is-hidden" href="/admin">Admin</a>
         <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">☰</button>
       </div>
     </header>
 
     <main>
-      <section class="hero">
+      <section class="hero" data-views="home">
         <div class="hero-orb hero-orb-1"></div>
         <div class="hero-orb hero-orb-2"></div>
         <div class="hero-media-layer" aria-hidden="true">
@@ -58,119 +65,80 @@
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
           <div class="hero-video-tint"></div>
+          <div class="hero-bottom-overlay"></div>
         </div>
-        <div class="container hero-inner">
-          <div class="hero-text">
-            <span class="hero-badge" data-i18n="hero_badge">⚡ Hệ sinh thái giải pháp số</span>
-            <h1 class="hero-title-stack">
-              <span class="hero-title-kicker" data-i18n="hero_title_kicker">Website, phần mềm, công cụ AI</span>
-              <span class="hero-title-art">
-                <span class="hero-title-line" data-i18n="hero_line_a">Giải pháp số</span>
-                <span class="hero-title-line hero-title-line-accent" data-i18n="hero_line_b">gọn, nhanh,</span>
-                <span class="hero-title-line" data-i18n="hero_line_c">dùng được ngay</span>
-              </span>
-            </h1>
-            <p class="hero-sub" data-i18n="hero_sub">Chọn đúng công cụ cho công việc của bạn.</p>
-          </div>
-          <div class="hero-visual">
-            <div class="hero-logo-board">
-              <div class="hero-board-top" aria-hidden="true">
-                <span class="hero-board-live">DIGITAL ECOSYSTEM</span>
-                <div class="hero-board-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-              <div class="hero-window hero-window-wireframe" aria-hidden="true">
-                <span class="hero-window-label">FLOW</span>
-                <div class="hero-wireframe-lines">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <div class="hero-wireframe-grid">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-              <div class="hero-window hero-window-dashboard" aria-hidden="true">
-                <span class="hero-window-label">ANALYTICS</span>
-                <div class="hero-bars">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <div class="hero-line-chart">
-                  <span></span>
-                </div>
-              </div>
-              <article class="hero-web-card">
-                <div class="hero-web-copy">
-                  <span class="hero-web-badge">WEB</span>
-                  <strong data-i18n="hero_logo_web">Thiết kế website chuyên nghiệp</strong>
-                  <small data-i18n="hero_logo_web_sub">Landing page, web bán hàng, web thương hiệu</small>
-                </div>
-                <div class="hero-web-preview" aria-hidden="true">
-                  <div class="hero-preview-bar">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                  <div class="hero-preview-screen">
-                    <div class="hero-preview-main"></div>
-                    <div class="hero-preview-side"></div>
-                    <div class="hero-preview-foot"></div>
-                  </div>
-                </div>
-              </article>
-              <div class="hero-logo-grid">
-                <article class="hero-logo-tile is-violet">
-                  <span class="hero-logo-mark">UI</span>
-                  <strong data-i18n="hero_logo_key">Dashboard nhanh</strong>
-                </article>
-                <article class="hero-logo-tile is-amber">
-                  <span class="hero-logo-mark">AI</span>
-                  <strong data-i18n="hero_logo_app">AI chat & form</strong>
-                </article>
-                <article class="hero-logo-tile is-cyan">
-                  <span class="hero-logo-mark">DATA</span>
-                  <strong data-i18n="hero_logo_pro">Biểu đồ rõ</strong>
-                </article>
-                <article class="hero-logo-tile is-rose">
-                  <span class="hero-logo-mark">FLOW</span>
-                  <strong data-i18n="hero_logo_web_tile">Checkout gọn</strong>
-                </article>
-              </div>
-              <div class="hero-motion-tags" aria-hidden="true">
-                <span>Học tập</span>
-                <span>Làm việc</span>
-                <span>Bán hàng</span>
-                <span>Tự động hóa</span>
-              </div>
-              <div class="hero-cursor" aria-hidden="true">
-                <span class="hero-cursor-ring"></span>
-              </div>
+        <div class="container hero-inner hero-inner-home">
+          <div class="hero-text hero-text-docked">
+            <span class="hero-badge" id="homeHeroBadge"></span>
+            <div class="hero-home-copy">
+              <h1 class="hero-home-title">
+                <span class="hero-home-title-main" id="homeHeroTitleMain"></span>
+                <span class="hero-home-title-sub" id="homeHeroTitleSub"></span>
+                <span class="hero-home-title-tail" id="homeHeroTitleTail"></span>
+              </h1>
+              <p class="hero-home-desc" id="homeHeroDesc"></p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="banner-carousel">
-        <div class="banner-track" id="bannerTrack">
-          <!-- filled by JS -->
+      <section class="banner-carousel banner-carousel-lite" data-views="home">
+        <div class="banner-track banner-track-lite" id="bannerTrack"></div>
+      </section>
+
+      <section class="pathways-section" data-views="home">
+        <div class="container">
+          <div class="section-head section-head-tight center">
+            <span class="section-eyebrow" id="homePathwaysEyebrow"></span>
+            <h2 id="homePathwaysTitle"></h2>
+            <p id="homePathwaysSub"></p>
+          </div>
+          <div class="pathway-grid" id="homePathwayGrid"></div>
         </div>
       </section>
 
-      <section class="web-demo-section" id="web-demo">
+      <section class="value-section" data-views="home">
+        <div class="container">
+          <div class="section-head center">
+            <span class="section-eyebrow" id="homeBenefitsEyebrow"></span>
+            <h2 id="homeBenefitsTitle"></h2>
+            <p id="homeBenefitsSub"></p>
+          </div>
+          <div class="value-grid" id="homeBenefitsGrid"></div>
+        </div>
+      </section>
+
+      <section class="page-hero-shell" id="pageHeroSection" data-views="web,demo,software,study,work,guide,contact">
+        <div class="container">
+          <div class="page-hero-card">
+            <video class="page-hero-video" autoplay muted loop playsinline aria-hidden="true">
+              <source src="/Video/hero-web-brand.mp4" type="video/mp4" />
+            </video>
+            <div class="page-hero-video-overlay" aria-hidden="true"></div>
+            <div class="page-hero-copy">
+              <span class="page-hero-kicker" id="pageHeroKicker"></span>
+              <h1 id="pageHeroTitle"></h1>
+              <p id="pageHeroDesc"></p>
+              <div class="page-hero-tags" id="pageHeroTags"></div>
+              <div class="page-hero-actions" id="pageHeroActions"></div>
+            </div>
+            <div class="page-hero-side" id="pageHeroSide"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="route-story-section" id="routeStorySection" data-views="web,demo,software,study,work,guide,contact">
+        <div class="container">
+          <div id="routeStoryContent"></div>
+        </div>
+      </section>
+
+      <section class="web-demo-section" id="web-demo" data-views="web,demo">
         <div class="container">
           <div class="section-head web-demo-head">
-            <span class="section-eyebrow" data-i18n="web_demo_eyebrow">Web Demo</span>
-            <h2 data-i18n="web_demo_title">Thiết Kế Web Chuyên Nghiệp</h2>
-            <p data-i18n="web_demo_sub">Xem mẫu web demo theo từng ngành phổ biến.</p>
+            <span class="section-eyebrow" id="webDemoEyebrow">Mẫu Demo</span>
+            <h2 id="webDemoSectionTitle">Thiết kế web theo ngành</h2>
+            <p id="webDemoSectionSub">Xem nhanh các mẫu website gợi ý cho từng nhóm dịch vụ phổ biến.</p>
           </div>
 
           <div class="web-demo-layout">
@@ -259,33 +227,41 @@
         </div>
       </section>
 
-      <section class="categories" id="catalog">
+      <section class="web-build-section" id="webBuildSection" data-views="web">
+        <div class="container">
+          <div id="webBuildContent"></div>
+        </div>
+      </section>
+
+      <section class="categories" id="catalog" data-views="software,study,work">
         <div class="container">
           <div class="section-head">
-            <h2 data-i18n="cat_title">Danh mục sản phẩm</h2>
-            <p data-i18n="cat_sub">Chọn danh mục hoặc xem tất cả sản phẩm bên dưới</p>
+            <span class="section-eyebrow" id="catalogEyebrow">Phần mềm</span>
+            <h2 id="catalogTitle">Nhóm phần mềm</h2>
+            <p id="catalogSub">Chọn nhóm phù hợp hoặc tìm nhanh công cụ bạn đang cần.</p>
           </div>
           <div class="cat-tabs" id="catTabs">
-            <button class="cat-tab active" data-cat="all" data-i18n="cat_all">Tất cả</button>
+            <button class="cat-tab active" data-cat="all">Tất cả</button>
           </div>
         </div>
       </section>
 
-      <section class="products">
+      <section class="products" data-views="software,study,work">
         <div class="container">
           <div class="section-head">
-            <h2 data-i18n="products_title">🔥 Sản phẩm bán chạy</h2>
+            <h2 id="productsTitle">Phần mềm và công cụ</h2>
           </div>
           <div id="catalogNotice" class="catalog-notice" aria-live="polite"></div>
           <div id="productList" class="product-grid"></div>
         </div>
       </section>
 
-      <section class="how-section" id="how">
+      <section class="how-section" id="how" data-views="software,study,work">
         <div class="container">
           <div class="section-head center">
-            <h2 data-i18n="how_title">Hướng dẫn mua hàng</h2>
-            <p data-i18n="how_sub">Chỉ 3 bước đơn giản để nhận key tự động</p>
+            <span class="section-eyebrow" id="howEyebrow">Hướng dẫn</span>
+            <h2 id="howTitle" data-i18n="how_title">Hướng dẫn mua hàng</h2>
+            <p id="howSub" data-i18n="how_sub">Chỉ 3 bước đơn giản để nhận key tự động</p>
           </div>
           <div class="steps-row">
             <div class="step-card">
@@ -311,79 +287,51 @@
           </div>
         </div>
       </section>
-
-      <section class="testimonials">
-        <div class="container">
-          <div class="section-head center">
-            <h2 data-i18n="testimonials_title">Đánh giá từ khách hàng</h2>
-            <p data-i18n="testimonials_sub">Hơn 10,000 khách hàng hài lòng</p>
-          </div>
-          <div class="testimonials-grid">
-            <div class="testimonial-card">
-              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p class="testimonial-text" data-i18n="testimonial_1">"Key giao rất nhanh, dùng thử ngay được, chất lượng tốt. Sẽ quay lại."</p>
-              <div class="testimonial-person">
-                <img class="testimonial-avatar" src="/products/image/avatar-dung-le.svg" alt="Dũng LÊ" loading="lazy" />
-                <div class="testimonial-meta">
-                  <div class="testimonial-author" data-i18n="testimonial_author_1">Dũng LÊ</div>
-                  <div class="testimonial-role">Chủ shop online</div>
-                </div>
-              </div>
-            </div>
-            <div class="testimonial-card">
-              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p class="testimonial-text" data-i18n="testimonial_2">"Tư vấn tận tình, hỗ trợ 24/7. Rất uy tín. Giá cả hợp lý."</p>
-              <div class="testimonial-person">
-                <img class="testimonial-avatar" src="/products/image/avatar-nga-truong.svg" alt="Nga Trương" loading="lazy" />
-                <div class="testimonial-meta">
-                  <div class="testimonial-author" data-i18n="testimonial_author_2">Nga Trương</div>
-                  <div class="testimonial-role">Freelancer thiết kế</div>
-                </div>
-              </div>
-            </div>
-            <div class="testimonial-card">
-              <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p class="testimonial-text" data-i18n="testimonial_3">"Mua lần thứ 5 rồi. Luôn ổn định. Đặc biệt hỗ trợ nhanh."</p>
-              <div class="testimonial-person">
-                <img class="testimonial-avatar" src="/products/image/avatar-tran-ngoc-hai.svg" alt="Trần Ngọc Hải" loading="lazy" />
-                <div class="testimonial-meta">
-                  <div class="testimonial-author" data-i18n="testimonial_author_3">Trần NGọc Hải</div>
-                  <div class="testimonial-role">Nhân viên văn phòng</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
 
     <footer class="footer">
+      <div class="container footer-cta-wrap">
+        <div class="footer-cta-panel">
+          <div class="footer-cta-copy">
+            <span class="footer-cta-kicker">Hỗ trợ chọn giải pháp</span>
+            <h2 id="footerCtaTitle">Chọn công cụ phù hợp cho công việc của bạn</h2>
+            <p id="footerCtaDesc">Đi nhanh đến nhóm giải pháp cần dùng hoặc liên hệ để được tư vấn rõ ràng.</p>
+          </div>
+          <div class="footer-cta-actions">
+            <a class="btn btn-accent" href="/thiet-ke-web">Thiết kế Web</a>
+            <a class="btn btn-outline btn-outline-light" href="/phan-mem">Xem phần mềm</a>
+            <a class="btn btn-outline btn-outline-light" href="https://zalo.me/0902964685" target="_blank" rel="noopener">Liên hệ tư vấn</a>
+          </div>
+        </div>
+      </div>
       <div class="container footer-inner">
         <div class="footer-brand">
           <div class="footer-brand-mark">
-            <img class="footer-logo" src="/logo_2.png" alt="Logo" />
+            <img class="footer-logo" src="/logo_2.png" alt="Logo Ứng Dụng Thông Minh" />
             <strong>Ứng Dụng Thông Minh</strong>
           </div>
-          <p data-i18n="footer_desc">Nền tảng bán key phần mềm bản quyền tự động. Thanh toán linh hoạt, giao key ngay.</p>
+          <p>Giải pháp số gọn, dễ dùng cho người kinh doanh nhỏ: website, phần mềm mini và công cụ hỗ trợ công việc.</p>
         </div>
         <div class="footer-links">
-          <h4 data-i18n="footer_quick">Truy cập nhanh</h4>
-          <a href="#web-demo">🌐 Thiết kế Web</a>
-          <a href="#catalog">🛒 Sản phẩm</a>
-          <a href="#how" data-i18n="how_title">📖 Hướng dẫn mua hàng</a>
-          <a href="#how">📖 Hướng dẫn mua</a>
+          <h4>Điều hướng</h4>
+          <a href="/">Trang chủ</a>
+          <a href="/thiet-ke-web">Thiết kế Web</a>
+          <a href="/phan-mem">Phần mềm</a>
+          <a href="/huong-dan">Hướng dẫn</a>
+          <a href="/lien-he">Liên hệ</a>
         </div>
         <div class="footer-links">
-          <h4 data-i18n="footer_policy">Chính sách</h4>
-          <a href="#">🛡️ Bảo hành &amp; hoàn tiền</a>
-          <a href="#">🔒 Chính sách bảo mật</a>
-          <a href="#">📜 Điều khoản sử dụng</a>
+          <h4>Nhánh phần mềm</h4>
+          <a href="/phan-mem/hoc-tap">Học tập</a>
+          <a href="/phan-mem/lam-viec">Làm việc</a>
+          <a href="/account?tab=downloads">Tải app & key</a>
         </div>
-        <div class="footer-links">
-          <h4 data-i18n="footer_contact">Liên hệ</h4>
-          <span>📧 Email: ungdungthongminh.info@gmail.com</span>
-          <span>📱 SĐT: 0902 96 46 85</span>
-          <a href="https://www.facebook.com/share/1BFbrsX3UK/?mibextid=wwXIfr" target="_blank" rel="noopener">📘 Fanpage</a>
+        <div class="footer-links footer-contact-links">
+          <h4>Liên hệ</h4>
+          <span class="footer-contact-item"><span class="footer-contact-icon" aria-hidden="true">✉</span>Email: ungdungthongminh.info@gmail.com</span>
+          <span class="footer-contact-item"><span class="footer-contact-icon" aria-hidden="true">☎</span>SĐT: 0902 96 46 85</span>
+          <a class="footer-contact-item" href="https://zalo.me/0902964685" target="_blank" rel="noopener"><span class="footer-contact-icon" aria-hidden="true">Z</span>Zalo hỗ trợ</a>
+          <a class="footer-contact-item" href="https://www.facebook.com/share/1BFbrsX3UK/?mibextid=wwXIfr" target="_blank" rel="noopener"><span class="footer-contact-icon" aria-hidden="true">f</span>Fanpage</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -397,38 +345,37 @@
         <span class="support-dock-toggle-text">Thu gọn</span>
       </button>
       <div class="support-dock-body" id="supportDockBody">
-        <p class="support-dock-eyebrow">Hỗ trợ nhanh</p>
-        <strong>Khách cần gì, bấm ngay ở đây</strong>
-        <p class="support-dock-copy">Giữ cố định ở mọi vị trí để khách không rành công nghệ vẫn dễ liên hệ.</p>
+        <p class="support-dock-eyebrow" id="supportDockEyebrow">Hỗ trợ nhanh</p>
+        <strong id="supportDockTitle">Chọn kênh phù hợp và liên hệ ngay</strong>
+        <p class="support-dock-copy" id="supportDockCopy">Giữ cố định ở mọi vị trí để khách không rành công nghệ vẫn dễ liên hệ và hỏi đúng nhu cầu.</p>
         <div class="support-dock-actions">
           <a class="support-chip support-chip-zalo" href="https://zalo.me/0902964685" target="_blank" rel="noopener" title="Chat Zalo">
             <span class="support-chip-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 48 48" fill="none"><path d="M24 2C11.85 2 2 11.07 2 22.27c0 6.07 3.13 11.49 8.02 15.07-.2 1.97-.73 4.89-2.02 7.22 0 0 4.48-.86 8.32-3.52 2.44.7 5.05 1.08 7.68 1.08C36.15 42.12 46 33.05 46 22.27 46 11.07 36.15 2 24 2z" fill="#fff"/><text x="12" y="30" font-size="18" font-weight="900" fill="#0068ff" font-family="Arial">Z</text></svg>
             </span>
             <span>
-              <strong>Zalo hỗ trợ</strong>
-              <small>Nhắn tư vấn trực tiếp</small>
+              <strong id="supportZaloTitle">Zalo tư vấn</strong>
+              <small id="supportZaloSub">Nhắn hỗ trợ trực tiếp</small>
             </span>
           </a>
           <a class="support-chip support-chip-phone" href="tel:0902964685" title="Gọi hỗ trợ">
             <span class="support-chip-icon" aria-hidden="true">☎</span>
             <span>
-              <strong>Gọi 0902 96 46 85</strong>
-              <small>Hỗ trợ khách nhanh</small>
+              <strong id="supportPhoneTitle">Gọi 0902 96 46 85</strong>
+              <small id="supportPhoneSub">Trao đổi nhanh nhu cầu</small>
             </span>
           </a>
-          <a class="support-chip support-chip-buy" href="#catalog" title="Xem sản phẩm">
-            <span class="support-chip-icon" aria-hidden="true">🛒</span>
+          <a class="support-chip support-chip-buy" id="supportRouteAction" href="/phan-mem" title="Xem phần mềm">
+            <span class="support-chip-icon" aria-hidden="true">🧭</span>
             <span>
-              <strong>Xem sản phẩm</strong>
-              <small>Đi tới danh mục ngay</small>
+              <strong id="supportRouteTitle">Đi tới đúng khu vực</strong>
+              <small id="supportRouteSub">Mở trang phù hợp ngay</small>
             </span>
           </a>
         </div>
       </div>
     </aside>
 
-    <!-- Login / Register Modal -->
     <div class="modal-overlay" id="loginModal">
       <div class="modal-card">
         <button class="modal-close" id="loginModalClose">✕</button>
@@ -437,7 +384,6 @@
           <button class="modal-tab" id="tabRegister" data-i18n="modal_register_title">Đăng ký</button>
         </div>
 
-        <!-- Login form -->
         <div id="loginPane" class="modal-pane">
           <p class="modal-sub" data-i18n="modal_login_desc">Nhập email để đăng nhập.</p>
           <form id="loginForm" autocomplete="off">
@@ -455,7 +401,6 @@
           <p class="modal-note"><span data-i18n="modal_login_no_account">Chưa có tài khoản?</span> <a href="#" id="switchToRegister" data-i18n="modal_register_link">Đăng ký ngay</a></p>
         </div>
 
-        <!-- Register form -->
         <div id="registerPane" class="modal-pane" style="display:none">
           <p class="modal-sub" data-i18n="modal_register_desc">Nhập email và họ tên để tạo tài khoản mới.</p>
           <form id="registerForm" autocomplete="off">
@@ -490,8 +435,9 @@
       (function () {
         var al = document.querySelector(".admin-link");
         if (!al) return;
-        if (localStorage.getItem("wst_show_admin_menu") === "1" || new URLSearchParams(location.search).get("admin") === "1")
+        if (localStorage.getItem("wst_show_admin_menu") === "1" || new URLSearchParams(location.search).get("admin") === "1") {
           al.classList.remove("is-hidden");
+        }
       })();
       var mobileMenuBtn = document.getElementById("mobileMenuBtn");
       var headerNav = document.getElementById("headerNav");

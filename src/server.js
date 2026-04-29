@@ -3758,7 +3758,23 @@ app.get("/pricing", (req, res) => {
 });
 
 app.get("/web-demo", (req, res) => {
-  res.redirect("/#web-demo");
+  res.redirect("/mau-demo");
+});
+
+app.get("/thiet-ke-web/mau-demo", (req, res) => {
+  res.redirect("/mau-demo");
+});
+
+app.get("/san-pham", (req, res) => {
+  res.redirect("/phan-mem");
+});
+
+app.get("/san-pham/hoc-tap", (req, res) => {
+  res.redirect("/phan-mem/hoc-tap");
+});
+
+app.get("/san-pham/lam-viec", (req, res) => {
+  res.redirect("/phan-mem/lam-viec");
 });
 
 app.get("/web-demo/:id", (req, res) => {
