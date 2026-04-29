@@ -2087,6 +2087,7 @@ function bindDiscountCodeAdmin(){
 function bindAdminSidebarNav(){
   const links = Array.from(document.querySelectorAll('.admin-sidebar a[href^="#section-"]'));
   if(!links.length) return;
+  const scrollRoot = document.getElementById("adminMain");
 
   const setActive = (hash)=>{
     links.forEach((link)=>{
@@ -2111,6 +2112,7 @@ function bindAdminSidebarNav(){
         setActive(`#${visible.target.id}`);
       }
     }, {
+      root: scrollRoot || null,
       rootMargin: "-14% 0px -60% 0px",
       threshold: [0.15, 0.3, 0.5, 0.75]
     });
@@ -2119,6 +2121,10 @@ function bindAdminSidebarNav(){
 
   if(window.location.hash){
     setActive(window.location.hash);
+    const initialTarget = document.querySelector(window.location.hash);
+    if(initialTarget && scrollRoot?.contains(initialTarget)){
+      requestAnimationFrame(()=> initialTarget.scrollIntoView({ block: "start" }));
+    }
   }
 }
 
