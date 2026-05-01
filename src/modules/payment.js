@@ -5,6 +5,61 @@ const { pool } = require("../db/pool");
 
 const EMAIL_EVENT_PAID_ORDER_SUCCESS = "paid_order_success";
 const PAID_ORDER_EMAIL_RESEND_WINDOW_MINUTES = 10;
+const BRAND_NAME = "Ứng Dụng Thông Minh";
+
+function sanitizeMailboxAddress(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const angleMatch = raw.match(/<([^>]+)>/);
+  return String(angleMatch ? angleMatch[1] : raw).trim();
+}
+
+function resolveResendSenderProfile(purpose) {
+  const normalizedPurpose = String(purpose || "").trim().toLowerCase();
+  const defaultAddress = sanitizeMailboxAddress(env.emailFromDefault);
+  const securityAddress = sanitizeMailboxAddress(env.emailFromSecurity) || defaultAddress;
+  const supportAddress = sanitizeMailboxAddress(env.emailFromSupport) || defaultAddress;
+  const quoteAddress = sanitizeMailboxAddress(env.emailFromQuotes) || defaultAddress;
+  const careerAddress = sanitizeMailboxAddress(env.emailFromCareers) || defaultAddress;
+
+  if (normalizedPurpose.startsWith("admin_login:")) {
+    return { displayName: `${BRAND_NAME} | Bảo mật`, address: securityAddress };
+  }
+
+  if (normalizedPurpose === "reset_password") {
+    return { displayName: `${BRAND_NAME} | Tài khoản`, address: securityAddress };
+  }
+
+  if (normalizedPurpose === EMAIL_EVENT_PAID_ORDER_SUCCESS) {
+    return { displayName: `${BRAND_NAME} | Giao key`, address: supportAddress };
+  }
+
+  if (normalizedPurpose === "contact") {
+    return { displayName: `${BRAND_NAME} | Chăm sóc khách hàng`, address: supportAddress };
+  }
+
+  if (normalizedPurpose === "quote") {
+    return { displayName: `${BRAND_NAME} | Báo giá`, address: quoteAddress };
+  }
+
+  if (normalizedPurpose === "career") {
+    return { displayName: `${BRAND_NAME} | Tuyển dụng`, address: careerAddress };
+  }
+
+  return { displayName: BRAND_NAME, address: defaultAddress };
+}
+
+function resolveSupportReplyAddress() {
+  return sanitizeMailboxAddress(env.emailReplyTo) || sanitizeMailboxAddress(env.gmailNotifyFrom);
+}
+
+function isResendNotifyEnabled() {
+  const defaultSender = resolveResendSenderProfile("default");
+  return env.resendEnabled && Boolean(env.resendApiKey) && Boolean(defaultSender.address);
+}
 
 function getPaymentProviderMode() {
   const runtime = readRuntimeSettings();
@@ -179,7 +234,80 @@ function buildSenderHeader(senderEmail) {
     return "";
   }
 
-  return `${encodeMimeHeader("Smart App")} <${email}>`;
+  return `${encodeMimeHeader(BRAND_NAME)} <${email}>`;
+}
+
+function buildPurposeSenderHeader(senderEmail, purpose) {
+  const email = sanitizeMailboxAddress(senderEmail);
+  if (!email) {
+    return "";
+  }
+
+  const profile = resolveResendSenderProfile(purpose);
+  const displayName = profile.displayName || BRAND_NAME;
+  return `${encodeMimeHeader(displayName)} <${email}>`;
+}
+
+async function sendResendMessage({ subject, text, html, to, purpose }) {
+  if (!isResendNotifyEnabled()) {
+    return { ok: false, skipped: true, reason: "resend_disabled_or_missing_config", provider: "resend" };
+  }
+
+  const recipients = Array.isArray(to)
+    ? to.map((item) => String(item || "").trim()).filter(Boolean)
+    : String(to || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+  if (!recipients.length) {
+    return { ok: false, skipped: true, reason: "missing_recipient", provider: "resend" };
+  }
+
+  const senderProfile = resolveResendSenderProfile(purpose);
+  if (!senderProfile.address) {
+    return { ok: false, skipped: true, reason: "missing_from_email", provider: "resend" };
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.resendApiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: `${senderProfile.displayName} <${senderProfile.address}>`,
+      to: recipients,
+      subject,
+      text,
+      html,
+      reply_to: resolveSupportReplyAddress() || undefined
+    })
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.id) {
+    return {
+      ok: false,
+      skipped: false,
+      reason: payload?.message || payload?.error || `http_${response.status}`,
+      provider: "resend"
+    };
+  }
+
+  return {
+    ok: true,
+    skipped: false,
+    messageId: payload.id,
+    provider: "resend",
+    recipients
+  };
 }
 
 function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) {
@@ -190,7 +318,7 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
   const webAppUrl = "https://hoctap-cap-01.vercel.app/";
   const logoUrl = `${websiteUrl}/logo_2.png`;
-  const supportEmail = resolveGmailSender() || "support@ungdungthongminh.shop";
+  const supportEmail = resolveSupportReplyAddress() || sanitizeMailboxAddress(env.emailFromSupport) || "ungdungthongminh.info@gmail.com";
   const websiteDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
 
   const keyValue = keyDelivery?.keyValue || "(chưa cấp key)";
@@ -382,9 +510,16 @@ async function getGoogleAccessTokenByRefreshToken() {
   return payload.access_token;
 }
 
-async function sendGmailMessage({ subject, text, html, to }) {
+async function sendGmailMessage({ subject, text, html, to, purpose = "default" }) {
+  if (isResendNotifyEnabled()) {
+    const resendResult = await sendResendMessage({ subject, text, html, to, purpose });
+    if (resendResult.ok || !isGmailNotifyEnabled()) {
+      return resendResult;
+    }
+  }
+
   if (!isGmailNotifyEnabled()) {
-    return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config" };
+    return { ok: false, skipped: true, reason: "gmail_disabled_or_missing_config", provider: "gmail" };
   }
 
   const sender = resolveGmailSender();
@@ -405,10 +540,11 @@ async function sendGmailMessage({ subject, text, html, to }) {
 
   const accessToken = await getGoogleAccessTokenByRefreshToken();
   const boundary = `wst_${Date.now().toString(16)}`;
-  const fromHeader = buildSenderHeader(sender);
+  const fromHeader = buildPurposeSenderHeader(sender, purpose) || buildSenderHeader(sender);
   const subjectHeader = encodeMimeHeader(subject);
   const rawEmail = [
     `From: ${fromHeader}`,
+    ...(resolveSupportReplyAddress() ? [`Reply-To: ${resolveSupportReplyAddress()}`] : []),
     `To: ${recipients.join(", ")}`,
     `Subject: ${subjectHeader}`,
     "MIME-Version: 1.0",
@@ -450,7 +586,8 @@ async function sendGmailMessage({ subject, text, html, to }) {
     return {
       ok: false,
       skipped: false,
-      reason
+      reason,
+      provider: "gmail"
     };
   }
 
@@ -459,6 +596,7 @@ async function sendGmailMessage({ subject, text, html, to }) {
     skipped: false,
     messageId: payload.id,
     threadId: payload.threadId || null,
+    provider: "gmail",
     recipients
   };
 }
@@ -553,7 +691,7 @@ async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, i
     eventType: EMAIL_EVENT_PAID_ORDER_SUCCESS,
     orderId,
     idempotencyKey,
-    provider: "gmail",
+    provider: isResendNotifyEnabled() ? "resend" : "gmail",
     recipient: recipients.join(","),
     payload: {
       orderId,
@@ -625,7 +763,7 @@ async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, i
       } catch { /* ignore */ }
     }
     const message = buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail });
-    const sendResult = await sendGmailMessage({ ...message, to: recipients });
+    const sendResult = await sendGmailMessage({ ...message, to: recipients, purpose: EMAIL_EVENT_PAID_ORDER_SUCCESS });
 
     if (sendResult.ok) {
       await updateEmailNotificationAttempt({
@@ -1107,6 +1245,7 @@ module.exports = {
   buildSepayCheckout,
   sendGmailMessage,
   isGmailNotifyEnabled,
+  isResendNotifyEnabled,
   sendTelegramMessage,
   isTelegramNotifyEnabled,
   isMockPaymentMode,

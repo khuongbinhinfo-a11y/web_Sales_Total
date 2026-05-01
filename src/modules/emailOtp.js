@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { env } = require("../config/env");
 const { pool } = require("../db/pool");
-const { sendGmailMessage, isGmailNotifyEnabled } = require("./payment");
+const { sendGmailMessage, isGmailNotifyEnabled, isResendNotifyEnabled } = require("./payment");
 
 const OTP_TTL_MINUTES = 10;
 const OTP_LENGTH = 6;
@@ -30,7 +30,7 @@ function generateOtpCode() {
 }
 
 function isEmailOtpConfigured() {
-  return Boolean(hasSmtpTransportConfig() || isGmailNotifyEnabled());
+  return Boolean(hasSmtpTransportConfig() || isResendNotifyEnabled() || isGmailNotifyEnabled());
 }
 
 function getTransporter() {
@@ -102,26 +102,43 @@ function bodyByPurpose({ purpose, code }) {
   return `Ma xac minh dang ky cua ban la: ${code}. Ma co hieu luc trong ${OTP_TTL_MINUTES} phut.`;
 }
 
-async function sendOtpEmail({ to, subject, text }) {
-  const html = `<p>${text}</p>`;
-  let gmailFailureReason = "";
+function buildSmtpFromHeader(purpose) {
+  const smtpFrom = String(env.smtpFrom || "").trim();
+  if (!smtpFrom) {
+    return "";
+  }
 
-  if (isGmailNotifyEnabled()) {
+  const baseName = "Ứng Dụng Thông Minh";
+  const displayName = String(purpose || "").startsWith("admin_login:")
+    ? `${baseName} | Bảo mật`
+    : purpose === "reset_password"
+      ? `${baseName} | Tài khoản`
+      : baseName;
+
+  return `${displayName} <${smtpFrom}>`;
+}
+
+async function sendOtpEmail({ to, subject, text, purpose }) {
+  const html = `<p>${text}</p>`;
+  let emailApiFailureReason = "";
+
+  if (isResendNotifyEnabled() || isGmailNotifyEnabled()) {
     try {
       const result = await sendGmailMessage({
         subject,
         text,
         html,
-        to: [to]
+        to: [to],
+        purpose
       });
 
       if (result.ok) {
         return;
       }
 
-      gmailFailureReason = String(result.reason || "gmail_send_failed").trim();
+      emailApiFailureReason = String(result.reason || `${result.provider || "email"}_send_failed`).trim();
     } catch (error) {
-      gmailFailureReason = String(error?.message || "gmail_send_failed").trim();
+      emailApiFailureReason = String(error?.message || "email_send_failed").trim();
     }
   }
 
@@ -129,16 +146,17 @@ async function sendOtpEmail({ to, subject, text }) {
   if (transporter) {
     try {
       await transporter.sendMail({
-        from: env.smtpFrom,
+        from: buildSmtpFromHeader(purpose) || env.smtpFrom,
         to,
         subject,
-        text
+        text,
+        ...(env.emailReplyTo ? { replyTo: env.emailReplyTo } : {})
       });
       return;
     } catch (error) {
       const smtpFailureReason = String(error?.message || "smtp_send_failed").trim();
       const err = new Error(
-        `Không gửi được mã xác minh. Gmail: ${gmailFailureReason || "không khả dụng"}. SMTP: ${smtpFailureReason}`
+        `Không gửi được mã xác minh. Email API: ${emailApiFailureReason || "không khả dụng"}. SMTP: ${smtpFailureReason}`
       );
       err.statusCode = 503;
       throw err;
@@ -146,8 +164,8 @@ async function sendOtpEmail({ to, subject, text }) {
   }
 
   const err = new Error(
-    gmailFailureReason
-      ? `Không gửi được mã xác minh. Gmail: ${gmailFailureReason}`
+    emailApiFailureReason
+      ? `Không gửi được mã xác minh. Email API: ${emailApiFailureReason}`
       : "OTP email delivery is not available"
   );
   err.statusCode = 503;
@@ -193,7 +211,8 @@ async function issueAndSendOtp({ email, purpose }) {
   await sendOtpEmail({
     to: normalizedEmail,
     subject,
-    text
+    text,
+    purpose: normalizedPurpose
   });
 
   return { ok: true, expiresInMinutes: OTP_TTL_MINUTES };
