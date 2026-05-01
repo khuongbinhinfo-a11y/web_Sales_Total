@@ -88,6 +88,7 @@ npm run dev
 - `npm run db:migrate`: apply SQL migrations
 - `npm run db:seed`: seed du lieu mau
 - `npm run db:setup`: migrate + seed
+- `npm run prod:verify [-- <BASE_URL>]`: kiem tra dong bo production (catalog, health, Google config, endpoint desktop update `/desktop-updates/*`, feed `/app-update.json`, va CTA tai Windows tren homepage)
 - `npm run gmail:auth-url`: tao link OAuth lay authorization code cho Gmail API
 - `npm run gmail:exchange-token -- --code <AUTH_CODE> --redirect-uri <REDIRECT_URI>`: doi code thanh refresh token
 

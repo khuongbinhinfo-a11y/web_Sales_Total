@@ -681,9 +681,9 @@ const ACCOUNT_DOWNLOAD_APP_META = {
   "app-study-12": {
     appName: "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học",
     icon: "📚",
-    deliveryType: "website",
+    deliveryType: "manifest_download",
     websiteUrl: ACCOUNT_STUDY_APP_URL,
-    actionLabel: "Mở website học tập"
+    actionLabel: "Tải app Windows"
   },
   "hair-spa-manager": {
     appName: "Salon Manager",
@@ -3833,6 +3833,7 @@ app.use((req, res, next) => {
 app.use(express.static(webRoot));
 app.use("/og", express.static(ogRoot));
 app.use("/app-updates", express.static(appUpdatesRoot));
+app.use("/desktop-updates", express.static(path.join(appUpdatesRoot, "app-study-12")));
 app.get("/logo_2.png", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "logo_2.png"));
 });

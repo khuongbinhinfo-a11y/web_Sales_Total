@@ -1,0 +1,14 @@
+{
+  "appId": "hoc-tap-cap-01",
+  "channel": "stable",
+  "latestVersion": "0.1.0",
+  "minimumSupportedVersion": "0.1.0",
+  "publishedAt": "2026-04-29T00:00:00+07:00",
+  "title": "Ban phat hanh on dinh",
+  "notes": [
+    "Toi uu flow kich hoat key va phan quyen theo goi.",
+    "Bo sung co che kiem tra cap nhat va thong bao ban moi.",
+    "Cai thien do on dinh audio offline."
+  ],
+  "downloadUrl": "https://www.ungdungthongminh.shop"
+}

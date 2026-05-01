@@ -151,6 +151,15 @@ button{font-family:inherit;cursor:pointer}
 .hero-sub{color:rgba(246,243,255,.92);font-size:1.03rem;font-weight:600;margin:0;max-width:46ch;line-height:1.72;text-wrap:pretty;text-shadow:0 8px 24px rgba(7,8,24,.18)}
 .hero-btns{display:none}
 
+.home-download-cta{position:relative;z-index:4;padding:0 0 24px;background:linear-gradient(180deg,rgba(255,247,241,0),rgba(255,247,241,.56))}
+.home-download-cta .container{display:flex;justify-content:center}
+.home-download-cta__button{display:flex;align-items:center;gap:16px;width:min(980px,100%);padding:18px 24px;border-radius:22px;background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 48%,#0f3f99 100%);border:2px solid rgba(255,255,255,.24);box-shadow:0 18px 36px rgba(17,58,142,.36);color:#fff;text-decoration:none;transition:transform var(--transition),box-shadow var(--transition),filter var(--transition)}
+.home-download-cta__button:hover{transform:translateY(-2px);box-shadow:0 22px 42px rgba(17,58,142,.44);filter:saturate(1.06)}
+.home-download-cta__icon{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);font-size:1.8rem;font-weight:900;flex-shrink:0}
+.home-download-cta__copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.home-download-cta__copy strong{font-size:1.32rem;line-height:1.18;letter-spacing:.01em}
+.home-download-cta__copy small{font-size:.92rem;line-height:1.45;color:rgba(239,246,255,.94)}
+
 .hero .btn{min-height:52px;padding:0 26px;border-radius:18px;font-size:.94rem}
 .hero .btn-accent{background:linear-gradient(135deg,#8d7bff 0%,#6d58e1 52%,#5846bf 100%);box-shadow:0 16px 36px rgba(77,59,183,.34)}
 .hero .btn-accent:hover{transform:translateY(-2px);box-shadow:0 20px 42px rgba(77,59,183,.42)}
@@ -3292,6 +3301,26 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
   }
   .hero{
     padding:34px 0 48px
+  }
+  .home-download-cta{
+    padding:0 0 18px
+  }
+  .home-download-cta__button{
+    padding:14px 14px;
+    gap:10px;
+    border-radius:18px
+  }
+  .home-download-cta__icon{
+    width:44px;
+    height:44px;
+    border-radius:12px;
+    font-size:1.3rem
+  }
+  .home-download-cta__copy strong{
+    font-size:1.05rem
+  }
+  .home-download-cta__copy small{
+    font-size:.8rem
   }
   .hero-inner-home{min-height:430px}
   .hero-text-docked{padding-bottom:2px}

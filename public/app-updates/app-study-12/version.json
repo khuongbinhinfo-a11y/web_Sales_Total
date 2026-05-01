@@ -1,0 +1,15 @@
+{
+  "latestVersion": "0.1.0",
+  "minimumSupportedVersion": "0.1.0",
+  "required": false,
+  "title": "Hoc Hung Khoi Tieu Hoc - ban desktop moi nhat",
+  "message": "Ban desktop Windows da san sang. Bam Tai app Windows de tai bo cai moi nhat.",
+  "notes": [
+    "Bo cai danh cho Windows x64.",
+    "Sau khi cai dat, app se tu kiem tra cap nhat nen.",
+    "Neu dang dung ban cu, hay cap nhat de nhan du tinh nang moi."
+  ],
+  "downloadPath": "/app-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe",
+  "releaseNotesPath": "/app-updates/app-study-12/latest.yml",
+  "publishedAt": "2026-05-02T00:00:00Z"
+}

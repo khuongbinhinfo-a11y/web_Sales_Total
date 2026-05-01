@@ -7,6 +7,12 @@ const expectedApp = {
   description: "Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc."
 };
 
+const expectedDesktopUpdate = {
+  latestPath: "/desktop-updates/latest.yml",
+  installerPath: "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe",
+  blockmapPath: "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe.blockmap"
+};
+
 const expectedProducts = {
   "prod-test-2k": {
     name: "INTERNAL Sepay Test",
@@ -81,6 +87,35 @@ async function fetchJson(url) {
   return response.json();
 }
 
+async function fetchText(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`${url} -> HTTP ${response.status}`);
+  }
+  return {
+    status: response.status,
+    contentType: String(response.headers.get("content-type") || ""),
+    text: await response.text()
+  };
+}
+
+async function fetchHead(url) {
+  const response = await fetch(url, { method: "HEAD" });
+  if (!response.ok) {
+    throw new Error(`${url} -> HTTP ${response.status}`);
+  }
+  return {
+    status: response.status,
+    contentType: String(response.headers.get("content-type") || ""),
+    contentLength: Number(response.headers.get("content-length") || 0)
+  };
+}
+
+function looksLikeHtml(payload) {
+  const text = String(payload || "").toLowerCase();
+  return text.includes("<html") || text.includes("<!doctype html");
+}
+
 function compareField(findings, label, actual, expected) {
   if (actual !== expected) {
     findings.push(`${label}: actual=${formatValue(actual)} expected=${formatValue(expected)}`);
@@ -90,10 +125,15 @@ function compareField(findings, label, actual, expected) {
 async function main() {
   const baseUrl = String(process.argv[2] || process.env.PROD_BASE_URL || DEFAULT_BASE_URL).trim().replace(/\/$/, "");
 
-  const [health, googleConfig, catalog] = await Promise.all([
+  const [health, googleConfig, catalog, latestYml, installerHead, blockmapHead, appUpdateFeed, homepage] = await Promise.all([
     fetchJson(`${baseUrl}/api/health`),
     fetchJson(`${baseUrl}/api/auth/google/config`),
-    fetchJson(`${baseUrl}/api/catalog`)
+    fetchJson(`${baseUrl}/api/catalog`),
+    fetchText(`${baseUrl}${expectedDesktopUpdate.latestPath}`),
+    fetchHead(`${baseUrl}${expectedDesktopUpdate.installerPath}`),
+    fetchHead(`${baseUrl}${expectedDesktopUpdate.blockmapPath}`),
+    fetchText(`${baseUrl}/app-update.json`),
+    fetchText(`${baseUrl}/`)
   ]);
 
   const findings = [];
@@ -126,9 +166,62 @@ async function main() {
     findings.push("Google login disabled: /api/auth/google/config returns enabled=false");
   }
 
+  const latestText = String(latestYml.text || "");
+  if (looksLikeHtml(latestText)) {
+    findings.push(`${expectedDesktopUpdate.latestPath} returns HTML instead of latest.yml`);
+  } else {
+    if (!/\bversion\s*:/i.test(latestText)) {
+      findings.push(`${expectedDesktopUpdate.latestPath} missing key: version`);
+    }
+    if (!/\bfiles\s*:/i.test(latestText)) {
+      findings.push(`${expectedDesktopUpdate.latestPath} missing key: files`);
+    }
+    if (!/HocHungKhoi_Desktopapp-Win\.exe/i.test(latestText)) {
+      findings.push(`${expectedDesktopUpdate.latestPath} missing installer filename`);
+    }
+  }
+
+  if (installerHead.contentLength <= 0) {
+    findings.push(`${expectedDesktopUpdate.installerPath} empty or missing content-length`);
+  }
+  if (blockmapHead.contentLength <= 0) {
+    findings.push(`${expectedDesktopUpdate.blockmapPath} empty or missing content-length`);
+  }
+
+  if (looksLikeHtml(appUpdateFeed.text)) {
+    findings.push("/app-update.json returns HTML instead of JSON");
+  } else {
+    let parsedFeed = null;
+    try {
+      parsedFeed = JSON.parse(appUpdateFeed.text);
+    } catch (_error) {
+      findings.push("/app-update.json is not valid JSON");
+    }
+    if (parsedFeed) {
+      if (String(parsedFeed.appId || "") !== "hoc-tap-cap-01") {
+        findings.push(`/app-update.json.appId mismatch: ${formatValue(parsedFeed.appId)} != hoc-tap-cap-01`);
+      }
+      if (!String(parsedFeed.latestVersion || "")) {
+        findings.push("/app-update.json missing latestVersion");
+      }
+    }
+  }
+
+  const homepageHtml = String(homepage.text || "");
+  if (!homepageHtml.includes("/account?tab=downloads&highlight=app-study-12")) {
+    findings.push("Homepage missing Windows download CTA link with highlight=app-study-12");
+  }
+  if (!/Tai app cho Windows|Tải app cho Windows/i.test(homepageHtml)) {
+    findings.push("Homepage missing Windows download CTA text");
+  }
+
   console.log(`Base URL: ${baseUrl}`);
   console.log(`Health: environment=${health.environment} paymentProviderMode=${health.paymentProviderMode} database=${health.database}`);
   console.log(`Google config: enabled=${Boolean(googleConfig.enabled)} clientIdPresent=${Boolean(googleConfig.clientId)}`);
+  console.log(
+    `Desktop update: latestContentType=${latestYml.contentType || "n/a"} installerLength=${installerHead.contentLength} blockmapLength=${blockmapHead.contentLength}`
+  );
+  console.log(`App update feed: contentType=${appUpdateFeed.contentType || "n/a"}`);
 
   if (!findings.length) {
     console.log("Production sync OK");
