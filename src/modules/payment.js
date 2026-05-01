@@ -125,8 +125,13 @@ function resolveGmailRecipients() {
     return recipients;
   }
 
-  const sender = resolveGmailSender();
-  return sender ? [sender] : [];
+  const fallbackRecipient =
+    resolveSupportReplyAddress() ||
+    resolveGmailSender() ||
+    sanitizeMailboxAddress(env.emailFromSupport) ||
+    sanitizeMailboxAddress(env.emailFromDefault);
+
+  return fallbackRecipient ? [fallbackRecipient] : [];
 }
 
 async function resolvePaidOrderRecipients(order) {
@@ -710,16 +715,16 @@ async function notifyPaidOrderByGmailWithPolicy({ order, keyDelivery, orderId, i
     };
   }
 
-  if (!isGmailNotifyEnabled()) {
+  if (!isResendNotifyEnabled() && !isGmailNotifyEnabled()) {
     await updateEmailNotificationAttempt({
       notificationEventId: attempt.notificationEventId,
       status: "skipped",
-      reason: "gmail_disabled_or_missing_config"
+      reason: "email_provider_disabled_or_missing_config"
     });
     return {
       ok: false,
       skipped: true,
-      reason: "gmail_disabled_or_missing_config",
+      reason: "email_provider_disabled_or_missing_config",
       notificationEventId: attempt.notificationEventId
     };
   }
