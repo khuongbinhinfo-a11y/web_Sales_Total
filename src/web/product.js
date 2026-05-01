@@ -628,6 +628,16 @@ function isExternalLink(value) {
 function resolveDownloadAction(product, content) {
   const customLink = String(content?.downloadUrl || "").trim();
   const appId = String(product?.appId || "").trim().toLowerCase();
+  const productId = String(product?.id || "").trim();
+
+  // Test products - không có download link
+  if (appId === "app-cap12" || productId === "demo-hoc12") {
+    return {
+      href: "/account?tab=downloads",
+      label: "🔐 Xem tải app sau mua",
+      external: false
+    };
+  }
 
   if (appId === "app-study-12") {
     return {
