@@ -13,6 +13,11 @@ let currentGateData = null;
 let aiAppSecretConfigured = false;
 let adminListFocusUsername = "";
 const licenseCompDraftStorageKey = "admin_license_compensation_draft_v1";
+let appRegistryState = {
+  items: [],
+  selectedAppId: "",
+  lastDetail: null
+};
 
 function wait(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -585,6 +590,104 @@ function bindSepayForm(){
         msg.textContent = "Đã lưu cấu hình, nhưng Webhook URL vẫn là localhost/private nên Sepay chưa gọi được từ bên ngoài.";
         msg.style.color = "var(--danger)";
       }
+    } catch(err){
+      msg.textContent = "Lỗi kết nối: " + err.message;
+      msg.style.color = "var(--danger)";
+    }
+  });
+}
+
+function renderPublicPageLockStatus(locked){
+  const statusEl = document.getElementById("publicPageControlStatus");
+  if(!statusEl) return;
+  if(locked){
+    statusEl.textContent = "Đang tạm khóa";
+    statusEl.style.background = "#fee2e2";
+    statusEl.style.color = "#991b1b";
+    return;
+  }
+  statusEl.textContent = "Đang mở";
+  statusEl.style.background = "#dcfce7";
+  statusEl.style.color = "#166534";
+}
+
+async function loadPublicPageControls(){
+  const form = document.getElementById("publicPageControlForm");
+  if(!form) return;
+
+  const msg = document.getElementById("publicPageControlMsg");
+  const lockEl = document.getElementById("mauDemoLocked");
+  const messageEl = document.getElementById("mauDemoLockMessage");
+  if(!msg || !lockEl || !messageEl) return;
+
+  try {
+    const res = await fetchAdmin("/api/admin/settings/public-pages");
+    if(res.status===401){ redirectToAdminLogin("/api/admin/settings/public-pages"); return; }
+    const data = await res.json().catch(()=>({}));
+    if(res.status===403){
+      msg.textContent = "Bạn không có quyền xem cấu hình tạm khóa trang.";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+    if(!res.ok){
+      msg.textContent = data.message || "Không tải được cấu hình tạm khóa trang.";
+      msg.style.color = "var(--danger)";
+      return;
+    }
+
+    const pageFlags = data.pageFlags || {};
+    const isLocked = Boolean(pageFlags.mauDemoLocked);
+    lockEl.checked = isLocked;
+    messageEl.value = String(pageFlags.mauDemoMessage || "");
+    renderPublicPageLockStatus(isLocked);
+    msg.textContent = "Đã tải trạng thái tạm khóa /mau-demo.";
+    msg.style.color = "var(--muted)";
+  } catch(err){
+    msg.textContent = "Lỗi tải cấu hình tạm khóa: " + err.message;
+    msg.style.color = "var(--danger)";
+  }
+}
+
+function bindPublicPageControls(){
+  const form = document.getElementById("publicPageControlForm");
+  if(!form) return;
+
+  const msg = document.getElementById("publicPageControlMsg");
+  const lockEl = document.getElementById("mauDemoLocked");
+  const messageEl = document.getElementById("mauDemoLockMessage");
+  if(!msg || !lockEl || !messageEl) return;
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    msg.textContent = "Đang lưu cấu hình...";
+    msg.style.color = "var(--muted)";
+
+    const payload = {
+      mauDemoLocked: Boolean(lockEl.checked),
+      mauDemoMessage: messageEl.value.trim()
+    };
+
+    try {
+      const res = await fetchAdmin("/api/admin/settings/public-pages", {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      if(res.status===401){ redirectToAdminLogin("/api/admin/settings/public-pages"); return; }
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        msg.textContent = data.message || "Lưu cấu hình tạm khóa thất bại.";
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      const pageFlags = data.pageFlags || {};
+      const isLocked = Boolean(pageFlags.mauDemoLocked);
+      lockEl.checked = isLocked;
+      messageEl.value = String(pageFlags.mauDemoMessage || "");
+      renderPublicPageLockStatus(isLocked);
+      msg.textContent = data.message || "Đã lưu cấu hình tạm khóa /mau-demo.";
+      msg.style.color = "var(--success)";
     } catch(err){
       msg.textContent = "Lỗi kết nối: " + err.message;
       msg.style.color = "var(--danger)";
@@ -2136,8 +2239,10 @@ document.getElementById("lookupBtn")?.addEventListener("click",()=>{
 bindCreateAdminForm();
 bindChangeMyAdminPasswordForm();
 bindSepayForm();
+bindPublicPageControls();
 bindAiAppSecretControls();
 bindAiGateControls();
+bindAppRegistryControls();
 bindManualGrant();
 bindLicenseCompensationTool();
 loadManualGrantCatalog();
@@ -2151,8 +2256,413 @@ bindDiscountCodeAdmin();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();
+  loadPublicPageControls();
   loadAiAppSecretStatus();
+  loadAppRegistryList();
 });
+
+function appRegistryHealthMeta(status){
+  const normalized = String(status || "unknown").trim().toLowerCase();
+  if(normalized === "green") return { label: "Xanh - Ổn định", className: "is-green" };
+  if(normalized === "yellow") return { label: "Vàng - Cần bổ sung", className: "is-yellow" };
+  if(normalized === "red") return { label: "Đỏ - Thiếu quan trọng", className: "is-red" };
+  return { label: "Chưa kiểm tra", className: "is-unknown" };
+}
+
+function getAppRegistryFilters(){
+  return {
+    keyword: document.getElementById("appRegistrySearch")?.value?.trim() || "",
+    status: document.getElementById("appRegistryStatusFilter")?.value || "",
+    publicReady: document.getElementById("appRegistryPublicReadyFilter")?.value || "",
+    missingDownload: document.getElementById("appRegistryMissingDownload")?.checked || false,
+    sortBy: "risk",
+    order: "desc"
+  };
+}
+
+function renderAppRegistrySummary(summary){
+  const wrap = document.getElementById("appRegistrySummaryWrap");
+  if(!wrap) return;
+  const safe = summary || {};
+  wrap.innerHTML = [
+    { value: safe.totalApps || 0, label: "Tổng số app đang theo dõi" },
+    { value: safe.redApps || 0, label: "App lỗi đỏ cần xử lý ngay" },
+    { value: safe.missingDownloadApps || 0, label: "App đang thiếu link tải" },
+    { value: safe.staleVerifyApps || 0, label: "App lâu chưa kiểm tra lại" }
+  ].map((item)=>`<div class="info-card"><strong>${Number(item.value || 0).toLocaleString("vi-VN")}</strong><span>${escapeHtml(item.label)}</span></div>`).join("");
+}
+
+function renderAppRegistryTable(items){
+  const wrap = document.getElementById("appRegistryTableWrap");
+  if(!wrap) return;
+  const safeItems = Array.isArray(items) ? items : [];
+  if(!safeItems.length){
+    wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Không có app nào khớp bộ lọc hiện tại.</p>`;
+    return;
+  }
+
+  wrap.innerHTML = `<table class="data-table admin-app-registry-table"><thead><tr>
+    <th>App</th>
+    <th>Sức khỏe</th>
+    <th>Link tải</th>
+    <th>Manifest</th>
+    <th>Mở bán</th>
+    <th>Người phụ trách</th>
+    <th>Kiểm tra gần nhất</th>
+  </tr></thead><tbody>${safeItems.map((item)=>{
+    const health = appRegistryHealthMeta(item.healthStatus);
+    return `<tr data-app-id="${escapeHtml(item.appId)}" class="${item.appId === appRegistryState.selectedAppId ? "is-active" : ""}">
+      <td>
+        <strong>${escapeHtml(item.displayName || item.appId)}</strong>
+        <div class="admin-product-card-subline">${escapeHtml(item.appId)} · ${escapeHtml(item.appNameFromAppsTable || "")}</div>
+      </td>
+      <td>
+        <span class="admin-app-registry-health ${health.className}">${health.label}</span>
+        <div class="admin-product-card-subline">Điểm: ${Number(item.healthScore || 0)} · Đỏ: ${Number(item.criticalCount || 0)} · Vàng: ${Number(item.warningCount || 0)}</div>
+      </td>
+      <td>${item.hasDownloadUrl ? '<span class="status-badge status-active">Đã có</span>' : '<span class="status-badge" style="background:#fee2e2;color:#991b1b">Thiếu</span>'}</td>
+      <td>${item.hasManifest ? '<span class="status-badge status-active">Đã có</span>' : '<span class="status-badge" style="background:#e2e8f0;color:#334155">Không có</span>'}</td>
+      <td>${item.publicReady ? '<span class="status-badge status-active">Sẵn sàng</span>' : '<span class="status-badge" style="background:#e2e8f0;color:#334155">Chưa bật</span>'}</td>
+      <td>${escapeHtml(item.ownerName || "Chưa gán")}</td>
+      <td style="font-size:.8rem">${item.lastVerifiedAt ? fmtDate(item.lastVerifiedAt) : "Chưa kiểm tra"}</td>
+    </tr>`;
+  }).join("")}</tbody></table>`;
+
+  wrap.querySelectorAll("tr[data-app-id]").forEach((row)=>{
+    row.addEventListener("click", ()=>{
+      const appId = row.dataset.appId || "";
+      if(!appId) return;
+      appRegistryState.selectedAppId = appId;
+      renderAppRegistryTable(appRegistryState.items);
+      loadAppRegistryDetail(appId);
+    });
+  });
+}
+
+function renderAppRegistryChecks(checks){
+  const safeChecks = Array.isArray(checks) ? checks : [];
+  if(!safeChecks.length){
+    return `<p style="color:var(--muted);font-size:.82rem">App này chưa có lần kiểm tra nào.</p>`;
+  }
+  return `<div class="admin-app-registry-check-list">${safeChecks.map((check)=>{
+    const itemClass = check.passed ? "" : (check.severity === "critical" ? "is-fail-critical" : "is-fail-warning");
+    const prefix = check.passed ? "Ổn" : (check.severity === "critical" ? "Cần xử lý ngay" : "Nên bổ sung");
+    return `<div class="admin-app-registry-check-item ${itemClass}"><strong>${escapeHtml(prefix)} · ${escapeHtml(check.checkCode || "")}</strong><span>${escapeHtml(check.message || "")}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function renderAppRegistryHistory(history){
+  const safeHistory = Array.isArray(history) ? history : [];
+  if(!safeHistory.length){
+    return `<p style="color:var(--muted);font-size:.82rem">Chưa có lịch sử kiểm tra.</p>`;
+  }
+  return `<table class="data-table"><thead><tr><th>Thời điểm</th><th>Sức khỏe</th><th>Lỗi đỏ</th><th>Cảnh báo</th></tr></thead><tbody>${safeHistory.map((item)=>{
+    const health = appRegistryHealthMeta(item.healthStatus);
+    return `<tr>
+      <td style="font-size:.8rem">${fmtDate(item.checkedAt)}</td>
+      <td><span class="admin-app-registry-health ${health.className}">${health.label}</span></td>
+      <td>${Number(item.criticalCount || 0)}</td>
+      <td>${Number(item.warningCount || 0)}</td>
+    </tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+function renderAppRegistryDetail(payload){
+  const wrap = document.getElementById("appRegistryDetailWrap");
+  if(!wrap) return;
+  const data = payload?.data || payload || {};
+  const app = data.app || null;
+  if(!app){
+    wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chọn một app để xem chi tiết.</p>`;
+    return;
+  }
+  appRegistryState.lastDetail = data;
+  const health = appRegistryHealthMeta(app.healthStatus);
+  const products = Array.isArray(data.catalog?.products) ? data.catalog.products : [];
+  const criticalCount = Array.isArray(data.checks) ? data.checks.filter((item)=>item.severity === "critical" && item.passed === false).length : 0;
+  wrap.innerHTML = `<div class="admin-app-registry-panel">
+    <div class="info-card">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <h4 style="margin:0;color:#fff;font-size:1rem">${escapeHtml(app.displayName || app.appId)}</h4>
+          <p style="margin:6px 0 0;color:var(--muted);font-size:.82rem">${escapeHtml(app.appId)} · ${escapeHtml(app.appNameFromAppsTable || "")}</p>
+        </div>
+        <span class="admin-app-registry-health ${health.className}">${health.label}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px">
+        <div class="admin-chip-panel"><b style="display:block;color:#fff">${Number(app.activeProductCount || 0)}</b>Sản phẩm đang hoạt động</div>
+        <div class="admin-chip-panel"><b style="display:block;color:#fff">${Number(app.liveProductCount || 0)}</b>Sản phẩm đang mở bán</div>
+        <div class="admin-chip-panel"><b style="display:block;color:#fff">${Number(app.healthScore || 0)}</b>Điểm sức khỏe hiện tại</div>
+      </div>
+      ${criticalCount > 0 ? `<div style="margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(127,29,29,.24);border:1px solid rgba(251,113,133,.3);color:#ffe4e6;font-size:.84rem">App này đang còn <b>${criticalCount}</b> lỗi đỏ. Nên xử lý hết lỗi đỏ rồi mới bật trạng thái sẵn sàng mở bán.</div>` : ""}
+    </div>
+
+    <form id="appRegistryDetailForm" data-app-id="${escapeHtml(app.appId)}" class="info-card" style="display:grid;gap:12px">
+      <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:10px">
+        <div>
+          <label class="admin-field-label">Tên hiển thị trên web tổng</label>
+          <input name="displayName" class="admin-input" value="${escapeHtml(app.displayName || "")}" />
+        </div>
+        <div>
+          <label class="admin-field-label">Nhóm kinh doanh</label>
+          <input name="businessGroup" class="admin-input" value="${escapeHtml(app.businessGroup || "general")}" placeholder="education / real-estate / salon" />
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <div>
+          <label class="admin-field-label">Kiểu bàn giao</label>
+          <select name="deliveryType" class="admin-input">
+            <option value="website" ${app.deliveryType === "website" ? "selected" : ""}>Website / khách mở trên web</option>
+            <option value="manifest_download" ${app.deliveryType === "manifest_download" ? "selected" : ""}>Có bộ cài + có update manifest</option>
+            <option value="manual_delivery" ${app.deliveryType === "manual_delivery" ? "selected" : ""}>Bàn giao thủ công</option>
+          </select>
+        </div>
+        <div>
+          <label class="admin-field-label">Người phụ trách</label>
+          <input name="ownerName" class="admin-input" value="${escapeHtml(app.ownerName || "")}" placeholder="Tên người chịu trách nhiệm app" />
+        </div>
+        <div>
+          <label class="admin-field-label">SLA hỗ trợ (giờ)</label>
+          <input name="supportSlaHours" type="number" min="1" max="168" class="admin-input" value="${Number(app.supportSlaHours || 24)}" />
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1px solid rgba(145,180,255,.12);border-radius:14px;background:rgba(10,22,37,.45)">
+        <input name="publicReady" type="checkbox" ${app.publicReady ? "checked" : ""} style="margin-top:3px" />
+        <span style="font-size:.84rem;color:#d7e7ff">Bật trạng thái <b>Sẵn sàng mở bán</b>. Chỉ nên bật khi đã đủ link tải, link hỗ trợ và kiểm tra không còn lỗi đỏ.</span>
+      </label>
+
+      <div style="display:grid;gap:10px">
+        <div>
+          <label class="admin-field-label">Link app web</label>
+          <input name="webUrl" class="admin-input" value="${escapeHtml(app.webUrl || "")}" placeholder="Ví dụ: https://ten-app.com" />
+        </div>
+        <div>
+          <label class="admin-field-label">Link trang giá / trang giới thiệu</label>
+          <input name="pricingUrl" class="admin-input" value="${escapeHtml(app.pricingUrl || "")}" placeholder="Link khách xem trước khi mua" />
+        </div>
+        <div>
+          <label class="admin-field-label">Link tải cho khách</label>
+          <input name="downloadUrl" class="admin-input" value="${escapeHtml(app.downloadUrl || "")}" placeholder="Link khách bấm để tải hoặc mở app" />
+        </div>
+        <div>
+          <label class="admin-field-label">Link manifest update</label>
+          <input name="manifestUrl" class="admin-input" value="${escapeHtml(app.manifestUrl || "")}" placeholder="Dùng cho app desktop có cập nhật tự động" />
+        </div>
+        <div>
+          <label class="admin-field-label">Link ghi chú cập nhật</label>
+          <input name="releaseNotesUrl" class="admin-input" value="${escapeHtml(app.releaseNotesUrl || "")}" placeholder="Release note để support tra nhanh" />
+        </div>
+        <div>
+          <label class="admin-field-label">Link hỗ trợ khách</label>
+          <input name="supportUrl" class="admin-input" value="${escapeHtml(app.supportUrl || "")}" placeholder="Zalo hoặc trang hỗ trợ" />
+        </div>
+      </div>
+
+      <div>
+        <label class="admin-field-label">Ghi chú nội bộ</label>
+        <textarea name="checklistNote" class="admin-textarea" rows="3" placeholder="Ghi những gì dễ quên: đã có file cài chưa, chờ xác nhận gì nữa...">${escapeHtml(app.checklistNote || "")}</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="submit" class="btn btn-accent" style="min-height:40px">Lưu hồ sơ app</button>
+        <button type="button" class="btn btn-outline" id="appRegistryVerifyOneBtn">Kiểm tra app này</button>
+        ${app.downloadUrl ? `<a href="${escapeHtml(app.downloadUrl)}" target="_blank" class="btn btn-outline">Mở link tải</a>` : ""}
+      </div>
+      <p id="appRegistryDetailMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+    </form>
+
+    <div class="info-card">
+      <b class="admin-card-title">Các sản phẩm đang nối với app này</b>
+      <div class="table-wrap" style="margin-top:10px">${products.length ? `<table class="data-table"><thead><tr><th>Sản phẩm</th><th>Trạng thái card</th><th>Hiển thị</th></tr></thead><tbody>${products.map((product)=>`<tr><td><strong>${escapeHtml(product.productName || product.productId)}</strong><div class="admin-product-card-subline">${escapeHtml(product.productId || "")}</div></td><td>${escapeHtml(product.saleStatus || "live")}</td><td>${product.active ? '<span class="status-badge status-active">active</span>' : '<span class="status-badge">inactive</span>'} <span class="status-badge ${product.visibility === "hidden" ? "" : "status-active"}">${escapeHtml(product.visibility || "public")}</span></td></tr>`).join("")}</tbody></table>` : `<p style="padding:16px;color:var(--muted)">App này chưa có sản phẩm nào trong catalog.</p>`}</div>
+    </div>
+
+    <div class="info-card">
+      <b class="admin-card-title">Cảnh báo và việc cần làm</b>
+      <div style="margin-top:10px">${renderAppRegistryChecks(data.checks)}</div>
+    </div>
+
+    <div class="info-card">
+      <b class="admin-card-title">Lịch sử kiểm tra gần đây</b>
+      <div class="table-wrap" style="margin-top:10px">${renderAppRegistryHistory(data.history)}</div>
+    </div>
+  </div>`;
+}
+
+async function loadAppRegistryDetail(appId){
+  const wrap = document.getElementById("appRegistryDetailWrap");
+  if(!wrap || !appId) return;
+  wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Đang tải chi tiết app...</p>`;
+  try {
+    const res = await fetchAdmin(`/api/admin/app-registry/${encodeURIComponent(appId)}`);
+    if(res.status===401){ redirectToAdminLogin(`/api/admin/app-registry/${encodeURIComponent(appId)}`); return; }
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">${escapeHtml(payload.message || "Không tải được chi tiết app")}</p>`;
+      return;
+    }
+    renderAppRegistryDetail(payload.data || payload);
+  } catch(err){
+    wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">Lỗi tải chi tiết app: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function loadAppRegistryList(preferredAppId){
+  const msg = document.getElementById("appRegistryMsg");
+  const tableWrap = document.getElementById("appRegistryTableWrap");
+  if(!tableWrap) return;
+  if(msg){ msg.textContent = "Đang tải app registry..."; msg.style.color = "var(--muted)"; }
+  tableWrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Đang tải danh sách app...</p>`;
+  try {
+    const query = new URLSearchParams();
+    const filters = getAppRegistryFilters();
+    Object.entries(filters).forEach(([key, value])=>{
+      if(value === "" || value === false || value === null || value === undefined) return;
+      query.set(key, String(value));
+    });
+    const res = await fetchAdmin(`/api/admin/app-registry?${query.toString()}`);
+    if(res.status===401){ redirectToAdminLogin("/api/admin/app-registry"); return; }
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      if(msg){ msg.textContent = payload.message || "Không tải được app registry"; msg.style.color = "var(--danger)"; }
+      return;
+    }
+    const data = payload.data || { summary: {}, items: [] };
+    appRegistryState.items = Array.isArray(data.items) ? data.items : [];
+    renderAppRegistrySummary(data.summary || {});
+    if(!appRegistryState.items.length){
+      appRegistryState.selectedAppId = "";
+      renderAppRegistryTable([]);
+      renderAppRegistryDetail(null);
+      if(msg){ msg.textContent = payload.message || "Không có app nào khớp bộ lọc."; msg.style.color = "var(--muted)"; }
+      return;
+    }
+    const desiredAppId = preferredAppId || appRegistryState.selectedAppId || appRegistryState.items[0].appId;
+    appRegistryState.selectedAppId = appRegistryState.items.some((item)=>item.appId === desiredAppId)
+      ? desiredAppId
+      : appRegistryState.items[0].appId;
+    renderAppRegistryTable(appRegistryState.items);
+    await loadAppRegistryDetail(appRegistryState.selectedAppId);
+    if(msg){ msg.textContent = `Đã tải ${appRegistryState.items.length} app trong registry.`; msg.style.color = "var(--success)"; }
+  } catch(err){
+    if(msg){ msg.textContent = `Lỗi tải app registry: ${err.message}`; msg.style.color = "var(--danger)"; }
+  }
+}
+
+function bindAppRegistryControls(){
+  const searchEl = document.getElementById("appRegistrySearch");
+  const statusEl = document.getElementById("appRegistryStatusFilter");
+  const readyEl = document.getElementById("appRegistryPublicReadyFilter");
+  const missingEl = document.getElementById("appRegistryMissingDownload");
+  const refreshBtn = document.getElementById("appRegistryRefreshBtn");
+  const verifyAllBtn = document.getElementById("appRegistryVerifyAllBtn");
+  const detailWrap = document.getElementById("appRegistryDetailWrap");
+  const msg = document.getElementById("appRegistryMsg");
+  if(!detailWrap) return;
+
+  let searchTimer = null;
+  const scheduleReload = ()=>{
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(()=> loadAppRegistryList(appRegistryState.selectedAppId), 250);
+  };
+
+  searchEl?.addEventListener("input", scheduleReload);
+  statusEl?.addEventListener("change", ()=> loadAppRegistryList(appRegistryState.selectedAppId));
+  readyEl?.addEventListener("change", ()=> loadAppRegistryList(appRegistryState.selectedAppId));
+  missingEl?.addEventListener("change", ()=> loadAppRegistryList(appRegistryState.selectedAppId));
+  refreshBtn?.addEventListener("click", ()=> loadAppRegistryList(appRegistryState.selectedAppId));
+  verifyAllBtn?.addEventListener("click", async ()=>{
+    if(msg){ msg.textContent = "Đang kiểm tra toàn bộ app..."; msg.style.color = "var(--muted)"; }
+    try {
+      const res = await fetchAdmin("/api/admin/app-registry/verify-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveHistory: true })
+      });
+      if(res.status===401){ redirectToAdminLogin("/api/admin/app-registry/verify-all"); return; }
+      const payload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        if(msg){ msg.textContent = payload.message || "Kiểm tra toàn bộ app thất bại"; msg.style.color = "var(--danger)"; }
+        return;
+      }
+      if(msg){ msg.textContent = `Đã kiểm tra ${Number(payload.data?.checkedApps || 0)} app. Đỏ: ${Number(payload.data?.redApps || 0)} · Vàng: ${Number(payload.data?.yellowApps || 0)} · Xanh: ${Number(payload.data?.greenApps || 0)}.`; msg.style.color = "var(--success)"; }
+      await loadAppRegistryList(appRegistryState.selectedAppId);
+    } catch(err){
+      if(msg){ msg.textContent = `Lỗi kiểm tra toàn bộ app: ${err.message}`; msg.style.color = "var(--danger)"; }
+    }
+  });
+
+  detailWrap.addEventListener("submit", async (e)=>{
+    const form = e.target;
+    if(!(form instanceof HTMLFormElement) || form.id !== "appRegistryDetailForm") return;
+    e.preventDefault();
+    const appId = form.dataset.appId || "";
+    const detailMsg = document.getElementById("appRegistryDetailMsg");
+    if(detailMsg){ detailMsg.textContent = "Đang lưu hồ sơ app..."; detailMsg.style.color = "var(--muted)"; }
+    const payload = {
+      displayName: form.elements.displayName?.value || "",
+      businessGroup: form.elements.businessGroup?.value || "",
+      deliveryType: form.elements.deliveryType?.value || "manual_delivery",
+      ownerName: form.elements.ownerName?.value || "",
+      supportSlaHours: Number(form.elements.supportSlaHours?.value || 24),
+      publicReady: Boolean(form.elements.publicReady?.checked),
+      webUrl: form.elements.webUrl?.value || "",
+      pricingUrl: form.elements.pricingUrl?.value || "",
+      downloadUrl: form.elements.downloadUrl?.value || "",
+      manifestUrl: form.elements.manifestUrl?.value || "",
+      releaseNotesUrl: form.elements.releaseNotesUrl?.value || "",
+      supportUrl: form.elements.supportUrl?.value || "",
+      checklistNote: form.elements.checklistNote?.value || ""
+    };
+    try {
+      const res = await fetchAdmin(`/api/admin/app-registry/${encodeURIComponent(appId)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if(res.status===401){ redirectToAdminLogin(`/api/admin/app-registry/${encodeURIComponent(appId)}`); return; }
+      const responsePayload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        const errors = Array.isArray(responsePayload.errors) ? responsePayload.errors.map((item)=>item.message).join(" | ") : "";
+        if(detailMsg){ detailMsg.textContent = errors || responsePayload.message || "Lưu hồ sơ app thất bại"; detailMsg.style.color = "var(--danger)"; }
+        return;
+      }
+      if(detailMsg){ detailMsg.textContent = responsePayload.message || "Đã lưu hồ sơ app"; detailMsg.style.color = "var(--success)"; }
+      await loadAppRegistryList(appId);
+    } catch(err){
+      if(detailMsg){ detailMsg.textContent = `Lỗi lưu hồ sơ app: ${err.message}`; detailMsg.style.color = "var(--danger)"; }
+    }
+  });
+
+  detailWrap.addEventListener("click", async (e)=>{
+    const target = e.target;
+    if(!(target instanceof HTMLElement)) return;
+    if(target.id !== "appRegistryVerifyOneBtn") return;
+    const form = detailWrap.querySelector("#appRegistryDetailForm");
+    const detailMsg = document.getElementById("appRegistryDetailMsg");
+    const appId = form?.dataset?.appId || appRegistryState.selectedAppId || "";
+    if(!appId) return;
+    if(detailMsg){ detailMsg.textContent = "Đang kiểm tra app này..."; detailMsg.style.color = "var(--muted)"; }
+    try {
+      const res = await fetchAdmin(`/api/admin/app-registry/${encodeURIComponent(appId)}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveHistory: true })
+      });
+      if(res.status===401){ redirectToAdminLogin(`/api/admin/app-registry/${encodeURIComponent(appId)}/verify`); return; }
+      const payload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        if(detailMsg){ detailMsg.textContent = payload.message || "Kiểm tra app thất bại"; detailMsg.style.color = "var(--danger)"; }
+        return;
+      }
+      if(detailMsg){ detailMsg.textContent = `Đã kiểm tra app. Điểm: ${Number(payload.data?.healthScore || 0)} · Đỏ: ${Number(payload.data?.summary?.criticalCount || 0)} · Vàng: ${Number(payload.data?.summary?.warningCount || 0)}.`; detailMsg.style.color = "var(--success)"; }
+      await loadAppRegistryList(appId);
+    } catch(err){
+      if(detailMsg){ detailMsg.textContent = `Lỗi kiểm tra app: ${err.message}`; detailMsg.style.color = "var(--danger)"; }
+    }
+  });
+}
 
 function bindProductKeyManager() {
   const summaryWrap = document.getElementById("pkSummaryWrap");

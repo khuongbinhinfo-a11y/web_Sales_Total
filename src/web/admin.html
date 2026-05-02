@@ -54,6 +54,8 @@
           <div class="admin-sidebar-group-label">Cau hinh he thong</div>
           <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
           <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
+          <a href="#section-public-pages"><span class="icon">⛔</span> Tạm khóa trang</a>
+          <a href="#section-app-registry"><span class="icon">🧩</span> Quản trị App</a>
           <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
           <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
         </div>
@@ -244,6 +246,33 @@
           </div>
         </section>
 
+        <section id="section-public-pages" class="admin-section">
+          <h3>⛔ Tạm khóa trang công khai</h3>
+          <div class="info-card">
+            <form id="publicPageControlForm" style="display:grid;grid-template-columns:1fr;gap:10px;max-width:760px">
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff">
+                <input id="mauDemoLocked" type="checkbox" style="margin-top:3px" />
+                <span>
+                  <b>Tạm khóa route /mau-demo</b><br />
+                  <span style="color:var(--muted);font-size:.82rem">Khi bật, khách truy cập /mau-demo sẽ thấy trang thông báo tạm khóa thân thiện (HTTP 503).</span>
+                </span>
+              </label>
+
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Thông điệp hiển thị (tùy chọn, tối đa 280 ký tự)</label>
+                <textarea id="mauDemoLockMessage" rows="3" maxlength="280" placeholder="Trang mẫu demo đang được cập nhật, vui lòng quay lại sau." style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;resize:vertical"></textarea>
+              </div>
+
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button type="submit" class="btn btn-accent" style="min-height:40px;width:260px">Lưu cấu hình tạm khóa /mau-demo</button>
+                <span id="publicPageControlStatus" class="status-badge" style="background:#e2e8f0;color:#334155">Đang tải trạng thái...</span>
+              </div>
+
+              <p id="publicPageControlMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+            </form>
+          </div>
+        </section>
+
         <section id="section-aiapp-secret" class="admin-section">
           <h3>🔐 Shared Secret cho AI-app</h3>
           <div class="info-card">
@@ -347,6 +376,71 @@
               <button id="gateCommitBtn" class="btn btn-outline" style="min-height:38px;font-size:.84rem">Commit qua GitHub API</button>
             </div>
             <p id="gateCommitMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+        </section>
+
+        <section id="section-app-registry" class="admin-section">
+          <h3>🧩 Quản trị App chống sót link tải</h3>
+          <p class="admin-section-intro">Mục này gom toàn bộ app về một nơi để anh nhìn ra ngay app nào thiếu link tải, thiếu manifest update, chưa có người phụ trách hoặc chưa đủ điều kiện mở bán.</p>
+
+          <div class="info-card" style="margin-bottom:12px">
+            <div class="admin-app-registry-toolbar">
+              <div>
+                <label class="admin-field-label">Tìm nhanh app</label>
+                <input id="appRegistrySearch" class="admin-input" placeholder="Nhập tên app hoặc mã app" />
+              </div>
+              <div>
+                <label class="admin-field-label">Lọc theo mức rủi ro</label>
+                <select id="appRegistryStatusFilter" class="admin-input">
+                  <option value="">Tất cả</option>
+                  <option value="red">Đỏ - Thiếu quan trọng</option>
+                  <option value="yellow">Vàng - Cần bổ sung</option>
+                  <option value="green">Xanh - Ổn định</option>
+                  <option value="unknown">Chưa kiểm tra</option>
+                </select>
+              </div>
+              <div>
+                <label class="admin-field-label">Trạng thái mở bán</label>
+                <select id="appRegistryPublicReadyFilter" class="admin-input">
+                  <option value="">Tất cả</option>
+                  <option value="true">Đã bật sẵn sàng bán</option>
+                  <option value="false">Chưa bật sẵn sàng bán</option>
+                </select>
+              </div>
+              <label class="admin-app-registry-checkbox">
+                <input id="appRegistryMissingDownload" type="checkbox" />
+                <span>Chỉ hiện app đang thiếu link tải</span>
+              </label>
+              <button id="appRegistryRefreshBtn" class="btn btn-outline admin-compact-btn">🔄 Tải lại</button>
+              <button id="appRegistryVerifyAllBtn" class="btn btn-accent admin-compact-btn">🩺 Kiểm tra toàn bộ app</button>
+            </div>
+            <p id="appRegistryMsg" style="margin:10px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div id="appRegistrySummaryWrap" class="admin-app-registry-summary">
+            <div class="info-card"><b>Đang tải...</b></div>
+          </div>
+
+          <div class="admin-app-registry-layout">
+            <div class="info-card">
+              <div class="admin-card-head">
+                <div>
+                  <b class="admin-card-title">Danh sách app đang vận hành</b>
+                  <p class="admin-inline-note">Bấm vào một dòng để mở chi tiết. App lỗi đỏ sẽ được ưu tiên lên trên nếu anh lọc theo rủi ro.</p>
+                </div>
+              </div>
+              <div class="table-wrap admin-app-registry-table-wrap" id="appRegistryTableWrap"><p style="padding:16px;color:var(--muted)">Đang tải danh sách app...</p></div>
+            </div>
+
+            <div class="info-card admin-app-registry-detail-card">
+              <div class="admin-card-head">
+                <div>
+                  <b class="admin-card-title">Chi tiết app đang chọn</b>
+                  <p class="admin-inline-note">Điền các thông tin dễ quên nhất: link tải, link update, người phụ trách và trạng thái sẵn sàng mở bán.</p>
+                </div>
+              </div>
+              <div id="appRegistryDetailWrap" class="admin-app-registry-detail-wrap"><p style="padding:16px;color:var(--muted)">Chọn một app để xem chi tiết.</p></div>
+            </div>
           </div>
         </section>
 

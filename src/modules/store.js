@@ -1,7 +1,11 @@
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { pool } = require("../db/pool");
 
 const LICENSE_RUNTIME_LEASE_SECONDS = 180;
+const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates");
+const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
 
 function generateReadableOrderCode() {
   const timePart = Date.now().toString(36).toUpperCase();
@@ -67,6 +71,840 @@ function createStoreError(message, statusCode = 400) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function normalizeAppRegistryDeliveryType(value, fallback = "manual_delivery") {
+  const normalized = String(value || "").trim().toLowerCase();
+  return APP_REGISTRY_DELIVERY_TYPES.has(normalized) ? normalized : fallback;
+}
+
+function normalizeAppRegistryText(value, maxLength = 500) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function normalizeAppRegistryUrl(value) {
+  const normalized = String(value || "").trim();
+  return normalized;
+}
+
+function isValidAppRegistryUrl(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return true;
+  }
+  if (normalized.startsWith("/")) {
+    return true;
+  }
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function computeAppRegistryHealthStatus(score) {
+  const safeScore = Math.max(0, Number(score) || 0);
+  if (safeScore >= 80) return "green";
+  if (safeScore >= 50) return "yellow";
+  return "red";
+}
+
+function readLocalAppManifest(appIdRaw) {
+  const appId = String(appIdRaw || "").trim();
+  if (!appId) {
+    return null;
+  }
+  const manifestPath = path.join(appUpdatesRoot, appId, "version.json");
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+
+  try {
+    const raw = fs.readFileSync(manifestPath, "utf8");
+    const manifest = JSON.parse(raw);
+    return { appId, manifestPath, manifest };
+  } catch {
+    return null;
+  }
+}
+
+function getLocalArtifactPathFromDownloadUrl(appIdRaw, downloadUrlRaw) {
+  const appId = String(appIdRaw || "").trim();
+  const downloadUrl = String(downloadUrlRaw || "").trim();
+  if (!appId || !downloadUrl) {
+    return null;
+  }
+
+  let pathname = downloadUrl;
+  if (/^https?:\/\//i.test(downloadUrl)) {
+    try {
+      pathname = new URL(downloadUrl).pathname || "";
+    } catch {
+      return null;
+    }
+  }
+
+  if (!pathname.startsWith("/app-updates/")) {
+    return null;
+  }
+
+  const relativePath = pathname.slice("/app-updates/".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
+  if (!relativePath.startsWith(`${appId}/`)) {
+    return null;
+  }
+
+  const absolutePath = path.resolve(appUpdatesRoot, relativePath);
+  const rootPath = `${path.resolve(appUpdatesRoot)}${path.sep}`;
+  if (!absolutePath.startsWith(rootPath)) {
+    return null;
+  }
+  return absolutePath;
+}
+
+function normalizeLatestCheckRow(row) {
+  if (!row) {
+    return {
+      criticalCount: 0,
+      warningCount: 0,
+      lastCheckedAt: null
+    };
+  }
+
+  return {
+    criticalCount: Number(row.critical_count || 0),
+    warningCount: Number(row.warning_count || 0),
+    lastCheckedAt: row.last_checked_at || null
+  };
+}
+
+function mapAppRegistryRow(row) {
+  const criticalCount = Number(row.critical_count || 0);
+  const warningCount = Number(row.warning_count || 0);
+  return {
+    appId: row.app_id,
+    displayName: row.display_name,
+    appNameFromAppsTable: row.app_name,
+    slug: row.slug,
+    status: row.app_status,
+    description: row.app_description || "",
+    businessGroup: row.business_group || "general",
+    deliveryType: normalizeAppRegistryDeliveryType(row.delivery_type),
+    webUrl: row.web_url || "",
+    pricingUrl: row.pricing_url || "",
+    downloadUrl: row.download_url || "",
+    manifestUrl: row.manifest_url || "",
+    releaseNotesUrl: row.release_notes_url || "",
+    updateChannel: row.update_channel || "stable",
+    ownerName: row.owner_name || "",
+    supportUrl: row.support_url || "",
+    supportSlaHours: Number(row.support_sla_hours || 24),
+    publicReady: Boolean(row.public_ready),
+    checklistNote: row.checklist_note || "",
+    healthStatus: row.health_status || "unknown",
+    healthScore: Number(row.health_score || 0),
+    activeProductCount: Number(row.active_product_count || 0),
+    liveProductCount: Number(row.live_product_count || 0),
+    criticalCount,
+    warningCount,
+    hasCriticalIssues: criticalCount > 0,
+    hasDownloadUrl: Boolean(String(row.download_url || "").trim()),
+    hasManifest: Boolean(String(row.manifest_url || "").trim()),
+    lastVerifiedAt: row.last_verified_at || null,
+    updatedAt: row.updated_at,
+    createdAt: row.created_at
+  };
+}
+
+function summarizeAppRegistryChecks(checks) {
+  const safeChecks = Array.isArray(checks) ? checks : [];
+  const criticalCount = safeChecks.filter((item) => item.severity === "critical" && item.passed === false).length;
+  const warningCount = safeChecks.filter((item) => item.severity === "warning" && item.passed === false).length;
+  const passedCount = safeChecks.filter((item) => item.passed === true).length;
+  const totalChecks = safeChecks.length;
+  const score = Math.max(0, 100 - criticalCount * 25 - warningCount * 10);
+  return {
+    score,
+    healthStatus: computeAppRegistryHealthStatus(score),
+    criticalCount,
+    warningCount,
+    passedCount,
+    totalChecks
+  };
+}
+
+function inferDefaultRegistrySeed(app) {
+  const appId = String(app?.id || "").trim();
+  const manifestRecord = readLocalAppManifest(appId);
+  const manifest = manifestRecord?.manifest || {};
+  const hasManifest = Boolean(manifestRecord);
+  const isStudyWebsite = appId === "app-study-12";
+  const deliveryType = isStudyWebsite ? "website" : (hasManifest ? "manifest_download" : "manual_delivery");
+  return {
+    displayName: String(app?.name || appId || "Ứng dụng").trim(),
+    deliveryType,
+    webUrl: isStudyWebsite ? "https://hoctap-cap-01.vercel.app" : "",
+    pricingUrl: isStudyWebsite ? "https://hoctap-cap-01.vercel.app/#/pricing" : "",
+    downloadUrl: String(manifest.downloadPath || "").trim(),
+    manifestUrl: hasManifest ? `/api/v1/app-updates/${appId}/manifest` : "",
+    releaseNotesUrl: String(manifest.releaseNotesPath || "").trim(),
+    supportUrl: "https://zalo.me/0902964685"
+  };
+}
+
+async function ensureAppRegistryRows() {
+  const appsResult = await pool.query(
+    "SELECT id, name FROM apps ORDER BY created_at ASC"
+  );
+
+  for (const row of appsResult.rows) {
+    const seed = inferDefaultRegistrySeed(row);
+    await pool.query(
+      `INSERT INTO app_registry(
+         app_id, display_name, delivery_type, web_url, pricing_url,
+         download_url, manifest_url, release_notes_url, support_url
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (app_id) DO NOTHING`,
+      [
+        row.id,
+        seed.displayName,
+        seed.deliveryType,
+        seed.webUrl,
+        seed.pricingUrl,
+        seed.downloadUrl,
+        seed.manifestUrl,
+        seed.releaseNotesUrl,
+        seed.supportUrl
+      ]
+    );
+  }
+}
+
+async function queryAdminAppRegistryRows() {
+  await ensureAppRegistryRows();
+
+  const result = await pool.query(
+    `WITH latest_batch_ids AS (
+       SELECT DISTINCT ON (app_id) app_id, check_batch_id
+       FROM app_registry_checks
+       ORDER BY app_id, checked_at DESC
+     )
+     SELECT a.id AS app_id,
+            a.name AS app_name,
+            a.slug,
+            a.status AS app_status,
+            a.description AS app_description,
+            ar.display_name,
+            ar.business_group,
+            ar.delivery_type,
+            ar.web_url,
+            ar.pricing_url,
+            ar.download_url,
+            ar.manifest_url,
+            ar.release_notes_url,
+            ar.update_channel,
+            ar.owner_name,
+            ar.support_url,
+            ar.support_sla_hours,
+            ar.public_ready,
+            ar.checklist_note,
+            ar.health_status,
+            ar.health_score,
+            ar.last_verified_at,
+            ar.created_at,
+            ar.updated_at,
+            COUNT(p.id) FILTER (WHERE p.active = TRUE) AS active_product_count,
+            COUNT(p.id) FILTER (WHERE p.active = TRUE AND COALESCE(p.sale_status, 'live') = 'live') AS live_product_count,
+            COALESCE(checks.critical_count, 0) AS critical_count,
+            COALESCE(checks.warning_count, 0) AS warning_count,
+            checks.last_checked_at
+     FROM apps a
+     JOIN app_registry ar ON ar.app_id = a.id
+     LEFT JOIN products p ON p.app_id = a.id
+     LEFT JOIN latest_batch_ids lbi ON lbi.app_id = a.id
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*) FILTER (WHERE severity = 'critical' AND passed = FALSE) AS critical_count,
+              COUNT(*) FILTER (WHERE severity = 'warning' AND passed = FALSE) AS warning_count,
+              MAX(checked_at) AS last_checked_at
+       FROM app_registry_checks c
+       WHERE c.app_id = a.id
+         AND c.check_batch_id = lbi.check_batch_id
+     ) checks ON TRUE
+     GROUP BY a.id, a.name, a.slug, a.status, a.description,
+              ar.display_name, ar.business_group, ar.delivery_type, ar.web_url, ar.pricing_url,
+              ar.download_url, ar.manifest_url, ar.release_notes_url, ar.update_channel,
+              ar.owner_name, ar.support_url, ar.support_sla_hours, ar.public_ready,
+              ar.checklist_note, ar.health_status, ar.health_score, ar.last_verified_at,
+              ar.created_at, ar.updated_at,
+              checks.critical_count, checks.warning_count, checks.last_checked_at
+     ORDER BY a.created_at ASC`
+  );
+
+  return result.rows.map(mapAppRegistryRow);
+}
+
+function filterAdminAppRegistryItems(items, filters = {}) {
+  const safeItems = Array.isArray(items) ? items : [];
+  const keyword = normalizeAppRegistryText(filters.keyword, 80).toLowerCase();
+  const status = normalizeAppRegistryText(filters.status, 20).toLowerCase();
+  const sortBy = normalizeAppRegistryText(filters.sortBy, 30) || "risk";
+  const order = normalizeAppRegistryText(filters.order, 10).toLowerCase() === "asc" ? "asc" : "desc";
+  const staleDays = Math.max(0, Number(filters.staleDays) || 0);
+  const requireMissingDownload = filters.missingDownload === true || String(filters.missingDownload || "").toLowerCase() === "true";
+  const publicReadyFilter = String(filters.publicReady || "").trim().toLowerCase();
+
+  let next = safeItems.filter((item) => {
+    if (keyword) {
+      const haystack = `${item.displayName} ${item.appId} ${item.appNameFromAppsTable}`.toLowerCase();
+      if (!haystack.includes(keyword)) {
+        return false;
+      }
+    }
+    if (status && item.healthStatus !== status) {
+      return false;
+    }
+    if (publicReadyFilter === "true" && item.publicReady !== true) {
+      return false;
+    }
+    if (publicReadyFilter === "false" && item.publicReady !== false) {
+      return false;
+    }
+    if (requireMissingDownload && item.hasDownloadUrl) {
+      return false;
+    }
+    if (staleDays > 0) {
+      const lastVerifiedAt = item.lastVerifiedAt ? new Date(item.lastVerifiedAt).getTime() : 0;
+      const staleMs = staleDays * 24 * 60 * 60 * 1000;
+      if (lastVerifiedAt && Date.now() - lastVerifiedAt < staleMs) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  next.sort((left, right) => {
+    let delta = 0;
+    if (sortBy === "displayName") {
+      delta = String(left.displayName || "").localeCompare(String(right.displayName || ""), "vi");
+    } else if (sortBy === "updatedAt") {
+      delta = new Date(left.updatedAt || 0).getTime() - new Date(right.updatedAt || 0).getTime();
+    } else {
+      delta = (left.criticalCount - right.criticalCount) || (left.warningCount - right.warningCount) || (left.healthScore - right.healthScore);
+    }
+    return order === "asc" ? delta : -delta;
+  });
+
+  return next;
+}
+
+async function listAdminAppRegistry(filters = {}) {
+  const items = filterAdminAppRegistryItems(await queryAdminAppRegistryRows(), filters);
+  const allItems = await queryAdminAppRegistryRows();
+  return {
+    summary: {
+      totalApps: allItems.length,
+      greenApps: allItems.filter((item) => item.healthStatus === "green").length,
+      yellowApps: allItems.filter((item) => item.healthStatus === "yellow").length,
+      redApps: allItems.filter((item) => item.healthStatus === "red").length,
+      publicReadyApps: allItems.filter((item) => item.publicReady).length,
+      missingDownloadApps: allItems.filter((item) => !item.hasDownloadUrl).length,
+      staleVerifyApps: allItems.filter((item) => {
+        if (!item.lastVerifiedAt) return true;
+        return Date.now() - new Date(item.lastVerifiedAt).getTime() > 7 * 24 * 60 * 60 * 1000;
+      }).length
+    },
+    items
+  };
+}
+
+async function getLatestAppRegistryChecks(appId) {
+  const batchResult = await pool.query(
+    `SELECT check_batch_id
+     FROM app_registry_checks
+     WHERE app_id = $1
+     ORDER BY checked_at DESC
+     LIMIT 1`,
+    [appId]
+  );
+
+  if (batchResult.rowCount === 0) {
+    return [];
+  }
+
+  const result = await pool.query(
+    `SELECT check_code, severity, passed, message, detail_json, health_status, health_score, checked_at
+     FROM app_registry_checks
+     WHERE app_id = $1 AND check_batch_id = $2::uuid
+     ORDER BY severity DESC, check_code ASC`,
+    [appId, batchResult.rows[0].check_batch_id]
+  );
+
+  return result.rows.map((row) => ({
+    checkCode: row.check_code,
+    severity: row.severity,
+    passed: Boolean(row.passed),
+    message: row.message,
+    detail: row.detail_json || {},
+    healthStatus: row.health_status,
+    healthScore: Number(row.health_score || 0),
+    checkedAt: row.checked_at
+  }));
+}
+
+async function listAppRegistryCheckHistory(appId, limit = 20) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const result = await pool.query(
+    `SELECT check_batch_id,
+            MAX(checked_at) AS checked_at,
+            MAX(health_status) AS health_status,
+            MAX(health_score) AS health_score,
+            COUNT(*) FILTER (WHERE severity = 'critical' AND passed = FALSE) AS critical_count,
+            COUNT(*) FILTER (WHERE severity = 'warning' AND passed = FALSE) AS warning_count
+     FROM app_registry_checks
+     WHERE app_id = $1
+     GROUP BY check_batch_id
+     ORDER BY MAX(checked_at) DESC
+     LIMIT $2`,
+    [appId, safeLimit]
+  );
+
+  return result.rows.map((row) => ({
+    checkBatchId: row.check_batch_id,
+    checkedAt: row.checked_at,
+    healthStatus: row.health_status || "unknown",
+    healthScore: Number(row.health_score || 0),
+    criticalCount: Number(row.critical_count || 0),
+    warningCount: Number(row.warning_count || 0)
+  }));
+}
+
+async function getAdminAppRegistryDetail(appId) {
+  const safeAppId = String(appId || "").trim();
+  if (!safeAppId) {
+    throw createStoreError("Thiếu appId", 400);
+  }
+
+  const rows = await queryAdminAppRegistryRows();
+  const app = rows.find((item) => item.appId === safeAppId);
+  if (!app) {
+    throw createStoreError("Không tìm thấy app trong registry", 404);
+  }
+
+  const productsResult = await pool.query(
+    `SELECT id, name, sale_status, active, visibility
+     FROM products
+     WHERE app_id = $1
+     ORDER BY created_at ASC`,
+    [safeAppId]
+  );
+
+  const checks = await getLatestAppRegistryChecks(safeAppId);
+  const history = await listAppRegistryCheckHistory(safeAppId, 20);
+
+  return {
+    app,
+    catalog: {
+      activeProductCount: app.activeProductCount,
+      liveProductCount: app.liveProductCount,
+      products: productsResult.rows.map((row) => ({
+        productId: row.id,
+        productName: row.name,
+        saleStatus: normalizeProductSaleStatus(row.sale_status),
+        active: Boolean(row.active),
+        visibility: row.visibility || "public"
+      }))
+    },
+    checks,
+    history
+  };
+}
+
+function validateAppRegistryInput(appId, input = {}) {
+  const displayName = normalizeAppRegistryText(input.displayName, 160);
+  const businessGroup = normalizeAppRegistryText(input.businessGroup || "general", 60).toLowerCase() || "general";
+  const deliveryType = normalizeAppRegistryDeliveryType(input.deliveryType);
+  const webUrl = normalizeAppRegistryUrl(input.webUrl);
+  const pricingUrl = normalizeAppRegistryUrl(input.pricingUrl);
+  const downloadUrl = normalizeAppRegistryUrl(input.downloadUrl);
+  const manifestUrl = normalizeAppRegistryUrl(input.manifestUrl);
+  const releaseNotesUrl = normalizeAppRegistryUrl(input.releaseNotesUrl);
+  const updateChannel = normalizeAppRegistryText(input.updateChannel || "stable", 40).toLowerCase() || "stable";
+  const ownerName = normalizeAppRegistryText(input.ownerName, 120);
+  const supportUrl = normalizeAppRegistryUrl(input.supportUrl);
+  const supportSlaHours = Math.max(1, Math.min(168, Number(input.supportSlaHours) || 24));
+  const publicReady = input.publicReady === true || String(input.publicReady || "").toLowerCase() === "true";
+  const checklistNote = normalizeAppRegistryText(input.checklistNote, 500);
+  const errors = [];
+
+  if (!displayName) {
+    errors.push({ field: "displayName", message: "Vui lòng nhập tên hiển thị cho app" });
+  }
+  const urls = [
+    ["webUrl", webUrl],
+    ["pricingUrl", pricingUrl],
+    ["downloadUrl", downloadUrl],
+    ["manifestUrl", manifestUrl],
+    ["releaseNotesUrl", releaseNotesUrl],
+    ["supportUrl", supportUrl]
+  ];
+  for (const [field, value] of urls) {
+    if (!isValidAppRegistryUrl(value)) {
+      errors.push({ field, message: `Định dạng link chưa hợp lệ ở trường ${field}` });
+    }
+  }
+  if (publicReady && !ownerName) {
+    errors.push({ field: "ownerName", message: "App sẵn sàng mở bán phải có người phụ trách" });
+  }
+  if (publicReady && !supportUrl) {
+    errors.push({ field: "supportUrl", message: "App sẵn sàng mở bán phải có link hỗ trợ khách" });
+  }
+  if ((deliveryType === "website" || deliveryType === "manifest_download") && !downloadUrl) {
+    errors.push({ field: "downloadUrl", message: "App dạng web hoặc tải bộ cài phải có link tải cho khách" });
+  }
+  if (deliveryType === "manifest_download" && !manifestUrl) {
+    errors.push({ field: "manifestUrl", message: "App có cập nhật bộ cài phải có link manifest update" });
+  }
+
+  if (errors.length > 0) {
+    const error = createStoreError("Dữ liệu chưa đủ để lưu", 400);
+    error.details = errors;
+    throw error;
+  }
+
+  return {
+    appId,
+    displayName,
+    businessGroup,
+    deliveryType,
+    webUrl,
+    pricingUrl,
+    downloadUrl,
+    manifestUrl,
+    releaseNotesUrl,
+    updateChannel,
+    ownerName,
+    supportUrl,
+    supportSlaHours,
+    publicReady,
+    checklistNote
+  };
+}
+
+async function writeAppRegistryAuditLog({ appId, actorAdminId, actorUsername, action, beforeValue, afterValue }) {
+  await pool.query(
+    `INSERT INTO app_registry_audit_logs(app_id, actor_admin_id, actor_username, action, before_json, after_json)
+     VALUES ($1, $2::uuid, $3, $4, $5::jsonb, $6::jsonb)`,
+    [
+      appId,
+      actorAdminId || null,
+      String(actorUsername || "").trim(),
+      action,
+      JSON.stringify(beforeValue || {}),
+      JSON.stringify(afterValue || {})
+    ]
+  );
+}
+
+async function upsertAdminAppRegistry(appId, input = {}, actor = {}) {
+  await ensureAppRegistryRows();
+  const safeAppId = String(appId || "").trim();
+  if (!safeAppId) {
+    throw createStoreError("Thiếu appId", 400);
+  }
+
+  const beforeDetail = await getAdminAppRegistryDetail(safeAppId);
+  const normalized = validateAppRegistryInput(safeAppId, input);
+
+  const result = await pool.query(
+    `UPDATE app_registry
+     SET display_name = $2,
+         business_group = $3,
+         delivery_type = $4,
+         web_url = $5,
+         pricing_url = $6,
+         download_url = $7,
+         manifest_url = $8,
+         release_notes_url = $9,
+         update_channel = $10,
+         owner_name = $11,
+         support_url = $12,
+         support_sla_hours = $13,
+         public_ready = $14,
+         checklist_note = $15,
+         updated_at = NOW()
+     WHERE app_id = $1
+     RETURNING app_id`,
+    [
+      safeAppId,
+      normalized.displayName,
+      normalized.businessGroup,
+      normalized.deliveryType,
+      normalized.webUrl,
+      normalized.pricingUrl,
+      normalized.downloadUrl,
+      normalized.manifestUrl,
+      normalized.releaseNotesUrl,
+      normalized.updateChannel,
+      normalized.ownerName,
+      normalized.supportUrl,
+      normalized.supportSlaHours,
+      normalized.publicReady,
+      normalized.checklistNote
+    ]
+  );
+
+  if (result.rowCount === 0) {
+    throw createStoreError("Không tìm thấy app để cập nhật", 404);
+  }
+
+  const verification = await verifyAdminAppRegistryApp(safeAppId, { saveHistory: false });
+  let openingBlocked = false;
+  if (normalized.publicReady && Number(verification?.summary?.criticalCount || 0) > 0) {
+    openingBlocked = true;
+    await pool.query(
+      `UPDATE app_registry
+       SET public_ready = FALSE,
+           updated_at = NOW()
+       WHERE app_id = $1`,
+      [safeAppId]
+    );
+  }
+
+  const afterDetail = await getAdminAppRegistryDetail(safeAppId);
+  await writeAppRegistryAuditLog({
+    appId: safeAppId,
+    actorAdminId: actor.id || null,
+    actorUsername: actor.username || "",
+    action: "app_registry_update",
+    beforeValue: beforeDetail.app,
+    afterValue: afterDetail.app
+  });
+
+  return {
+    ...afterDetail,
+    openingBlocked
+  };
+}
+
+function buildAppRegistryCheck({ checkCode, severity, passed, message, detail = {} }) {
+  return { checkCode, severity, passed, message, detail };
+}
+
+async function verifyAdminAppRegistryApp(appId, options = {}) {
+  await ensureAppRegistryRows();
+  const detail = await getAdminAppRegistryDetail(appId);
+  const app = detail.app;
+  const manifestRecord = readLocalAppManifest(app.appId);
+  const localManifest = manifestRecord?.manifest || null;
+  const checks = [];
+
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_APP_EXISTS",
+    severity: "critical",
+    passed: true,
+    message: "App đã tồn tại trong hệ thống"
+  }));
+
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_DELIVERY_TYPE_VALID",
+    severity: "critical",
+    passed: APP_REGISTRY_DELIVERY_TYPES.has(app.deliveryType),
+    message: APP_REGISTRY_DELIVERY_TYPES.has(app.deliveryType)
+      ? "Kiểu bàn giao app hợp lệ"
+      : "Kiểu bàn giao app chưa hợp lệ"
+  }));
+
+  const activeProductOk = !app.publicReady || app.activeProductCount > 0;
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_HAS_ACTIVE_PRODUCT",
+    severity: "critical",
+    passed: activeProductOk,
+    message: activeProductOk
+      ? "Đã có sản phẩm hoạt động hoặc app chưa bật mở bán"
+      : "App đang bật sẵn sàng mở bán nhưng chưa có sản phẩm hoạt động"
+  }));
+
+  const requiresDownloadUrl = app.deliveryType === "website" || app.deliveryType === "manifest_download";
+  const hasDownloadUrl = Boolean(String(app.downloadUrl || "").trim());
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_DOWNLOAD_URL_REQUIRED",
+    severity: "critical",
+    passed: !requiresDownloadUrl || hasDownloadUrl,
+    message: !requiresDownloadUrl || hasDownloadUrl
+      ? "Đã có link tải cho khách"
+      : "Chưa có link tải cho khách"
+  }));
+
+  let downloadReachable = true;
+  if (requiresDownloadUrl && hasDownloadUrl) {
+    const localArtifactPath = getLocalArtifactPathFromDownloadUrl(app.appId, app.downloadUrl);
+    if (localArtifactPath) {
+      downloadReachable = fs.existsSync(localArtifactPath);
+    } else {
+      downloadReachable = isValidAppRegistryUrl(app.downloadUrl);
+    }
+  }
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_DOWNLOAD_URL_REACHABLE",
+    severity: "critical",
+    passed: !requiresDownloadUrl || !hasDownloadUrl ? false : downloadReachable,
+    message: !requiresDownloadUrl
+      ? "App này không cần link tải trực tiếp"
+      : (!hasDownloadUrl
+        ? "Chưa có link tải để kiểm tra"
+        : (downloadReachable ? "Link tải đang hợp lệ" : "Link tải đang lỗi hoặc file chưa tồn tại"))
+  }));
+
+  const requiresManifest = app.deliveryType === "manifest_download";
+  const hasManifestUrl = Boolean(String(app.manifestUrl || "").trim());
+  const manifestExists = requiresManifest ? Boolean(localManifest) : true;
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_MANIFEST_EXISTS",
+    severity: "critical",
+    passed: !requiresManifest || (hasManifestUrl && manifestExists),
+    message: !requiresManifest
+      ? "App này không cần manifest update"
+      : (hasManifestUrl && manifestExists ? "Đã có manifest update" : "Chưa tìm thấy manifest update cho app này")
+  }));
+
+  let manifestMatches = true;
+  if (requiresManifest && hasManifestUrl) {
+    const manifestUrl = String(app.manifestUrl || "").trim();
+    manifestMatches = manifestUrl.includes(`/api/v1/app-updates/${app.appId}/manifest`);
+  }
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_MANIFEST_APP_MATCH",
+    severity: "critical",
+    passed: !requiresManifest || !hasManifestUrl ? false : manifestMatches,
+    message: !requiresManifest
+      ? "App này không cần kiểm tra khớp manifest"
+      : (!hasManifestUrl
+        ? "Chưa có link manifest để đối chiếu"
+        : (manifestMatches ? "Manifest đang trỏ đúng app" : "Manifest đang trỏ sai app hoặc sai đường dẫn"))
+  }));
+
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_OWNER_REQUIRED",
+    severity: "warning",
+    passed: !app.publicReady || Boolean(String(app.ownerName || "").trim()),
+    message: !app.publicReady || Boolean(String(app.ownerName || "").trim())
+      ? "Đã có người phụ trách app"
+      : "App sẵn sàng mở bán nhưng chưa có người phụ trách"
+  }));
+
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_SUPPORT_LINK_REQUIRED",
+    severity: "warning",
+    passed: !app.publicReady || Boolean(String(app.supportUrl || "").trim()),
+    message: !app.publicReady || Boolean(String(app.supportUrl || "").trim())
+      ? "Đã có link hỗ trợ khách"
+      : "App sẵn sàng mở bán nhưng chưa có link hỗ trợ khách"
+  }));
+
+  checks.push(buildAppRegistryCheck({
+    checkCode: "RULE_RELEASE_NOTES_OPTIONAL_WARN",
+    severity: "warning",
+    passed: Boolean(String(app.releaseNotesUrl || "").trim()),
+    message: Boolean(String(app.releaseNotesUrl || "").trim())
+      ? "Đã có link ghi chú cập nhật"
+      : "Chưa có link ghi chú cập nhật, nên bổ sung để support dễ hơn"
+  }));
+
+  if (requiresManifest && localManifest?.downloadPath && hasDownloadUrl) {
+    const manifestDownloadPath = String(localManifest.downloadPath || "").trim();
+    const registryDownloadPath = String(app.downloadUrl || "").trim();
+    const normalizedManifestDownload = manifestDownloadPath.startsWith("http") ? manifestDownloadPath : manifestDownloadPath;
+    const passed = normalizedManifestDownload === registryDownloadPath;
+    checks.push(buildAppRegistryCheck({
+      checkCode: "RULE_MANIFEST_DOWNLOAD_MATCH",
+      severity: "warning",
+      passed,
+      message: passed
+        ? "Link tải trên registry khớp với manifest"
+        : "Link tải trên registry đang lệch với downloadPath trong manifest"
+    }));
+  }
+
+  const summary = summarizeAppRegistryChecks(checks);
+
+  await pool.query(
+    `UPDATE app_registry
+     SET health_status = $2,
+         health_score = $3,
+         last_verified_at = NOW(),
+         updated_at = NOW()
+     WHERE app_id = $1`,
+    [app.appId, summary.healthStatus, summary.score]
+  );
+
+  if (options.saveHistory !== false) {
+    const batchId = crypto.randomUUID();
+    for (const check of checks) {
+      await pool.query(
+        `INSERT INTO app_registry_checks(
+           id, check_batch_id, app_id, check_code, severity, passed, message,
+           detail_json, health_status, health_score, checked_at
+         )
+         VALUES (
+           gen_random_uuid(), $1::uuid, $2, $3, $4, $5, $6,
+           $7::jsonb, $8, $9, NOW()
+         )`,
+        [
+          batchId,
+          app.appId,
+          check.checkCode,
+          check.severity,
+          check.passed,
+          check.message,
+          JSON.stringify(check.detail || {}),
+          summary.healthStatus,
+          summary.score
+        ]
+      );
+    }
+  }
+
+  return {
+    appId: app.appId,
+    healthStatus: summary.healthStatus,
+    healthScore: summary.score,
+    checkedAt: new Date().toISOString(),
+    summary: {
+      criticalCount: summary.criticalCount,
+      warningCount: summary.warningCount,
+      passedCount: summary.passedCount,
+      totalChecks: summary.totalChecks
+    },
+    checks
+  };
+}
+
+async function verifyAllAdminAppRegistry(options = {}) {
+  const rows = await queryAdminAppRegistryRows();
+  const items = [];
+  for (const app of rows) {
+    if (options.onlyPublicReady === true && !app.publicReady) {
+      continue;
+    }
+    const verified = await verifyAdminAppRegistryApp(app.appId, { saveHistory: options.saveHistory !== false });
+    items.push({
+      appId: app.appId,
+      displayName: app.displayName,
+      healthStatus: verified.healthStatus,
+      healthScore: verified.healthScore,
+      criticalCount: verified.summary.criticalCount,
+      warningCount: verified.summary.warningCount
+    });
+  }
+
+  return {
+    checkedApps: items.length,
+    greenApps: items.filter((item) => item.healthStatus === "green").length,
+    yellowApps: items.filter((item) => item.healthStatus === "yellow").length,
+    redApps: items.filter((item) => item.healthStatus === "red").length,
+    items
+  };
 }
 
 const PRODUCT_SALE_STATUSES = new Set(["live", "locked", "coming_soon"]);
@@ -3170,7 +4008,13 @@ module.exports = {
   deleteProductKey,
   listDiscountCodes,
   createDiscountCode,
-  updateDiscountCodeActive
+  updateDiscountCodeActive,
+  listAdminAppRegistry,
+  getAdminAppRegistryDetail,
+  upsertAdminAppRegistry,
+  verifyAdminAppRegistryApp,
+  verifyAllAdminAppRegistry,
+  listAppRegistryCheckHistory
 };
 
 async function listProductKeySummary() {

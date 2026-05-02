@@ -13,6 +13,8 @@ const {
   updateSepayRuntimeSettings,
   getAiAppRuntimeSettings,
   updateAiAppRuntimeSettings,
+  getPublicPageRuntimeSettings,
+  updatePublicPageRuntimeSettings,
   resolveSepayWebhookUrl
 } = require("./config/runtimeSettings");
 
@@ -67,7 +69,13 @@ const {
   listDiscountCodes,
   createDiscountCode,
   updateDiscountCodeActive,
-  activateProductKeyForMachine
+  activateProductKeyForMachine,
+  listAdminAppRegistry,
+  getAdminAppRegistryDetail,
+  upsertAdminAppRegistry,
+  verifyAdminAppRegistryApp,
+  verifyAllAdminAppRegistry,
+  listAppRegistryCheckHistory
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -413,6 +421,101 @@ function sendHtmlWithMetadata(res, filePath, metadata) {
     const htmlWithTitle = html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
     res.type("html").send(htmlWithTitle.replace("</head>", `    ${buildMetadataTags(metadata)}\n  </head>`));
   });
+}
+
+function sendRouteLockPage(res, options = {}) {
+  const title = String(options.title || "Trang Tam Khoa");
+  const message = String(options.message || "Trang nay dang tam thoi ngung hoat dong de cap nhat.");
+  const fallbackHref = String(options.fallbackHref || "/thiet-ke-web");
+  const fallbackLabel = String(options.fallbackLabel || "Quay lai thiet ke web");
+
+  const html = `<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${escapeHtmlAttr(title)}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --line: #dbe4ef;
+        --accent: #0f766e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #e0f2fe, transparent 48%),
+                    radial-gradient(circle at 80% 10%, #fef3c7, transparent 44%),
+                    var(--bg);
+        color: var(--text);
+        padding: 20px;
+      }
+      .panel {
+        width: min(560px, 100%);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(1.25rem, 2.3vw, 1.7rem);
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        min-height: 40px;
+        padding: 0 16px;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+      .btn-ghost {
+        border-color: var(--line);
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <h1>${escapeHtmlAttr(title)}</h1>
+      <p>${escapeHtmlAttr(message)}</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="${escapeHtmlAttr(fallbackHref)}">${escapeHtmlAttr(fallbackLabel)}</a>
+        <a class="btn btn-ghost" href="/">Ve trang chu</a>
+      </div>
+    </main>
+  </body>
+</html>`;
+
+  return res.status(503).send(html);
 }
 
 function sendWebDemoDetailPage(req, res) {
@@ -2778,6 +2881,169 @@ app.put(
 );
 
 app.get(
+  "/api/admin/settings/public-pages",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const pageFlags = getPublicPageRuntimeSettings();
+    return res.json({
+      ok: true,
+      pageFlags: {
+        mauDemoLocked: Boolean(pageFlags.mauDemoLocked),
+        mauDemoMessage: String(pageFlags.mauDemoMessage || "")
+      }
+    });
+  })
+);
+
+app.put(
+  "/api/admin/settings/public-pages",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const rawLocked = req.body?.mauDemoLocked;
+    const rawMessage = req.body?.mauDemoMessage;
+
+    if (typeof rawLocked !== "boolean") {
+      return res.status(400).json({ message: "mauDemoLocked phai la boolean" });
+    }
+
+    if (rawMessage !== undefined && typeof rawMessage !== "string") {
+      return res.status(400).json({ message: "mauDemoMessage phai la chuoi" });
+    }
+
+    const next = updatePublicPageRuntimeSettings({
+      mauDemoLocked: rawLocked,
+      mauDemoMessage: typeof rawMessage === "string" ? rawMessage : ""
+    });
+
+    const actor = getAdminFromSession(req);
+    console.info("[admin][public-page-lock] /mau-demo", {
+      actorId: actor?.id || null,
+      actorUsername: actor?.username || "unknown",
+      mauDemoLocked: Boolean(next.pageFlags?.mauDemoLocked)
+    });
+
+    return res.json({
+      ok: true,
+      message: "Da cap nhat trang thai tam khoa /mau-demo",
+      pageFlags: {
+        mauDemoLocked: Boolean(next.pageFlags?.mauDemoLocked),
+        mauDemoMessage: String(next.pageFlags?.mauDemoMessage || "")
+      }
+    });
+  })
+);
+
+app.get(
+  "/api/admin/app-registry",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const data = await listAdminAppRegistry({
+      status: req.query?.status,
+      publicReady: req.query?.publicReady,
+      missingDownload: req.query?.missingDownload,
+      staleDays: req.query?.staleDays,
+      keyword: req.query?.keyword,
+      sortBy: req.query?.sortBy,
+      order: req.query?.order
+    });
+
+    return res.json({
+      ok: true,
+      message: "Đã tải danh sách app registry",
+      data
+    });
+  })
+);
+
+app.post(
+  "/api/admin/app-registry/verify-all",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const data = await verifyAllAdminAppRegistry({
+      onlyPublicReady: req.body?.onlyPublicReady === true,
+      saveHistory: req.body?.saveHistory !== false
+    });
+
+    return res.json({
+      ok: true,
+      message: "Đã kiểm tra toàn bộ app",
+      data
+    });
+  })
+);
+
+app.get(
+  "/api/admin/app-registry/:appId/check-history",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const data = await listAppRegistryCheckHistory(req.params.appId, req.query?.limit);
+    return res.json({
+      ok: true,
+      message: "Đã tải lịch sử kiểm tra app",
+      data: {
+        appId: req.params.appId,
+        items: data
+      }
+    });
+  })
+);
+
+app.post(
+  "/api/admin/app-registry/:appId/verify",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const data = await verifyAdminAppRegistryApp(req.params.appId, {
+      saveHistory: req.body?.saveHistory !== false
+    });
+    return res.json({
+      ok: true,
+      message: "Đã kiểm tra app thành công",
+      data
+    });
+  })
+);
+
+app.get(
+  "/api/admin/app-registry/:appId",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const data = await getAdminAppRegistryDetail(req.params.appId);
+    return res.json({
+      ok: true,
+      message: "Đã tải chi tiết app registry",
+      data
+    });
+  })
+);
+
+app.put(
+  "/api/admin/app-registry/:appId",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    try {
+      const actor = getAdminFromSession(req);
+      const data = await upsertAdminAppRegistry(req.params.appId, req.body || {}, actor || {});
+      return res.json({
+        ok: true,
+        message: data.openingBlocked
+          ? "Đã lưu hồ sơ app, nhưng chưa thể bật Sẵn sàng mở bán vì app vẫn còn lỗi đỏ"
+          : "Đã lưu hồ sơ app",
+        data
+      });
+    } catch (error) {
+      if (error?.statusCode) {
+        return res.status(error.statusCode).json({
+          ok: false,
+          message: error.message,
+          errors: Array.isArray(error.details) ? error.details : undefined
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+app.get(
   "/api/admin/integrations/ai-app",
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
@@ -3778,11 +4044,26 @@ app.get("/pricing", (req, res) => {
 });
 
 app.get("/web-demo", (req, res) => {
-  res.redirect("/mau-demo");
+  res.sendFile(path.join(webRoot, "index.html"));
 });
 
 app.get("/thiet-ke-web/mau-demo", (req, res) => {
-  res.redirect("/mau-demo");
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/mau-demo", (req, res, next) => {
+  const pageFlags = getPublicPageRuntimeSettings();
+  if (!pageFlags.mauDemoLocked) {
+    return next();
+  }
+
+  const lockMessage = String(pageFlags.mauDemoMessage || "").trim() || "Trang mau demo dang duoc tam khoa de cap nhat noi dung. Vui long quay lai sau.";
+  return sendRouteLockPage(res, {
+    title: "Mau Demo Dang Tam Khoa",
+    message: lockMessage,
+    fallbackHref: "/thiet-ke-web",
+    fallbackLabel: "Quay lai nhanh web"
+  });
 });
 
 app.get("/san-pham", (req, res) => {

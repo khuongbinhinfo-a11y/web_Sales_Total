@@ -384,7 +384,7 @@ function getRouteName(pathname = window.location.pathname) {
   const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
   if (cleaned === "/" || cleaned === "/pricing") return "home";
   if (cleaned === "/thiet-ke-web") return "web";
-  if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo") return "demo";
+  if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo" || cleaned === "/web-demo") return "demo";
   if (cleaned === "/phan-mem" || cleaned === "/san-pham") return "software";
   if (cleaned === "/phan-mem/hoc-tap" || cleaned === "/san-pham/hoc-tap") return "study";
   if (cleaned === "/phan-mem/lam-viec" || cleaned === "/san-pham/lam-viec") return "work";

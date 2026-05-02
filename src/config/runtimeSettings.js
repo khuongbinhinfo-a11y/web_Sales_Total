@@ -32,6 +32,10 @@ function ensureSettingsFile() {
   if (!fs.existsSync(settingsFile)) {
     const initial = {
       paymentProviderMode: "",
+      pageFlags: {
+        mauDemoLocked: false,
+        mauDemoMessage: ""
+      },
       aiApp: {
         sharedKey: "",
         keys: {
@@ -163,6 +167,40 @@ function updateAiAppRuntimeSettings(input) {
   return writeRuntimeSettings(next);
 }
 
+function getPublicPageRuntimeSettings() {
+  const all = readRuntimeSettings();
+  const pageFlags = (all.pageFlags && typeof all.pageFlags === "object") ? all.pageFlags : {};
+  return {
+    mauDemoLocked: Boolean(pageFlags.mauDemoLocked),
+    mauDemoMessage: String(pageFlags.mauDemoMessage || "").trim()
+  };
+}
+
+function updatePublicPageRuntimeSettings(input) {
+  const all = readRuntimeSettings();
+  const currentPageFlags = (all.pageFlags && typeof all.pageFlags === "object") ? all.pageFlags : {};
+
+  const nextLocked = typeof input?.mauDemoLocked === "boolean"
+    ? input.mauDemoLocked
+    : Boolean(currentPageFlags.mauDemoLocked);
+
+  const rawMessage = typeof input?.mauDemoMessage === "string"
+    ? input.mauDemoMessage
+    : String(currentPageFlags.mauDemoMessage || "");
+  const nextMessage = rawMessage.trim().slice(0, 280);
+
+  const next = {
+    ...all,
+    pageFlags: {
+      ...currentPageFlags,
+      mauDemoLocked: nextLocked,
+      mauDemoMessage: nextMessage
+    }
+  };
+
+  return writeRuntimeSettings(next);
+}
+
 module.exports = {
   readRuntimeSettings,
   writeRuntimeSettings,
@@ -170,5 +208,7 @@ module.exports = {
   updateSepayRuntimeSettings,
   getAiAppRuntimeSettings,
   updateAiAppRuntimeSettings,
+  getPublicPageRuntimeSettings,
+  updatePublicPageRuntimeSettings,
   resolveSepayWebhookUrl
 };

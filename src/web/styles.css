@@ -668,6 +668,29 @@ button{font-family:inherit;cursor:pointer}
 .admin-inline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .admin-product-card-subline{margin-top:4px;font-size:.78rem;color:var(--muted);word-break:break-word}
 .admin-product-state-preview{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:.78rem;color:var(--muted)}
+.admin-app-registry-toolbar{display:grid;grid-template-columns:minmax(220px,1.15fr) repeat(2,minmax(180px,.7fr)) minmax(220px,.9fr) auto auto;gap:10px;align-items:end}
+.admin-app-registry-checkbox{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;border:1px solid rgba(145,180,255,.12);border-radius:14px;background:rgba(10,22,37,.54);font-size:.82rem;color:#d7e7ff}
+.admin-app-registry-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.admin-app-registry-summary .info-card{padding:14px 16px}
+.admin-app-registry-summary strong{display:block;font-size:1.4rem;line-height:1;color:#fff}
+.admin-app-registry-summary span{display:block;margin-top:6px;font-size:.8rem;color:var(--muted)}
+.admin-app-registry-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(360px,.95fr);gap:12px;align-items:start}
+.admin-app-registry-table-wrap{max-height:760px;overflow:auto}
+.admin-app-registry-detail-wrap{max-height:760px;overflow:auto;padding-right:2px}
+.admin-app-registry-table tr.is-active{outline:1px solid rgba(125,211,252,.42);background:rgba(22,45,73,.56)}
+.admin-app-registry-table tr{cursor:pointer}
+.admin-app-registry-health{display:inline-flex;align-items:center;justify-content:center;min-width:86px;padding:6px 10px;border-radius:999px;font-size:.74rem;font-weight:800;letter-spacing:.04em}
+.admin-app-registry-health.is-green{background:#dcfce7;color:#166534}
+.admin-app-registry-health.is-yellow{background:#fef3c7;color:#92400e}
+.admin-app-registry-health.is-red{background:#fee2e2;color:#991b1b}
+.admin-app-registry-health.is-unknown{background:#e2e8f0;color:#334155}
+.admin-app-registry-panel{display:grid;gap:12px}
+.admin-app-registry-check-list{display:grid;gap:8px}
+.admin-app-registry-check-item{padding:10px 12px;border-radius:14px;border:1px solid rgba(145,180,255,.12);background:rgba(10,22,37,.52)}
+.admin-app-registry-check-item.is-fail-critical{border-color:rgba(251,113,133,.35);background:rgba(80,22,34,.26)}
+.admin-app-registry-check-item.is-fail-warning{border-color:rgba(251,191,36,.28);background:rgba(87,59,11,.2)}
+.admin-app-registry-check-item strong{display:block;color:#fff;font-size:.84rem}
+.admin-app-registry-check-item span{display:block;margin-top:4px;color:var(--muted);font-size:.8rem;line-height:1.55}
 .admin-product-state-chip{display:inline-flex;align-items:center;justify-content:center;width:fit-content;padding:4px 10px;border-radius:999px;font-size:.68rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
 .admin-product-state-chip.is-live{background:rgba(74,222,128,.16);color:#86efac}
 .admin-product-state-chip.is-locked{background:rgba(251,113,133,.14);color:#fda4af}
@@ -923,6 +946,8 @@ button{font-family:inherit;cursor:pointer}
   .admin-form-grid--actions,.admin-form-grid--lookup,.admin-form-grid--triple,.admin-result-grid,.admin-lease-grid{grid-template-columns:1fr}
   .admin-inline-actions{width:100%}
   .admin-inline-actions .btn{flex:1}
+  .admin-app-registry-toolbar,.admin-app-registry-summary,.admin-app-registry-layout{grid-template-columns:1fr}
+  .admin-app-registry-table-wrap,.admin-app-registry-detail-wrap{max-height:none}
   .admin-kv-row{grid-template-columns:1fr;gap:4px}
   .kpi-row{grid-template-columns:1fr 1fr}
   .drawer-panel{width:100%}
