@@ -7,20 +7,7 @@ const expectedApp = {
   description: "Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc."
 };
 
-const expectedDesktopUpdate = {
-  latestPath: "/desktop-updates/latest.yml",
-  installerPath: "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe",
-  blockmapPath: "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe.blockmap"
-};
-
 const expectedProducts = {
-  "prod-test-2k": {
-    name: "INTERNAL Sepay Test",
-    cycle: "one_time",
-    price: 2000,
-    credits: 1,
-    active: false
-  },
   "prod-study-month": {
     name: "Goi Thang Tieu Chuan",
     cycle: "monthly",
@@ -52,7 +39,7 @@ const expectedProducts = {
   "prod-study-standard-lifetime": {
     name: "Goi Tron Doi Tieu Chuan",
     cycle: "one_time",
-    price: 999000,
+    price: 1299000,
     credits: 9990,
     active: true
   },
@@ -125,14 +112,10 @@ function compareField(findings, label, actual, expected) {
 async function main() {
   const baseUrl = String(process.argv[2] || process.env.PROD_BASE_URL || DEFAULT_BASE_URL).trim().replace(/\/$/, "");
 
-  const [health, googleConfig, catalog, latestYml, installerHead, blockmapHead, appUpdateFeed, homepage] = await Promise.all([
+  const [health, googleConfig, catalog, homepage] = await Promise.all([
     fetchJson(`${baseUrl}/api/health`),
     fetchJson(`${baseUrl}/api/auth/google/config`),
     fetchJson(`${baseUrl}/api/catalog`),
-    fetchText(`${baseUrl}${expectedDesktopUpdate.latestPath}`),
-    fetchHead(`${baseUrl}${expectedDesktopUpdate.installerPath}`),
-    fetchHead(`${baseUrl}${expectedDesktopUpdate.blockmapPath}`),
-    fetchText(`${baseUrl}/app-update.json`),
     fetchText(`${baseUrl}/`)
   ]);
 
@@ -166,50 +149,9 @@ async function main() {
     findings.push("Google login disabled: /api/auth/google/config returns enabled=false");
   }
 
-  const latestText = String(latestYml.text || "");
-  if (looksLikeHtml(latestText)) {
-    findings.push(`${expectedDesktopUpdate.latestPath} returns HTML instead of latest.yml`);
-  } else {
-    if (!/\bversion\s*:/i.test(latestText)) {
-      findings.push(`${expectedDesktopUpdate.latestPath} missing key: version`);
-    }
-    if (!/\bfiles\s*:/i.test(latestText)) {
-      findings.push(`${expectedDesktopUpdate.latestPath} missing key: files`);
-    }
-    if (!/HocHungKhoi_Desktopapp-Win\.exe/i.test(latestText)) {
-      findings.push(`${expectedDesktopUpdate.latestPath} missing installer filename`);
-    }
-  }
-
-  if (installerHead.contentLength <= 0) {
-    findings.push(`${expectedDesktopUpdate.installerPath} empty or missing content-length`);
-  }
-  if (blockmapHead.contentLength <= 0) {
-    findings.push(`${expectedDesktopUpdate.blockmapPath} empty or missing content-length`);
-  }
-
-  if (looksLikeHtml(appUpdateFeed.text)) {
-    findings.push("/app-update.json returns HTML instead of JSON");
-  } else {
-    let parsedFeed = null;
-    try {
-      parsedFeed = JSON.parse(appUpdateFeed.text);
-    } catch (_error) {
-      findings.push("/app-update.json is not valid JSON");
-    }
-    if (parsedFeed) {
-      if (String(parsedFeed.appId || "") !== "hoc-tap-cap-01") {
-        findings.push(`/app-update.json.appId mismatch: ${formatValue(parsedFeed.appId)} != hoc-tap-cap-01`);
-      }
-      if (!String(parsedFeed.latestVersion || "")) {
-        findings.push("/app-update.json missing latestVersion");
-      }
-    }
-  }
-
   const homepageHtml = String(homepage.text || "");
-  if (!homepageHtml.includes("/account?tab=downloads&highlight=app-study-12")) {
-    findings.push("Homepage missing Windows download CTA link with highlight=app-study-12");
+  if (!/hoctap-cap-01\.vercel\.app/i.test(homepageHtml)) {
+    findings.push("Homepage missing Windows download CTA link to hoctap-cap-01 pricing");
   }
   if (!/Tai app cho Windows|Tải app cho Windows/i.test(homepageHtml)) {
     findings.push("Homepage missing Windows download CTA text");
@@ -218,10 +160,7 @@ async function main() {
   console.log(`Base URL: ${baseUrl}`);
   console.log(`Health: environment=${health.environment} paymentProviderMode=${health.paymentProviderMode} database=${health.database}`);
   console.log(`Google config: enabled=${Boolean(googleConfig.enabled)} clientIdPresent=${Boolean(googleConfig.clientId)}`);
-  console.log(
-    `Desktop update: latestContentType=${latestYml.contentType || "n/a"} installerLength=${installerHead.contentLength} blockmapLength=${blockmapHead.contentLength}`
-  );
-  console.log(`App update feed: contentType=${appUpdateFeed.contentType || "n/a"}`);
+  console.log("Desktop update artifacts: skipped (app-owned distribution flow)");
 
   if (!findings.length) {
     console.log("Production sync OK");

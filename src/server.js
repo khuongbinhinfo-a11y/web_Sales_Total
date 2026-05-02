@@ -676,14 +676,14 @@ function normalizeManifestPublicPaths(manifest) {
 
 const ACCOUNT_DOWNLOAD_TICKET_TTL_SECONDS = 5 * 60;
 const ACCOUNT_SUPPORT_URL = "https://zalo.me/0902964685";
-const ACCOUNT_STUDY_APP_URL = "https://hoctap-cap-01.vercel.app/";
+const ACCOUNT_STUDY_APP_URL = "https://hoctap-cap-01.vercel.app/#/pricing";
 const ACCOUNT_DOWNLOAD_APP_META = {
   "app-study-12": {
     appName: "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học",
     icon: "📚",
-    deliveryType: "manifest_download",
+    deliveryType: "website",
     websiteUrl: ACCOUNT_STUDY_APP_URL,
-    actionLabel: "Tải app Windows"
+    actionLabel: "Mở trang tải app"
   },
   "hair-spa-manager": {
     appName: "Salon Manager",

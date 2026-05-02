@@ -459,7 +459,7 @@ const PUBLIC_PAGE_CONTENT = {
             text: "Dành cho người cần app học tập, công cụ làm việc, AI mini app và khu tải phần mềm có key rõ ràng.",
             href: "/phan-mem",
             cta: "Mở nhánh phần mềm",
-            meta: ["Học tập", "Làm việc", "Tải app & key"]
+            meta: ["Học tập", "Làm việc", "Tài khoản app & key"]
           }
         ]
       },
@@ -610,7 +610,7 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Phần mềm",
           title: "Nhóm app và công cụ được gom theo đúng nhu cầu sử dụng",
           desc: "Khu phần mềm là trang con riêng cho catalog tải về, chia thành hai nhánh nhỏ là Học tập và Làm việc để khách vào đúng nhóm nhanh hơn.",
-          tags: ["Catalog rõ nhóm", "App học tập", "Công cụ làm việc", "Tải app & key"],
+          tags: ["Catalog rõ nhóm", "App học tập", "Công cụ làm việc", "Tài khoản app & key"],
           actions: [
             { label: "Xem nhánh Học tập", href: "/phan-mem/hoc-tap", variant: "outline" },
             { label: "Xem nhánh Làm việc", href: "/phan-mem/lam-viec", variant: "accent" }
@@ -632,7 +632,7 @@ const PUBLIC_PAGE_CONTENT = {
           cards: [
             { title: "Nhánh Học tập", text: "Tập trung các phần mềm ôn tập, luyện kiến thức và gói liên quan đến học sinh.", linkLabel: "Mở nhánh Học tập", linkHref: "/phan-mem/hoc-tap" },
             { title: "Nhánh Làm việc", text: "Tập trung các app phục vụ video, quản lý, tự động hóa và vận hành hằng ngày.", linkLabel: "Mở nhánh Làm việc", linkHref: "/phan-mem/lam-viec" },
-            { title: "Tải app & key", text: "Sau khi mua, người dùng vẫn vào tài khoản để xem tải xuống và thông tin key/app.", linkLabel: "Mở tài khoản", linkHref: "/account?tab=downloads" }
+            { title: "Tài khoản app & key", text: "Sau khi mua, người dùng vẫn vào tài khoản để mở app phù hợp và xem thông tin key/app.", linkLabel: "Mở tài khoản", linkHref: "/account?tab=downloads" }
           ],
           checklistTitle: "Khi nào nên vào trang này",
           checklist: [
@@ -674,7 +674,7 @@ const PUBLIC_PAGE_CONTENT = {
           tags: ["Ôn tập", "Học sinh", "Luyện kiến thức", "Lọc đúng nhóm"],
           actions: [
             { label: "Xem tất cả phần mềm", href: "/phan-mem", variant: "outline" },
-            { label: "Xem tài khoản & tải app", href: "/account?tab=downloads", variant: "accent" }
+            { label: "Xem tài khoản app & key", href: "/account?tab=downloads", variant: "accent" }
           ]
         },
         side: {
@@ -1395,7 +1395,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.study, {
     tags: ["Study", "Learning", "Students", "Filtered catalog"],
     actions: [
       { label: "View all software", href: "/phan-mem", variant: "outline" },
-      { label: "Account and downloads", href: "/account?tab=downloads", variant: "accent" }
+      { label: "Account and app access", href: "/account?tab=downloads", variant: "accent" }
     ]
   },
   side: {

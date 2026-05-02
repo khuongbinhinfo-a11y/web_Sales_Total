@@ -12,26 +12,6 @@
   ],
   "routes": [
     {
-      "src": "/desktop-updates/latest.yml",
-      "status": 308,
-      "dest": "https://storage.googleapis.com/ungdungthongminh-desktop-updates/app-study-12/latest.yml"
-    },
-    {
-      "src": "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe",
-      "status": 308,
-      "dest": "https://storage.googleapis.com/ungdungthongminh-desktop-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe"
-    },
-    {
-      "src": "/desktop-updates/HocHungKhoi_Desktopapp-Win.exe.blockmap",
-      "status": 308,
-      "dest": "https://storage.googleapis.com/ungdungthongminh-desktop-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe.blockmap"
-    },
-    {
-      "src": "/app-update.json",
-      "status": 308,
-      "dest": "https://storage.googleapis.com/ungdungthongminh-desktop-updates/app-update.json"
-    },
-    {
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
