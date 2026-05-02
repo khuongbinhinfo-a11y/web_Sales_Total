@@ -75,7 +75,14 @@ const {
   upsertAdminAppRegistry,
   verifyAdminAppRegistryApp,
   verifyAllAdminAppRegistry,
-  listAppRegistryCheckHistory
+  listAppRegistryCheckHistory,
+  listPublicRouteRegistry,
+  getPublicRouteRegistry,
+  updatePublicRouteLock,
+  getPublicRouteLocks,
+  isPublicRouteLocked,
+  getPublicRoutesForAdminUI,
+  handleMauDemoLockedMigration
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -516,6 +523,60 @@ function sendRouteLockPage(res, options = {}) {
 </html>`;
 
   return res.status(503).send(html);
+}
+
+// Map routes to their route IDs for locking system
+const ROUTE_PATH_TO_ID = {
+  "/": "home",
+  "/pricing": "home",  // alias
+  "/web-demo": "web",  // alias
+  "/thiet-ke-web": "web",
+  "/thiet-ke-web/": "web",
+  "/thiet-ke-web/mau-demo": "demo",
+  "/mau-demo": "demo",
+  "/phan-mem": "software",
+  "/san-pham": "software",  // alias
+  "/phan-mem/hoc-tap": "study",
+  "/san-pham/hoc-tap": "study",  // alias
+  "/phan-mem/lam-viec": "work",
+  "/san-pham/lam-viec": "work",  // alias
+  "/huong-dan": "guide",
+  "/lien-he": "contact"
+};
+
+async function checkPublicRouteLockMiddleware(req, res, next) {
+  try {
+    const routePath = req.path.toLowerCase();
+    const routeId = ROUTE_PATH_TO_ID[routePath];
+
+    if (!routeId) {
+      return next();
+    }
+
+    const isLocked = await isPublicRouteLocked(routeId);
+    if (!isLocked) {
+      return next();
+    }
+
+    // Get lock details
+    const locks = await getPublicRouteLocks();
+    const lockInfo = locks.find((l) => l.routeId === routeId);
+
+    if (!lockInfo) {
+      return next();
+    }
+
+    const message = lockInfo.lockMessage || `Trang ${lockInfo.displayName} đang được tạm khóa để cập nhật. Vui lòng quay lại sau.`;
+    return sendRouteLockPage(res, {
+      title: `${lockInfo.displayName} Đang Tạm Khóa`,
+      message: message,
+      fallbackHref: "/",
+      fallbackLabel: "Về trang chủ"
+    });
+  } catch (error) {
+    console.error("[route-lock-check] error:", error);
+    return next();
+  }
 }
 
 function sendWebDemoDetailPage(req, res) {
@@ -2933,6 +2994,95 @@ app.put(
   })
 );
 
+// ═══════════════════ PUBLIC ROUTE LOCKING ═══════════════════
+
+app.get(
+  "/api/admin/route-locks",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const locks = await getPublicRouteLocks();
+    return res.json({
+      ok: true,
+      locks: locks
+    });
+  })
+);
+
+app.get(
+  "/api/admin/routes-registry-ui",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const routes = await getPublicRoutesForAdminUI();
+    return res.json({
+      ok: true,
+      routes: routes
+    });
+  })
+);
+
+app.get(
+  "/api/admin/route-locks/:routeId",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const routeId = String(req.params.routeId || "").trim();
+    if (!routeId) {
+      return res.status(400).json({ message: "routeId là bắt buộc" });
+    }
+
+    const registry = await getPublicRouteRegistry(routeId);
+    if (!registry) {
+      return res.status(404).json({ message: `Route "${routeId}" không tồn tại` });
+    }
+
+    const locks = await getPublicRouteLocks();
+    const lock = locks.find((l) => l.routeId === routeId);
+
+    return res.json({
+      ok: true,
+      route: registry,
+      lock: lock || null
+    });
+  })
+);
+
+app.put(
+  "/api/admin/route-locks/:routeId",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const routeId = String(req.params.routeId || "").trim();
+    if (!routeId) {
+      return res.status(400).json({ message: "routeId là bắt buộc" });
+    }
+
+    const isLocked = Boolean(req.body?.isLocked);
+    const lockScope = req.body?.lockScope || "exact";
+    const lockMessage = String(req.body?.lockMessage || "").trim();
+
+    if (!["exact", "branch"].includes(lockScope)) {
+      return res.status(400).json({ message: "lockScope phải là 'exact' hoặc 'branch'" });
+    }
+
+    const actor = getAdminFromSession(req);
+    const actorUsername = actor?.username || "unknown";
+
+    const updated = await updatePublicRouteLock(routeId, isLocked, lockScope, lockMessage, actorUsername);
+
+    console.info("[admin][route-lock] updated", {
+      routeId: routeId,
+      isLocked: isLocked,
+      lockScope: lockScope,
+      actorId: actor?.id || null,
+      actorUsername: actorUsername
+    });
+
+    return res.json({
+      ok: true,
+      message: `Đã cập nhật khóa cho route "${routeId}"`,
+      lock: updated
+    });
+  })
+);
+
 app.get(
   "/api/admin/app-registry",
   requireAdminPermission("admins:read"),
@@ -4035,50 +4185,53 @@ app.get(
   })
 );
 
-app.get("/", (req, res) => {
+// ═══════════════════ PUBLIC ROUTES WITH LOCK CHECKING ═══════════════════
+// Apply lock checking middleware to public routes (except API, admin, account)
+app.get("/", checkPublicRouteLockMiddleware, (req, res) => {
   sendHtmlWithMetadata(res, path.join(webRoot, "index.html"), homePageMetadata);
 });
 
-app.get("/pricing", (req, res) => {
+app.get("/pricing", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
-app.get("/web-demo", (req, res) => {
+app.get("/web-demo", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
-app.get("/thiet-ke-web/mau-demo", (req, res) => {
+app.get("/thiet-ke-web/mau-demo", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
-app.get("/mau-demo", (req, res, next) => {
-  const pageFlags = getPublicPageRuntimeSettings();
-  if (!pageFlags.mauDemoLocked) {
-    return next();
-  }
-
-  const lockMessage = String(pageFlags.mauDemoMessage || "").trim() || "Trang mau demo dang duoc tam khoa de cap nhat noi dung. Vui long quay lai sau.";
-  return sendRouteLockPage(res, {
-    title: "Mau Demo Dang Tam Khoa",
-    message: lockMessage,
-    fallbackHref: "/thiet-ke-web",
-    fallbackLabel: "Quay lai nhanh web"
-  });
+app.get("/mau-demo", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
 });
 
-app.get("/san-pham", (req, res) => {
+app.get("/phan-mem", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/huong-dan", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/lien-he", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/san-pham", checkPublicRouteLockMiddleware, (req, res) => {
   res.redirect("/phan-mem");
 });
 
-app.get("/san-pham/hoc-tap", (req, res) => {
+app.get("/san-pham/hoc-tap", checkPublicRouteLockMiddleware, (req, res) => {
   res.redirect("/phan-mem/hoc-tap");
 });
 
-app.get("/san-pham/lam-viec", (req, res) => {
+app.get("/san-pham/lam-viec", checkPublicRouteLockMiddleware, (req, res) => {
   res.redirect("/phan-mem/lam-viec");
 });
 
-app.get("/web-demo/:id", (req, res) => {
+app.get("/web-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });
 
@@ -4294,6 +4447,7 @@ async function prepareServer() {
         await ensureCustomerAuthSchema();
         await ensureEmailOtpSchema();
         await ensureAdminLoginSecuritySchema();
+        await handleMauDemoLockedMigration();
         console.log("✅ Customer auth schema ready");
       } catch (error) {
         if (isDatabaseUnavailableError(error)) {

@@ -4014,8 +4014,307 @@ module.exports = {
   upsertAdminAppRegistry,
   verifyAdminAppRegistryApp,
   verifyAllAdminAppRegistry,
-  listAppRegistryCheckHistory
+  listAppRegistryCheckHistory,
+  listPublicRouteRegistry,
+  getPublicRouteRegistry,
+  updatePublicRouteLock,
+  getPublicRouteLocks,
+  isPublicRouteLocked,
+  getPublicRoutesForAdminUI,
+  handleMauDemoLockedMigration
 };
+
+async function listPublicRouteRegistry() {
+  const result = await pool.query(`
+    SELECT
+      route_id,
+      display_name,
+      path,
+      parent_id,
+      lockable,
+      sort_order,
+      description,
+      created_at,
+      updated_at
+    FROM public_route_registry
+    ORDER BY sort_order ASC
+  `);
+
+  return result.rows.map((row) => ({
+    routeId: row.route_id,
+    displayName: row.display_name,
+    path: row.path,
+    parentId: row.parent_id,
+    lockable: row.lockable,
+    sortOrder: row.sort_order,
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  }));
+}
+
+async function getPublicRouteRegistry(routeId) {
+  const safeRouteId = String(routeId || "").trim();
+  if (!safeRouteId) {
+    throw new Error("routeId là bắt buộc");
+  }
+
+  const result = await pool.query(`
+    SELECT
+      route_id,
+      display_name,
+      path,
+      parent_id,
+      lockable,
+      sort_order,
+      description,
+      created_at,
+      updated_at
+    FROM public_route_registry
+    WHERE route_id = $1
+  `, [safeRouteId]);
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    routeId: row.route_id,
+    displayName: row.display_name,
+    path: row.path,
+    parentId: row.parent_id,
+    lockable: row.lockable,
+    sortOrder: row.sort_order,
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function getPublicRouteLocks() {
+  const result = await pool.query(`
+    SELECT
+      prl.route_id,
+      prl.is_locked,
+      prl.lock_scope,
+      prl.lock_message,
+      prl.locked_at,
+      prl.locked_by,
+      prr.display_name,
+      prr.path,
+      prr.parent_id,
+      prr.lockable,
+      prr.sort_order
+    FROM public_route_locks prl
+    LEFT JOIN public_route_registry prr ON prr.route_id = prl.route_id
+    ORDER BY prr.sort_order ASC
+  `);
+
+  return result.rows.map((row) => ({
+    routeId: row.route_id,
+    isLocked: row.is_locked,
+    lockScope: row.lock_scope,
+    lockMessage: row.lock_message,
+    lockedAt: row.locked_at,
+    lockedBy: row.locked_by,
+    displayName: row.display_name,
+    path: row.path,
+    parentId: row.parent_id,
+    lockable: row.lockable,
+    sortOrder: row.sort_order
+  }));
+}
+
+async function isPublicRouteLocked(routeId) {
+  const safeRouteId = String(routeId || "").trim();
+  if (!safeRouteId) {
+    return false;
+  }
+
+  const result = await pool.query(`
+    SELECT is_locked, lock_scope, parent_id
+    FROM public_route_locks prl
+    LEFT JOIN public_route_registry prr ON prr.route_id = prl.route_id
+    WHERE prl.route_id = $1
+  `, [safeRouteId]);
+
+  if (result.rowCount === 0) {
+    return false;
+  }
+
+  const row = result.rows[0];
+  const currentLocked = row.is_locked;
+
+  // If scope is 'branch' and parent is locked, this route is also locked
+  if (!currentLocked && row.parent_id) {
+    const parentLockResult = await pool.query(`
+      SELECT is_locked, lock_scope
+      FROM public_route_locks
+      WHERE route_id = $1
+    `, [row.parent_id]);
+
+    if (parentLockResult.rowCount > 0) {
+      const parentLock = parentLockResult.rows[0];
+      if (parentLock.is_locked && parentLock.lock_scope === 'branch') {
+        return true;
+      }
+    }
+  }
+
+  return currentLocked;
+}
+
+async function updatePublicRouteLock(routeId, isLocked, lockScope = 'exact', lockMessage = '', adminUsername = '') {
+  const safeRouteId = String(routeId || "").trim();
+  if (!safeRouteId) {
+    throw new Error("routeId là bắt buộc");
+  }
+
+  const safeScope = ['exact', 'branch'].includes(lockScope) ? lockScope : 'exact';
+  const safeMessage = String(lockMessage || "").trim().slice(0, 500);
+  const safeUsername = String(adminUsername || "").trim() || 'system';
+
+  // Verify route exists and is lockable
+  const regResult = await pool.query(`
+    SELECT lockable FROM public_route_registry WHERE route_id = $1
+  `, [safeRouteId]);
+
+  if (regResult.rowCount === 0) {
+    throw new Error(`Route "${safeRouteId}" không tồn tại`);
+  }
+
+  if (!regResult.rows[0].lockable) {
+    throw new Error(`Route "${safeRouteId}" không thể được khóa`);
+  }
+
+  const result = await pool.query(`
+    UPDATE public_route_locks
+    SET
+      is_locked = $1,
+      lock_scope = $2,
+      lock_message = $3,
+      locked_at = CASE WHEN $1 THEN NOW() ELSE NULL END,
+      locked_by = CASE WHEN $1 THEN $4 ELSE NULL END,
+      updated_at = NOW()
+    WHERE route_id = $5
+    RETURNING route_id, is_locked, lock_scope, lock_message, locked_at, locked_by, updated_at
+  `, [isLocked, safeScope, safeMessage || null, safeUsername, safeRouteId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Không cập nhật được khóa cho route "${safeRouteId}"`);
+  }
+
+  const row = result.rows[0];
+  return {
+    routeId: row.route_id,
+    isLocked: row.is_locked,
+    lockScope: row.lock_scope,
+    lockMessage: row.lock_message,
+    lockedAt: row.locked_at,
+    lockedBy: row.locked_by,
+    updatedAt: row.updated_at
+  };
+}
+
+async function getPublicRoutesForAdminUI() {
+  // Returns routes grouped by parent for tree UI rendering
+  const result = await pool.query(`
+    SELECT
+      prr.route_id,
+      prr.display_name,
+      prr.path,
+      prr.parent_id,
+      prr.lockable,
+      prr.sort_order,
+      prl.is_locked,
+      prl.lock_scope,
+      prl.lock_message,
+      prl.locked_at,
+      prl.locked_by
+    FROM public_route_registry prr
+    LEFT JOIN public_route_locks prl ON prl.route_id = prr.route_id
+    ORDER BY prr.sort_order ASC
+  `);
+
+  const nodes = result.rows.map((row) => ({
+    routeId: row.route_id,
+    displayName: row.display_name,
+    path: row.path,
+    parentId: row.parent_id,
+    lockable: row.lockable,
+    sortOrder: row.sort_order,
+    isLocked: row.is_locked,
+    lockScope: row.lock_scope,
+    lockMessage: row.lock_message,
+    lockedAt: row.locked_at,
+    lockedBy: row.locked_by
+  }));
+
+  // Group into tree structure
+  const rootNodes = nodes.filter((n) => !n.parentId);
+  for (const root of rootNodes) {
+    root.children = nodes.filter((n) => n.parentId === root.routeId);
+  }
+
+  return rootNodes;
+}
+
+async function handleMauDemoLockedMigration() {
+  // Backward compatibility: migrate old mauDemoLocked flag to new route locking system
+  try {
+    // Check if migration was already done
+    const migrationCheck = await pool.query(`
+      SELECT migration_state FROM public_route_locks_migration
+      WHERE migration_key = 'mau_demo_locked_v1'
+    `);
+
+    if (migrationCheck.rowCount > 0) {
+      const state = migrationCheck.rows[0].migration_state;
+      if (state?.status === 'completed') {
+        return { migrated: false, reason: 'Already migrated' };
+      }
+    }
+
+    // Get old mauDemoLocked state from runtime-settings.json if available
+    const settingsPath = path.join(__dirname, '..', '..', 'runtime-settings.json');
+    let oldMauDemoLocked = false;
+    let oldMauDemoMessage = '';
+
+    try {
+      if (fs.existsSync(settingsPath)) {
+        const content = fs.readFileSync(settingsPath, 'utf-8');
+        const settings = JSON.parse(content);
+        oldMauDemoLocked = Boolean(settings?.pageFlags?.mauDemoLocked);
+        oldMauDemoMessage = String(settings?.pageFlags?.mauDemoMessage || '').trim();
+      }
+    } catch (e) {
+      // File doesn't exist or is invalid JSON, continue with defaults
+    }
+
+    // If old flag was set, migrate it to new system
+    if (oldMauDemoLocked && oldMauDemoMessage) {
+      await updatePublicRouteLock('demo', true, 'exact', oldMauDemoMessage, 'migration-system');
+    }
+
+    // Mark migration as completed
+    await pool.query(`
+      INSERT INTO public_route_locks_migration (migration_key, migration_state)
+      VALUES ('mau_demo_locked_v1', $1::jsonb)
+      ON CONFLICT (migration_key)
+      DO UPDATE SET migration_state = EXCLUDED.migration_state
+    `, [JSON.stringify({ status: 'completed', migratedAt: new Date().toISOString() })]);
+
+    return {
+      migrated: oldMauDemoLocked,
+      routeId: 'demo',
+      oldMessage: oldMauDemoMessage
+    };
+  } catch (error) {
+    console.error('Error in handleMauDemoLockedMigration:', error);
+    return { migrated: false, error: error.message };
+  }
+}
 
 async function listProductKeySummary() {
   const result = await pool.query(

@@ -247,28 +247,65 @@
         </section>
 
         <section id="section-public-pages" class="admin-section">
-          <h3>⛔ Tạm khóa trang công khai</h3>
+          <h3>⛔ Quản lý khóa trang công khai (Multi-branch)</h3>
           <div class="info-card">
-            <form id="publicPageControlForm" style="display:grid;grid-template-columns:1fr;gap:10px;max-width:760px">
-              <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff">
-                <input id="mauDemoLocked" type="checkbox" style="margin-top:3px" />
+            <div class="admin-route-lock-toolbar" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+              <button type="button" id="routeLockRefreshBtn" class="btn btn-outline" style="min-height:36px;padding:0 12px;font-size:.85rem">🔄 Tải danh sách</button>
+              <span id="routeLockStatus" class="status-badge" style="background:#e2e8f0;color:#334155;font-size:.82rem">Đang tải...</span>
+            </div>
+
+            <!-- Tree view for route locks -->
+            <div id="routeLockTreeWrap" class="admin-route-lock-tree" style="border:1.5px solid rgba(145,180,255,.12);border-radius:10px;background:rgba(145,180,255,.03);padding:12px;max-height:500px;overflow-y:auto;font-size:.88rem">
+              <!-- Populated by JavaScript -->
+            </div>
+
+            <p id="routeLockTreeMsg" style="margin:8px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+        </section>
+
+        <!-- Expanded route lock detail form (initially hidden) -->
+        <section id="section-route-lock-detail" class="admin-section" style="display:none;margin-top:18px">
+          <h3 id="routeLockDetailTitle">Chi tiết khóa route</h3>
+          <div class="info-card">
+            <form id="routeLockDetailForm" style="display:grid;grid-template-columns:1fr;gap:12px;max-width:760px">
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Route ID</label>
+                <input id="routeLockDetailRouteId" type="text" readonly style="width:100%;padding:8px 10px;border:1.5px solid rgba(145,180,255,.12);border-radius:8px;background:rgba(145,180,255,.03);color:var(--muted)">
+              </div>
+
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Đường dẫn</label>
+                <input id="routeLockDetailPath" type="text" readonly style="width:100%;padding:8px 10px;border:1.5px solid rgba(145,180,255,.12);border-radius:8px;background:rgba(145,180,255,.03);color:var(--muted)">
+              </div>
+
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid rgba(145,180,255,.12);border-radius:10px;background:rgba(145,180,255,.06)">
+                <input id="routeLockDetailIsLocked" type="checkbox" style="margin-top:3px" />
                 <span>
-                  <b>Tạm khóa route /mau-demo</b><br />
-                  <span style="color:var(--muted);font-size:.82rem">Khi bật, khách truy cập /mau-demo sẽ thấy trang thông báo tạm khóa thân thiện (HTTP 503).</span>
+                  <b>Bật khóa route này</b><br />
+                  <span style="color:var(--muted);font-size:.82rem">Khi bật, khách truy cập sẽ thấy trang thông báo tạm khóa thân thiện (HTTP 503).</span>
                 </span>
               </label>
 
               <div>
-                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Thông điệp hiển thị (tùy chọn, tối đa 280 ký tự)</label>
-                <textarea id="mauDemoLockMessage" rows="3" maxlength="280" placeholder="Trang mẫu demo đang được cập nhật, vui lòng quay lại sau." style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;resize:vertical"></textarea>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Phạm vi khóa</label>
+                <select id="routeLockDetailScope" style="width:100%;padding:8px 10px;border:1.5px solid rgba(145,180,255,.18);border-radius:8px;background:rgba(10,22,37,.88);color:var(--ink)">
+                  <option value="exact">Chỉ route này (exact)</option>
+                  <option value="branch">Route này + các nhánh con (branch)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Thông điệp khóa (tùy chọn, tối đa 500 ký tự)</label>
+                <textarea id="routeLockDetailMessage" rows="3" maxlength="500" placeholder="Route này đang được tạm khóa để cập nhật, vui lòng quay lại sau." style="width:100%;padding:8px 10px;border:1.5px solid rgba(145,180,255,.18);border-radius:8px;resize:vertical;background:rgba(10,22,37,.88);color:var(--ink)"></textarea>
               </div>
 
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <button type="submit" class="btn btn-accent" style="min-height:40px;width:260px">Lưu cấu hình tạm khóa /mau-demo</button>
-                <span id="publicPageControlStatus" class="status-badge" style="background:#e2e8f0;color:#334155">Đang tải trạng thái...</span>
+                <button type="submit" class="btn btn-accent" style="min-height:40px;width:200px">Lưu cập nhật</button>
+                <button type="button" id="routeLockDetailCloseBtn" class="btn btn-outline" style="min-height:40px;width:120px">Đóng</button>
+                <span id="routeLockDetailStatus" class="status-badge" style="background:#e2e8f0;color:#334155"></span>
               </div>
 
-              <p id="publicPageControlMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+              <p id="routeLockDetailMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
             </form>
           </div>
         </section>

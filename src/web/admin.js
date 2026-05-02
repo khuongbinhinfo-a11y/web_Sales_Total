@@ -2955,3 +2955,235 @@ function bindProductCardManager() {
   refreshBtn?.addEventListener("click", loadCards);
   loadCards();
 }
+
+// ═══════════════════ ROUTE LOCKING MANAGEMENT ═══════════════════
+
+let routeLockState = {
+  routes: [],
+  selectedRouteId: ""
+};
+
+async function loadRouteLocksUI() {
+  const refreshBtn = document.getElementById("routeLockRefreshBtn");
+  const treeWrap = document.getElementById("routeLockTreeWrap");
+  const statusEl = document.getElementById("routeLockStatus");
+  const msgEl = document.getElementById("routeLockTreeMsg");
+
+  if (!treeWrap) return;
+
+  try {
+    statusEl.textContent = "Đang tải...";
+    statusEl.style.color = "#64748b";
+    msgEl.textContent = "";
+
+    const res = await fetchAdmin("/api/admin/routes-registry-ui");
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      statusEl.textContent = "Lỗi tải";
+      statusEl.style.color = "var(--danger)";
+      msgEl.textContent = data.message || "Không thể tải danh sách routes";
+      return;
+    }
+
+    const routes = data.routes || [];
+    routeLockState.routes = routes;
+
+    if (!routes.length) {
+      treeWrap.innerHTML = `<p style="padding:12px;color:var(--muted)">Không có routes để quản lý.</p>`;
+      statusEl.textContent = `0 routes`;
+      statusEl.style.color = "var(--muted)";
+      return;
+    }
+
+    // Render tree
+    let html = "";
+    for (const route of routes) {
+      const isLocked = route.isLocked ? "✅" : "⭕";
+      const lockedClass = route.isLocked ? "is-locked" : "is-unlocked";
+      html += `
+        <div class="admin-route-lock-item ${lockedClass}" style="padding:8px 10px;margin:4px 0;border-radius:6px;border:1px solid rgba(145,180,255,.10);background:rgba(145,180,255,.03);cursor:pointer;display:flex;gap:8px;align-items:center" data-route-id="${escapeHtml(route.routeId)}">
+          <span style="font-size:1rem">${isLocked}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(route.displayName)}</div>
+            <div style="font-size:.78rem;color:var(--muted);font-family:monospace">${escapeHtml(route.path)}</div>
+            ${route.children && route.children.length > 0 ? `<div style="font-size:.75rem;color:var(--muted);margin-top:2px">${route.children.length} sub-route(s)</div>` : ""}
+          </div>
+          <span style="font-size:.75rem;padding:2px 6px;border-radius:4px;background:rgba(145,180,255,.12);color:#90b0d0">${route.lockScope === "branch" ? "Branch" : "Exact"}</span>
+        </div>
+      `;
+
+      if (route.children && route.children.length > 0) {
+        for (const child of route.children) {
+          const childIsLocked = child.isLocked ? "✅" : "⭕";
+          const childLockedClass = child.isLocked ? "is-locked" : "is-unlocked";
+          html += `
+            <div class="admin-route-lock-item ${childLockedClass}" style="padding:8px 10px;margin:2px 0 2px 24px;border-radius:6px;border:1px solid rgba(145,180,255,.08);background:rgba(145,180,255,.02);cursor:pointer;display:flex;gap:8px;align-items:center;opacity:.85" data-route-id="${escapeHtml(child.routeId)}">
+              <span style="font-size:.9rem">${childIsLocked}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.90rem">${escapeHtml(child.displayName)}</div>
+                <div style="font-size:.74rem;color:var(--muted);font-family:monospace">${escapeHtml(child.path)}</div>
+              </div>
+              <span style="font-size:.73rem;padding:1px 4px;border-radius:3px;background:rgba(145,180,255,.10);color:#90b0d0">${child.lockScope === "branch" ? "Branch" : "Exact"}</span>
+            </div>
+          `;
+        }
+      }
+    }
+
+    treeWrap.innerHTML = html;
+    statusEl.textContent = `${routes.length} routes`;
+    statusEl.style.color = "#64748b";
+
+    // Bind click handlers
+    for (const el of treeWrap.querySelectorAll(".admin-route-lock-item")) {
+      el.addEventListener("click", async () => {
+        const routeId = el.getAttribute("data-route-id");
+        if (routeId) {
+          routeLockState.selectedRouteId = routeId;
+          await loadRouteDetailForm(routeId);
+        }
+      });
+    }
+
+  } catch (err) {
+    statusEl.textContent = "Lỗi";
+    statusEl.style.color = "var(--danger)";
+    msgEl.textContent = `Lỗi: ${err.message}`;
+  }
+}
+
+async function loadRouteDetailForm(routeId) {
+  const section = document.getElementById("section-route-lock-detail");
+  const titleEl = document.getElementById("routeLockDetailTitle");
+  const routeIdEl = document.getElementById("routeLockDetailRouteId");
+  const pathEl = document.getElementById("routeLockDetailPath");
+  const isLockedEl = document.getElementById("routeLockDetailIsLocked");
+  const scopeEl = document.getElementById("routeLockDetailScope");
+  const messageEl = document.getElementById("routeLockDetailMessage");
+  const statusEl = document.getElementById("routeLockDetailStatus");
+  const msgEl = document.getElementById("routeLockDetailMsg");
+  const form = document.getElementById("routeLockDetailForm");
+
+  if (!section) return;
+
+  try {
+    statusEl.textContent = "Đang tải...";
+    statusEl.style.color = "#64748b";
+    msgEl.textContent = "";
+
+    const res = await fetchAdmin(`/api/admin/route-locks/${encodeURIComponent(routeId)}`);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      statusEl.textContent = "Lỗi";
+      statusEl.style.color = "var(--danger)";
+      msgEl.textContent = data.message || "Không thể tải chi tiết route";
+      return;
+    }
+
+    const route = data.route || {};
+    const lock = data.lock || {};
+
+    if (titleEl) titleEl.textContent = `Chi tiết: ${route.displayName || routeId}`;
+    if (routeIdEl) routeIdEl.value = route.routeId || "";
+    if (pathEl) pathEl.value = route.path || "";
+    if (isLockedEl) isLockedEl.checked = Boolean(lock.isLocked);
+    if (scopeEl) scopeEl.value = lock.lockScope || "exact";
+    if (messageEl) messageEl.value = lock.lockMessage || "";
+
+    section.style.display = "block";
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    statusEl.textContent = `${lock.isLocked ? "Đã khóa" : "Mở khóa"}`;
+    statusEl.style.color = lock.isLocked ? "#dc2626" : "#16a34a";
+
+    if (form) {
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        await saveRouteLock(routeId);
+      };
+    }
+
+  } catch (err) {
+    statusEl.textContent = "Lỗi";
+    statusEl.style.color = "var(--danger)";
+    msgEl.textContent = `Lỗi: ${err.message}`;
+  }
+}
+
+async function saveRouteLock(routeId) {
+  const statusEl = document.getElementById("routeLockDetailStatus");
+  const msgEl = document.getElementById("routeLockDetailMsg");
+  const isLockedEl = document.getElementById("routeLockDetailIsLocked");
+  const scopeEl = document.getElementById("routeLockDetailScope");
+  const messageEl = document.getElementById("routeLockDetailMessage");
+  const form = document.getElementById("routeLockDetailForm");
+
+  try {
+    statusEl.textContent = "Đang lưu...";
+    statusEl.style.color = "#64748b";
+    msgEl.textContent = "";
+
+    const payload = {
+      isLocked: isLockedEl?.checked || false,
+      lockScope: scopeEl?.value || "exact",
+      lockMessage: (messageEl?.value || "").trim()
+    };
+
+    const res = await fetchAdmin(`/api/admin/route-locks/${encodeURIComponent(routeId)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      statusEl.textContent = "Lỗi lưu";
+      statusEl.style.color = "var(--danger)";
+      msgEl.textContent = data.message || "Không thể lưu cập nhật";
+      return;
+    }
+
+    statusEl.textContent = `✅ Đã lưu`;
+    statusEl.style.color = "#16a34a";
+    msgEl.textContent = data.message || "Cập nhật thành công";
+
+    // Reload tree to reflect changes
+    setTimeout(() => {
+      loadRouteLocksUI();
+    }, 500);
+
+  } catch (err) {
+    statusEl.textContent = "Lỗi";
+    statusEl.style.color = "var(--danger)";
+    msgEl.textContent = `Lỗi: ${err.message}`;
+  }
+}
+
+function initRouteLocksUI() {
+  const refreshBtn = document.getElementById("routeLockRefreshBtn");
+  const closeBtn = document.getElementById("routeLockDetailCloseBtn");
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", loadRouteLocksUI);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      const section = document.getElementById("section-route-lock-detail");
+      if (section) section.style.display = "none";
+    });
+  }
+
+  // Load on init
+  loadRouteLocksUI();
+}
+
+// Initialize route locks UI when admin page loads
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initRouteLocksUI);
+} else {
+  initRouteLocksUI();
+}
+
