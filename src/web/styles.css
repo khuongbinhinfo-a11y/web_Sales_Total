@@ -68,21 +68,25 @@ button{font-family:inherit;cursor:pointer}
 .balance-badge{background:linear-gradient(135deg,#f3eeff,#ede4ff)!important;color:#7c6dd8!important;border-color:#d4c8f9!important;font-weight:700!important;font-size:.82rem!important;gap:4px}
 
 /* ── User menu ── */
-.user-menu{position:relative}
+.user-menu{position:relative;min-width:0;max-width:100%}
 .user-menu-btn{
-  width:42px;
+  width:auto;
+  min-width:42px;
+  max-width:min(240px,40vw);
   height:42px;
   display:inline-flex;
   align-items:center;
-  justify-content:center;
-  padding:0;
+  justify-content:flex-start;
+  gap:8px;
+  padding:0 12px;
   border-radius:999px;
   border:1.5px solid rgba(21,101,255,.14);
   background:linear-gradient(145deg,#ffffff,#eef5ff);
   color:#163250;
   cursor:pointer;
   transition:all var(--transition);
-  box-shadow:0 10px 22px rgba(15,42,70,.08)
+  box-shadow:0 10px 22px rgba(15,42,70,.08);
+  overflow:hidden
 }
 .user-menu-btn:hover{
   border-color:rgba(21,101,255,.28);
@@ -98,6 +102,16 @@ button{font-family:inherit;cursor:pointer}
   height:20px;
   fill:currentColor;
   opacity:.92
+}
+.user-menu-btn #userEmail{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.8rem;
+  line-height:1.1;
+  font-weight:700
 }
 .user-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:rgba(255,255,255,.98);border:1.5px solid rgba(124,109,216,.14);border-radius:18px;box-shadow:0 18px 36px rgba(44,40,36,.12);z-index:200;overflow:hidden;backdrop-filter:blur(18px)}
 .user-dropdown.show{display:block}
@@ -3316,6 +3330,14 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
     padding:11px 12px;
     border-radius:14px;
     background:transparent
+  }
+  .header-nav .user-menu{
+    width:100%
+  }
+  .header-nav .user-menu-btn{
+    width:100%;
+    max-width:none;
+    justify-content:space-between
   }
   .nav-mobile-account-link{
     display:flex!important;
