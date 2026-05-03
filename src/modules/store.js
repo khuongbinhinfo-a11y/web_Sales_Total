@@ -2388,11 +2388,12 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
   if (normalizedCustomerEmail) {
     const matchedCustomer = await findCustomerByEmail(normalizedCustomerEmail);
     if (!matchedCustomer?.id) {
-      return null;
+      // Email không tồn tại trong DB → có thể email sai
+      return { emailMismatch: true, reason: "email_not_found" };
     }
 
     if (resolvedCustomerId && resolvedCustomerId !== matchedCustomer.id) {
-      return null;
+      return { emailMismatch: true, reason: "customer_id_conflict" };
     }
 
     resolvedCustomerId = matchedCustomer.id;
@@ -2404,6 +2405,11 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
     ...(resolvedCustomerId ? { customerId: resolvedCustomerId } : {})
   });
   if (!existingLicense) {
+    // Nếu đã resolve được customer từ email nhưng không tìm thấy key cho customer đó
+    // → key thuộc customer khác (email mismatch)
+    if (resolvedCustomerId && normalizedCustomerEmail) {
+      return { emailMismatch: true, reason: "key_not_owned_by_email" };
+    }
     return null;
   }
 

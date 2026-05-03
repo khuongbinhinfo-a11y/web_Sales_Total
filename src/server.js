@@ -2568,6 +2568,9 @@ app.post(
     if (!license) {
       return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
     }
+    if (license.emailMismatch) {
+      return res.status(422).json({ success: false, error: "email_mismatch: Email không khớp với key này. Vui lòng kiểm tra lại email đã dùng khi mua hàng." });
+    }
     if (
       clientProfile === "web"
       && String(license.productId || "").trim().toLowerCase() === "cap01_beta_year_299"
