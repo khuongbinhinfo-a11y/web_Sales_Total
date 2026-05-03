@@ -627,6 +627,7 @@ function buildAiAppLicenseView(license) {
   const planByProductId = {
     'prod-study-month': 'standard_month',
     'prod-study-year': 'standard_year',
+    'standard_1year_1grade': 'standard_1year_1grade',
     'prod-study-standard-lifetime': 'standard_lifetime',
     'prod-study-premium-month': 'premium_month',
     'prod-study-premium-year': 'premium_year',
@@ -660,6 +661,7 @@ function buildCap01Entitlement(aiLicense) {
   const planByProductId = {
     'prod-study-month': 'standard_month',
     'prod-study-year': 'standard_year',
+    'standard_1year_1grade': 'standard_1year_1grade',
     'prod-study-standard-lifetime': 'standard_lifetime',
     'prod-study-premium-month': 'premium_month',
     'prod-study-premium-year': 'premium_year',
@@ -677,6 +679,11 @@ function buildCap01Entitlement(aiLicense) {
     'prod-study-year': {
       allowedGrades: [1, 2],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'standard_1year_1grade': {
+      allowedGrades: [],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'prod-study-standard-lifetime': {
@@ -770,6 +777,14 @@ async function handleCap01LicenseVerifyLikeRequest(req, res) {
 
   if (!appId || !licenseKey) {
     return res.status(400).json({ success: false, status: 'invalid', error: 'appId and licenseKey are required' });
+  }
+
+  if (!deviceId) {
+    return res.status(400).json({
+      success: false,
+      status: 'invalid',
+      error: 'deviceId is required for desktop activation/verification',
+    });
   }
 
   const verified = await verifyAppLicenseByKey({
@@ -2518,10 +2533,25 @@ app.post(
     const licenseKey = String(req.body?.licenseKey || "").trim();
     const deviceId = String(req.body?.deviceId || "").trim() || null;
     const deviceName = String(req.body?.deviceName || "").trim() || null;
-    const clientProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
+    const requestedProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
+    const clientProfile = requestedProfile === "desktop" ? "desktop" : "web";
 
     if (!appId || !licenseKey) {
       return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
+    }
+
+    if (!deviceId) {
+      return res.status(400).json({
+        success: false,
+        error: "deviceId is required to enforce one active runtime session per key",
+      });
+    }
+
+    if (clientProfile === "web" && !customerEmail) {
+      return res.status(400).json({
+        success: false,
+        error: "customerEmail is required for web key verification",
+      });
     }
 
     const license = await verifyAppLicenseByKey({
@@ -2537,6 +2567,18 @@ app.post(
 
     if (!license) {
       return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
+    }
+    if (
+      clientProfile === "web"
+      && String(license.productId || "").trim().toLowerCase() === "cap01_beta_year_299"
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Key beta chỉ dùng cho flow desktop cũ, không dùng cho web verify thường.",
+      });
+    }
+    if (license.deviceLimitExceeded) {
+      return res.status(409).json({ success: false, error: "Key đã vượt số thiết bị cho phép." });
     }
     if (license.concurrentUsage) {
       return res.status(409).json({ success: false, error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });

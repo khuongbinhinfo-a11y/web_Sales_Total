@@ -1358,7 +1358,11 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
 }
 
 async function getPublicCatalog() {
-  return getCatalog({ includeHidden: false });
+  const catalog = await getCatalog({ includeHidden: false });
+  return {
+    ...catalog,
+    products: (catalog.products || []).filter((product) => String(product?.id || '').trim().toLowerCase() !== 'prod-study-topup'),
+  };
 }
 
 async function getAdminCatalog() {
@@ -1565,6 +1569,9 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     }
 
     const product = productResult.rows[0];
+    if (String(product?.id || '').trim().toLowerCase() === 'prod-study-topup') {
+      throw createStoreError("Top-up 300 Credit đã tạm dừng bán trên web", 409);
+    }
     const pricing = resolveProductPricing(product);
     const saleStatus = normalizeProductSaleStatus(product.sale_status);
     if (saleStatus !== "live") {
