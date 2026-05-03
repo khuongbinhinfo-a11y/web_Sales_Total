@@ -625,6 +625,7 @@ function buildAiAppLicenseView(license) {
   const normalizedProductId = String(license?.productId || '').trim().toLowerCase();
   const metadataPlanId = String(license?.metadata?.planId || '').trim();
   const planByProductId = {
+    'cap01_beta_year_299': 'beta_year_299',
     'prod-study-premium-month': 'premium',
     'prod-study-premium-year': 'premium',
     'prod-study-premium-lifetime': 'premium',
@@ -641,11 +642,129 @@ function buildAiAppLicenseView(license) {
   const grace = computeLicenseGrace(license);
   return {
     ...license,
+    appId: 'hoctap-cap-01',
     planId: resolvedPlanId || null,
     tier,
     features,
     grace
   };
+}
+
+function buildCap01Entitlement(aiLicense) {
+  const metadata = (aiLicense?.metadata && typeof aiLicense.metadata === 'object') ? aiLicense.metadata : {};
+  const allowedGrades = Array.isArray(metadata?.allowedGrades)
+    ? metadata.allowedGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade > 0)
+    : [1, 2];
+  const featureFlags = (metadata?.features && typeof metadata.features === 'object')
+    ? metadata.features
+    : {
+      desktopOfflineTts: true,
+      downloadByGrade: true,
+      downloadAllGrades: true,
+      aiTutor: false,
+    };
+  const offlineGraceDays = Number(metadata?.license?.offlineGraceDays || aiLicense?.grace?.graceDays || env.aiAppOfflineGraceDays || 7);
+  const deviceLimit = Number(metadata?.license?.deviceLimit || 1);
+  const productId = String(aiLicense?.productId || 'cap01_beta_year_299').trim() || 'cap01_beta_year_299';
+  const plan = String(metadata?.planId || aiLicense?.planId || 'beta_year_299').trim() || 'beta_year_299';
+
+  return {
+    appId: 'hoctap-cap-01',
+    productId,
+    plan,
+    status: 'active',
+    allowedGrades: allowedGrades.length > 0 ? allowedGrades : [1, 2],
+    features: {
+      desktopOfflineTts: Boolean(featureFlags.desktopOfflineTts),
+      downloadByGrade: Boolean(featureFlags.downloadByGrade),
+      downloadAllGrades: Boolean(featureFlags.downloadAllGrades),
+      aiTutor: Boolean(featureFlags.aiTutor),
+    },
+    license: {
+      deviceLimit: Number.isFinite(deviceLimit) && deviceLimit > 0 ? deviceLimit : 1,
+      offlineGraceDays: Number.isFinite(offlineGraceDays) && offlineGraceDays > 0 ? offlineGraceDays : 7,
+      expiresAt: aiLicense?.expiresAt || null,
+    },
+  };
+}
+
+function normalizeCap01AppId(appIdRaw) {
+  const normalized = String(appIdRaw || '').trim().toLowerCase();
+  if (!normalized) return '';
+  if (normalized === 'app-study-12' || normalized === 'hoctap-cap-01') {
+    return 'hoctap-cap-01';
+  }
+  return normalized;
+}
+
+async function handleCap01LicenseVerifyLikeRequest(req, res) {
+  const inputAppId = normalizeCap01AppId(req.body?.appId);
+  const appId = inputAppId === 'hoctap-cap-01' ? 'hoctap-cap-01' : inputAppId;
+  const licenseKey = String(req.body?.licenseKey || '').trim().toUpperCase();
+  const deviceId = String(req.body?.deviceId || '').trim() || null;
+  const deviceName = String(req.body?.deviceName || '').trim() || null;
+  const appVersion = String(req.body?.appVersion || '').trim() || null;
+
+  if (!appId || !licenseKey) {
+    return res.status(400).json({ success: false, status: 'invalid', error: 'appId and licenseKey are required' });
+  }
+
+  const verified = await verifyAppLicenseByKey({
+    appId,
+    licenseKey,
+    deviceId,
+    deviceName,
+    appVersion,
+    clientProfile: 'desktop',
+  });
+
+  if (verified?.deviceLimitExceeded || verified?.concurrentUsage) {
+    return res.status(200).json({
+      success: false,
+      status: 'device_limit_exceeded',
+      error: 'Key da vuot gioi han thiet bi cho phep.',
+      serverTime: new Date().toISOString(),
+    });
+  }
+
+  if (!verified) {
+    const existing = await findAppLicenseByKey({ appId, licenseKey });
+    if (!existing) {
+      return res.status(200).json({
+        success: false,
+        status: 'invalid',
+        error: 'License key khong hop le.',
+        serverTime: new Date().toISOString(),
+      });
+    }
+
+    if (existing?.expiresAt && new Date(existing.expiresAt).getTime() <= Date.now()) {
+      return res.status(200).json({
+        success: false,
+        status: 'expired',
+        error: 'License key da het han.',
+        serverTime: new Date().toISOString(),
+      });
+    }
+
+    return res.status(200).json({
+      success: false,
+      status: 'invalid',
+      error: 'License key khong hop le.',
+      serverTime: new Date().toISOString(),
+    });
+  }
+
+  const aiLicense = buildAiAppLicenseView(verified);
+  const entitlement = buildCap01Entitlement(aiLicense);
+
+  return res.json({
+    success: true,
+    status: 'active',
+    entitlement,
+    offlineValidUntil: String(aiLicense?.grace?.offlineUntil || ''),
+    serverTime: new Date().toISOString(),
+  });
 }
 
 function getCustomerFromBridgeAuthorization(req) {
@@ -2009,6 +2128,7 @@ app.post(
       customerEmail,
       deviceId,
       deviceName,
+      appVersion: req.body?.appVersion || null,
       clientProfile
     });
 
@@ -2348,6 +2468,7 @@ app.post(
       customerEmail,
       deviceId,
       deviceName,
+      appVersion: req.body?.appVersion || null,
       clientProfile
     });
 
@@ -2371,6 +2492,26 @@ app.post(
       }
     });
   })
+);
+
+app.post(
+  "/api/licenses/activate",
+  asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
+);
+
+app.post(
+  "/api/licenses/verify",
+  asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
+);
+
+app.post(
+  "/api/v1/licenses/activate",
+  asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
+);
+
+app.post(
+  "/api/v1/licenses/verify",
+  asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
 );
 
 app.post(

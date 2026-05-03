@@ -6,6 +6,25 @@ const { pool } = require("../db/pool");
 const LICENSE_RUNTIME_LEASE_SECONDS = 180;
 const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates");
 const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
+const CAP01_PRIMARY_APP_ID = "hoctap-cap-01";
+const CAP01_APP_ID_ALIASES = new Set(["hoctap-cap-01", "app-study-12"]);
+
+function normalizePublicAppId(appIdRaw) {
+  const normalized = String(appIdRaw || "").trim().toLowerCase();
+  if (CAP01_APP_ID_ALIASES.has(normalized)) {
+    return CAP01_PRIMARY_APP_ID;
+  }
+  return normalized;
+}
+
+function resolveAppIdCandidates(appIdRaw) {
+  const normalized = normalizePublicAppId(appIdRaw);
+  if (!normalized) return [];
+  if (normalized === CAP01_PRIMARY_APP_ID) {
+    return ["hoctap-cap-01", "app-study-12"];
+  }
+  return [normalized];
+}
 
 function generateReadableOrderCode() {
   const timePart = Date.now().toString(36).toUpperCase();
@@ -22,7 +41,7 @@ function mapOrder(row) {
     id: row.id,
     orderCode: row.order_code,
     customerId: row.customer_id,
-    appId: row.app_id,
+    appId: normalizePublicAppId(row.app_id),
     productId: row.product_id,
     amount,
     subtotalAmount,
@@ -182,7 +201,7 @@ function mapAppRegistryRow(row) {
   const criticalCount = Number(row.critical_count || 0);
   const warningCount = Number(row.warning_count || 0);
   return {
-    appId: row.app_id,
+    appId: normalizePublicAppId(row.app_id),
     displayName: row.display_name,
     appNameFromAppsTable: row.app_name,
     slug: row.slug,
@@ -1236,6 +1255,23 @@ async function issueAppLicenseForOrder({ client, order, product }) {
     metadata.profiles = 2;
   }
 
+  if (String(product.id || "").trim().toLowerCase() === "cap01_beta_year_299") {
+    metadata.planId = "beta_year_299";
+    metadata.basePlan = "beta";
+    metadata.appId = "hoctap-cap-01";
+    metadata.allowedGrades = [1, 2];
+    metadata.features = {
+      desktopOfflineTts: true,
+      downloadByGrade: true,
+      downloadAllGrades: true,
+      aiTutor: false,
+    };
+    metadata.license = {
+      deviceLimit: 1,
+      offlineGraceDays: 7,
+    };
+  }
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const licenseKey = generateReadableLicenseKey();
     try {
@@ -2213,12 +2249,16 @@ async function verifyCustomerLicense({ licenseId, customerId, deviceId, deviceNa
 
 async function findAppLicenseByKey({ appId, licenseKey, customerId }) {
   const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
+  const appIdCandidates = resolveAppIdCandidates(appId);
   if (!normalizedLicenseKey) {
     return null;
   }
+  if (appIdCandidates.length === 0) {
+    return null;
+  }
 
-  const params = [normalizedLicenseKey, appId];
-  let whereSql = "WHERE license_key = $1 AND app_id = $2 AND status <> 'revoked'";
+  const params = [normalizedLicenseKey, appIdCandidates];
+  let whereSql = "WHERE license_key = $1 AND app_id = ANY($2::text[]) AND status <> 'revoked'";
 
   if (customerId) {
     params.push(customerId);
@@ -2323,9 +2363,13 @@ async function deactivateCustomerLicense({ licenseId, customerId, clientId = nul
   return mapAppLicense(result.rows[0]);
 }
 
-async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEmail, deviceId, deviceName, clientProfile }) {
+async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEmail, deviceId, deviceName, appVersion, clientProfile }) {
   const normalizedLicenseKey = String(licenseKey || "").trim().toUpperCase();
+  const appIdCandidates = resolveAppIdCandidates(appId);
   if (!normalizedLicenseKey) {
+    return null;
+  }
+  if (appIdCandidates.length === 0) {
     return null;
   }
 
@@ -2357,6 +2401,20 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
   const normalizedClientProfile = normalizeRuntimeClientProfile(clientProfile);
   const runtimeClientId = normalizeRuntimeClientId(deviceId);
   const runtimeClientName = String(deviceName || "").trim() || null;
+  const runtimeAppVersion = String(appVersion || "").trim() || null;
+
+  if (
+    normalizedClientProfile === "desktop"
+    && runtimeClientId
+    && String(existingLicense?.deviceId || "").trim()
+    && String(existingLicense.deviceId).trim() !== runtimeClientId
+  ) {
+    return {
+      deviceLimitExceeded: true,
+      existingDeviceId: String(existingLicense.deviceId || "").trim() || null,
+      license: existingLicense,
+    };
+  }
 
   if (runtimeClientId) {
     const lease = await claimOrRenewLicenseRuntimeLease({
@@ -2387,14 +2445,28 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
            WHEN $5::text = 'desktop' AND $4::text IS NOT NULL THEN $4::text
            ELSE device_name
          END,
+         metadata = CASE
+           WHEN $5::text = 'desktop' THEN
+             COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+               'deviceBinding',
+               jsonb_strip_nulls(jsonb_build_object(
+                 'deviceId', $3::text,
+                 'deviceName', $4::text,
+                 'appVersion', $6::text,
+                 'lastSeenAt', NOW()::text
+               ))
+             )
+           ELSE metadata
+         END,
          updated_at = NOW()
-     WHERE license_key = $1 AND app_id = $2
+     WHERE license_key = $1
+       AND app_id = ANY($2::text[])
        AND status <> 'revoked'
        AND (expires_at IS NULL OR expires_at > NOW())
      RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
                metadata, created_at, updated_at`,
-    [normalizedLicenseKey, appId, runtimeClientId, runtimeClientName, normalizedClientProfile]
+    [normalizedLicenseKey, appIdCandidates, runtimeClientId, runtimeClientName, normalizedClientProfile, runtimeAppVersion]
   );
 
   if (result.rowCount === 0) {
