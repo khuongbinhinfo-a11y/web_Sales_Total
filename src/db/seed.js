@@ -45,6 +45,13 @@ async function seed() {
     );
 
     await client.query(
+      `UPDATE products
+       SET active = TRUE,
+           visibility = 'public'
+       WHERE id = 'cap01_beta_year_299'`
+    );
+
+    await client.query(
       `INSERT INTO customers(id, email, full_name)
        VALUES ('cus-demo', 'demo@user.local', 'Demo Customer')
        ON CONFLICT (id) DO UPDATE SET

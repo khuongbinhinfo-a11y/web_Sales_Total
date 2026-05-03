@@ -625,14 +625,14 @@ function buildAiAppLicenseView(license) {
   const normalizedProductId = String(license?.productId || '').trim().toLowerCase();
   const metadataPlanId = String(license?.metadata?.planId || '').trim();
   const planByProductId = {
-    'cap01_beta_year_299': 'beta_year_299',
-    'prod-study-premium-month': 'premium',
-    'prod-study-premium-year': 'premium',
-    'prod-study-premium-lifetime': 'premium',
-    'prod-study-month': 'standard',
-    'standard_1year_1grade': 'standard_1year_1grade',
-    'prod-study-year': 'standard_1year_3grade',
-    'prod-study-standard-lifetime': 'standard'
+    'prod-study-month': 'standard_month',
+    'prod-study-year': 'standard_year',
+    'prod-study-standard-lifetime': 'standard_lifetime',
+    'prod-study-premium-month': 'premium_month',
+    'prod-study-premium-year': 'premium_year',
+    'prod-study-premium-lifetime': 'premium_lifetime',
+    'prod-study-topup': 'topup_300_credit',
+    'cap01_beta_year_299': 'beta_year_299'
   };
 
   // Với các productId chuẩn, productId là nguồn sự thật để tránh metadata cũ gây lệch gói.
@@ -652,28 +652,91 @@ function buildAiAppLicenseView(license) {
 
 function buildCap01Entitlement(aiLicense) {
   const metadata = (aiLicense?.metadata && typeof aiLicense.metadata === 'object') ? aiLicense.metadata : {};
-  const allowedGrades = Array.isArray(metadata?.allowedGrades)
+  const normalizedProductId = String(aiLicense?.productId || '').trim().toLowerCase();
+  const lockedStandardGrades = Array.isArray(metadata?.standardGrades)
+    ? metadata.standardGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade > 0)
+    : [];
+
+  const planByProductId = {
+    'prod-study-month': 'standard_month',
+    'prod-study-year': 'standard_year',
+    'prod-study-standard-lifetime': 'standard_lifetime',
+    'prod-study-premium-month': 'premium_month',
+    'prod-study-premium-year': 'premium_year',
+    'prod-study-premium-lifetime': 'premium_lifetime',
+    'prod-study-topup': 'topup_300_credit',
+    'cap01_beta_year_299': 'beta_year_299'
+  };
+
+  const defaultEntitlementByProduct = {
+    'prod-study-month': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'prod-study-year': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'prod-study-standard-lifetime': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'prod-study-premium-month': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
+      license: { deviceLimit: 2, offlineGraceDays: 7 },
+    },
+    'prod-study-premium-year': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
+      license: { deviceLimit: 2, offlineGraceDays: 7 },
+    },
+    'prod-study-premium-lifetime': {
+      allowedGrades: [1, 2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
+      license: { deviceLimit: 2, offlineGraceDays: 7 },
+    },
+    'prod-study-topup': {
+      allowedGrades: [],
+      features: { desktopOfflineTts: false, downloadByGrade: false, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_beta_year_299': {
+      allowedGrades: [],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+  };
+
+  const defaultEntitlement = defaultEntitlementByProduct[normalizedProductId] || defaultEntitlementByProduct['prod-study-year'];
+  const allowedGrades = (normalizedProductId === 'cap01_beta_year_299' && lockedStandardGrades.length > 0)
+    ? lockedStandardGrades
+    : Array.isArray(metadata?.allowedGrades)
     ? metadata.allowedGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade > 0)
-    : [1, 2];
+    : defaultEntitlement.allowedGrades;
   const featureFlags = (metadata?.features && typeof metadata.features === 'object')
     ? metadata.features
-    : {
-      desktopOfflineTts: true,
-      downloadByGrade: true,
-      downloadAllGrades: true,
-      aiTutor: false,
-    };
-  const offlineGraceDays = Number(metadata?.license?.offlineGraceDays || aiLicense?.grace?.graceDays || env.aiAppOfflineGraceDays || 7);
-  const deviceLimit = Number(metadata?.license?.deviceLimit || 1);
-  const productId = String(aiLicense?.productId || 'cap01_beta_year_299').trim() || 'cap01_beta_year_299';
-  const plan = String(metadata?.planId || aiLicense?.planId || 'beta_year_299').trim() || 'beta_year_299';
+    : defaultEntitlement.features;
+  const offlineGraceDays = Number(
+    metadata?.license?.offlineGraceDays
+    || defaultEntitlement.license.offlineGraceDays
+    || aiLicense?.grace?.graceDays
+    || env.aiAppOfflineGraceDays
+    || 7
+  );
+  const deviceLimit = Number(metadata?.license?.deviceLimit || defaultEntitlement.license.deviceLimit || 1);
+  const productId = String(aiLicense?.productId || '').trim() || 'prod-study-year';
+  const plan = String(metadata?.planId || planByProductId[normalizedProductId] || aiLicense?.planId || 'standard_year').trim() || 'standard_year';
 
   return {
     appId: 'hoctap-cap-01',
     productId,
     plan,
     status: 'active',
-    allowedGrades: allowedGrades.length > 0 ? allowedGrades : [1, 2],
+    allowedGrades,
     features: {
       desktopOfflineTts: Boolean(featureFlags.desktopOfflineTts),
       downloadByGrade: Boolean(featureFlags.downloadByGrade),

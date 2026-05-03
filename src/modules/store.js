@@ -1259,11 +1259,13 @@ async function issueAppLicenseForOrder({ client, order, product }) {
     metadata.planId = "beta_year_299";
     metadata.basePlan = "beta";
     metadata.appId = "hoctap-cap-01";
-    metadata.allowedGrades = [1, 2];
+    metadata.allowedGrades = [];
+    metadata.standardGrades = [];
+    metadata.standardGradesRequiredCount = 1;
     metadata.features = {
       desktopOfflineTts: true,
       downloadByGrade: true,
-      downloadAllGrades: true,
+      downloadAllGrades: false,
       aiTutor: false,
     };
     metadata.license = {
@@ -2557,6 +2559,10 @@ async function lockAppLicenseStandardGradesByKey({ appId, licenseKey, customerId
 
     const row = checkResult.rows[0];
     const metadata = (row.metadata && typeof row.metadata === "object") ? row.metadata : {};
+    const normalizedProductId = String(row.product_id || "").trim().toLowerCase();
+    if (normalizedProductId === "cap01_beta_year_299" && normalizedRequired !== 1) {
+      throw new Error("requiredGradeCount must be 1 for cap01_beta_year_299");
+    }
     const existingGrades = normalizeStandardGrades(metadata.standardGrades);
     const existingRequired = Number(metadata.standardGradesRequiredCount || 0);
 
@@ -2584,6 +2590,7 @@ async function lockAppLicenseStandardGradesByKey({ appId, licenseKey, customerId
       ...metadata,
       standardGrades: normalizedSelectedGrades,
       standardGradesRequiredCount: normalizedRequired,
+      allowedGrades: normalizedSelectedGrades,
       standardGradesLockedAt: new Date().toISOString()
     };
 
