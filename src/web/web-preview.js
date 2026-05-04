@@ -1497,10 +1497,14 @@ const initSupportPopup = (config) => {
   }
 };
 
-const slug = parseSlug();
+/* AUTO-DETECT TEMPLATE FROM HTML ATTRIBUTES (for standalone folder deployment) */
+const htmlEl = document.documentElement;
+const templateFromAttr = htmlEl.dataset.template;
+const variantFromAttr = parseInt(htmlEl.dataset.variant || "1", 10);
+const slug = templateFromAttr || parseSlug();
 const data = PREVIEW_DATA[slug];
 const config = loadConfig(slug);
-const companyDemoVariant = slug === "company" ? parseCompanyDemoVariant() : 1;
+const companyDemoVariant = slug === "company" ? (templateFromAttr ? variantFromAttr : parseCompanyDemoVariant()) : 1;
 const activeRenderer = slug === "company"
   ? (COMPANY_RENDERERS[companyDemoVariant] || renderCompany)
   : RENDERERS[slug];

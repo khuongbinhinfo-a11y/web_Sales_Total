@@ -20,7 +20,10 @@ const parseSlug = () => {
   return idx >= 0 ? (parts[idx + 1] || "company") : "company";
 };
 
-const slug = parseSlug();
+/* AUTO-DETECT TEMPLATE FROM HTML ATTRIBUTES (for standalone folder deployment) */
+const htmlEl = document.documentElement;
+const templateFromAttr = htmlEl.dataset.template;
+const slug = templateFromAttr || parseSlug();
 const CONFIG_KEY = `preview_config_${slug}`;
 
 const loadConfig = () => {
