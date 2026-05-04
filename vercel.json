@@ -5,12 +5,15 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "{src/**,public/**,migrations/**,products/**,docs/ai-gates/**,runtime-settings.json,logo.png,logo_2.png}",
+        "includeFiles": "{src/**,migrations/**,products/**,docs/ai-gates/**,runtime-settings.json,logo.png,logo_2.png}",
         "maxDuration": 10
       }
     }
   ],
   "routes": [
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/(.*)",
       "dest": "/api/index.js"
