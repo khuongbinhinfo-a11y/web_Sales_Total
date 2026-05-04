@@ -540,21 +540,50 @@ const planPackageVariantByApp = {
         }
       },
       {
-        key: "cap01_grade_1class_1year",
-        label: "Gói 01 năm / Theo lớp",
-        standardName: "Gói 01 năm / Theo lớp",
+        key: "cap01_grade_la_1year",
+        label: "Gói 01 năm / Lớp Lá",
+        standardName: "Gói 01 năm / Lớp Lá",
+        standardPrice: 299000,
+        standardProductId: "cap01_grade_la_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [0],
+        standardTag: "Lớp Lá",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Lớp Lá", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
+        standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_1_1year",
+        label: "Gói 01 năm / Lớp 01",
+        standardName: "Gói 01 năm / Lớp 01",
         standardPrice: 299000,
         standardProductId: "cap01_grade_1_1year",
         requiredGradeCount: 1,
         selectedGrades: [1],
-        standardTag: "01 lớp",
+        standardTag: "Lớp 01",
         standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Chọn 1 lớp phù hợp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        productIdByGrade: {
-          0: "cap01_grade_la_1year",
-          1: "cap01_grade_1_1year",
-          2: "cap01_grade_2_1year"
+        standardFeatures: ["Tất cả môn học", "Lớp 01", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
         },
+        standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_2_1year",
+        label: "Gói 01 năm / Lớp 02",
+        standardName: "Gói 01 năm / Lớp 02",
+        standardPrice: 299000,
+        standardProductId: "cap01_grade_2_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [2],
+        standardTag: "Lớp 02",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Lớp 02", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
         standardCompare: {
           classes: "1",
           profiles: "2"
@@ -704,6 +733,38 @@ function renderLongDescription(content, productName) {
   return `<div class="pd-long-desc">${media}${highlightsBlock}${sections}</div>`;
 }
 
+function getDefaultProductContent(productName) {
+  return {
+    desc: `${productName} — Sản phẩm phần mềm chất lượng cao, giao key tự động sau thanh toán.`,
+    icon: "📦",
+    features: [
+      { icon:"⚡", title:"Tự động giao key", detail:"Nhận key ngay sau thanh toán" },
+      { icon:"🔐", title:"Key bản quyền", detail:"Key chuẩn, kích hoạt ngay" },
+      { icon:"💬", title:"Hỗ trợ 24/7", detail:"Tư vấn & hỗ trợ mọi lúc" },
+      { icon:"🔄", title:"Bảo hành", detail:"Đổi key nếu gặp sự cố" },
+    ],
+    guide: [
+      { title:"Nhận key", detail:"Key được giao tự động sau khi thanh toán thành công." },
+      { title:"Kích hoạt phần mềm", detail:"Mở phần mềm và nhập key vào ô kích hoạt." },
+      { title:"Bắt đầu sử dụng", detail:"Tạo tài khoản hoặc đăng nhập và trải nghiệm đầy đủ tính năng." },
+    ]
+  };
+}
+
+function resolveProductContent(product, productName) {
+  const byId = productContent[product?.id];
+  if (byId) {
+    return byId;
+  }
+
+  const appId = String(product?.appId || "").trim().toLowerCase();
+  if (appId === "app-study-12") {
+    return productContent["prod-study-month"] || getDefaultProductContent(productName);
+  }
+
+  return getDefaultProductContent(productName);
+}
+
 function getPlanBlueprint(product) {
   const app = normalizeText(product?.appId);
   if (app.includes("hoc") || app.includes("study")) {
@@ -808,10 +869,6 @@ function inferPackageKeyByProduct(appId, period, productId) {
   const normalizedProductId = String(productId || "").trim().toLowerCase();
   if (!normalizedProductId) {
     return null;
-  }
-
-  if (isCap01SimpleYear(appId, period) && normalizedProductId.startsWith("cap01_grade_")) {
-    return "cap01_grade_1class_1year";
   }
 
   const variants = getPackageVariants(appId, period);
@@ -1498,21 +1555,7 @@ function renderProduct(p){
   renderPlanZone(p);
 
   // content from productContent map
-  const content = productContent[p.id] || {
-    desc: `${productName} — Sản phẩm phần mềm chất lượng cao, giao key tự động sau thanh toán.`,
-    icon: "📦",
-    features: [
-      { icon:"⚡", title:"Tự động giao key", detail:"Nhận key ngay sau thanh toán" },
-      { icon:"🔐", title:"Key bản quyền", detail:"Key chuẩn, kích hoạt ngay" },
-      { icon:"💬", title:"Hỗ trợ 24/7", detail:"Tư vấn & hỗ trợ mọi lúc" },
-      { icon:"🔄", title:"Bảo hành", detail:"Đổi key nếu gặp sự cố" },
-    ],
-    guide: [
-      { title:"Nhận key", detail:"Key được giao tự động sau khi thanh toán thành công." },
-      { title:"Kích hoạt phần mềm", detail:"Mở phần mềm và nhập key vào ô kích hoạt." },
-      { title:"Bắt đầu sử dụng", detail:"Tạo tài khoản hoặc đăng nhập và trải nghiệm đầy đủ tính năng." },
-    ]
-  };
+  const content = resolveProductContent(p, productName);
 
   const downloadBtn = document.getElementById("pdDownloadAppBtn");
   if (downloadBtn) {
