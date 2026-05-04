@@ -74,49 +74,49 @@ const DEMO_DATA = {
     desc: "Hướng này phù hợp các chiến dịch cần chuyển đổi nhanh với lợi ích rõ, bảng giá, feedback và form đăng ký.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
-      title: "Ảnh mẫu đầy đủ cho web Giáo dục / Khóa học",
-      desc: "Xem tổng thể bố cục demo từ giới thiệu khóa học, lộ trình, giảng viên, học phí đến form đăng ký tư vấn.",
+      title: "Ảnh mẫu đầy đủ cho web Landing Page",
+      desc: "Xem tổng thể bố cục demo từ hero lợi ích, trust block, bảng giá đến form đăng ký tư vấn.",
       image: "/web-demo-photo.jpg",
       cta: "Mở ảnh lớn"
     },
-    primary: "Tư vấn mẫu giáo dục",
-    caption: "Tone sáng, trẻ, thân thiện",
-    liveTitle: "Chương trình, lợi ích, roadmap học và form đăng ký",
-    stats: [["Lộ trình", "học gì theo từng giai đoạn"], ["Giảng viên", "tăng niềm tin"], ["Đăng ký", "form tư vấn / ghi danh rõ ràng"]],
+    primary: "Tư vấn mẫu landing",
+    caption: "Tone rõ lợi ích, tập trung CTA",
+    liveTitle: "Hero lợi ích, gói giá, FAQ và form nhận lead",
+    stats: [["Thông điệp", "nêu lợi ích trong 5 giây"], ["Ưu đãi", "bảng giá gọn, dễ quyết"], ["Đăng ký", "form ngắn để chốt lead"]],
     cards: [
-      ["Giới thiệu chương trình", "Nêu mục tiêu khóa học, đối tượng phù hợp và đầu ra sau khi hoàn thành."],
-      ["Lợi ích học viên", "Chuyển tính năng khóa học thành kết quả cụ thể cho người học."],
-      ["Lộ trình học", "Chia tuần / module để học viên hình dung tiến độ."],
-      ["Giảng viên", "Ảnh, kinh nghiệm, chứng chỉ và phong cách giảng dạy."],
-      ["Lịch khai giảng", "Ca học, ngày mở lớp, số chỗ còn lại và học phí."],
-      ["Form đăng ký", "Thu tên, số điện thoại, độ tuổi/lớp và khung giờ tư vấn."]
+      ["Hero chuyển đổi", "Nêu rõ vấn đề, lợi ích chính và lời kêu gọi hành động ngay trên màn đầu."],
+      ["Lợi ích nổi bật", "Chuyển tính năng thành kết quả đo được để tăng sức thuyết phục."],
+      ["Gói giá", "Trình bày 2-3 lựa chọn đơn giản để khách quyết nhanh."],
+      ["Bằng chứng tin cậy", "Feedback, chỉ số, logo đối tác hoặc case ngắn để giảm nghi ngại."],
+      ["FAQ chốt đơn", "Giải đáp câu hỏi thường gặp trước khi khách để lại thông tin."],
+      ["Form nhận lead", "Thu tên, số điện thoại, nhu cầu và thời gian liên hệ mong muốn."]
     ],
-    flowTitle: "Từ cảm hứng học đến đăng ký",
-    flowDesc: "Mẫu giáo dục cần tạo động lực, giải thích lộ trình và làm form đăng ký đủ thân thiện.",
+    flowTitle: "Từ thấy lợi ích đến gửi form",
+    flowDesc: "Mẫu landing cần cô đọng, ít phân tán và dẫn người xem vào một hành động chuyển đổi duy nhất.",
     flow: [
-      ["Gợi cảm hứng", "Hero và lợi ích giúp người học thấy mình phù hợp."],
-      ["Làm rõ lộ trình", "Roadmap và giảng viên trả lời câu hỏi 'học như thế nào?'."],
-      ["Ghi danh", "Lịch học và form đăng ký giúp chuyển nhu cầu thành hành động."]
+      ["Thu hút", "Hero và lợi ích chính giúp khách hiểu ngay trang này dành cho ai."],
+      ["Thuyết phục", "Giá, bằng chứng và FAQ làm rõ vì sao nên chọn ngay."],
+      ["Chuyển đổi", "Form ngắn và CTA lặp lại giúp tăng tỉ lệ để lại thông tin."]
     ],
-    contactTitle: "Muốn có trang khóa học riêng?",
-    contactText: "Có thể thêm khóa học, giáo viên, lịch khai giảng, học phí, form kiểm tra đầu vào và CRM tuyển sinh."
+    contactTitle: "Muốn làm landing theo chiến dịch riêng?",
+    contactText: "Có thể tùy biến theo từng chiến dịch quảng cáo, thêm biến thể A/B, ưu đãi theo thời điểm và tracking chuyển đổi."
   },
   salon: {
-    name: "Salon / Thẩm mỹ / Làm đẹp",
+    name: "Salon / Beauty",
     brand: "Maison Glow",
     template: "salon",
-    eyebrow: "Mẫu web salon / làm đẹp",
+    eyebrow: "Mẫu web salon / beauty",
     title: "Trang salon cao cấp để khách đặt lịch",
-    desc: "Hướng này dành cho salon tóc, nail, spa nhỏ hoặc dịch vụ làm đẹp. Trọng tâm là dịch vụ, bảng giá, feedback và đặt lịch.",
+    desc: "Hướng này dành cho salon tóc, nail và dịch vụ làm đẹp. Trọng tâm là dịch vụ, bảng giá, feedback và đặt lịch.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
-      title: "Ảnh mẫu đầy đủ cho web Spa / Làm đẹp",
+      title: "Ảnh mẫu đầy đủ cho web Salon / Beauty",
       desc: "Xem tổng thể bố cục demo từ hero, dịch vụ nổi bật, bảng giá, feedback đến form đặt lịch trước khi chọn gói triển khai.",
       image: "/web-demo-photo.jpg",
       cta: "Mở ảnh lớn"
     },
-    primary: "Tư vấn mẫu spa",
-    caption: "Tone nude / tím nhạt / champagne",
+    primary: "Tư vấn mẫu salon",
+    caption: "Tone nude / beige / champagne",
     liveTitle: "Dịch vụ nổi bật, before-after, bảng giá và booking",
     stats: [["Sang", "không gian mềm và cao cấp"], ["Chứng thực", "before-after / feedback"], ["Booking", "đặt lịch nhanh sau khi xem giá"]],
     cards: [
@@ -128,14 +128,14 @@ const DEMO_DATA = {
       ["Đặt lịch", "Form ngày giờ, dịch vụ quan tâm, số điện thoại và kênh xác nhận."]
     ],
     flowTitle: "Từ xem kết quả đến đặt lịch",
-    flowDesc: "Mẫu spa cần mềm và sang, nhưng CTA đặt lịch vẫn phải đủ rõ để không bị chỉ đẹp mà không chuyển đổi.",
+    flowDesc: "Mẫu salon cần mềm và sang, nhưng CTA đặt lịch vẫn phải đủ rõ để không bị chỉ đẹp mà không chuyển đổi.",
     flow: [
       ["Gợi mong muốn", "Dịch vụ và hình ảnh tạo cảm giác được chăm sóc."],
       ["Tạo niềm tin", "Before-after, feedback và chuyên viên giảm rủi ro cảm nhận."],
       ["Đặt lịch", "Bảng giá và form booking đặt ngay cạnh nhau để khách hành động."]
     ],
-    contactTitle: "Muốn có mẫu web spa sang hơn?",
-    contactText: "Có thể thêm ảnh dịch vụ, bảng giá, feedback, booking online và nội dung theo màu thương hiệu của spa."
+    contactTitle: "Muốn có mẫu web salon sang hơn?",
+    contactText: "Có thể thêm ảnh dịch vụ, bảng giá, feedback, booking online và nội dung theo màu thương hiệu của salon."
   },
   industry: {
     name: "Industry / Kỹ thuật",
@@ -146,32 +146,32 @@ const DEMO_DATA = {
     desc: "Hướng này dành cho doanh nghiệp kỹ thuật B2B với danh mục sản phẩm, mã sản phẩm, thương hiệu và form yêu cầu báo giá.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
-      title: "Ảnh mẫu đầy đủ cho web Nhà hàng / Local",
-      desc: "Xem tổng thể bố cục demo từ món nổi bật, menu, không gian quán, bản đồ đến form đặt bàn hoặc gọi món.",
+      title: "Ảnh mẫu đầy đủ cho web Industry / Kỹ thuật",
+      desc: "Xem tổng thể bố cục demo từ hero kỹ thuật, danh mục sản phẩm, bộ lọc mã hàng đến form yêu cầu báo giá.",
       image: "/web-demo-photo.jpg",
       cta: "Mở ảnh lớn"
     },
-    primary: "Tư vấn mẫu nhà hàng",
-    caption: "Tone ấm, đậm, giàu hình ảnh",
-    liveTitle: "Món nổi bật, menu, không gian, bản đồ và đặt bàn",
-    stats: [["Hình ảnh", "món / không gian nổi bật"], ["Menu", "dễ xem trên mobile"], ["Ghé quán", "bản đồ, hotline, đặt bàn"]],
+    primary: "Tư vấn mẫu industry",
+    caption: "Tone xanh thép / xám công nghiệp",
+    liveTitle: "Danh mục kỹ thuật, bộ lọc mã hàng và form nhận báo giá",
+    stats: [["Danh mục", "nhóm sản phẩm rõ theo ứng dụng"], ["Bộ lọc", "lọc nhanh theo mã/thương hiệu"], ["Báo giá", "form yêu cầu ngắn gọn"]],
     cards: [
-      ["Món nổi bật", "Hero dùng ảnh món chính, ưu đãi hôm nay và CTA đặt bàn/gọi món."],
-      ["Menu trực quan", "Nhóm món, giá, món bán chạy và tag cay/chay/đặc biệt."],
-      ["Không gian quán", "Ảnh bàn ghế, khu check-in, phòng riêng hoặc không gian gia đình."],
-      ["Bản đồ / giờ mở cửa", "Địa chỉ, giờ hoạt động, chỉ đường và khu vực giao hàng."],
-      ["Đánh giá khách", "Review ngắn, ảnh thật và điểm nổi bật của dịch vụ."],
-      ["Đặt bàn / gọi món", "Form đặt bàn, nút gọi nhanh và link chat."]
+      ["Hero kỹ thuật", "Nêu năng lực, phân khúc sản phẩm và CTA yêu cầu báo giá."],
+      ["Danh mục sản phẩm", "Nhóm theo ngành, công suất hoặc ứng dụng thực tế."],
+      ["Bộ lọc mã hàng", "Cho phép lọc theo mã, thương hiệu, chuẩn kỹ thuật và mức giá."],
+      ["Thông số chi tiết", "Hiển thị thông số chính, tài liệu và ứng dụng phù hợp."],
+      ["Case triển khai", "Đưa ví dụ dự án đã làm để tăng độ tin cậy B2B."],
+      ["Form nhận báo giá", "Thu yêu cầu kỹ thuật, số lượng và thông tin liên hệ người phụ trách."]
     ],
-    flowTitle: "Từ thèm món đến ghé cửa hàng",
-    flowDesc: "Mẫu local business nên trực quan, ít chữ, ưu tiên ảnh và các hành động ngay: gọi, đặt bàn, xem bản đồ.",
+    flowTitle: "Từ tìm mã hàng đến gửi yêu cầu",
+    flowDesc: "Mẫu industry cần rõ thông số, dễ lọc và chốt hành động bằng form báo giá thay vì nội dung cảm tính.",
     flow: [
-      ["Kích thích thị giác", "Món nổi bật và không gian tạo lý do muốn đến."],
-      ["Giúp chọn nhanh", "Menu rõ giá giúp khách quyết định trước khi gọi hoặc ghé."],
-      ["Dẫn đường", "Bản đồ, hotline và đặt bàn đưa khách tới hành động thực tế."]
+      ["Định vị nhu cầu", "Hero giúp khách nhận diện đúng nhóm sản phẩm kỹ thuật đang cần."],
+      ["So sánh nhanh", "Danh mục và bộ lọc rút ngắn thời gian chọn phương án phù hợp."],
+      ["Chốt lead B2B", "Form báo giá thu đủ dữ liệu để đội sale xử lý nhanh và chính xác."]
     ],
-    contactTitle: "Muốn có mẫu web quán / local business?",
-    contactText: "Có thể thêm menu thật, ảnh quán, bản đồ, đặt bàn, giao hàng và nút gọi nhanh trên mobile."
+    contactTitle: "Muốn có mẫu web industry theo danh mục của bạn?",
+    contactText: "Có thể tùy biến theo nhóm sản phẩm, bảng thông số, tài liệu kỹ thuật và quy trình báo giá của doanh nghiệp."
   }
 };
 
@@ -283,7 +283,7 @@ function PricingSection(id) {
   section.innerHTML = `
     <div class="demo-container">
       <div class="demo-section-head demo-pricing-head">
-        <span>Báo giá theo ngành</span>
+        <span>Báo giá theo mẫu</span>
         <h2 id="demoPricingTitle">${escapeHtml(shared.title || "Gói triển khai phù hợp")}</h2>
         <p>${escapeHtml(shared.description || "")}</p>
       </div>
@@ -405,18 +405,18 @@ function renderLivePreview(item) {
     el.innerHTML = `
       <div class="live-education">
         <div class="live-edu-intro">
-          <span>Khóa học 8 tuần</span>
-          <h3>Từ nền tảng đến dự án thực tế</h3>
-          <p>Học theo lộ trình, có mentor và bài tập ứng dụng.</p>
+          <span>Chiến dịch tháng này</span>
+          <h3>Landing page tập trung chốt lead nhanh</h3>
+          <p>Nêu lợi ích rõ, có bảng giá gọn và CTA bấm gửi form ngay.</p>
         </div>
         <div class="live-edu-roadmap">
-          ${["Nền tảng", "Thực hành", "Dự án", "Đánh giá"].map((text, index) => `
+          ${["Hero lợi ích", "Bằng chứng", "Bảng giá", "Form đăng ký"].map((text, index) => `
             <article><b>${index + 1}</b><span>${text}</span></article>
           `).join("")}
         </div>
         <div class="live-edu-signup">
-          <strong>Đăng ký tư vấn</strong>
-          <button>Giữ chỗ học thử</button>
+          <strong>Nhận tư vấn ngay</strong>
+          <button>Để lại thông tin</button>
         </div>
       </div>
     `;
@@ -445,16 +445,16 @@ function renderLivePreview(item) {
   el.innerHTML = `
     <div class="live-restaurant">
       <div class="live-restaurant-hero">
-        <span>Món hôm nay</span>
-        <h3>Cơm niêu cá kho & set gia đình</h3>
-        <a href="#demoContact">Đặt bàn</a>
+        <span>Industry catalog</span>
+        <h3>Thiết bị lọc công nghiệp cho nhà máy</h3>
+        <a href="#demoContact">Yêu cầu báo giá</a>
       </div>
       <div class="live-restaurant-menu">
-        ${["Món chính", "Đồ uống", "Combo", "Tráng miệng"].map((text) => `<article><b>${text}</b><span>từ 59K</span></article>`).join("")}
+        ${["Lọc theo mã", "Theo thương hiệu", "Theo công suất", "Theo ứng dụng"].map((text) => `<article><b>${text}</b><span>xem nhanh</span></article>`).join("")}
       </div>
       <div class="live-restaurant-map">
-        <strong>Bản đồ & giờ mở cửa</strong>
-        <p>10:00 - 22:00 | Gọi đặt bàn nhanh</p>
+        <strong>Thông số & tài liệu kỹ thuật</strong>
+        <p>Datasheet, tiêu chuẩn, thời gian giao hàng và hỗ trợ kỹ thuật</p>
       </div>
     </div>
   `;
@@ -568,12 +568,7 @@ if (flowEl) {
 
 renderLivePreview(active);
 renderFullPreview(active);
-const pricingAlias = {
-  salon: "spa",
-  industry: "restaurant",
-  landing: "education"
-};
-PricingSection(pricingAlias[activeId] || activeId);
+PricingSection(activeId);
 
 function toggleSectionBySelector(selector, enabled) {
   const el = document.querySelector(selector);

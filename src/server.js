@@ -1812,12 +1812,21 @@ app.patch(
 async function handleCreateOrder(req, res) {
   const session = getCustomerFromSession(req);
   const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
-  const { appId, productId, discountCode, selectedGrades } = req.body;
-  const { order, product } = await createOrder({ customerId, appId, productId, discountCode, selectedGrades });
+  const { appId, productId, discountCode, selectedGrades, addonProductIds, metadata } = req.body;
+  const { order, product, addons } = await createOrder({
+    customerId,
+    appId,
+    productId,
+    discountCode,
+    selectedGrades,
+    addonProductIds,
+    metadata
+  });
 
   res.status(201).json({
     order,
     product,
+    addons,
     checkoutUrl: `/pay/${order.id}`
   });
 }

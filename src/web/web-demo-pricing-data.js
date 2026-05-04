@@ -288,6 +288,17 @@ window.webDemoPricingShared = {
 
 (function enrichWebDemoPricingData() {
   const data = window.webDemoPricingData || {};
+  const canonicalAliasSource = {
+    salon: "spa",
+    industry: "restaurant",
+    landing: "education"
+  };
+
+  Object.entries(canonicalAliasSource).forEach(([canonicalSlug, sourceSlug]) => {
+    if (!data[canonicalSlug] && data[sourceSlug]) {
+      data[canonicalSlug] = JSON.parse(JSON.stringify(data[sourceSlug]));
+    }
+  });
 
   const industries = {
     company: {
@@ -469,6 +480,196 @@ window.webDemoPricingShared = {
       }
     ]
   };
+
+  industries.salon = {
+    slug: "salon",
+    name: "Salon / Beauty",
+    label: "Web salon / beauty",
+    useCases: [
+      "Cần website giới thiệu dịch vụ, bảng giá và đặt lịch",
+      "Muốn hình ảnh thương hiệu mềm, đẹp, dễ tạo niềm tin",
+      "Cần tối ưu nút đặt lịch, Zalo và gọi nhanh trên mobile"
+    ],
+    excluded: [
+      "Không bao gồm quản lý lịch hẹn phức tạp, phân ca nhân viên hoặc nhắc lịch tự động nếu chưa báo giá riêng",
+      "Không bao gồm chỉnh sửa ảnh chuyên sâu, quay/chụp hình dịch vụ",
+      "Không bao gồm nhập dữ liệu nhiều sản phẩm hoặc combo số lượng lớn ngoài phạm vi"
+    ]
+  };
+  industries.industry = {
+    slug: "industry",
+    name: "Industry / Kỹ thuật",
+    label: "Web industry / kỹ thuật",
+    useCases: [
+      "Cần website catalog kỹ thuật có nhóm sản phẩm rõ ràng",
+      "Muốn khách lọc nhanh theo mã hàng, thương hiệu hoặc ứng dụng",
+      "Cần form nhận yêu cầu báo giá B2B với thông tin kỹ thuật"
+    ],
+    excluded: [
+      "Không bao gồm ERP, đồng bộ kho, CRM hoặc API riêng nếu chưa báo giá riêng",
+      "Không bao gồm nhập dữ liệu catalog số lượng lớn ngoài phạm vi thống nhất",
+      "Không bao gồm biên soạn tài liệu kỹ thuật chuyên sâu hoặc hồ sơ thầu"
+    ]
+  };
+  industries.landing = {
+    slug: "landing",
+    name: "Landing Page",
+    label: "Web landing page",
+    useCases: [
+      "Cần trang chuyển đổi nhanh cho chiến dịch quảng cáo",
+      "Muốn tập trung 1 mục tiêu: để lại lead hoặc đăng ký tư vấn",
+      "Cần bố cục rõ lợi ích, bằng chứng và CTA mạnh"
+    ],
+    excluded: [
+      "Không bao gồm hệ thống nội dung nhiều cấp hoặc blog lớn nếu chưa báo giá riêng",
+      "Không bao gồm CRM automation nâng cao nếu chưa thống nhất tích hợp",
+      "Không bao gồm sản xuất media chuyên nghiệp ngoài phạm vi thiết kế web"
+    ]
+  };
+
+  planMeta.salon = [
+    {
+      slug: "spa-mini",
+      timeline: "5 - 7 ngày làm việc sau khi nhận đủ hình ảnh/nội dung",
+      pages: ["Trang giới thiệu salon", "Dịch vụ nổi bật và bảng giá cơ bản", "Nút đặt lịch nhanh"],
+      included: ["Sắp xếp dịch vụ nổi bật", "Zalo / gọi nhanh", "Tối ưu mobile cho khách đặt lịch"]
+    },
+    {
+      slug: "spa-chuyen-nghiep",
+      timeline: "8 - 12 ngày làm việc tùy số lượng dịch vụ",
+      pages: ["Trang chủ chuyên nghiệp", "Danh mục dịch vụ và combo/ưu đãi", "Gallery và feedback khách hàng"],
+      included: ["Form đặt lịch", "Chỉnh nội dung bán hàng cơ bản", "SEO cơ bản theo dịch vụ"]
+    },
+    {
+      slug: "spa-ban-hang-dat-lich",
+      timeline: "12 - 20 ngày làm việc tùy dịch vụ/sản phẩm bán kèm",
+      pages: ["Dịch vụ chi tiết", "Sản phẩm bán kèm", "Form đặt lịch nâng cao và popup khuyến mãi"],
+      included: ["Tracking quảng cáo", "Tối ưu CTA đặt lịch", "Nội dung bán hàng chuyên sâu hơn"]
+    }
+  ];
+
+  planMeta.industry = [
+    {
+      slug: "local-co-ban",
+      timeline: "6 - 9 ngày làm việc sau khi nhận đủ nhóm sản phẩm",
+      pages: ["Trang giới thiệu năng lực", "Danh mục sản phẩm chính", "Form yêu cầu tư vấn kỹ thuật"],
+      included: ["Nút liên hệ nhanh", "Bố cục rõ theo ngành", "Tối ưu mobile cho khách B2B"]
+    },
+    {
+      slug: "menu-chuyen-nghiep",
+      timeline: "10 - 15 ngày làm việc tùy số lượng danh mục",
+      pages: ["Trang chủ chuyên nghiệp", "Catalog theo nhóm sản phẩm", "Trang chi tiết thông số và ứng dụng"],
+      included: ["Bộ lọc mã hàng cơ bản", "Chỉnh nội dung catalog", "Bố cục ưu tiên yêu cầu báo giá"]
+    },
+    {
+      slug: "dat-ban-dat-mon",
+      timeline: "15 - 25 ngày làm việc tùy mức độ dữ liệu kỹ thuật",
+      pages: ["Catalog nâng cao", "Bộ lọc theo mã/thương hiệu", "Luồng nhận yêu cầu báo giá chi tiết"],
+      included: ["Tracking nguồn lead", "Tối ưu CTA báo giá", "Hướng dẫn quản trị catalog cơ bản"]
+    }
+  ];
+
+  planMeta.landing = [
+    {
+      slug: "tuyen-sinh-co-ban",
+      timeline: "4 - 6 ngày làm việc sau khi có nội dung chiến dịch",
+      pages: ["Hero lợi ích", "Khối ưu đãi", "Form đăng ký nhanh"],
+      included: ["Sắp xếp nội dung chuyển đổi", "Nút gọi nhanh", "Tối ưu mobile"]
+    },
+    {
+      slug: "trung-tam-dao-tao",
+      timeline: "7 - 10 ngày làm việc tùy phạm vi nội dung",
+      pages: ["Nhiều khối lợi ích", "Bằng chứng tin cậy và FAQ", "Form theo từng nhu cầu"],
+      included: ["Tracking quảng cáo cơ bản", "Tinh chỉnh nội dung chuyển đổi", "Bố cục CTA đa điểm"]
+    },
+    {
+      slug: "he-thong-khoa-hoc",
+      timeline: "10 - 16 ngày làm việc tùy số biến thể chiến dịch",
+      pages: ["Cụm landing theo nhóm chiến dịch", "Khối nội dung linh hoạt", "Luồng lead nâng cao"],
+      included: ["Tối ưu CTA theo kịch bản", "Hỗ trợ biến thể nội dung", "Hướng dẫn quản trị landing"]
+    }
+  ];
+
+  if (Array.isArray(data.salon?.plans)) {
+    data.salon.plans = data.salon.plans.map((plan, index) => {
+      if (index === 0) {
+        return {
+          ...plan,
+          name: "Gói Salon cơ bản",
+          fit: "Salon tóc, nail, beauty studio cần web đặt lịch nhanh",
+          note: "Phù hợp khi cần trang dịch vụ rõ ràng, bảng giá gọn và CTA đặt lịch ngay."
+        };
+      }
+      if (index === 1) {
+        return {
+          ...plan,
+          name: "Gói Salon chuyên nghiệp",
+          fit: "Salon cần hình ảnh đẹp, có nhiều dịch vụ và feedback",
+          note: "Tập trung hình ảnh, dịch vụ chủ lực, ưu đãi và form booking để tăng chuyển đổi."
+        };
+      }
+      return {
+        ...plan,
+        name: "Gói Salon nâng cao",
+        fit: "Salon cần kết hợp dịch vụ, sản phẩm bán kèm và chiến dịch quảng cáo",
+        note: "Dành cho salon muốn mở rộng bán hàng, booking và tracking chiến dịch ở mức cao hơn."
+      };
+    });
+  }
+
+  if (Array.isArray(data.industry?.plans)) {
+    data.industry.plans = data.industry.plans.map((plan, index) => {
+      if (index === 0) {
+        return {
+          ...plan,
+          name: "Gói Industry cơ bản",
+          fit: "Doanh nghiệp kỹ thuật cần trang giới thiệu năng lực và danh mục",
+          note: "Giúp khách xem nhanh nhóm sản phẩm, ứng dụng thực tế và gửi yêu cầu tư vấn."
+        };
+      }
+      if (index === 1) {
+        return {
+          ...plan,
+          name: "Gói Industry chuyên nghiệp",
+          fit: "Doanh nghiệp cần catalog rõ, có bộ lọc và trang thông số sản phẩm",
+          note: "Phù hợp khi cần cấu trúc catalog kỹ thuật, thông số chi tiết và form báo giá."
+        };
+      }
+      return {
+        ...plan,
+        name: "Gói Industry báo giá nâng cao",
+        fit: "Doanh nghiệp B2B cần luồng nhận báo giá và chăm lead kỹ thuật",
+        note: "Dành cho hệ thống có nhiều mã hàng, cần tối ưu luồng nhận yêu cầu báo giá chuyên sâu."
+      };
+    });
+  }
+
+  if (Array.isArray(data.landing?.plans)) {
+    data.landing.plans = data.landing.plans.map((plan, index) => {
+      if (index === 0) {
+        return {
+          ...plan,
+          name: "Gói Landing cơ bản",
+          fit: "Chiến dịch cần landing page gọn, rõ ưu đãi và form nhận lead",
+          note: "Phù hợp khi cần một landing page chuyển đổi nhanh theo 1 mục tiêu chính."
+        };
+      }
+      if (index === 1) {
+        return {
+          ...plan,
+          name: "Gói Landing chuyên nghiệp",
+          fit: "Chiến dịch có nhiều thông điệp, cần trust block và FAQ đầy đủ",
+          note: "Có đủ khối lợi ích, bảng giá, bằng chứng và form để tăng tỉ lệ chuyển đổi."
+        };
+      }
+      return {
+        ...plan,
+        name: "Gói Landing hệ thống",
+        fit: "Doanh nghiệp chạy nhiều chiến dịch và cần landing theo cụm",
+        note: "Dành cho nhu cầu xây nhiều landing, tối ưu luồng lead và tracking ở mức hệ thống."
+      };
+    });
+  }
 
   const baseProcess = [
     "Tiếp nhận nhu cầu và tư vấn gói phù hợp",

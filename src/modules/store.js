@@ -1652,20 +1652,43 @@ async function applyDiscountToOrderWithClient({ client, orderId, discountCode })
   };
 }
 
-async function createOrder({ customerId, appId, productId, discountCode, selectedGrades = [] }) {
+async function createOrder({ customerId, appId, productId, discountCode, selectedGrades = [], addonProductIds = [], metadata = {} }) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    const safeProductId = String(productId || "").trim();
+    if (!safeProductId) {
+      throw createStoreError("Thieu productId", 400);
+    }
+
+    const normalizedAddonProductIds = Array.from(
+      new Set(
+        (Array.isArray(addonProductIds) ? addonProductIds : [])
+          .map((id) => String(id || "").trim())
+          .filter((id) => Boolean(id) && id !== safeProductId)
+      )
+    );
+
+    const queryProductIds = [safeProductId, ...normalizedAddonProductIds];
 
     const productResult = await client.query(
       `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
               currency, credits, sale_status, sale_note
        FROM products
-       WHERE id = $1 AND app_id = $2 AND active = TRUE`,
-      [productId, appId]
+       WHERE app_id = $1 AND id = ANY($2::text[]) AND active = TRUE`,
+      [appId, queryProductIds]
     );
-    if (productResult.rowCount === 0) {
+
+    const productById = new Map((productResult.rows || []).map((row) => [row.id, row]));
+    const product = productById.get(safeProductId);
+    if (!product) {
       throw createStoreError("Product khong ton tai hoac dang tat", 404);
+    }
+
+    const missingAddonProductIds = normalizedAddonProductIds.filter((id) => !productById.has(id));
+    if (missingAddonProductIds.length > 0) {
+      throw createStoreError("Addon khong ton tai hoac dang tat", 404);
     }
 
     const customerResult = await client.query("SELECT id FROM customers WHERE id = $1", [customerId]);
@@ -1673,9 +1696,11 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
       throw createStoreError("Customer khong ton tai", 404);
     }
 
-    const product = productResult.rows[0];
     const cap01Config = getCap01ProductLicenseConfig(product.id);
-    let orderMetadata = {};
+    const inputMetadata = metadata && typeof metadata === "object" && !Array.isArray(metadata)
+      ? metadata
+      : {};
+    let orderMetadata = { ...inputMetadata };
 
     if (cap01Config) {
       const normalizedSelectedGrades = normalizeStandardGrades(selectedGrades);
@@ -1705,7 +1730,32 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
     if (String(product?.id || '').trim().toLowerCase() === 'prod-study-topup') {
       throw createStoreError("Top-up 300 Credit đã tạm dừng bán trên web", 409);
     }
-    const pricing = resolveProductPricing(product);
+
+    const itemEntries = queryProductIds.map((id) => {
+      const itemProduct = productById.get(id);
+      const itemPricing = resolveProductPricing(itemProduct);
+      const itemSaleStatus = normalizeProductSaleStatus(itemProduct.sale_status);
+      return {
+        id,
+        product: itemProduct,
+        pricing: itemPricing,
+        saleStatus: itemSaleStatus,
+        isAddon: id !== safeProductId
+      };
+    });
+
+    const blockedItem = itemEntries.find(({ saleStatus }) => saleStatus !== "live");
+    if (blockedItem) {
+      const saleNote = String(blockedItem.product.sale_note || "").trim();
+      const message =
+        blockedItem.saleStatus === "coming_soon"
+          ? saleNote || "Sản phẩm này đang ở trạng thái coming soon, chưa thể tạo đơn"
+          : saleNote || "Sản phẩm này đang tạm khóa bán, chưa thể tạo đơn";
+      throw createStoreError(message, 409);
+    }
+
+    const productEntry = itemEntries.find((entry) => !entry.isAddon);
+    const pricing = productEntry.pricing;
     const saleStatus = normalizeProductSaleStatus(product.sale_status);
     if (saleStatus !== "live") {
       const saleNote = String(product.sale_note || "").trim();
@@ -1716,8 +1766,29 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
       throw createStoreError(message, 409);
     }
 
-    if (discountCode && pricing.hasDirectSale && !pricing.allowCouponStack) {
+    const hasNonStackableDirectSale = itemEntries.some(
+      ({ pricing: itemPricing }) => itemPricing.hasDirectSale && !itemPricing.allowCouponStack
+    );
+    if (discountCode && hasNonStackableDirectSale) {
       throw createStoreError("Sản phẩm này đã giảm trực tiếp và không cho cộng thêm mã giảm giá", 400);
+    }
+
+    const addonEntries = itemEntries.filter((entry) => entry.isAddon);
+    const addonSubtotal = addonEntries.reduce((sum, entry) => sum + entry.pricing.effectivePrice, 0);
+    const subtotalAmount = pricing.effectivePrice + addonSubtotal;
+
+    if (addonEntries.length > 0) {
+      orderMetadata.addons = addonEntries.map((entry) => ({
+        productId: entry.product.id,
+        name: entry.product.name,
+        cycle: entry.product.cycle,
+        price: entry.pricing.basePrice,
+        effectivePrice: entry.pricing.effectivePrice,
+        comparePrice: entry.pricing.comparePrice,
+        salePrice: entry.pricing.salePrice,
+        saleEnabled: entry.pricing.saleEnabled,
+        hasDirectSale: entry.pricing.hasDirectSale
+      }));
     }
 
     let orderRow = null;
@@ -1730,11 +1801,20 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
              amount, subtotal_amount, discount_amount, discount_percent,
              currency, status, metadata
            )
-           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $5, 0, 0, $6, 'pending', $7::jsonb)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 0, 0, $7, 'pending', $8::jsonb)
            RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
                     discount_amount, discount_percent, discount_code, discount_code_id, metadata,
                      currency, status, created_at, paid_at`,
-          [orderCode, customerId, appId, productId, pricing.effectivePrice, product.currency, JSON.stringify(orderMetadata)]
+          [
+            orderCode,
+            customerId,
+            appId,
+            safeProductId,
+            subtotalAmount,
+            subtotalAmount,
+            product.currency,
+            JSON.stringify(orderMetadata)
+          ]
         );
         orderRow = orderResult.rows[0];
         break;
@@ -1791,7 +1871,22 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
         hasDirectSale: pricing.hasDirectSale,
         currency: product.currency,
         credits: Number(product.credits)
-      }
+      },
+      addons: addonEntries.map((entry) => ({
+        id: entry.product.id,
+        appId: entry.product.app_id,
+        name: entry.product.name,
+        cycle: entry.product.cycle,
+        price: entry.pricing.basePrice,
+        effectivePrice: entry.pricing.effectivePrice,
+        comparePrice: entry.pricing.comparePrice,
+        salePrice: entry.pricing.salePrice,
+        saleEnabled: entry.pricing.saleEnabled,
+        allowCouponStack: entry.pricing.allowCouponStack,
+        hasDirectSale: entry.pricing.hasDirectSale,
+        currency: entry.product.currency,
+        credits: Number(entry.product.credits)
+      }))
     };
   } catch (error) {
     await client.query("ROLLBACK");

@@ -599,7 +599,7 @@ const PUBLIC_PAGE_CONTENT = {
           title: "Nhánh web giờ có không gian riêng",
           copy: "Tất cả nội dung mang tính giới thiệu dịch vụ web được gom về một khu rõ ràng hơn: có hướng chọn ngành, khu demo và CTA tư vấn.",
           cards: [
-            { title: "Xem theo ngành", text: "Công ty, shop, giáo dục, spa và local business đều có chỗ xem nhanh.", linkLabel: "Mở kho mẫu demo", linkHref: "/mau-demo" },
+            { title: "Xem theo nhóm mẫu", text: "Công ty, shop, salon, industry và landing page đều có chỗ xem nhanh.", linkLabel: "Mở kho mẫu demo", linkHref: "/mau-demo" },
             { title: "Đi từ mục tiêu", text: "Khách có thể chọn web để lấy lead, bán hàng, đặt lịch hay xây thương hiệu.", linkLabel: "Xem nhánh web", linkHref: "/thiet-ke-web" },
             { title: "Chốt trao đổi gọn", text: "Sau khi có hướng, khách nhắn Zalo để nhận tư vấn sát ngành và phạm vi hơn.", linkLabel: "Nhắn Zalo", linkHref: "https://zalo.me/0902964685", external: true }
           ],
@@ -620,7 +620,7 @@ const PUBLIC_PAGE_CONTENT = {
           webDemo: {
             eyebrow: "Kho mẫu web",
             title: "Mẫu demo website theo từng nhóm ngành",
-            sub: "Từ dịch vụ, shop đến giáo dục và spa, bạn có thể xem phong cách trước khi triển khai."
+            sub: "Từ công ty, shop đến salon, industry và landing, bạn có thể xem phong cách trước khi triển khai."
           },
           footerCta: {
             title: "Muốn có website gọn, rõ và chốt lead tốt hơn?",
@@ -657,7 +657,7 @@ const PUBLIC_PAGE_CONTENT = {
           copy: "Khối demo được chuyển về đúng chỗ để homepage không giống một trang bán template, nhưng khách vẫn xem mẫu rất nhanh khi cần.",
           cards: [
             { title: "Ít nhiễu hơn", text: "Home chỉ định vị. Demo nằm ở trang con nên luồng nhìn gọn hơn." },
-            { title: "Dễ so ngành", text: "Mỗi mẫu đại diện cho một kiểu nhu cầu khác nhau: dịch vụ, shop, giáo dục, spa, local." },
+            { title: "Dễ so mẫu", text: "Mỗi mẫu đại diện cho một kiểu nhu cầu khác nhau: công ty, shop, salon, industry, landing." },
             { title: "Đi thẳng tư vấn", text: "Khi đã chọn được hướng, khách nhắn hỗ trợ để chốt chi tiết triển khai.", linkLabel: "Liên hệ nhanh", linkHref: "/lien-he" }
           ],
           checklistTitle: "Bạn nên vào trang này khi",
@@ -2405,12 +2405,74 @@ const webDemoMockTitle = document.getElementById("webDemoMockTitle");
 const webDemoMockSub = document.getElementById("webDemoMockSub");
 const webDemoImage = document.getElementById("webDemoImage");
 const webDemoViewLink = document.getElementById("webDemoViewLink");
+const webDemoLayout = document.querySelector(".web-demo-layout");
+
+function getWebDemoViewLabel() {
+  const translated = t("web_demo_view");
+  if (translated && translated !== "web_demo_view") return translated;
+  return lang === "en" ? "View demo" : "Xem mẫu web demo";
+}
+
+function renderWebDemoMarketLayout(demos) {
+  if (!webDemoLayout) return;
+
+  const entries = ["company", "shop", "salon", "industry", "landing"]
+    .map((id) => ({ id, item: demos[id] || WEB_DEMOS.vi[id] }))
+    .filter((entry) => Boolean(entry.item));
+
+  webDemoLayout.classList.add("is-market-mode");
+  webDemoLayout.innerHTML = `
+    <div class="web-demo-market-grid">
+      ${entries.map(({ id, item }) => `
+        <article class="web-demo-market-card is-${escapeHtml(id)}">
+          <div class="web-demo-market-preview" aria-hidden="true">
+            <div class="web-demo-market-browser-top"><span></span><span></span><span></span></div>
+            <div class="web-demo-market-preview-grid">
+              <div class="web-demo-market-copy">
+                <b>${escapeHtml(item.pill || "WEB")}</b>
+                <strong>${escapeHtml(item.mockTitle || item.cardTitle || item.title || "")}</strong>
+                <small>${escapeHtml(item.mockSub || item.cardKind || "")}</small>
+              </div>
+              <figure>
+                <img src="${escapeHtml(WEB_DEMO_IMAGES[id] || "/web-demo-photo.jpg")}" alt="${escapeHtml(item.title || item.cardTitle || "")}" loading="lazy" />
+              </figure>
+              <i></i><i></i><i></i>
+            </div>
+          </div>
+          <div class="web-demo-market-content">
+            <span>${escapeHtml(item.label || "")}</span>
+            <h3>${escapeHtml(item.cardTitle || item.title || "")}</h3>
+            <p>${escapeHtml(item.desc || "")}</p>
+            <div class="web-demo-market-features">
+              ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
+            </div>
+            <div class="web-demo-market-actions">
+              <a href="/web-demo/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="/web-demo/${encodeURIComponent(id)}#demoPricing">${lang === "en" ? "View package" : "Xem gói"}</a>
+            </div>
+          </div>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
 
 function renderWebDemo(nextId) {
-  if (nextId) activeWebDemo = nextId;
   const demos = WEB_DEMOS[lang] || WEB_DEMOS.vi;
+  if (currentRoute === "demo") {
+    renderWebDemoMarketLayout(demos);
+    return;
+  }
+
+  if (webDemoLayout) {
+    webDemoLayout.classList.remove("is-market-mode");
+  }
+
+  if (nextId) activeWebDemo = nextId;
   const item = demos[activeWebDemo] || demos.company;
   if (!item || !webDemoTitle) return;
+
+  const demoViewLabel = getWebDemoViewLabel();
 
   webDemoButtons.forEach((button) => {
     const id = button.dataset.webDemo;
@@ -2421,7 +2483,7 @@ function renderWebDemo(nextId) {
     const link = button.querySelector(".web-demo-card-link");
     if (name && buttonItem) name.textContent = buttonItem.cardTitle;
     if (kind && buttonItem) kind.textContent = buttonItem.cardKind;
-    if (link) link.textContent = t("web_demo_view");
+    if (link) link.textContent = demoViewLabel;
     button.setAttribute("aria-current", id === activeWebDemo ? "true" : "false");
   });
 
@@ -2441,7 +2503,7 @@ function renderWebDemo(nextId) {
   }
   if (webDemoViewLink) {
     webDemoViewLink.href = `/web-demo/${encodeURIComponent(activeWebDemo)}`;
-    webDemoViewLink.textContent = t("web_demo_view");
+    webDemoViewLink.textContent = demoViewLabel;
   }
 }
 
