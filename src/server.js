@@ -4730,6 +4730,10 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(webRoot));
+app.use(
+  "/image",
+  express.static(path.join(__dirname, "..", "public", "image"))
+);
 app.use("/og", express.static(ogRoot));
 app.use("/app-updates", express.static(appUpdatesRoot));
 app.use("/desktop-updates", express.static(path.join(appUpdatesRoot, "app-study-12")));
