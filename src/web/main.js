@@ -378,6 +378,22 @@ let googleAuthInitAttempts = 0;
 let catalogMode = "loading";
 const ACCOUNT_DOWNLOADS_PATH = "/account?tab=downloads";
 
+// Device ID for single-session enforcement
+function getOrCreateDeviceId() {
+  const key = "wst_device_id";
+  let deviceId = localStorage.getItem(key);
+  if (!deviceId) {
+    // Generate a stable device ID: browser + OS + userAgent hash
+    const ua = navigator.userAgent;
+    const hash = String((ua.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)).toString(16).slice(-8));
+    deviceId = "web_" + Date.now().toString(36) + "_" + hash;
+    localStorage.setItem(key, deviceId);
+  }
+  return deviceId;
+}
+
+const DEVICE_ID = getOrCreateDeviceId();
+
 function t(k){ return (T[lang]||T.vi)[k] || k; }
 
 function getRouteName(pathname = window.location.pathname) {
@@ -2541,10 +2557,49 @@ function setLoggedOut(){
   }
 }
 
+function showSessionRevokedNotice(message) {
+  // Show message in login modal when opening
+  const messageEl = document.createElement("div");
+  messageEl.className = "session-revoked-notice";
+  messageEl.style.cssText = "background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; margin-bottom: 16px; border: 1px solid #fca5a5; text-align: center;";
+  messageEl.textContent = message;
+  
+  // Store in sessionStorage so we can show it when modal opens
+  sessionStorage.setItem("session_revoked_message", message);
+}
+
+function showLoginModalWithSessionRevokedNotice() {
+  const message = sessionStorage.getItem("session_revoked_message");
+  if(message) {
+    sessionStorage.removeItem("session_revoked_message");
+    loginError.textContent = message;
+    loginError.style.color = "#991b1b";
+  }
+  showLoginTab();
+  loginModal.classList.add("show");
+  ensureGoogleAuthInit();
+}
+
 async function checkAuth(){
   try {
     const res = await fetch("/api/auth/me", { credentials: "same-origin" });
-    if(!res.ok) { setLoggedOut(); return; }
+    if(!res.ok) {
+      // Check if session was revoked on a different device
+      if(res.status === 401) {
+        try {
+          const payload = await res.json();
+          if(payload?.status === "session_revoked" || payload?.reason === "session_revoked") {
+            console.warn("[AUTH] Session revoked, logging out and showing notice");
+            setLoggedOut();
+            showSessionRevokedNotice("Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.");
+            showLoginModalWithSessionRevokedNotice();
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+      setLoggedOut();
+      return;
+    }
     const data = await res.json();
     if(data.customer) setLoggedIn(data);
     else setLoggedOut();
@@ -2724,8 +2779,15 @@ function resetAuthInputsForUserForms() {
 async function readApiErrorMessage(response, fallbackKey = "modal_login_error_db") {
   try {
     const payload = await response.json();
+    // Handle session_revoked from API
+    if(payload?.status === "session_revoked" || payload?.reason === "session_revoked") {
+      return "Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.";
+    }
     if (payload && typeof payload.message === "string" && payload.message.trim()) {
       return payload.message.trim();
+    }
+    if (payload && typeof payload.error === "string" && payload.error.trim()) {
+      return payload.error.trim();
     }
   } catch {
     try {
@@ -2763,7 +2825,7 @@ loginForm.addEventListener("submit", async (e)=>{
   try {
     const res = await fetch("/api/auth/customer/login",{
       method:"POST", credentials: "same-origin", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, deviceId: DEVICE_ID, deviceName: navigator.userAgent })
     });
     if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
     await finalizeAuthFlow(await res.json());
@@ -2786,7 +2848,7 @@ registerForm.addEventListener("submit", async (e)=>{
   try {
     const res = await fetch("/api/auth/customer/register",{
       method:"POST", credentials: "same-origin", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ email, fullName, password, code })
+      body: JSON.stringify({ email, fullName, password, code, deviceId: DEVICE_ID, deviceName: navigator.userAgent })
     });
     if(!res.ok){ loginError.textContent = await readApiErrorMessage(res); return; }
     await finalizeAuthFlow(await res.json());

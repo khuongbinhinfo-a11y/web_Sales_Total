@@ -3304,6 +3304,193 @@ async function updateCustomerPasswordByEmail(email, passwordHash) {
 
 async function ensureCustomerAuthSchema() {
   await pool.query("ALTER TABLE customers ADD COLUMN IF NOT EXISTS password_hash TEXT");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_sessions (
+      session_id TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+      device_id TEXT,
+      device_name TEXT,
+      app_id TEXT NOT NULL DEFAULT 'hoctap-cap-01',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ,
+      revoke_reason TEXT
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_customer_sessions_customer_app_active
+      ON customer_sessions(customer_id, app_id, revoked_at)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_customer_sessions_last_seen
+      ON customer_sessions(last_seen_at DESC)
+  `);
+}
+
+async function createCustomerSession({ sessionId, customerId, deviceId, deviceName, appId = "hoctap-cap-01" }) {
+  const safeSessionId = String(sessionId || "").trim();
+  const safeCustomerId = String(customerId || "").trim();
+  const safeDeviceId = String(deviceId || "").trim() || null;
+  const safeDeviceName = String(deviceName || "").trim() || null;
+  const safeAppId = String(appId || "hoctap-cap-01").trim() || "hoctap-cap-01";
+
+  if (!safeSessionId || !safeCustomerId) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `INSERT INTO customer_sessions(session_id, customer_id, device_id, device_name, app_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (session_id)
+     DO UPDATE SET
+       customer_id = EXCLUDED.customer_id,
+       device_id = EXCLUDED.device_id,
+       device_name = EXCLUDED.device_name,
+       app_id = EXCLUDED.app_id,
+       last_seen_at = NOW(),
+       revoked_at = NULL,
+       revoke_reason = NULL
+     RETURNING session_id, customer_id, device_id, device_name, app_id, created_at, last_seen_at, revoked_at, revoke_reason`,
+    [safeSessionId, safeCustomerId, safeDeviceId, safeDeviceName, safeAppId]
+  );
+
+  return result.rowCount > 0 ? {
+    sessionId: result.rows[0].session_id,
+    customerId: result.rows[0].customer_id,
+    deviceId: result.rows[0].device_id,
+    deviceName: result.rows[0].device_name,
+    appId: result.rows[0].app_id,
+    createdAt: result.rows[0].created_at,
+    lastSeenAt: result.rows[0].last_seen_at,
+    revokedAt: result.rows[0].revoked_at,
+    revokeReason: result.rows[0].revoke_reason,
+  } : null;
+}
+
+async function getCustomerSessionById(sessionId) {
+  const safeSessionId = String(sessionId || "").trim();
+  if (!safeSessionId) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `SELECT session_id, customer_id, device_id, device_name, app_id, created_at, last_seen_at, revoked_at, revoke_reason
+     FROM customer_sessions
+     WHERE session_id = $1
+     LIMIT 1`,
+    [safeSessionId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    sessionId: result.rows[0].session_id,
+    customerId: result.rows[0].customer_id,
+    deviceId: result.rows[0].device_id,
+    deviceName: result.rows[0].device_name,
+    appId: result.rows[0].app_id,
+    createdAt: result.rows[0].created_at,
+    lastSeenAt: result.rows[0].last_seen_at,
+    revokedAt: result.rows[0].revoked_at,
+    revokeReason: result.rows[0].revoke_reason,
+  };
+}
+
+async function touchCustomerSession(sessionId) {
+  const safeSessionId = String(sessionId || "").trim();
+  if (!safeSessionId) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `UPDATE customer_sessions
+     SET last_seen_at = NOW()
+     WHERE session_id = $1
+       AND revoked_at IS NULL
+     RETURNING session_id, customer_id, device_id, device_name, app_id, created_at, last_seen_at, revoked_at, revoke_reason`,
+    [safeSessionId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    sessionId: result.rows[0].session_id,
+    customerId: result.rows[0].customer_id,
+    deviceId: result.rows[0].device_id,
+    deviceName: result.rows[0].device_name,
+    appId: result.rows[0].app_id,
+    createdAt: result.rows[0].created_at,
+    lastSeenAt: result.rows[0].last_seen_at,
+    revokedAt: result.rows[0].revoked_at,
+    revokeReason: result.rows[0].revoke_reason,
+  };
+}
+
+async function revokeCustomerSessionById({ sessionId, reason = "logged_out" }) {
+  const safeSessionId = String(sessionId || "").trim();
+  const safeReason = String(reason || "logged_out").trim() || "logged_out";
+  if (!safeSessionId) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `UPDATE customer_sessions
+     SET revoked_at = COALESCE(revoked_at, NOW()),
+         revoke_reason = COALESCE(revoke_reason, $2),
+         last_seen_at = NOW()
+     WHERE session_id = $1
+     RETURNING session_id, customer_id, device_id, device_name, app_id, created_at, last_seen_at, revoked_at, revoke_reason`,
+    [safeSessionId, safeReason]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    sessionId: result.rows[0].session_id,
+    customerId: result.rows[0].customer_id,
+    deviceId: result.rows[0].device_id,
+    deviceName: result.rows[0].device_name,
+    appId: result.rows[0].app_id,
+    createdAt: result.rows[0].created_at,
+    lastSeenAt: result.rows[0].last_seen_at,
+    revokedAt: result.rows[0].revoked_at,
+    revokeReason: result.rows[0].revoke_reason,
+  };
+}
+
+async function revokeOtherCustomerSessions({ customerId, appId = "hoctap-cap-01", excludeSessionId = null, reason = "logged_out_by_new_device" }) {
+  const safeCustomerId = String(customerId || "").trim();
+  const safeAppId = String(appId || "hoctap-cap-01").trim() || "hoctap-cap-01";
+  const safeExcludeSessionId = String(excludeSessionId || "").trim() || null;
+  const safeReason = String(reason || "logged_out_by_new_device").trim() || "logged_out_by_new_device";
+
+  if (!safeCustomerId) {
+    return { revokedCount: 0 };
+  }
+
+  const params = [safeCustomerId, safeAppId, safeReason];
+  let whereSql = "customer_id = $1 AND app_id = $2 AND revoked_at IS NULL";
+  if (safeExcludeSessionId) {
+    params.push(safeExcludeSessionId);
+    whereSql += ` AND session_id <> $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `UPDATE customer_sessions
+     SET revoked_at = NOW(),
+         revoke_reason = $3,
+         last_seen_at = NOW()
+     WHERE ${whereSql}`,
+    params
+  );
+
+  return { revokedCount: Number(result.rowCount || 0) };
 }
 
 async function listCustomers(limit = 100) {
@@ -4068,6 +4255,11 @@ module.exports = {
   registerCustomerByEmail,
   updateCustomerPasswordByEmail,
   ensureCustomerAuthSchema,
+  createCustomerSession,
+  getCustomerSessionById,
+  touchCustomerSession,
+  revokeCustomerSessionById,
+  revokeOtherCustomerSessions,
   getCustomerTelegramProfile,
   ensureCustomerTelegramLinkToken,
   refreshCustomerTelegramLinkToken,

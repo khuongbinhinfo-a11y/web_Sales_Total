@@ -1,6 +1,10 @@
 const crypto = require("crypto");
 const { env } = require("../config/env");
-const { findAdminById } = require("./store");
+const {
+  findAdminById,
+  getCustomerSessionById,
+  touchCustomerSession,
+} = require("./store");
 
 const ADMIN_AUTH_DEBUG_ENABLED = String(process.env.ADMIN_AUTH_DEBUG || "1").trim() !== "0";
 const ADMIN_AUTH_TRACE_PATH_PREFIXES = [
@@ -259,9 +263,16 @@ function clearAuthCookie(res, name, req) {
   }
 }
 
-function createCustomerSessionToken(customerId, email) {
+function createCustomerSessionToken(customerId, email, sessionId) {
   const ttlMs = env.customerSessionDays * 24 * 60 * 60 * 1000;
-  const payload = { scope: "customer", customerId, email, exp: Date.now() + ttlMs };
+  const safeSessionId = String(sessionId || "").trim();
+  const payload = {
+    scope: "customer",
+    customerId,
+    email,
+    sessionId: safeSessionId || null,
+    exp: Date.now() + ttlMs,
+  };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   const signature = signValue(encodedPayload);
   return `${encodedPayload}.${signature}`;
@@ -347,8 +358,59 @@ function getCustomerFromSession(req) {
   try {
     const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
     if (payload.scope !== "customer" || !payload.exp || Number(payload.exp) < Date.now()) return null;
-    return { customerId: payload.customerId, email: payload.email };
-  } catch { return null; }
+    return {
+      customerId: payload.customerId,
+      email: payload.email,
+      sessionId: String(payload.sessionId || "").trim() || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function getCustomerSessionState(req, options = {}) {
+  const { touch = true } = options;
+  const decoded = getCustomerFromSession(req);
+  if (!decoded?.customerId) {
+    return { status: "none", session: null, reason: "missing_cookie" };
+  }
+
+  const sessionId = String(decoded.sessionId || "").trim();
+  if (!sessionId) {
+    return { status: "revoked", session: decoded, reason: "legacy_session_missing_id" };
+  }
+
+  const record = await getCustomerSessionById(sessionId);
+  if (!record) {
+    return { status: "revoked", session: decoded, reason: "session_not_found" };
+  }
+
+  if (record.revokedAt) {
+    return {
+      status: "revoked",
+      session: { ...decoded, deviceId: record.deviceId || null, deviceName: record.deviceName || null, appId: record.appId || null },
+      reason: record.revokeReason || "logged_out_by_new_device",
+    };
+  }
+
+  if (String(record.customerId || "") !== String(decoded.customerId || "")) {
+    return { status: "revoked", session: decoded, reason: "customer_session_mismatch" };
+  }
+
+  if (touch) {
+    await touchCustomerSession(sessionId).catch(() => null);
+  }
+
+  return {
+    status: "active",
+    session: {
+      ...decoded,
+      deviceId: record.deviceId || null,
+      deviceName: record.deviceName || null,
+      appId: record.appId || null,
+    },
+    reason: "active",
+  };
 }
 
 function getAdminFromSession(req) {
@@ -549,8 +611,22 @@ async function requireAdminAuth(req, res, next) {
 }
 
 async function requireCustomerOrAdmin(req, res, next) {
-  if (isCustomerAuthenticated(req)) {
+  const customerState = await getCustomerSessionState(req, { touch: true });
+  if (customerState.status === "active") {
+    req.customerSession = customerState.session;
     return next();
+  }
+
+  if (customerState.status === "revoked") {
+    clearAuthCookie(res, "wst_customer_session", req);
+    if (wantsHtml(req)) {
+      return res.redirect("/?auth=login&reason=session_revoked");
+    }
+    return res.status(401).json({
+      success: false,
+      status: "session_revoked",
+      error: "Tài khoản đã đăng nhập trên thiết bị khác.",
+    });
   }
 
   const adminSession = await syncAdminSessionFromRequest(req, res);
@@ -563,7 +639,7 @@ async function requireCustomerOrAdmin(req, res, next) {
     return res.redirect("/?auth=login");
   }
 
-  return res.status(401).json({ message: "Unauthorized" });
+  return res.status(401).json({ success: false, status: "unauthorized", error: "Unauthorized" });
 }
 
 function handleAdminLogin(req, res) {
@@ -870,6 +946,7 @@ module.exports = {
   getPermissionsByRole,
   createCustomerSessionToken,
   getCustomerFromSession,
+  getCustomerSessionState,
   isAdminLoginAllowed,
   registerAdminLoginFailure,
   clearAdminLoginFailures

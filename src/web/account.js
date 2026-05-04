@@ -231,6 +231,22 @@ async function requestDownload(appId, button) {
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" }
     });
+    
+    // Check for session_revoked
+    if (response.status === 401) {
+      try {
+        const payload = await response.json();
+        if (payload?.status === "session_revoked" || payload?.reason === "session_revoked") {
+          window.alert("Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.");
+          window.location.href = "/?auth=login&reason=session_revoked";
+          return;
+        }
+      } catch { /* ignore */ }
+      window.alert("Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.");
+      window.location.href = "/";
+      return;
+    }
+    
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {

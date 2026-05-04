@@ -41,6 +41,9 @@ const {
   registerCustomerByEmail,
   updateCustomerPasswordByEmail,
   ensureCustomerAuthSchema,
+  createCustomerSession,
+  revokeOtherCustomerSessions,
+  revokeCustomerSessionById,
   ensureAdminLoginSecuritySchema,
   listCustomers,
   findAdminByUsername,
@@ -113,7 +116,8 @@ const {
   hashPassword,
   getPermissionsByRole,
   createCustomerSessionToken,
-  getCustomerFromSession
+  getCustomerFromSession,
+  getCustomerSessionState
 } = require("./modules/auth");
 const {
   ensureEmailOtpSchema,
@@ -160,6 +164,43 @@ function getRequestIp(req) {
   const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
   const socketIp = String(req?.socket?.remoteAddress || "").trim();
   return (forwardedFor || realIp || socketIp || "unknown").toLowerCase();
+}
+
+function resolveCustomerSessionAppId(req) {
+  const appId = normalizeCap01AppId(req?.body?.appId || req?.query?.appId || "hoctap-cap-01");
+  return appId || "hoctap-cap-01";
+}
+
+async function issueCustomerWebSession(req, res, customer, options = {}) {
+  const appId = String(options.appId || resolveCustomerSessionAppId(req) || "hoctap-cap-01").trim() || "hoctap-cap-01";
+  const deviceId = String(options.deviceId || req.body?.deviceId || req.query?.deviceId || "").trim() || null;
+  const deviceName = String(options.deviceName || req.body?.deviceName || req.query?.deviceName || "").trim() || null;
+  const sessionId = crypto.randomUUID();
+
+  await createCustomerSession({
+    sessionId,
+    customerId: customer.id,
+    deviceId,
+    deviceName,
+    appId,
+  });
+
+  await revokeOtherCustomerSessions({
+    customerId: customer.id,
+    appId,
+    excludeSessionId: sessionId,
+    reason: "logged_out_by_new_device",
+  });
+
+  const token = createCustomerSessionToken(customer.id, customer.email, sessionId);
+  setAuthCookie(res, "wst_customer_session", token, req);
+  return {
+    token,
+    sessionId,
+    appId,
+    deviceId,
+    deviceName,
+  };
 }
 
 function parseCookieHeader(cookieHeader) {
@@ -845,7 +886,7 @@ async function handleCap01LicenseVerifyLikeRequest(req, res) {
   });
 }
 
-function getCustomerFromBridgeAuthorization(req) {
+async function getCustomerFromBridgeAuthorization(req) {
   const authHeader = String(req.header("authorization") || "").trim();
   if (!/^bearer\s+/i.test(authHeader)) {
     return null;
@@ -862,7 +903,11 @@ function getCustomerFromBridgeAuthorization(req) {
     : `wst_customer_session=${bearerToken}`;
 
   try {
-    return getCustomerFromSession(req);
+    const sessionState = await getCustomerSessionState(req, { touch: true });
+    if (sessionState.status === "active") {
+      return sessionState.session;
+    }
+    return null;
   } finally {
     if (typeof originalCookieHeader === "undefined") {
       delete req.headers.cookie;
@@ -872,8 +917,17 @@ function getCustomerFromBridgeAuthorization(req) {
   }
 }
 
-function getCustomerBridgeSession(req) {
-  return getCustomerFromBridgeAuthorization(req) || getCustomerFromSession(req);
+async function getCustomerBridgeSession(req) {
+  const sessionFromBearer = await getCustomerFromBridgeAuthorization(req);
+  if (sessionFromBearer?.customerId) {
+    return sessionFromBearer;
+  }
+
+  const cookieState = await getCustomerSessionState(req, { touch: true });
+  if (cookieState.status === "active") {
+    return cookieState.session;
+  }
+  return null;
 }
 
 async function buildBridgePricingPlans() {
@@ -1966,7 +2020,17 @@ app.get(
       return res.status(410).json({ message: "Link tải đã hết hạn hoặc không hợp lệ." });
     }
 
-    const session = getCustomerFromSession(req);
+    const customerState = await getCustomerSessionState(req, { touch: true });
+    if (customerState.status === "revoked") {
+      clearAuthCookie(res, "wst_customer_session", req);
+      return res.status(401).json({
+        success: false,
+        status: "session_revoked",
+        error: "Tài khoản đã đăng nhập trên thiết bị khác.",
+      });
+    }
+
+    const session = customerState.status === "active" ? customerState.session : null;
     const admin = getAdminFromSession(req);
     if (!admin && (!session || session.customerId !== payload.customerId)) {
       return res.status(403).json({ message: "Bạn không có quyền dùng link tải này." });
@@ -2244,6 +2308,16 @@ app.post(
       return res.status(409).json({ success: false, status: "concurrent_usage", error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
     }
 
+    if (clientProfile === "web" && license.customerId) {
+      const requestSessionState = await getCustomerSessionState(req, { touch: true });
+      await revokeOtherCustomerSessions({
+        customerId: license.customerId,
+        appId: resolveCustomerSessionAppId(req),
+        excludeSessionId: requestSessionState.status === "active" ? requestSessionState.session?.sessionId || null : null,
+        reason: "logged_out_by_new_device",
+      });
+    }
+
     const aiLicense = buildAiAppLicenseView(license);
     const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
     const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
@@ -2338,12 +2412,17 @@ app.post(
   asyncHandler(async (req, res) => {
     const email = String(req.body?.email || "").trim().toLowerCase();
     const password = String(req.body?.password || "");
+    const deviceId = String(req.body?.deviceId || "").trim();
+    const deviceName = String(req.body?.deviceName || req.header("user-agent") || "").trim();
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ success: false, error: "Email không hợp lệ" });
     }
     if (!password || password.length < 8) {
       return res.status(400).json({ success: false, error: "Mật khẩu tối thiểu 8 ký tự" });
+    }
+    if (!deviceId) {
+      return res.status(400).json({ success: false, status: "invalid", error: "deviceId is required" });
     }
 
     const customer = await findCustomerByEmail(email);
@@ -2359,13 +2438,17 @@ app.post(
       return res.status(401).json({ success: false, error: "Email hoặc mật khẩu không đúng" });
     }
 
-    const bridgeToken = createCustomerSessionToken(customer.id, customer.email);
-    setAuthCookie(res, "wst_customer_session", bridgeToken, req);
+    const loginSession = await issueCustomerWebSession(req, res, customer, {
+      appId: resolveCustomerSessionAppId(req),
+      deviceId: req.body?.deviceId,
+      deviceName: req.body?.deviceName,
+    });
 
     return res.json({
       success: true,
+      status: "active",
       data: {
-        bridgeToken,
+        bridgeToken: loginSession.token,
         customer: {
           id: customer.id,
           email: customer.email,
@@ -2379,9 +2462,14 @@ app.post(
 app.get(
   "/api/v1/auth/me",
   asyncHandler(async (req, res) => {
-    const session = getCustomerBridgeSession(req);
+    const session = await getCustomerBridgeSession(req);
     if (!session?.customerId) {
-      return res.status(401).json({ success: false, error: "Chưa đăng nhập" });
+      clearAuthCookie(res, "wst_customer_session", req);
+      return res.status(401).json({
+        success: false,
+        status: "session_revoked",
+        error: "Tài khoản đã đăng nhập trên thiết bị khác.",
+      });
     }
 
     const snapshot = await getCustomerSnapshot(session.customerId);
@@ -2392,6 +2480,13 @@ app.get(
 app.post(
   "/api/v1/auth/customer/logout",
   asyncHandler(async (req, res) => {
+    const customerState = await getCustomerSessionState(req, { touch: false });
+    if (customerState.status === "active" && customerState.session?.sessionId) {
+      await revokeCustomerSessionById({
+        sessionId: customerState.session.sessionId,
+        reason: "logged_out",
+      }).catch(() => null);
+    }
     clearAuthCookie(res, "wst_customer_session", req);
     return res.json({ success: true, data: { ok: true } });
   })
@@ -2400,9 +2495,14 @@ app.post(
 app.get(
   "/api/v1/customer/snapshot",
   asyncHandler(async (req, res) => {
-    const session = getCustomerBridgeSession(req);
+    const session = await getCustomerBridgeSession(req);
     if (!session?.customerId) {
-      return res.status(401).json({ success: false, error: "Chưa đăng nhập" });
+      clearAuthCookie(res, "wst_customer_session", req);
+      return res.status(401).json({
+        success: false,
+        status: "session_revoked",
+        error: "Tài khoản đã đăng nhập trên thiết bị khác.",
+      });
     }
 
     const snapshot = await getCustomerSnapshot(session.customerId);
@@ -2530,12 +2630,13 @@ app.get(
 app.get(
   "/api/v1/ai-app/customers/:customerId/licenses",
   asyncHandler(async (req, res) => {
-    const session = getCustomerBridgeSession(req);
+    const session = await getCustomerBridgeSession(req);
     const customerId = String(req.params.customerId || "").trim();
     const appId = String(req.query.appId || "").trim() || undefined;
 
     if (!session?.customerId) {
-      return res.status(401).json({ success: false, error: "Thiếu bridge token Web tổng." });
+      clearAuthCookie(res, "wst_customer_session", req);
+      return res.status(401).json({ success: false, status: "session_revoked", error: "Tài khoản đã đăng nhập trên thiết bị khác." });
     }
     if (!customerId) {
       return res.status(400).json({ success: false, error: "customerId is required" });
@@ -2607,6 +2708,16 @@ app.post(
     }
     if (license.concurrentUsage) {
       return res.status(409).json({ success: false, status: "concurrent_usage", error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
+    }
+
+    if (clientProfile === "web" && license.customerId) {
+      const requestSessionState = await getCustomerSessionState(req, { touch: true });
+      await revokeOtherCustomerSessions({
+        customerId: license.customerId,
+        appId: resolveCustomerSessionAppId(req),
+        excludeSessionId: requestSessionState.status === "active" ? requestSessionState.session?.sessionId || null : null,
+        reason: "logged_out_by_new_device",
+      });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
@@ -3750,9 +3861,12 @@ app.post(
       fullName: customer.fullName
     };
 
-    const token = createCustomerSessionToken(customer.id, customer.email);
-    setAuthCookie(res, "wst_customer_session", token, req);
-    return res.json({ customer: safeCustomer });
+    await issueCustomerWebSession(req, res, customer, {
+      appId: "hoctap-cap-01",
+      deviceId: req.body?.deviceId,
+      deviceName: req.body?.deviceName,
+    });
+    return res.json({ customer: safeCustomer, status: "active" });
   })
 );
 
@@ -3782,9 +3896,12 @@ app.post(
       return res.status(409).json({ message: "Email này đã có tài khoản. Vui lòng đăng nhập." });
     }
 
-    const token = createCustomerSessionToken(result.customer.id, result.customer.email);
-    setAuthCookie(res, "wst_customer_session", token, req);
-    return res.status(result.created ? 201 : 200).json(result);
+    await issueCustomerWebSession(req, res, result.customer, {
+      appId: "hoctap-cap-01",
+      deviceId: req.body?.deviceId,
+      deviceName: req.body?.deviceName,
+    });
+    return res.status(result.created ? 201 : 200).json({ ...result, status: "active" });
   })
 );
 
@@ -3870,12 +3987,16 @@ app.post(
     const profile = await verifyGoogleCredential(credential);
     const account = await createCustomerAccount(profile.email, profile.fullName);
 
-    const token = createCustomerSessionToken(account.customer.id, account.customer.email);
-    setAuthCookie(res, "wst_customer_session", token, req);
+    await issueCustomerWebSession(req, res, account.customer, {
+      appId: "hoctap-cap-01",
+      deviceId: req.body?.deviceId,
+      deviceName: req.body?.deviceName,
+    });
     return res.json({
       customer: account.customer,
       created: account.created,
-      provider: "google"
+      provider: "google",
+      status: "active"
     });
   })
 );
@@ -3883,19 +4004,38 @@ app.post(
 app.get(
   "/api/auth/me",
   asyncHandler(async (req, res) => {
-    const session = getCustomerFromSession(req);
-    if (!session) return res.status(401).json({ message: "Not logged in" });
-    const refreshedToken = createCustomerSessionToken(session.customerId, session.email || "");
+    const sessionState = await getCustomerSessionState(req, { touch: true });
+    if (sessionState.status === "revoked") {
+      clearAuthCookie(res, "wst_customer_session", req);
+      return res.status(401).json({
+        success: false,
+        status: "session_revoked",
+        error: "Tài khoản đã đăng nhập trên thiết bị khác.",
+      });
+    }
+    if (sessionState.status !== "active") {
+      return res.status(401).json({ success: false, status: "unauthorized", message: "Not logged in" });
+    }
+
+    const session = sessionState.session;
+    const refreshedToken = createCustomerSessionToken(session.customerId, session.email || "", session.sessionId);
     setAuthCookie(res, "wst_customer_session", refreshedToken, req);
     const snapshot = await getCustomerSnapshot(session.customerId);
     return res.json(snapshot);
   })
 );
 
-app.post("/api/auth/customer/logout", (req, res) => {
+app.post("/api/auth/customer/logout", asyncHandler(async (req, res) => {
+  const customerState = await getCustomerSessionState(req, { touch: false });
+  if (customerState.status === "active" && customerState.session?.sessionId) {
+    await revokeCustomerSessionById({
+      sessionId: customerState.session.sessionId,
+      reason: "logged_out",
+    }).catch(() => null);
+  }
   clearAuthCookie(res, "wst_customer_session", req);
   return res.json({ ok: true });
-});
+}));
 
 app.get("/admin/login", (req, res) => {
   res.send(adminLoginPage());
@@ -4511,14 +4651,18 @@ app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-package.html"));
 });
 
-app.get("/account", (req, res) => {
-  const session = getCustomerFromSession(req);
-  if (!session) {
+app.get("/account", asyncHandler(async (req, res) => {
+  const sessionState = await getCustomerSessionState(req, { touch: true });
+  if (sessionState.status === "revoked") {
+    clearAuthCookie(res, "wst_customer_session", req);
+    return res.redirect(`/?auth=login&reason=session_revoked&next=${encodeURIComponent(req.originalUrl || "/account")}`);
+  }
+  if (sessionState.status !== "active") {
     return res.redirect(`/?auth=login&next=${encodeURIComponent(req.originalUrl || "/account")}`);
   }
 
   return res.sendFile(path.join(webRoot, "account.html"));
-});
+}));
 
 app.get("/admin", requireAdminAuth, (req, res) => {
   res.sendFile(path.join(webRoot, "admin.html"));
