@@ -1431,8 +1431,8 @@ button{font-family:inherit;cursor:pointer}
   -webkit-box-orient:vertical;
   overflow:hidden
 }
-.banner-pill-card strong{-webkit-line-clamp:2}
-.banner-pill-card small{-webkit-line-clamp:1}
+.banner-pill-card strong{-webkit-line-clamp:2;line-clamp:2}
+.banner-pill-card small{-webkit-line-clamp:1;line-clamp:1}
 @keyframes homeMarquee{
   from{transform:translateX(0)}
   to{transform:translateX(-50%)}
