@@ -1,4 +1,4 @@
-/* ═══════════════════ DESIGN TOKENS ═══════════════════ */
+﻿/* ═══════════════════ DESIGN TOKENS ═══════════════════ */
 :root {
   --bg: #eef4fb;
   --surface: #ffffff;
@@ -1290,7 +1290,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-web{
   --banner-accent:#1565ff;
   --banner-surface:rgba(21,101,255,.1);
-  --banner-thumb:url("/og/og-thiet-ke-web.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-thiet-ke-web.png");
   --banner-card-bg-start:#fbfdff;
   --banner-card-bg-end:#eef6ff;
   --banner-card-haze:rgba(21,101,255,.14);
@@ -1300,7 +1300,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-software{
   --banner-accent:#12b8c5;
   --banner-surface:rgba(18,184,197,.12);
-  --banner-thumb:url("/og/og-phan-mem.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-phan-mem.png");
   --banner-card-bg-start:#fcfeff;
   --banner-card-bg-end:#edfafa;
   --banner-card-haze:rgba(18,184,197,.14);
@@ -1310,7 +1310,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-branch{
   --banner-accent:#0f3f99;
   --banner-surface:rgba(15,63,153,.1);
-  --banner-thumb:url("/og/og-hoc-tap-lam-viec.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-hoc-tap-lam-viec.png");
   --banner-card-bg-start:#fbfcff;
   --banner-card-bg-end:#eef2fb;
   --banner-card-haze:rgba(61,126,255,.12);
@@ -1320,7 +1320,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-guide{
   --banner-accent:#1aa36f;
   --banner-surface:rgba(26,163,111,.12);
-  --banner-thumb:url("/og/og-cong-cu-ai.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-cong-cu-ai.png");
   --banner-card-bg-start:#fbfefd;
   --banner-card-bg-end:#eefaf5;
   --banner-card-haze:rgba(26,163,111,.13);
@@ -1330,7 +1330,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-contact{
   --banner-accent:#3d7eff;
   --banner-surface:rgba(61,126,255,.1);
-  --banner-thumb:url("/og/og-trang-chu.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-trang-chu.png");
   --banner-card-bg-start:#fbfdff;
   --banner-card-bg-end:#edf4ff;
   --banner-card-haze:rgba(61,126,255,.14);
@@ -1340,7 +1340,7 @@ button{font-family:inherit;cursor:pointer}
 .banner-pill-card.is-hub{
   --banner-accent:#10233a;
   --banner-surface:rgba(16,35,58,.08);
-  --banner-thumb:url("/og/og-trang-chu.png");
+  --banner-thumb:url("https://cdn.ungdungthongminh.shop/og/og-trang-chu.png");
   --banner-card-bg-start:#fcfdff;
   --banner-card-bg-end:#f0f5fa;
   --banner-card-haze:rgba(16,35,58,.08);
@@ -1610,8 +1610,8 @@ button{font-family:inherit;cursor:pointer}
 .pathway-card{
   --pathway-accent:#86c9ff;
   --pathway-soft:rgba(134,201,255,.14);
-  --pathway-preview-image:url("/og/og-web-cong-ty.png");
-  --pathway-device-image:url("/og/og-thiet-ke-web.png");
+  --pathway-preview-image:url("https://cdn.ungdungthongminh.shop/og/og-web-cong-ty.png");
+  --pathway-device-image:url("https://cdn.ungdungthongminh.shop/og/og-thiet-ke-web.png");
   --pathway-card-bg-start:#1e193a;
   --pathway-card-bg-end:#17122f;
   --pathway-card-glow:rgba(134,201,255,.14);
@@ -1641,8 +1641,8 @@ button{font-family:inherit;cursor:pointer}
 .pathway-card.is-software{
   --pathway-accent:#83f0e7;
   --pathway-soft:rgba(131,240,231,.14);
-  --pathway-preview-image:url("/og/og-phan-mem.png");
-  --pathway-device-image:url("/og/og-cong-cu-ai.png");
+  --pathway-preview-image:url("https://cdn.ungdungthongminh.shop/og/og-phan-mem.png");
+  --pathway-device-image:url("https://cdn.ungdungthongminh.shop/og/og-cong-cu-ai.png");
   --pathway-card-bg-start:#12293a;
   --pathway-card-bg-end:#0d202d;
   --pathway-card-glow:rgba(131,240,231,.12);
@@ -2307,12 +2307,12 @@ body[data-route="contact"] .page-hero-card::before{
 body[data-route="guide"] .page-hero-card::before{
   background-image:
     linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),
-    url('/image/hero-huongdan.png')
+    url('https://cdn.ungdungthongminh.shop/image/hero-huongdan.png')
 }
 body[data-route="contact"] .page-hero-card::before{
   background-image:
     linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.03)),
-    url('/image/hero-lienhe.png')
+    url('https://cdn.ungdungthongminh.shop/image/hero-lienhe.png')
 }
 body[data-route="guide"] .page-hero-copy,
 body[data-route="contact"] .page-hero-copy{

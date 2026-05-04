@@ -6,3 +6,13 @@ backups/
 .env*.local
 _external/
 public/app-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe
+
+# === CDN/R2 Phase 1: Media assets moved to CDN ===
+# Untrack after confirmed uploaded to CDN (run: git rm --cached -r public/Video public/image public/og products/image)
+# public/Video/
+# public/image/
+# public/og/
+# products/image/
+# src/web/*.jpg
+# src/web/*.png
+# src/web/image/

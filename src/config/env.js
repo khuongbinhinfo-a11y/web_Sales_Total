@@ -192,7 +192,11 @@ const env = {
   githubToken: process.env.GITHUB_TOKEN || "",
   githubRepoOwner: process.env.GITHUB_REPO_OWNER || "khuongbinhinfo-a11y",
   githubRepoName: process.env.GITHUB_REPO_NAME || "web_Sales_Total",
-  githubRepoBranch: process.env.GITHUB_REPO_BRANCH || "main"
+  githubRepoBranch: process.env.GITHUB_REPO_BRANCH || "main",
+  publicAssetBaseUrl: (function () {
+    const explicit = String(process.env.PUBLIC_ASSET_BASE_URL || "").trim();
+    return explicit || resolvePublicAppBaseUrl(process.env.APP_BASE_URL || "http://localhost:3900");
+  })()
 };
 
 function getStartupConfigIssues() {

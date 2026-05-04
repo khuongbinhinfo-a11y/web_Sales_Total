@@ -523,11 +523,17 @@ function buildPublicUrl(pathname = "/") {
   return `${base}${suffix}`;
 }
 
+function buildAssetUrl(pathname = "/") {
+  const base = String(env.publicAssetBaseUrl || env.publicAppBaseUrl || "https://ungdungthongminh.shop").replace(/\/+$/, "");
+  const suffix = String(pathname || "/").startsWith("/") ? pathname : `/${pathname}`;
+  return `${base}${suffix}`;
+}
+
 function buildMetadataTags(metadata) {
   const title = escapeHtmlAttr(metadata.title);
   const description = escapeHtmlAttr(metadata.description);
   const canonical = escapeHtmlAttr(buildPublicUrl(metadata.canonicalPath || "/"));
-  const image = escapeHtmlAttr(metadata.image);
+  const image = escapeHtmlAttr(buildAssetUrl(metadata.image || "/og/og-trang-chu.png"));
 
   return [
     `<meta name="description" content="${description}" />`,
@@ -4855,7 +4861,7 @@ app.get(
     <body style="background:var(--bg,#f8fafc);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px">
       <div style="max-width:560px;width:100%;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:32px;border:1px solid #e2e8f0">
         <div style="margin-bottom:16px;text-align:left">
-          <img src="/logo_2.png" alt="Ứng Dụng Thông Minh" style="display:block;max-width:280px;width:100%;height:auto;margin-bottom:8px" />
+          <img src="${buildAssetUrl('/logo_2.png')}" alt="Ứng Dụng Thông Minh" style="display:block;max-width:280px;width:100%;height:auto;margin-bottom:8px" />
           <p style="margin:0;font-size:.78rem;color:#64748b">Checkout</p>
         </div>
         <h2 style="margin:0 0 4px;font-size:1.3rem;font-weight:800">Thanh toán đơn hàng</h2>

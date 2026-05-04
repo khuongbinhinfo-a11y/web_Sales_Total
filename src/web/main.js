@@ -1,4 +1,4 @@
-/* ═══ main.js — storefront frontend ═══ */
+﻿/* ═══ main.js — storefront frontend ═══ */
 const productList = document.getElementById("productList");
 const langToggle  = document.getElementById("langToggle");
 const catTabs     = document.getElementById("catTabs");
@@ -634,7 +634,7 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Mẫu Demo",
           title: "Kho mẫu để chọn phong cách web nhanh hơn",
           desc: "Xem nhanh mẫu phù hợp để chốt hướng triển khai website.",
-          imageSrc: "/image/hero-web.jpeg",
+          imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg",
           imageAlt: "Dịch vụ thiết kế website theo ngành",
           tags: [],
           actions: [
@@ -748,7 +748,7 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Nhánh Học tập",
           title: "Khu phần mềm dành cho học sinh, ôn tập và luyện kiến thức",
           desc: "Trang này lọc sẵn đúng nhóm học tập để phụ huynh hoặc học sinh không phải lướt qua các công cụ làm việc không liên quan.",
-          imageSrc: "/image/hero.jpeg",
+          imageSrc: "https://cdn.ungdungthongminh.shop/image/hero.jpeg",
           imageAlt: "Phần mềm ứng dụng thông minh",
           tags: ["Ôn tập", "Học sinh", "Luyện kiến thức", "Lọc đúng nhóm"],
           actions: [
@@ -811,7 +811,7 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Nhánh Làm việc",
           title: "Công cụ giúp làm việc nhanh hơn, gọn hơn và bớt thao tác lặp",
           desc: "Trang này lọc riêng cho nhóm app phục vụ công việc: video, quản lý, bán hàng, vận hành và các tiện ích tải về.",
-          imageSrc: "/image/hero.jpeg",
+          imageSrc: "https://cdn.ungdungthongminh.shop/image/hero.jpeg",
           imageAlt: "Phần mềm ứng dụng thông minh",
           tags: ["Video Creator", "Quản lý", "Tự động hóa", "App vận hành"],
           actions: [
@@ -1192,7 +1192,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-web.jpeg",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg",
     imageAlt: "Dịch vụ thiết kế website theo ngành"
   },
   side: null,
@@ -1241,7 +1241,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-phanmem.jpeg?v=1",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-phanmem.jpeg?v=1",
     imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
@@ -1298,7 +1298,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-web.jpeg",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg",
     imageAlt: "Dịch vụ thiết kế website theo ngành"
   },
   side: null,
@@ -1345,7 +1345,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.demo, {
     kicker: "Demo Library",
     title: "Preview web styles before you talk scope",
     desc: "Quickly preview the right web direction before implementation.",
-    imageSrc: "/image/hero-web.jpeg",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg",
     imageAlt: "Dịch vụ thiết kế website theo ngành",
     tags: [],
     actions: [
@@ -1400,7 +1400,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-phanmem.jpeg?v=1",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero-phanmem.jpeg?v=1",
     imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
@@ -1477,7 +1477,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.study, {
     kicker: "Study branch",
     title: "Learning software for students and practice flow",
     desc: "This page filters directly to study products so parents and students do not need to scroll through unrelated work tools.",
-    imageSrc: "/image/hero.jpeg",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero.jpeg",
     imageAlt: "Phần mềm ứng dụng thông minh",
     tags: ["Study", "Learning", "Students", "Filtered catalog"],
     actions: [
@@ -1540,7 +1540,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.work, {
     kicker: "Work branch",
     title: "Tools for daily work, operations, and content flow",
     desc: "This page filters to apps used for work: video, management, selling support, operations, and downloadable utilities.",
-    imageSrc: "/image/hero.jpeg",
+    imageSrc: "https://cdn.ungdungthongminh.shop/image/hero.jpeg",
     imageAlt: "Phần mềm ứng dụng thông minh",
     tags: ["Video Creator", "Management", "Automation", "Work tools"],
     actions: [
@@ -1823,11 +1823,11 @@ function renderPageHero(routeContent) {
   if (!routeContent?.hero) return;
   const hero = routeContent.hero;
   const fallbackHeroImageByRoute = {
-    web: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
-    demo: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
-    software: { src: "/image/hero-phanmem.jpeg?v=1", alt: "Phần mềm ứng dụng thông minh" },
-    study: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
-    work: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" }
+    web: { src: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
+    demo: { src: "https://cdn.ungdungthongminh.shop/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
+    software: { src: "https://cdn.ungdungthongminh.shop/image/hero-phanmem.jpeg?v=1", alt: "Phần mềm ứng dụng thông minh" },
+    study: { src: "https://cdn.ungdungthongminh.shop/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
+    work: { src: "https://cdn.ungdungthongminh.shop/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" }
   };
   const heroImageConfig = fallbackHeroImageByRoute[currentRoute] || {};
   const nextImageSrc = String(hero.imageSrc || heroImageConfig.src || "").trim();

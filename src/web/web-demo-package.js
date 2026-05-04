@@ -320,7 +320,7 @@ async function renderPackagePage() {
 
     <section class="package-print-intro">
       <div class="package-container package-doc-note">
-        <img src="/logo_2.png" alt="Ứng Dụng Thông Minh">
+        <img src="https://cdn.ungdungthongminh.shop/logo_2.png" alt="Ứng Dụng Thông Minh">
         <div>
           <h2>Hồ sơ gói triển khai</h2>
           <p>Xin chào Quý khách,<br>Cảm ơn anh/chị đã quan tâm đến dịch vụ thiết kế website của Ứng Dụng Thông Minh. Dưới đây là hồ sơ mô tả chi tiết gói triển khai mà anh/chị đang quan tâm.</p>

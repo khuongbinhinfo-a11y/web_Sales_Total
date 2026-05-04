@@ -1,12 +1,12 @@
-const COLLECTIONS = {
+﻿const COLLECTIONS = {
   company: {
     label: "Mẫu lấy lead",
     title: "Kho mẫu công ty / dịch vụ",
     desc: "Mỗi card là một hướng trình bày khác nhau để bạn chọn nhanh trước khi đi vào gói chi tiết.",
     samples: [
-      { title: "Hero trust + dịch vụ", note: "Ưu tiên độ tin cậy, năng lực và CTA nhận tư vấn.", image: "/web-demo-company.jpg", planSlug: "co-ban" },
-      { title: "Nhiều trang dịch vụ", note: "Phù hợp công ty cần tách dịch vụ và quy trình rõ.", image: "/web-demo-company.jpg", planSlug: "chuyen-nghiep" },
-      { title: "Bản thương hiệu", note: "Đẩy mạnh brand, case study và cấu trúc nội dung sâu.", image: "/web-demo-company.jpg", planSlug: "thuong-hieu" }
+      { title: "Hero trust + dịch vụ", note: "Ưu tiên độ tin cậy, năng lực và CTA nhận tư vấn.", image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg", planSlug: "co-ban" },
+      { title: "Nhiều trang dịch vụ", note: "Phù hợp công ty cần tách dịch vụ và quy trình rõ.", image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg", planSlug: "chuyen-nghiep" },
+      { title: "Bản thương hiệu", note: "Đẩy mạnh brand, case study và cấu trúc nội dung sâu.", image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg", planSlug: "thuong-hieu" }
     ]
   },
   shop: {
@@ -14,9 +14,9 @@ const COLLECTIONS = {
     title: "Kho mẫu shop bán hàng",
     desc: "Chọn nhanh các layout tập trung danh mục, sản phẩm và chuyển đổi đặt mua.",
     samples: [
-      { title: "Shop giới thiệu", note: "Landing gọn để test thị trường và giới thiệu sản phẩm.", image: "/web-demo-shop-hero.png", planSlug: "shop-gioi-thieu" },
-      { title: "Shop bán hàng", note: "Có danh mục rõ, CTA mua nhanh và cấu trúc đơn giản.", image: "/web-demo-shop-item-fashion.png", planSlug: "shop-ban-hang" },
-      { title: "Shop nâng cao", note: "Bản nhiều danh mục với khối tối ưu chuyển đổi.", image: "/web-demo-shop-bundle.png", planSlug: "shop-nang-cao" }
+      { title: "Shop giới thiệu", note: "Landing gọn để test thị trường và giới thiệu sản phẩm.", image: "https://cdn.ungdungthongminh.shop/web-demo-shop-hero.png", planSlug: "shop-gioi-thieu" },
+      { title: "Shop bán hàng", note: "Có danh mục rõ, CTA mua nhanh và cấu trúc đơn giản.", image: "https://cdn.ungdungthongminh.shop/web-demo-shop-item-fashion.png", planSlug: "shop-ban-hang" },
+      { title: "Shop nâng cao", note: "Bản nhiều danh mục với khối tối ưu chuyển đổi.", image: "https://cdn.ungdungthongminh.shop/web-demo-shop-bundle.png", planSlug: "shop-nang-cao" }
     ]
   },
   salon: {
@@ -24,9 +24,9 @@ const COLLECTIONS = {
     title: "Kho mẫu salon / beauty",
     desc: "Nhiều mẫu mini tập trung booking, bảng giá và cảm giác thương hiệu mềm mại.",
     samples: [
-      { title: "Salon mini", note: "Trang dịch vụ gọn, CTA đặt lịch nhanh trên mobile.", image: "/web-demo-photo.jpg", planSlug: "spa-mini" },
-      { title: "Salon chuyên nghiệp", note: "Thêm gallery, feedback và nhóm combo dịch vụ.", image: "/web-demo-photo.jpg", planSlug: "spa-chuyen-nghiep" },
-      { title: "Salon bán hàng + booking", note: "Kết hợp dịch vụ với sản phẩm bán kèm và tracking.", image: "/web-demo-photo.jpg", planSlug: "spa-ban-hang-dat-lich" }
+      { title: "Salon mini", note: "Trang dịch vụ gọn, CTA đặt lịch nhanh trên mobile.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "spa-mini" },
+      { title: "Salon chuyên nghiệp", note: "Thêm gallery, feedback và nhóm combo dịch vụ.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "spa-chuyen-nghiep" },
+      { title: "Salon bán hàng + booking", note: "Kết hợp dịch vụ với sản phẩm bán kèm và tracking.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "spa-ban-hang-dat-lich" }
     ]
   },
   industry: {
@@ -34,9 +34,9 @@ const COLLECTIONS = {
     title: "Kho mẫu industry / kỹ thuật",
     desc: "Các mẫu mini phục vụ catalog kỹ thuật, lọc mã hàng và form báo giá B2B.",
     samples: [
-      { title: "Industry cơ bản", note: "Giới thiệu năng lực và danh mục sản phẩm chính.", image: "/web-demo-photo.jpg", planSlug: "local-co-ban" },
-      { title: "Industry chuyên nghiệp", note: "Có nhóm catalog sâu và trang thông số rõ ràng.", image: "/web-demo-photo.jpg", planSlug: "menu-chuyen-nghiep" },
-      { title: "Industry nâng cao", note: "Luồng nhận báo giá chi tiết cho nhiều mã hàng.", image: "/web-demo-photo.jpg", planSlug: "dat-ban-dat-mon" }
+      { title: "Industry cơ bản", note: "Giới thiệu năng lực và danh mục sản phẩm chính.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "local-co-ban" },
+      { title: "Industry chuyên nghiệp", note: "Có nhóm catalog sâu và trang thông số rõ ràng.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "menu-chuyen-nghiep" },
+      { title: "Industry nâng cao", note: "Luồng nhận báo giá chi tiết cho nhiều mã hàng.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "dat-ban-dat-mon" }
     ]
   },
   landing: {
@@ -44,9 +44,9 @@ const COLLECTIONS = {
     title: "Kho mẫu landing page",
     desc: "So nhanh các biến thể hero, khối lợi ích và form để chọn mẫu phù hợp chiến dịch.",
     samples: [
-      { title: "Landing cơ bản", note: "1 mục tiêu chuyển đổi rõ, khối nội dung ngắn gọn.", image: "/web-demo-photo.jpg", planSlug: "tuyen-sinh-co-ban" },
-      { title: "Landing chuyên nghiệp", note: "Thêm trust block, FAQ và nhiều CTA theo hành vi.", image: "/web-demo-photo.jpg", planSlug: "trung-tam-dao-tao" },
-      { title: "Landing hệ thống", note: "Dành cho cụm chiến dịch cần nhiều phiên bản landing.", image: "/web-demo-photo.jpg", planSlug: "he-thong-khoa-hoc" }
+      { title: "Landing cơ bản", note: "1 mục tiêu chuyển đổi rõ, khối nội dung ngắn gọn.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "tuyen-sinh-co-ban" },
+      { title: "Landing chuyên nghiệp", note: "Thêm trust block, FAQ và nhiều CTA theo hành vi.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "trung-tam-dao-tao" },
+      { title: "Landing hệ thống", note: "Dành cho cụm chiến dịch cần nhiều phiên bản landing.", image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg", planSlug: "he-thong-khoa-hoc" }
     ]
   }
 };

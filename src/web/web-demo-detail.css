@@ -1,4 +1,4 @@
-.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d;padding-top:62px}
+﻿.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d;padding-top:62px}
 .demo-container{width:min(1180px,100% - 32px);margin-inline:auto}
 .demo-header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.86);border-bottom:1px solid rgba(124,109,216,.14);backdrop-filter:blur(16px)}
 .demo-header-inner{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px}
@@ -95,7 +95,7 @@
 .live-edu-signup button{border:0;border-radius:999px;min-height:40px;padding:0 16px;background:#2f80ed;color:#fff;font-weight:900}
 
 .live-spa{grid-template-columns:1fr 1fr;background:linear-gradient(135deg,#fff7ed,#f5f3ff);color:#4a2f35}
-.live-spa-hero{grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:350px;padding:28px;border-radius:28px;background:linear-gradient(180deg,rgba(196,164,132,.34),rgba(107,70,85,.86)),url('/web-demo-photo.jpg') center/cover;color:#fff}
+.live-spa-hero{grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:350px;padding:28px;border-radius:28px;background:linear-gradient(180deg,rgba(196,164,132,.34),rgba(107,70,85,.86)),url('https://cdn.ungdungthongminh.shop/web-demo-photo.jpg') center/cover;color:#fff}
 .live-spa-before{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .live-spa-before div{min-height:150px;border-radius:24px;background:linear-gradient(135deg,#f5e7da,#e9d5ff);display:flex;align-items:flex-end;padding:16px;color:#6b4b5a;font-weight:900}
 .live-spa-pricing{display:grid;gap:12px}
@@ -103,7 +103,7 @@
 .live-spa-pricing span{padding:6px 10px;border-radius:999px;background:#f5e7da;color:#7a5b42;font-weight:900;font-size:.76rem}
 
 .live-restaurant{grid-template-columns:1.1fr .9fr;background:#1b0f0a;color:#fff}
-.live-restaurant-hero{display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;padding:30px;border-radius:28px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(27,15,10,.88)),url('/web-demo-photo.jpg') center/cover}
+.live-restaurant-hero{display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;padding:30px;border-radius:28px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(27,15,10,.88)),url('https://cdn.ungdungthongminh.shop/web-demo-photo.jpg') center/cover}
 .live-restaurant-hero a{color:#7c2d12}
 .live-restaurant-menu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .live-restaurant-menu article{min-height:130px;padding:16px;border-radius:22px;background:linear-gradient(135deg,#7c2d12,#f59e0b);display:flex;flex-direction:column;justify-content:space-between}

@@ -326,7 +326,8 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
   const currency = order?.currency || "VND";
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
   const webAppUrl = "https://hoctap-cap-01.vercel.app/";
-  const logoUrl = `${websiteUrl}/logo_2.png`;
+  const assetBase = String(env.publicAssetBaseUrl || websiteUrl).replace(/\/+$/, "");
+  const logoUrl = `${assetBase}/logo_2.png`;
   const supportEmail = resolveSupportReplyAddress() || sanitizeMailboxAddress(env.emailFromSupport) || "ungdungthongminh.info@gmail.com";
   const websiteDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
 
