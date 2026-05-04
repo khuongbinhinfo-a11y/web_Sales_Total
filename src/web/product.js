@@ -589,6 +589,57 @@ const planPackageVariantByApp = {
           profiles: "2"
         },
         standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_3_1year",
+        label: "Gói 01 năm / Lớp 03",
+        standardName: "Gói 01 năm / Lớp 03",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_3_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [3],
+        standardTag: "Lớp 03",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Lớp 03", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
+        standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_4_1year",
+        label: "Gói 01 năm / Lớp 04",
+        standardName: "Gói 01 năm / Lớp 04",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_4_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [4],
+        standardTag: "Lớp 04",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Lớp 04", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
+        standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_5_1year",
+        label: "Gói 01 năm / Lớp 05",
+        standardName: "Gói 01 năm / Lớp 05",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_5_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [5],
+        standardTag: "Lớp 05",
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Lớp 05", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
+        standardSaveText: "2 hồ sơ học sinh"
       }
     ]
   }
@@ -596,7 +647,10 @@ const planPackageVariantByApp = {
 const CAP01_GRADE_OPTIONS = [
   { value: 0, label: "Lớp Lá" },
   { value: 1, label: "Lớp 01" },
-  { value: 2, label: "Lớp 02" }
+  { value: 2, label: "Lớp 02" },
+  { value: 3, label: "Lớp 03" },
+  { value: 4, label: "Lớp 04" },
+  { value: 5, label: "Lớp 05" }
 ];
 
 function parseCap01GradeFromProductId(productId) {
