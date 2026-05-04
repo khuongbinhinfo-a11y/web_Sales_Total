@@ -2193,10 +2193,27 @@ app.post(
     const licenseKey = String(req.body?.licenseKey || "").trim();
     const deviceId = String(req.body?.deviceId || "").trim() || null;
     const deviceName = String(req.body?.deviceName || "").trim() || null;
-    const clientProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
+    const requestedProfile = normalizeAiAppKeyProfile(req.header("x-ai-app-profile") || req.query?.profile || "shared");
+    const clientProfile = requestedProfile === "desktop" ? "desktop" : "web";
 
     if (!appId || !licenseKey) {
-      return res.status(400).json({ message: "appId and licenseKey are required" });
+      return res.status(400).json({ success: false, status: "invalid", error: "appId and licenseKey are required" });
+    }
+
+    if (!deviceId) {
+      return res.status(400).json({
+        success: false,
+        status: "invalid",
+        error: "deviceId is required to enforce one active runtime session per key",
+      });
+    }
+
+    if (clientProfile === "web" && !customerEmail) {
+      return res.status(400).json({
+        success: false,
+        status: "invalid",
+        error: "customerEmail is required for web key verification",
+      });
     }
 
     const license = await verifyAppLicenseByKey({
@@ -2211,16 +2228,26 @@ app.post(
     });
 
     if (!license) {
-      return res.status(404).json({ ok: false, message: "License invalid, expired or revoked" });
+      return res.status(404).json({ success: false, status: "invalid", error: "License invalid, expired or revoked" });
+    }
+    if (license.emailMismatch) {
+      return res.status(422).json({
+        success: false,
+        status: "email_mismatch",
+        error: "Email không khớp với key này. Vui lòng kiểm tra lại email đã dùng khi mua hàng.",
+      });
+    }
+    if (license.deviceLimitExceeded) {
+      return res.status(409).json({ success: false, status: "device_limit_exceeded", error: "Key đã vượt số thiết bị cho phép." });
     }
     if (license.concurrentUsage) {
-      return res.status(409).json({ ok: false, message: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
+      return res.status(409).json({ success: false, status: "concurrent_usage", error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
     const allLicenses = await listCustomerLicenses({ customerId: license.customerId, appId });
     const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
-    return res.json({ ok: true, license: aiLicense, tier: aiLicense.tier, features: aiLicense.features, grace: aiLicense.grace, updateEntitlement });
+    return res.json({ success: true, status: "active", license: aiLicense, tier: aiLicense.tier, features: aiLicense.features, grace: aiLicense.grace, updateEntitlement });
   })
 );
 
@@ -2566,25 +2593,20 @@ app.post(
     });
 
     if (!license) {
-      return res.status(404).json({ success: false, error: "License invalid, expired or revoked" });
+      return res.status(404).json({ success: false, status: "invalid", error: "License invalid, expired or revoked" });
     }
     if (license.emailMismatch) {
-      return res.status(422).json({ success: false, error: "email_mismatch: Email không khớp với key này. Vui lòng kiểm tra lại email đã dùng khi mua hàng." });
-    }
-    if (
-      clientProfile === "web"
-      && String(license.productId || "").trim().toLowerCase() === "cap01_beta_year_299"
-    ) {
-      return res.status(403).json({
+      return res.status(422).json({
         success: false,
-        error: "Key beta chỉ dùng cho flow desktop cũ, không dùng cho web verify thường.",
+        status: "email_mismatch",
+        error: "Email không khớp với key này. Vui lòng kiểm tra lại email đã dùng khi mua hàng.",
       });
     }
     if (license.deviceLimitExceeded) {
-      return res.status(409).json({ success: false, error: "Key đã vượt số thiết bị cho phép." });
+      return res.status(409).json({ success: false, status: "device_limit_exceeded", error: "Key đã vượt số thiết bị cho phép." });
     }
     if (license.concurrentUsage) {
-      return res.status(409).json({ success: false, error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
+      return res.status(409).json({ success: false, status: "concurrent_usage", error: "Key này đang được sử dụng trên một thiết bị khác. Vui lòng đóng app/web ở thiết bị kia hoặc chờ phiên đó hết hạn rồi thử lại." });
     }
 
     const aiLicense = buildAiAppLicenseView(license);
@@ -2592,6 +2614,7 @@ app.post(
     const updateEntitlement = buildUpdateEntitlement(allLicenses, req.body?.appVersion || null);
     return res.json({
       success: true,
+      status: "active",
       data: {
         license: aiLicense,
         features: aiLicense.features,

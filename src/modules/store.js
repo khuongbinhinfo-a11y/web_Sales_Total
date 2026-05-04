@@ -2417,9 +2417,11 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
   const runtimeClientId = normalizeRuntimeClientId(deviceId);
   const runtimeClientName = String(deviceName || "").trim() || null;
   const runtimeAppVersion = String(appVersion || "").trim() || null;
+  const normalizedProductId = String(existingLicense?.productId || "").trim().toLowerCase();
+  const enforceSingleDeviceAcrossProfiles = normalizedProductId === "cap01_beta_year_299";
 
   if (
-    normalizedClientProfile === "desktop"
+    (normalizedClientProfile === "desktop" || enforceSingleDeviceAcrossProfiles)
     && runtimeClientId
     && String(existingLicense?.deviceId || "").trim()
     && String(existingLicense.deviceId).trim() !== runtimeClientId
@@ -2453,15 +2455,15 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
          activated_at = CASE WHEN activated_at IS NULL THEN NOW() ELSE activated_at END,
          last_verified_at = NOW(),
          device_id = CASE
-           WHEN $5::text = 'desktop' AND $3::text IS NOT NULL THEN $3::text
+           WHEN ($5::text = 'desktop' OR $7::boolean = true) AND $3::text IS NOT NULL THEN $3::text
            ELSE device_id
          END,
          device_name = CASE
-           WHEN $5::text = 'desktop' AND $4::text IS NOT NULL THEN $4::text
+           WHEN ($5::text = 'desktop' OR $7::boolean = true) AND $4::text IS NOT NULL THEN $4::text
            ELSE device_name
          END,
          metadata = CASE
-           WHEN $5::text = 'desktop' THEN
+           WHEN $5::text = 'desktop' OR $7::boolean = true THEN
              COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
                'deviceBinding',
                jsonb_strip_nulls(jsonb_build_object(
@@ -2481,7 +2483,7 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
      RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
                metadata, created_at, updated_at`,
-    [normalizedLicenseKey, appIdCandidates, runtimeClientId, runtimeClientName, normalizedClientProfile, runtimeAppVersion]
+    [normalizedLicenseKey, appIdCandidates, runtimeClientId, runtimeClientName, normalizedClientProfile, runtimeAppVersion, enforceSingleDeviceAcrossProfiles]
   );
 
   if (result.rowCount === 0) {
