@@ -260,7 +260,50 @@ const T = {
     expiring_soon:"Sắp hết hạn",
     expired:"Đã hết hạn",
     status_active:"Đang hoạt động",
-    active_until:"Đến"
+    active_until:"Đến",
+    modal_email_placeholder:"you@example.com",
+    modal_password_placeholder:"Tối thiểu 8 ký tự",
+    modal_login_title:"Đăng nhập",
+    modal_login_desc:"Nhập email để đăng nhập.",
+    modal_login_email_label:"Email",
+    modal_login_password_label:"Mật khẩu",
+    modal_login_btn:"Đăng nhập",
+    modal_login_error_email:"Vui lòng nhập email hợp lệ",
+    modal_login_error_password:"Mật khẩu tối thiểu 8 ký tự",
+    modal_login_error_db:"Không thể đăng nhập. Vui lòng thử lại.",
+    modal_auth_error_network:"Không thể kết nối máy chủ. Vui lòng thử lại.",
+    modal_login_no_account:"Chưa có tài khoản?",
+    modal_register_link:"Đăng ký ngay",
+    modal_register_title:"Đăng ký",
+    modal_register_desc:"Nhập email và họ tên để tạo tài khoản mới.",
+    modal_register_name_label:"Họ tên",
+    modal_register_name_placeholder:"Nguyễn Văn A",
+    modal_register_password_label:"Mật khẩu",
+    modal_register_btn:"Đăng ký",
+    modal_register_error_name:"Vui lòng nhập họ tên",
+    modal_register_error_password:"Mật khẩu tối thiểu 8 ký tự",
+    modal_register_code_label:"Mã xác minh email",
+    modal_register_code_placeholder:"Nhập 6 số",
+    modal_register_code_help:"Nhập email trước, bấm Gửi mã rồi kiểm tra hộp thư để lấy mã xác minh.",
+    modal_register_code_send:"Gửi mã",
+    modal_register_code_sending:"Đang gửi...",
+    modal_register_code_required:"Vui lòng nhập mã xác minh 6 số",
+    modal_register_code_sent:"Đã gửi mã xác minh",
+    modal_register_code_send_failed:"Không gửi được mã xác minh",
+    modal_register_has_account:"Đã có tài khoản?",
+    modal_login_link:"Đăng nhập ngay",
+    modal_forgot_password:"Quên mật khẩu?",
+    modal_reset_prompt_email:"Nhập email tài khoản để nhận mã reset:",
+    modal_reset_prompt_code:"Nhập mã 6 số đã gửi về Gmail:",
+    modal_reset_prompt_new_password:"Nhập mật khẩu mới (tối thiểu 8 ký tự):",
+    modal_reset_send_failed:"Không gửi được mã reset",
+    modal_reset_confirm_failed:"Không đặt lại được mật khẩu",
+    modal_reset_success:"Đặt lại mật khẩu thành công",
+    modal_reset_failed_generic:"Có lỗi khi xử lý quên mật khẩu",
+    modal_session_revoked:"Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.",
+    modal_google_or:"Hoặc tiếp tục với Google",
+    modal_google_not_ready:"Đăng nhập Google chưa được bật.",
+    modal_google_failed:"Không thể tiếp tục với Google. Vui lòng thử lại."
   },
   en:{
     meta_title:"Ứng Dụng Thông Minh - Buy genuine software keys",
@@ -333,12 +376,32 @@ const T = {
     modal_register_title:"Register",
     modal_register_desc:"Enter email and name to create a new account.",
     modal_register_name_label:"Full name",
+    modal_register_name_placeholder:"John Doe",
     modal_register_password_label:"Password",
     modal_register_btn:"Register",
     modal_register_error_name:"Please enter your name",
     modal_register_error_password:"Password must be at least 8 characters",
+    modal_email_placeholder:"you@example.com",
+    modal_password_placeholder:"At least 8 characters",
+    modal_register_code_label:"Email verification code",
+    modal_register_code_placeholder:"Enter 6 digits",
+    modal_register_code_help:"Enter your email, tap Send code, then check your inbox for the verification code.",
+    modal_register_code_send:"Send code",
+    modal_register_code_sending:"Sending...",
+    modal_register_code_required:"Please enter the 6-digit verification code",
+    modal_register_code_sent:"Verification code sent",
+    modal_register_code_send_failed:"Unable to send verification code",
     modal_register_has_account:"Already have an account?",
     modal_login_link:"Login now",
+    modal_forgot_password:"Forgot password?",
+    modal_reset_prompt_email:"Enter your account email to receive a reset code:",
+    modal_reset_prompt_code:"Enter the 6-digit code sent to your email:",
+    modal_reset_prompt_new_password:"Enter a new password (at least 8 characters):",
+    modal_reset_send_failed:"Unable to send reset code",
+    modal_reset_confirm_failed:"Unable to reset password",
+    modal_reset_success:"Password reset successful",
+    modal_reset_failed_generic:"An error occurred while processing password reset",
+    modal_session_revoked:"Your account was signed in on another device. Please sign in again.",
     modal_google_or:"Or continue with Google",
     modal_google_not_ready:"Google sign-in is not enabled.",
     modal_google_failed:"Unable to continue with Google. Please try again.",
@@ -2593,7 +2656,7 @@ async function checkAuth(){
           if(payload?.status === "session_revoked" || payload?.reason === "session_revoked") {
             console.warn("[AUTH] Session revoked, logging out and showing notice");
             setLoggedOut();
-            showSessionRevokedNotice("Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.");
+            showSessionRevokedNotice(t("modal_session_revoked"));
             showLoginModalWithSessionRevokedNotice();
             return;
           }
@@ -2668,7 +2731,7 @@ async function handleGoogleCredential(credential){
     });
     const data = await res.json();
     if (!res.ok) {
-      loginError.textContent = data.message || t("modal_google_failed");
+      loginError.textContent = localizeAuthMessage(data.message, "modal_google_failed");
       return;
     }
     await finalizeAuthFlow(data);
@@ -2778,24 +2841,73 @@ function resetAuthInputsForUserForms() {
   clearInvalidEmailAutofill(document.getElementById("registerEmail"));
 }
 
+function localizeAuthMessage(message, fallbackKey = "") {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallbackKey ? t(fallbackKey) : "";
+  }
+
+  if (lang !== "en") {
+    return raw;
+  }
+
+  const normalized = raw
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const exactMap = {
+    "Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.": "Your account was signed in on another device. Please sign in again.",
+    "Tài khoản đã đăng nhập trên thiết bị khác.": "Your account was signed in on another device.",
+    "Email không hợp lệ": "Invalid email address",
+    "Mật khẩu tối thiểu 8 ký tự": "Password must be at least 8 characters",
+    "Email hoặc mật khẩu không đúng": "Email or password is incorrect",
+    "Email này đã có tài khoản. Vui lòng đăng nhập.": "This email already has an account. Please log in.",
+    "Hệ thống email OTP chưa cấu hình": "Email OTP service is not configured",
+    "Đã gửi mã xác minh đến email của bạn": "Verification code has been sent to your email",
+    "Nếu email tồn tại, mã reset đã được gửi": "If the email exists, a reset code has been sent",
+    "Không tìm thấy tài khoản với email này": "No account found with this email",
+    "Đặt lại mật khẩu thành công": "Password reset successful",
+    "Google credential không hợp lệ hoặc đã hết hạn": "Google credential is invalid or expired",
+    "Google account email is not verified": "Google account email is not verified",
+    "Google login is not configured": "Google sign-in is not configured",
+    "Missing Google credential": "Missing Google credential"
+  };
+
+  if (exactMap[normalized]) {
+    return exactMap[normalized];
+  }
+
+  if (/^Mã reset không hợp lệ/.test(normalized)) {
+    return "Reset code is invalid";
+  }
+
+  if (/^Tài khoản này đăng nhập bằng Google\./.test(normalized)) {
+    return "This account uses Google sign-in. Use Forgot password on the website first to set a password before signing in to the app.";
+  }
+
+  return raw;
+}
+
 async function readApiErrorMessage(response, fallbackKey = "modal_login_error_db") {
   try {
     const payload = await response.json();
     // Handle session_revoked from API
     if(payload?.status === "session_revoked" || payload?.reason === "session_revoked") {
-      return "Tài khoản của bạn đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.";
+      return t("modal_session_revoked");
     }
     if (payload && typeof payload.message === "string" && payload.message.trim()) {
-      return payload.message.trim();
+      return localizeAuthMessage(payload.message.trim(), fallbackKey);
     }
     if (payload && typeof payload.error === "string" && payload.error.trim()) {
-      return payload.error.trim();
+      return localizeAuthMessage(payload.error.trim(), fallbackKey);
     }
   } catch {
     try {
       const text = await response.text();
       if (text && text.trim()) {
-        return text.trim();
+        return localizeAuthMessage(text.trim(), fallbackKey);
       }
     } catch {
       // ignore
@@ -2845,7 +2957,7 @@ registerForm.addEventListener("submit", async (e)=>{
   if(!email){ loginError.textContent = t("modal_login_error_email"); return; }
   if(!fullName){ loginError.textContent = t("modal_register_error_name"); return; }
   if(!password || password.length < 8){ loginError.textContent = t("modal_register_error_password"); return; }
-  if(!code || code.length !== 6){ loginError.textContent = "Vui lòng nhập mã xác minh 6 số"; return; }
+  if(!code || code.length !== 6){ loginError.textContent = t("modal_register_code_required"); return; }
   loginError.textContent = "";
   try {
     const res = await fetch("/api/auth/customer/register",{
@@ -2865,7 +2977,7 @@ sendRegisterCodeBtn?.addEventListener("click", async ()=>{
 
   loginError.textContent = "";
   sendRegisterCodeBtn.disabled = true;
-  sendRegisterCodeBtn.textContent = "Đang gửi...";
+  sendRegisterCodeBtn.textContent = t("modal_register_code_sending");
   try {
     const res = await fetch("/api/auth/customer/register/send-code", {
       method: "POST",
@@ -2874,16 +2986,16 @@ sendRegisterCodeBtn?.addEventListener("click", async ()=>{
     });
     const data = await res.json();
     if(!res.ok){
-      loginError.textContent = data.message || "Không gửi được mã";
+      loginError.textContent = localizeAuthMessage(data.message, "modal_register_code_send_failed");
       return;
     }
     loginError.style.color = "#16a34a";
-    loginError.textContent = data.message || "Đã gửi mã xác minh";
+    loginError.textContent = localizeAuthMessage(data.message, "modal_register_code_sent");
   } catch {
-    loginError.textContent = "Không gửi được mã xác minh";
+    loginError.textContent = t("modal_register_code_send_failed");
   } finally {
     sendRegisterCodeBtn.disabled = false;
-    sendRegisterCodeBtn.textContent = "Gửi mã";
+    sendRegisterCodeBtn.textContent = t("modal_register_code_send");
     setTimeout(() => { loginError.style.color = ""; }, 1200);
   }
 });
@@ -2891,7 +3003,7 @@ sendRegisterCodeBtn?.addEventListener("click", async ()=>{
 forgotPasswordLink?.addEventListener("click", async (e)=>{
   e.preventDefault();
 
-  const email = window.prompt("Nhập email tài khoản để nhận mã reset:");
+  const email = window.prompt(t("modal_reset_prompt_email"));
   if(!email) return;
 
   try {
@@ -2902,13 +3014,13 @@ forgotPasswordLink?.addEventListener("click", async (e)=>{
     });
     const sendData = await sendRes.json();
     if(!sendRes.ok){
-      loginError.textContent = sendData.message || "Không gửi được mã reset";
+      loginError.textContent = localizeAuthMessage(sendData.message, "modal_reset_send_failed");
       return;
     }
 
-    const code = window.prompt("Nhập mã 6 số đã gửi về Gmail:");
+    const code = window.prompt(t("modal_reset_prompt_code"));
     if(!code) return;
-    const newPassword = window.prompt("Nhập mật khẩu mới (tối thiểu 8 ký tự):");
+    const newPassword = window.prompt(t("modal_reset_prompt_new_password"));
     if(!newPassword) return;
 
     const confirmRes = await fetch("/api/auth/customer/password-reset/confirm", {
@@ -2918,15 +3030,15 @@ forgotPasswordLink?.addEventListener("click", async (e)=>{
     });
     const confirmData = await confirmRes.json();
     if(!confirmRes.ok){
-      loginError.textContent = confirmData.message || "Không đặt lại được mật khẩu";
+      loginError.textContent = localizeAuthMessage(confirmData.message, "modal_reset_confirm_failed");
       return;
     }
 
     loginError.style.color = "#16a34a";
-    loginError.textContent = confirmData.message || "Đặt lại mật khẩu thành công";
+    loginError.textContent = localizeAuthMessage(confirmData.message, "modal_reset_success");
     setTimeout(() => { loginError.style.color = ""; }, 1200);
   } catch {
-    loginError.textContent = "Có lỗi khi xử lý quên mật khẩu";
+    loginError.textContent = t("modal_reset_failed_generic");
   }
 });
 
