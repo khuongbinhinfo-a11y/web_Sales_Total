@@ -2156,6 +2156,32 @@ body[data-route="demo"] .page-hero-actions .btn-outline{
   backdrop-filter:blur(12px)
 }
 
+body[data-route="demo"] .page-hero-copy{
+  display:flex;
+  flex-direction:column;
+  min-height:100%
+}
+body[data-route="demo"] .page-hero-card p{
+  margin-top:auto;
+  max-width:100%;
+  color:#f2f8ff;
+  font-size:1rem;
+  line-height:1.45;
+  display:-webkit-box;
+  -webkit-line-clamp:1;
+  -webkit-box-orient:vertical;
+  line-clamp:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(6,20,38,.45);
+  border:1px solid rgba(255,255,255,.16)
+}
+body[data-route="demo"] .page-hero-tags{
+  display:none!important
+}
+
 body[data-route="software"] .page-hero-shell,
 body[data-route="study"] .page-hero-shell,
 body[data-route="work"] .page-hero-shell{

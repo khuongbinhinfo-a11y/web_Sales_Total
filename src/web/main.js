@@ -633,10 +633,10 @@ const PUBLIC_PAGE_CONTENT = {
         hero: {
           kicker: "Mẫu Demo",
           title: "Kho mẫu để chọn phong cách web nhanh hơn",
-          desc: "Trang này dành cho bước xem nhanh trước khi tư vấn: nhìn bố cục, tone nội dung và cách website phù hợp với từng ngành.",
+          desc: "Xem nhanh mẫu phù hợp để chốt hướng triển khai website.",
           imageSrc: "/image/hero-web.jpeg",
           imageAlt: "Dịch vụ thiết kế website theo ngành",
-          tags: ["Demo theo ngành", "Xem trước giao diện", "Dễ chọn hướng", "Không lẫn catalog"],
+          tags: [],
           actions: [
             { label: "Quay lại nhánh web", href: "/thiet-ke-web", variant: "outline" },
             { label: "Nhắn Zalo để chốt mẫu", href: "https://zalo.me/0902964685", variant: "accent", external: true }
@@ -655,11 +655,7 @@ const PUBLIC_PAGE_CONTENT = {
           eyebrow: "Lợi ích",
           title: "Demo không còn nằm lẫn ở home",
           copy: "Khối demo được chuyển về đúng chỗ để homepage không giống một trang bán template, nhưng khách vẫn xem mẫu rất nhanh khi cần.",
-          cards: [
-            { title: "Ít nhiễu hơn", text: "Home chỉ định vị. Demo nằm ở trang con nên luồng nhìn gọn hơn." },
-            { title: "Dễ so mẫu", text: "Mỗi mẫu đại diện cho một kiểu nhu cầu khác nhau: công ty, shop, salon, industry, landing." },
-            { title: "Đi thẳng tư vấn", text: "Khi đã chọn được hướng, khách nhắn hỗ trợ để chốt chi tiết triển khai.", linkLabel: "Liên hệ nhanh", linkHref: "/lien-he" }
-          ],
+          cards: [],
           checklistTitle: "Bạn nên vào trang này khi",
           checklist: [
             "Đang cân nhắc kiểu trình bày phù hợp với ngành.",
@@ -1348,10 +1344,10 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.demo, {
   hero: {
     kicker: "Demo Library",
     title: "Preview web styles before you talk scope",
-    desc: "This page is for fast comparison: layout direction, content tone, and industry fit before consultation.",
+    desc: "Quickly preview the right web direction before implementation.",
     imageSrc: "/image/hero-web.jpeg",
     imageAlt: "Dịch vụ thiết kế website theo ngành",
-    tags: ["Industry demos", "Fast comparison", "Preview first", "Separate from catalog"],
+    tags: [],
     actions: [
       { label: "Back to Web Design", href: "/thiet-ke-web", variant: "outline" },
       { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "accent", external: true }
@@ -1370,11 +1366,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.demo, {
     eyebrow: "Why this page exists",
     title: "Demos no longer sit inside the homepage",
     copy: "The demo block now lives in its own page so the homepage can stay focused on direction instead of looking like a template marketplace.",
-    cards: [
-      { title: "Less noise", text: "The homepage positions the site. Demo browsing happens here." },
-      { title: "Better comparisons", text: "Each sample maps to a different business need, from services to local stores." },
-      { title: "Move to contact faster", text: "After you choose a direction, move straight to contact or Zalo.", linkLabel: "Open contact page", linkHref: "/lien-he" }
-    ],
+    cards: [],
     checklistTitle: "Open this page when",
     checklist: [
       "You are comparing presentation styles by industry.",
@@ -2447,8 +2439,8 @@ function renderWebDemoMarketLayout(demos) {
               ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
             </div>
             <div class="web-demo-market-actions">
-              <a href="/mau-demo/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
-              <a class="is-buy" href="/mau-demo/${encodeURIComponent(id)}#demoPricing">${lang === "en" ? "View package" : "Xem gói"}</a>
+              <a href="/mau-demo/khomau-${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="/mau-demo/khomau-${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
             </div>
           </div>
         </article>

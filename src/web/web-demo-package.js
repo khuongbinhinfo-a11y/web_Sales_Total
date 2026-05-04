@@ -290,7 +290,7 @@ async function renderPackagePage() {
     <section class="package-hero">
       <div class="package-container package-hero-grid">
         <div class="package-hero-copy">
-          <a class="package-back" href="/web-demo/${encodeURIComponent(industrySlug)}#demoPricing">← Quay lại mẫu web</a>
+          <a class="package-back" href="/mau-demo/${encodeURIComponent(industrySlug)}">← Quay lại kho mẫu</a>
           <span class="package-eyebrow">Hồ sơ gói triển khai</span>
           <h1>${escapeHtml(plan.name)}</h1>
           <p>${escapeHtml(detail.summary || plan.note)}</p>

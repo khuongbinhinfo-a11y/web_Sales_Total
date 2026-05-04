@@ -4785,6 +4785,14 @@ app.get("/web-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   return res.redirect(301, `/mau-demo/${encodeURIComponent(req.params.id)}`);
 });
 
+app.get("/mau-demo/:id/chi-tiet", checkPublicRouteLockMiddleware, (req, res) => {
+  return res.redirect(301, `/mau-demo/${encodeURIComponent(req.params.id)}`);
+});
+
+app.get("/mau-demo/khomau-:id", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "web-demo-collection.html"));
+});
+
 app.get("/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });

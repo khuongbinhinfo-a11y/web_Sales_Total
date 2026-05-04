@@ -523,7 +523,7 @@ if (switchEl) {
     const item = DEMO_DATA[id];
     const current = id === activeId ? " active" : "";
     const aria = id === activeId ? ' aria-current="page"' : "";
-    return `<a class="${current.trim()}" href="/web-demo/${id}"${aria}>${escapeHtml(item.name)}</a>`;
+    return `<a class="${current.trim()}" href="/mau-demo/${id}"${aria}>${escapeHtml(item.name)}</a>`;
   }).join("");
 }
 
