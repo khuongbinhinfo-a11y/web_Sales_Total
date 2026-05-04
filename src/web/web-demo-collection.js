@@ -68,8 +68,7 @@ const parseSlug = () => {
 };
 
 const buildSampleCard = (slug, sample, index) => {
-  const detailHref = `/mau-demo/${encodeURIComponent(slug)}#demoPreview`;
-  const packageHref = `/catalog/web-demo/${encodeURIComponent(slug)}/goi/${encodeURIComponent(sample.planSlug)}`;
+  const sampleHref = `/preview/${encodeURIComponent(slug)}`;
   return `
     <article class="demo-mini-card">
       <div class="demo-mini-media">
@@ -80,8 +79,7 @@ const buildSampleCard = (slug, sample, index) => {
         <h3>${escapeHtml(sample.title)}</h3>
         <p>${escapeHtml(sample.note)}</p>
         <div class="demo-mini-actions">
-          <a href="${detailHref}">Xem demo lớn</a>
-          <a class="is-buy" href="${packageHref}">Xem gói</a>
+          <a class="is-buy" href="${sampleHref}">Xem mẫu →</a>
         </div>
       </div>
     </article>

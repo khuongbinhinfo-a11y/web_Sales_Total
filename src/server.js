@@ -4797,6 +4797,18 @@ app.get("/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });
 
+const VALID_PREVIEW_SLUGS = ["company", "shop", "salon", "industry", "landing"];
+
+app.get("/preview/:slug/admin", (req, res) => {
+  if (!VALID_PREVIEW_SLUGS.includes(req.params.slug)) return res.redirect("/preview/company/admin");
+  res.sendFile(path.join(webRoot, "web-preview-admin.html"));
+});
+
+app.get("/preview/:slug", (req, res) => {
+  if (!VALID_PREVIEW_SLUGS.includes(req.params.slug)) return res.redirect("/preview/company");
+  res.sendFile(path.join(webRoot, "web-preview.html"));
+});
+
 app.get(
   "/api/web-demo/templates/:templateSlug",
   asyncHandler(async (req, res) => {
