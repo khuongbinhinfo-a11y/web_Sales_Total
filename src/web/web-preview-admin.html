@@ -41,8 +41,13 @@
       <main class="adm-main">
         <div class="adm-topbar">
           <h2 id="admTabTitle">Thông tin site</h2>
-          <button class="adm-btn-save" id="admSaveBtn">💾 Lưu thay đổi</button>
+          <div class="adm-topbar-actions">
+            <button class="adm-btn-save" id="admSaveBtn">💾 Lưu bản nháp</button>
+            <button class="adm-btn-publish" id="admPublishBtn">🚀 Publish lên preview</button>
+            <button class="adm-btn-reset" id="admResetDraftBtn">↺ Đồng bộ từ bản công bố</button>
+          </div>
         </div>
+        <p class="adm-draft-hint" id="admDraftHint">Đang chỉnh sửa bản nháp. Preview công bố sẽ chỉ đổi khi bấm Publish.</p>
 
         <!-- Tab: General -->
         <div class="adm-tab active" id="tab-general">
@@ -66,7 +71,7 @@
                 <button type="button" class="adm-btn-add" id="clearLogoFileBtn">🗑 Xoá logo</button>
                 <input type="file" id="logoFileInput" accept="image/*" class="hidden" />
               </div>
-              <p class="adm-help" style="margin:8px 0 0">Không cần biết URL. Chỉ cần chọn file ảnh từ máy và bấm Lưu thay đổi.</p>
+              <p class="adm-help" style="margin:8px 0 0">Không cần biết URL. Chỉ cần chọn file ảnh từ máy và bấm Lưu bản nháp.</p>
             </div>
           </div>
         </div>

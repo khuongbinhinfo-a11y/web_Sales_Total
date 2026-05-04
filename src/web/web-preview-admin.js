@@ -24,17 +24,36 @@ const parseSlug = () => {
 const htmlEl = document.documentElement;
 const templateFromAttr = htmlEl.dataset.template;
 const slug = templateFromAttr || parseSlug();
-const CONFIG_KEY = `preview_config_${slug}`;
+const PUBLIC_CONFIG_KEY = `preview_config_${slug}`;
+const DRAFT_CONFIG_KEY = `admin_draft_${slug}`;
 
-const loadConfig = () => {
-  try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}"); }
+const loadJson = (key) => {
+  try { return JSON.parse(localStorage.getItem(key) || "{}"); }
   catch { return {}; }
 };
 
-const saveConfig = (cfg) => {
+const loadPublicConfig = () => loadJson(PUBLIC_CONFIG_KEY);
+
+const loadDraftConfig = () => {
+  const draft = loadJson(DRAFT_CONFIG_KEY);
+  if (Object.keys(draft).length) return draft;
+  const legacy = loadPublicConfig();
+  if (Object.keys(legacy).length) {
+    localStorage.setItem(DRAFT_CONFIG_KEY, JSON.stringify(legacy));
+    return legacy;
+  }
+  return {};
+};
+
+const saveDraftConfig = (cfg) => {
   cfg._v = CONFIG_VERSION;
   cfg._saved = new Date().toISOString();
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  localStorage.setItem(DRAFT_CONFIG_KEY, JSON.stringify(cfg));
+};
+
+const publishDraftConfig = (cfg) => {
+  cfg._published = new Date().toISOString();
+  localStorage.setItem(PUBLIC_CONFIG_KEY, JSON.stringify(cfg));
 };
 
 const isLoggedIn = () => sessionStorage.getItem("adm_auth") === "1";
@@ -47,9 +66,20 @@ const logout = () => { sessionStorage.removeItem("adm_auth"); location.reload();
 const $ = (id) => document.getElementById(id);
 const val = (id) => ($( id)?.value || "").trim();
 const checked = (id) => !!($(id)?.checked);
+let hasUnpublishedChanges = false;
 
-const showToast = () => {
+const setDraftHint = (msg, tone = "info") => {
+  const hint = $("admDraftHint");
+  if (!hint) return;
+  hint.textContent = msg;
+  hint.style.color = tone === "warn" ? "#fcd34d" : tone === "ok" ? "#86efac" : "#93c5fd";
+  hint.style.borderColor = tone === "warn" ? "rgba(252,211,77,.35)" : tone === "ok" ? "rgba(134,239,172,.35)" : "rgba(96,165,250,.28)";
+  hint.style.background = tone === "warn" ? "rgba(161,98,7,.12)" : tone === "ok" ? "rgba(22,163,74,.12)" : "rgba(37,99,235,.12)";
+};
+
+const showToast = (text = "✅ Đã lưu bản nháp!") => {
   const t = $("admToast");
+  t.textContent = text;
   t.classList.remove("hidden");
   setTimeout(() => t.classList.add("hidden"), 2800);
 };
@@ -657,7 +687,7 @@ $("addCompanyFlowBtn")?.addEventListener("click", () => {
    SAVE
    ================================================================ */
 $("admSaveBtn")?.addEventListener("click", () => {
-  const cfg = loadConfig();
+  const cfg = loadDraftConfig();
   cfg.siteName = val("siteName");
   cfg.tagline = val("tagline");
   cfg.logoUrl = val("logoUrl");
@@ -745,8 +775,29 @@ $("admSaveBtn")?.addEventListener("click", () => {
     .map((f) => ({ q: String(f.q || "").trim(), a: String(f.a || "").trim() }))
     .filter((f) => f.q || f.a);
   cfg.posts = JSON.parse(JSON.stringify(posts));
-  saveConfig(cfg);
-  showToast();
+  saveDraftConfig(cfg);
+  hasUnpublishedChanges = true;
+  setDraftHint("Đã lưu bản nháp. Bản demo công bố chưa đổi cho tới khi bạn bấm Publish.", "warn");
+  showToast("✅ Đã lưu bản nháp!");
+});
+
+$("admPublishBtn")?.addEventListener("click", () => {
+  const cfg = loadDraftConfig();
+  publishDraftConfig(cfg);
+  hasUnpublishedChanges = false;
+  setDraftHint("Đã publish lên preview công bố. Khách xem demo sẽ thấy nội dung mới.", "ok");
+  showToast("🚀 Đã publish lên preview!");
+});
+
+$("admResetDraftBtn")?.addEventListener("click", () => {
+  const confirmed = window.confirm("Đồng bộ bản nháp theo bản công bố hiện tại?\nCác chỉnh sửa nháp chưa publish sẽ bị ghi đè.");
+  if (!confirmed) return;
+  const publicCfg = loadPublicConfig();
+  saveDraftConfig(publicCfg);
+  populateForm(publicCfg);
+  hasUnpublishedChanges = false;
+  setDraftHint("Bản nháp đã đồng bộ từ bản công bố.", "info");
+  showToast("↺ Đã đồng bộ bản nháp từ bản công bố");
 });
 
 /* ================================================================
@@ -845,7 +896,7 @@ const populateForm = (cfg) => {
 const showPanel = () => {
   $("admLogin").classList.add("hidden");
   $("admPanel").classList.remove("hidden");
-  const cfg = loadConfig();
+  const cfg = loadDraftConfig();
   populateForm(cfg);
   renderPresets();
   syncColor("colorPrimary", "colorPrimaryText");
@@ -861,6 +912,7 @@ const showPanel = () => {
   document.querySelectorAll(".adm-content-block").forEach((el) => el.classList.add("hidden"));
   const contentBlock = $(`content-${slug}`);
   if (contentBlock) contentBlock.classList.remove("hidden");
+  setDraftHint("Đang chỉnh sửa bản nháp. Preview công bố chỉ đổi sau khi Publish.", "info");
 };
 
 $("loginBtn")?.addEventListener("click", () => {
@@ -876,6 +928,16 @@ $("loginPwd")?.addEventListener("keydown", (e) => {
 });
 
 $("admLogout")?.addEventListener("click", logout);
+
+document.addEventListener("input", () => {
+  hasUnpublishedChanges = true;
+});
+
+window.addEventListener("beforeunload", (e) => {
+  if (!hasUnpublishedChanges) return;
+  e.preventDefault();
+  e.returnValue = "Bạn có thay đổi chưa publish.";
+});
 
 /* ================================================================
    INIT
