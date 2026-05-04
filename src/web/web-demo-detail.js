@@ -199,6 +199,70 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 
 const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
 
+const WEB_DEMO_PLAN_PRODUCT_IDS = {
+  company: {
+    "co-ban": "prod-web-demo-company-basic",
+    "chuyen-nghiep": "prod-web-demo-company-pro",
+    "thuong-hieu": "prod-web-demo-company-brand"
+  },
+  shop: {
+    "shop-gioi-thieu": "prod-web-demo-shop-showcase",
+    "shop-ban-hang": "prod-web-demo-shop-sales",
+    "shop-nang-cao": "prod-web-demo-shop-advanced"
+  },
+  salon: {
+    "spa-mini": "prod-web-demo-salon-mini",
+    "spa-chuyen-nghiep": "prod-web-demo-salon-pro",
+    "spa-ban-hang-dat-lich": "prod-web-demo-salon-booking"
+  },
+  industry: {
+    "local-co-ban": "prod-web-demo-industry-basic",
+    "menu-chuyen-nghiep": "prod-web-demo-industry-pro",
+    "dat-ban-dat-mon": "prod-web-demo-industry-booking"
+  },
+  landing: {
+    "tuyen-sinh-co-ban": "prod-web-demo-landing-basic",
+    "trung-tam-dao-tao": "prod-web-demo-landing-pro",
+    "he-thong-khoa-hoc": "prod-web-demo-landing-system"
+  }
+};
+
+function formatFromCatalogPrice(amount) {
+  const n = Number(amount || 0);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return `Từ ${n.toLocaleString("vi-VN")}đ`;
+}
+
+async function syncWebDemoPricingFromCatalog(industryId) {
+  const plans = window.webDemoPricingData?.[industryId]?.plans;
+  const planMap = WEB_DEMO_PLAN_PRODUCT_IDS?.[industryId] || {};
+  if (!Array.isArray(plans) || !plans.length || !Object.keys(planMap).length) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/catalog");
+    if (!response.ok) return;
+    const payload = await response.json().catch(() => ({}));
+    const products = Array.isArray(payload?.products) ? payload.products : [];
+    const productById = new Map(products.map((item) => [String(item.id || ""), item]));
+
+    plans.forEach((plan) => {
+      const productId = planMap[String(plan?.slug || "")];
+      if (!productId) return;
+      const product = productById.get(productId);
+      if (!product) return;
+      const effectivePrice = Number(product.effectivePrice ?? product.price ?? 0);
+      const nextPriceText = formatFromCatalogPrice(effectivePrice);
+      if (nextPriceText) {
+        plan.price = nextPriceText;
+      }
+    });
+  } catch (error) {
+    console.warn("[web-demo] sync pricing from catalog failed", error?.message || error);
+  }
+}
+
 function MaintenanceNote(shared) {
   const items = Array.isArray(shared?.maintenance) ? shared.maintenance : [];
   if (!items.length) return "";
@@ -568,7 +632,9 @@ if (flowEl) {
 
 renderLivePreview(active);
 renderFullPreview(active);
-PricingSection(activeId);
+syncWebDemoPricingFromCatalog(activeId).finally(() => {
+  PricingSection(activeId);
+});
 
 function toggleSectionBySelector(selector, enabled) {
   const el = document.querySelector(selector);
