@@ -65,13 +65,13 @@ const DEMO_DATA = {
     contactTitle: "Muốn có shop bán hàng dễ chốt đơn?",
     contactText: "Có thể đổi màu theo ngành hàng, thêm sản phẩm, combo, giỏ hàng, thanh toán và luồng chat tư vấn."
   },
-  education: {
-    name: "Giáo dục / Khóa học",
+  landing: {
+    name: "Landing Page",
     brand: "Bright Edu",
-    template: "education",
-    eyebrow: "Mẫu web giáo dục / khóa học",
-    title: "Trang khóa học truyền cảm hứng để tăng đăng ký",
-    desc: "Hướng này phù hợp trung tâm, khóa học online, lớp kỹ năng hoặc đào tạo nội bộ. Trọng tâm là chương trình, lợi ích, lộ trình, giảng viên và đăng ký học.",
+    template: "landing",
+    eyebrow: "Mẫu landing chuyển đổi",
+    title: "Landing page tập trung chuyển đổi đăng ký",
+    desc: "Hướng này phù hợp các chiến dịch cần chuyển đổi nhanh với lợi ích rõ, bảng giá, feedback và form đăng ký.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
       title: "Ảnh mẫu đầy đủ cho web Giáo dục / Khóa học",
@@ -101,13 +101,13 @@ const DEMO_DATA = {
     contactTitle: "Muốn có trang khóa học riêng?",
     contactText: "Có thể thêm khóa học, giáo viên, lịch khai giảng, học phí, form kiểm tra đầu vào và CRM tuyển sinh."
   },
-  spa: {
-    name: "Spa / Thẩm mỹ / Làm đẹp",
+  salon: {
+    name: "Salon / Thẩm mỹ / Làm đẹp",
     brand: "Maison Glow",
-    template: "spa",
-    eyebrow: "Mẫu web spa / làm đẹp",
-    title: "Trang làm đẹp cao cấp để khách đặt lịch",
-    desc: "Hướng này dành cho spa, clinic, salon hoặc dịch vụ làm đẹp. Trọng tâm là cảm giác sang, dịch vụ nổi bật, before-after, bảng giá và đặt lịch.",
+    template: "salon",
+    eyebrow: "Mẫu web salon / làm đẹp",
+    title: "Trang salon cao cấp để khách đặt lịch",
+    desc: "Hướng này dành cho salon tóc, nail, spa nhỏ hoặc dịch vụ làm đẹp. Trọng tâm là dịch vụ, bảng giá, feedback và đặt lịch.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
       title: "Ảnh mẫu đầy đủ cho web Spa / Làm đẹp",
@@ -137,13 +137,13 @@ const DEMO_DATA = {
     contactTitle: "Muốn có mẫu web spa sang hơn?",
     contactText: "Có thể thêm ảnh dịch vụ, bảng giá, feedback, booking online và nội dung theo màu thương hiệu của spa."
   },
-  restaurant: {
-    name: "Nhà hàng / Quán / Local business",
-    brand: "Bếp Mộc",
-    template: "restaurant",
-    eyebrow: "Mẫu web nhà hàng / local business",
-    title: "Trang địa phương giàu hình ảnh để khách ghé quán",
-    desc: "Hướng này dành cho nhà hàng, cafe, quán ăn, showroom hoặc local business. Trọng tâm là món nổi bật, menu, không gian, bản đồ và đặt bàn/gọi món.",
+  industry: {
+    name: "Industry / Kỹ thuật",
+    brand: "Tech Industrial",
+    template: "industry",
+    eyebrow: "Mẫu web industry / kỹ thuật",
+    title: "Trang sản phẩm kỹ thuật để nhận yêu cầu báo giá",
+    desc: "Hướng này dành cho doanh nghiệp kỹ thuật B2B với danh mục sản phẩm, mã sản phẩm, thương hiệu và form yêu cầu báo giá.",
     image: "/web-demo-photo.jpg",
     fullPreview: {
       title: "Ảnh mẫu đầy đủ cho web Nhà hàng / Local",
@@ -175,7 +175,7 @@ const DEMO_DATA = {
   }
 };
 
-const ids = ["company", "shop", "education", "spa", "restaurant"];
+const ids = ["company", "shop", "salon", "industry", "landing"];
 const slug = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "company");
 const activeId = DEMO_DATA[slug] ? slug : "company";
 const active = DEMO_DATA[activeId];
@@ -401,7 +401,7 @@ function renderLivePreview(item) {
     return;
   }
 
-  if (item.template === "education") {
+  if (item.template === "landing") {
     el.innerHTML = `
       <div class="live-education">
         <div class="live-edu-intro">
@@ -423,7 +423,7 @@ function renderLivePreview(item) {
     return;
   }
 
-  if (item.template === "spa") {
+  if (item.template === "salon") {
     el.innerHTML = `
       <div class="live-spa">
         <div class="live-spa-hero">
@@ -568,4 +568,84 @@ if (flowEl) {
 
 renderLivePreview(active);
 renderFullPreview(active);
-PricingSection(activeId);
+const pricingAlias = {
+  salon: "spa",
+  industry: "restaurant",
+  landing: "education"
+};
+PricingSection(pricingAlias[activeId] || activeId);
+
+function toggleSectionBySelector(selector, enabled) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.style.display = enabled ? "" : "none";
+}
+
+function applyTemplateConfig(item) {
+  const config = item?.config || {};
+  const seo = item?.seo || {};
+  const siteSettings = config.siteSettings || {};
+  const themeSettings = config.themeSettings || {};
+  const sections = config.pageSections || {};
+
+  const root = document.documentElement;
+  if (themeSettings.primaryColor) root.style.setProperty("--demo-primary", String(themeSettings.primaryColor));
+  if (themeSettings.buttonColor) root.style.setProperty("--demo-button", String(themeSettings.buttonColor));
+
+  if (siteSettings.brandName) {
+    setText("demoMockBrand", String(siteSettings.brandName));
+  }
+  if (siteSettings.logoUrl) {
+    const logo = document.querySelector(".logo-img");
+    if (logo) logo.setAttribute("src", String(siteSettings.logoUrl));
+  }
+
+  if (seo.title) document.title = String(seo.title);
+  if (seo.description) {
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute("content", String(seo.description));
+  }
+
+  const hero = sections.hero || {};
+  if (hero.title) setText("demoTitle", String(hero.title));
+  if (hero.subtitle) setText("demoDesc", String(hero.subtitle));
+  if (hero.imageUrl) {
+    const heroImage = document.getElementById("demoHeroImage");
+    if (heroImage) heroImage.setAttribute("src", String(hero.imageUrl));
+  }
+
+  const cta = sections.cta || {};
+  if (cta.title) setText("demoContactTitle", String(cta.title));
+
+  toggleSectionBySelector(".demo-hero", hero.enabled !== false);
+  toggleSectionBySelector(".demo-live-section", sections.featured?.enabled !== false);
+  toggleSectionBySelector("#demoSections", sections.feedback?.enabled !== false);
+  toggleSectionBySelector(".demo-flow-section", sections.process?.enabled !== false);
+  toggleSectionBySelector("#demoContact", sections.cta?.enabled !== false);
+
+  const contactCta = document.getElementById("demoContactCta");
+  if (contactCta) {
+    if (siteSettings.zalo) {
+      contactCta.href = String(siteSettings.zalo);
+      contactCta.target = "_blank";
+      contactCta.rel = "noopener";
+    }
+    if (siteSettings.hotline) {
+      contactCta.textContent = `Gọi ${siteSettings.hotline}`;
+    }
+  }
+}
+
+async function loadTemplateConfigFromAdmin() {
+  try {
+    const res = await fetch(`/api/web-demo/templates/${encodeURIComponent(activeId)}`);
+    if (!res.ok) return;
+    const data = await res.json().catch(() => ({}));
+    if (!data?.item) return;
+    applyTemplateConfig(data.item);
+  } catch (error) {
+    console.warn("[web-demo] load template config failed", error?.message || error);
+  }
+}
+
+loadTemplateConfigFromAdmin();

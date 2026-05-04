@@ -55,6 +55,7 @@
           <a href="#section-admin-access"><span class="icon">🛡️</span> Phân quyền admin</a>
           <a href="#section-sepay"><span class="icon">🏦</span> Cấu hình Sepay</a>
           <a href="#section-public-pages"><span class="icon">⛔</span> Tạm khóa trang</a>
+          <a href="#section-web-demo-admin"><span class="icon">🧩</span> Web-demo Admin</a>
           <a href="#section-app-registry"><span class="icon">🧩</span> Quản trị App</a>
           <a href="#section-aiapp-secret"><span class="icon">🔐</span> Secret AI-app</a>
           <a href="#section-ai-gates"><span class="icon">✅</span> AI Gate</a>
@@ -260,6 +261,58 @@
             </div>
 
             <p id="routeLockTreeMsg" style="margin:8px 0 0;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+        </section>
+
+        <section id="section-web-demo-admin" class="admin-section">
+          <h3>🧩 Quản trị Web-demo Template (MVP)</h3>
+          <div class="info-card" style="margin-bottom:12px">
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Chỉnh cấu hình mẫu cho 5 ngành ưu tiên: company, shop, salon, industry, landing. Dữ liệu lưu DB để render ở public.</p>
+            <form id="webDemoTemplateForm" style="display:grid;gap:10px">
+              <div style="display:grid;grid-template-columns:220px 1fr;gap:10px;align-items:end">
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Template</label>
+                  <select id="webDemoTemplateSlug" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff">
+                    <option value="company">company</option>
+                    <option value="shop">shop</option>
+                    <option value="salon">salon</option>
+                    <option value="industry">industry</option>
+                    <option value="landing">landing</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <button type="button" id="webDemoTemplateLoadBtn" class="btn btn-outline" style="min-height:38px">Tải cấu hình</button>
+                  <button type="submit" class="btn btn-accent" style="min-height:38px">Lưu cấu hình</button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Display Name</label>
+                  <input id="webDemoTemplateDisplayName" placeholder="Company / Dịch vụ" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Template Group</label>
+                  <input id="webDemoTemplateGroup" placeholder="company" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                </div>
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">Config JSON</label>
+                <textarea id="webDemoTemplateConfig" rows="12" placeholder="{\"siteSettings\":{},\"themeSettings\":{},\"pageSections\":{}}" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.82rem"></textarea>
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--muted);font-weight:700">SEO JSON</label>
+                <textarea id="webDemoTemplateSeo" rows="5" placeholder="{\"title\":\"...\",\"description\":\"...\",\"shareImage\":\"...\"}" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:monospace;font-size:.82rem"></textarea>
+              </div>
+            </form>
+            <p id="webDemoTemplateMsg" style="margin-top:8px;font-size:.82rem;color:var(--muted)"></p>
+          </div>
+
+          <div class="info-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <h4 style="margin:0">Leads từ form web-demo</h4>
+              <button type="button" id="webDemoLeadRefreshBtn" class="btn btn-outline" style="min-height:34px">Làm mới leads</button>
+            </div>
+            <div class="table-wrap" id="webDemoLeadsWrap"><p style="padding:12px;color:var(--muted)">Đang tải...</p></div>
           </div>
         </section>
 

@@ -2293,38 +2293,38 @@ const WEB_DEMOS = {
       cardKind: "Khuyến mãi, sản phẩm, đơn",
       features: ["Banner sale", "Sản phẩm nổi bật", "Mua ngay"]
     },
-    education: {
-      label: "Mẫu đăng ký học",
-      title: "Giáo dục / Khóa học",
-      desc: "Tone thân thiện, truyền cảm hứng: chương trình học, lợi ích, lộ trình, giảng viên và form đăng ký.",
-      pill: "EDU",
-      mockTitle: "Lộ trình học mới",
-      mockSub: "Chương trình, lợi ích, giảng viên, đăng ký học.",
-      cardTitle: "Giáo dục / Khóa học",
-      cardKind: "Lộ trình, giảng viên, đăng ký",
-      features: ["Lộ trình học", "Giảng viên", "Đăng ký"]
-    },
-    spa: {
+    salon: {
       label: "Mẫu đặt lịch",
-      title: "Spa / Thẩm mỹ / Làm đẹp",
-      desc: "Tone cao cấp, mềm, sang: dịch vụ nổi bật, before-after, bảng giá và đặt lịch nhanh.",
-      pill: "SPA",
-      mockTitle: "Liệu trình cao cấp",
-      mockSub: "Dịch vụ, before-after, bảng giá, lịch hẹn.",
-      cardTitle: "Spa / Làm đẹp",
-      cardKind: "Sang, mềm, đặt lịch",
-      features: ["Before-after", "Bảng giá", "Đặt lịch"]
+      title: "Salon / Làm đẹp",
+      desc: "Tone sang và mềm: dịch vụ chủ lực, bảng giá, feedback, CTA đặt lịch nhanh.",
+      pill: "SALON",
+      mockTitle: "Dịch vụ làm đẹp nổi bật",
+      mockSub: "Bảng giá rõ, feedback thật, đặt lịch nhanh.",
+      cardTitle: "Salon / Làm đẹp",
+      cardKind: "Dịch vụ, bảng giá, đặt lịch",
+      features: ["Dịch vụ", "Bảng giá", "Đặt lịch"]
     },
-    restaurant: {
-      label: "Mẫu local business",
-      title: "Nhà hàng / Quán / Local business",
-      desc: "Tone trực quan, giàu hình ảnh: món nổi bật, menu, không gian, bản đồ và CTA đặt bàn/gọi món.",
-      pill: "LOCAL",
-      mockTitle: "Món nổi bật hôm nay",
-      mockSub: "Menu nhanh, không gian, bản đồ, đặt bàn.",
-      cardTitle: "Nhà hàng / Local",
-      cardKind: "Món nổi bật, bản đồ, đặt bàn",
-      features: ["Menu trực quan", "Bản đồ", "Đặt bàn"]
+    industry: {
+      label: "Mẫu kỹ thuật",
+      title: "Industry / Kỹ thuật",
+      desc: "Chuẩn B2B kỹ thuật: danh mục, mã sản phẩm, thương hiệu, ứng dụng ngành và form báo giá.",
+      pill: "B2B",
+      mockTitle: "Danh mục kỹ thuật",
+      mockSub: "Lọc theo mã, thương hiệu, danh mục, ứng dụng.",
+      cardTitle: "Industry / Kỹ thuật",
+      cardKind: "Mã hàng, thương hiệu, báo giá",
+      features: ["Mã sản phẩm", "Thông số", "Báo giá"]
+    },
+    landing: {
+      label: "Mẫu chuyển đổi",
+      title: "Landing Page",
+      desc: "Tập trung chuyển đổi: hero lợi ích, bảng giá, FAQ, feedback và form đăng ký.",
+      pill: "CVR",
+      mockTitle: "Landing chốt đăng ký",
+      mockSub: "Hero rõ lợi ích, CTA mạnh, form ngắn gọn.",
+      cardTitle: "Landing chuyển đổi",
+      cardKind: "Hero, lợi ích, FAQ, form",
+      features: ["Hero", "Bảng giá", "Form đăng ký"]
     }
   },
   en: {
@@ -2350,38 +2350,38 @@ const WEB_DEMOS = {
       cardKind: "Promo, products, orders",
       features: ["Sale banner", "Featured products", "Buy now"]
     },
-    education: {
-      label: "Enrollment demo",
-      title: "Education / Courses",
-      desc: "Friendly and inspiring: program intro, benefits, learning path, instructors, and registration form.",
-      pill: "EDU",
-      mockTitle: "New learning path",
-      mockSub: "Program, benefits, instructors, enrollment.",
-      cardTitle: "Education / Courses",
-      cardKind: "Roadmap, teachers, signup",
-      features: ["Learning path", "Instructors", "Signup"]
-    },
-    spa: {
+    salon: {
       label: "Booking demo",
-      title: "Spa / Beauty",
-      desc: "Premium, soft, elegant: featured services, before-after proof, pricing, and appointment booking.",
-      pill: "SPA",
-      mockTitle: "Premium treatment",
-      mockSub: "Services, before-after, pricing, booking.",
-      cardTitle: "Spa / Beauty",
-      cardKind: "Elegant, soft, booking",
-      features: ["Before-after", "Pricing", "Booking"]
+      title: "Salon / Beauty",
+      desc: "Elegant booking-oriented structure: services, price table, testimonials, and booking CTA.",
+      pill: "SALON",
+      mockTitle: "Beauty services",
+      mockSub: "Clear prices, real feedback, fast booking.",
+      cardTitle: "Salon / Beauty",
+      cardKind: "Services, pricing, booking",
+      features: ["Services", "Pricing", "Booking"]
     },
-    restaurant: {
-      label: "Local business demo",
-      title: "Restaurant / Local Business",
-      desc: "Visual and image-rich: featured dishes, menu, space, map, and reservation/order CTA.",
-      pill: "LOCAL",
-      mockTitle: "Today signature dish",
-      mockSub: "Quick menu, space, map, reservation.",
-      cardTitle: "Restaurant / Local",
-      cardKind: "Food, map, booking",
-      features: ["Visual menu", "Map", "Reservation"]
+    industry: {
+      label: "Industrial demo",
+      title: "Industry / Technical",
+      desc: "B2B technical layout with product codes, brands, categories, use-cases, and quotation form.",
+      pill: "B2B",
+      mockTitle: "Technical catalog",
+      mockSub: "Search by code, brand, category, application.",
+      cardTitle: "Industry / Technical",
+      cardKind: "Codes, brands, quotation",
+      features: ["Product codes", "Specs", "Quotation"]
+    },
+    landing: {
+      label: "Conversion demo",
+      title: "Landing Page",
+      desc: "Conversion-first layout: hero, benefits, pricing, FAQ, testimonials, and signup form.",
+      pill: "CVR",
+      mockTitle: "Conversion landing",
+      mockSub: "Clear value, strong CTA, short form.",
+      cardTitle: "Conversion Landing",
+      cardKind: "Hero, benefits, FAQ, form",
+      features: ["Hero", "Pricing", "Signup form"]
     }
   }
 };
@@ -2390,9 +2390,9 @@ let activeWebDemo = "company";
 const WEB_DEMO_IMAGES = {
   company: "/web-demo-company.jpg",
   shop: "/web-demo-shop-hero.png",
-  education: "/web-demo-photo.jpg",
-  spa: "/web-demo-photo.jpg",
-  restaurant: "/web-demo-photo.jpg"
+  salon: "/web-demo-photo.jpg",
+  industry: "/web-demo-photo.jpg",
+  landing: "/web-demo-photo.jpg"
 };
 const webDemoButtons = Array.from(document.querySelectorAll("[data-web-demo]"));
 const webDemoFrame = document.getElementById("webDemoFrame");

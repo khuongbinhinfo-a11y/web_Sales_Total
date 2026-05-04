@@ -695,6 +695,176 @@ function bindPublicPageControls(){
   });
 }
 
+function renderWebDemoLeadsTable(items){
+  const wrap = document.getElementById("webDemoLeadsWrap");
+  if(!wrap) return;
+  const rows = Array.isArray(items) ? items : [];
+  if(!rows.length){
+    wrap.innerHTML = `<p style="padding:12px;color:var(--muted)">Chưa có lead web-demo.</p>`;
+    return;
+  }
+
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+    <th>Thời gian</th><th>Template</th><th>Khách</th><th>Liên hệ</th><th>Nội dung</th><th>Trạng thái</th>
+  </tr></thead><tbody>${rows.map((item)=>`<tr>
+    <td style="font-size:.8rem">${fmtDate(item.createdAt)}</td>
+    <td><b>${escapeHtml(item.templateSlug || "")}</b></td>
+    <td>${escapeHtml(item.fullName || "")}<div style="font-size:.78rem;color:var(--muted)">${escapeHtml(item.companyName || "")}</div></td>
+    <td><div>${escapeHtml(item.phone || "")}</div><div style="font-size:.78rem;color:var(--muted)">${escapeHtml(item.email || "")}</div></td>
+    <td style="max-width:260px;white-space:normal">${escapeHtml(item.message || "")}</td>
+    <td>
+      <select data-web-demo-lead-status="${escapeHtml(item.id || "")}" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:.8rem">
+        ${["new","contacted","qualified","closed","spam"].map((status)=>`<option value="${status}" ${status === item.status ? "selected" : ""}>${status}</option>`).join("")}
+      </select>
+    </td>
+  </tr>`).join("")}</tbody></table>`;
+
+  wrap.querySelectorAll("[data-web-demo-lead-status]").forEach((selectEl)=>{
+    selectEl.addEventListener("change", async (e)=>{
+      const leadId = e.target.getAttribute("data-web-demo-lead-status") || "";
+      const status = String(e.target.value || "new").trim().toLowerCase();
+      if(!leadId) return;
+      try {
+        const res = await fetchAdmin(`/api/admin/web-demo/leads/${encodeURIComponent(leadId)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        });
+        if(res.status===401){ redirectToAdminLogin("/api/admin/web-demo/leads"); return; }
+        if(!res.ok){
+          const data = await res.json().catch(()=>({}));
+          alert(data.message || "Không cập nhật được trạng thái lead");
+          await loadWebDemoLeads();
+          return;
+        }
+      } catch(err){
+        alert("Lỗi cập nhật lead: " + err.message);
+        await loadWebDemoLeads();
+      }
+    });
+  });
+}
+
+async function loadWebDemoTemplate(){
+  const slugEl = document.getElementById("webDemoTemplateSlug");
+  const displayEl = document.getElementById("webDemoTemplateDisplayName");
+  const groupEl = document.getElementById("webDemoTemplateGroup");
+  const configEl = document.getElementById("webDemoTemplateConfig");
+  const seoEl = document.getElementById("webDemoTemplateSeo");
+  const msgEl = document.getElementById("webDemoTemplateMsg");
+  if(!slugEl || !displayEl || !groupEl || !configEl || !seoEl || !msgEl) return;
+
+  const slug = String(slugEl.value || "company").trim().toLowerCase();
+  msgEl.textContent = "Đang tải cấu hình...";
+  msgEl.style.color = "var(--muted)";
+
+  try {
+    const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}`);
+    if(res.status===401){ redirectToAdminLogin("/api/admin/web-demo/templates"); return; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      msgEl.textContent = data.message || "Không tải được cấu hình web-demo.";
+      msgEl.style.color = "var(--danger)";
+      return;
+    }
+    const item = data.item || {};
+    displayEl.value = item.displayName || slug;
+    groupEl.value = item.templateGroup || slug;
+    configEl.value = JSON.stringify(item.config || {}, null, 2);
+    seoEl.value = JSON.stringify(item.seo || {}, null, 2);
+    msgEl.textContent = `Đã tải cấu hình template ${slug}.`;
+    msgEl.style.color = "var(--success)";
+  } catch(err){
+    msgEl.textContent = "Lỗi tải cấu hình: " + err.message;
+    msgEl.style.color = "var(--danger)";
+  }
+}
+
+async function loadWebDemoLeads(){
+  const wrap = document.getElementById("webDemoLeadsWrap");
+  if(!wrap) return;
+  wrap.innerHTML = `<p style="padding:12px;color:var(--muted)">Đang tải leads...</p>`;
+
+  try {
+    const res = await fetchAdmin("/api/admin/web-demo/leads?limit=100");
+    if(res.status===401){ redirectToAdminLogin("/api/admin/web-demo/leads"); return; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      wrap.innerHTML = `<p style="padding:12px;color:var(--danger)">${escapeHtml(data.message || "Không tải được leads")}</p>`;
+      return;
+    }
+    renderWebDemoLeadsTable(data.items || []);
+  } catch(err){
+    wrap.innerHTML = `<p style="padding:12px;color:var(--danger)">Lỗi tải leads: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function bindWebDemoAdminControls(){
+  const form = document.getElementById("webDemoTemplateForm");
+  const loadBtn = document.getElementById("webDemoTemplateLoadBtn");
+  const refreshLeadsBtn = document.getElementById("webDemoLeadRefreshBtn");
+  const msgEl = document.getElementById("webDemoTemplateMsg");
+  const slugEl = document.getElementById("webDemoTemplateSlug");
+  const displayEl = document.getElementById("webDemoTemplateDisplayName");
+  const groupEl = document.getElementById("webDemoTemplateGroup");
+  const configEl = document.getElementById("webDemoTemplateConfig");
+  const seoEl = document.getElementById("webDemoTemplateSeo");
+  if(!form || !loadBtn || !msgEl || !slugEl || !displayEl || !groupEl || !configEl || !seoEl) return;
+
+  loadBtn.addEventListener("click", loadWebDemoTemplate);
+  slugEl.addEventListener("change", loadWebDemoTemplate);
+  if(refreshLeadsBtn){
+    refreshLeadsBtn.addEventListener("click", loadWebDemoLeads);
+  }
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const slug = String(slugEl.value || "company").trim().toLowerCase();
+    let config;
+    let seo;
+    try {
+      config = JSON.parse(configEl.value || "{}");
+      seo = JSON.parse(seoEl.value || "{}");
+    } catch(parseError){
+      msgEl.textContent = "Config JSON hoặc SEO JSON không hợp lệ.";
+      msgEl.style.color = "var(--danger)";
+      return;
+    }
+
+    msgEl.textContent = "Đang lưu cấu hình...";
+    msgEl.style.color = "var(--muted)";
+
+    try {
+      const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: String(displayEl.value || "").trim(),
+          templateGroup: String(groupEl.value || slug).trim().toLowerCase(),
+          config,
+          seo
+        })
+      });
+      if(res.status===401){ redirectToAdminLogin("/api/admin/web-demo/templates"); return; }
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        msgEl.textContent = data.message || "Không lưu được cấu hình web-demo.";
+        msgEl.style.color = "var(--danger)";
+        return;
+      }
+      msgEl.textContent = data.message || "Đã lưu cấu hình web-demo.";
+      msgEl.style.color = "var(--success)";
+      if(data.item){
+        configEl.value = JSON.stringify(data.item.config || {}, null, 2);
+        seoEl.value = JSON.stringify(data.item.seo || {}, null, 2);
+      }
+    } catch(err){
+      msgEl.textContent = "Lỗi lưu cấu hình: " + err.message;
+      msgEl.style.color = "var(--danger)";
+    }
+  });
+}
+
 async function loadAiAppSecretStatus(){
   const maskedEl = document.getElementById("aiAppMaskedSecret");
   const headerEl = document.getElementById("aiAppHeaderName");
@@ -2240,6 +2410,7 @@ bindCreateAdminForm();
 bindChangeMyAdminPasswordForm();
 bindSepayForm();
 bindPublicPageControls();
+bindWebDemoAdminControls();
 bindAiAppSecretControls();
 bindAiGateControls();
 bindAppRegistryControls();
@@ -2257,6 +2428,8 @@ Promise.all([loadMe(), loadAdmin()]).finally(()=>{
   loadAdminUsers();
   loadSepayConfig();
   loadPublicPageControls();
+  loadWebDemoTemplate();
+  loadWebDemoLeads();
   loadAiAppSecretStatus();
   loadAppRegistryList();
 });

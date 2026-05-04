@@ -4435,6 +4435,12 @@ module.exports = {
   verifyAdminAppRegistryApp,
   verifyAllAdminAppRegistry,
   listAppRegistryCheckHistory,
+  listWebDemoTemplates,
+  getWebDemoTemplate,
+  upsertWebDemoTemplate,
+  createWebDemoLead,
+  listWebDemoLeads,
+  updateWebDemoLeadStatus,
   listPublicRouteRegistry,
   getPublicRouteRegistry,
   updatePublicRouteLock,
@@ -4814,4 +4820,191 @@ async function deleteProductKey(keyId) {
     keyValue: result.rows[0].key_value,
     productId: result.rows[0].product_id
   };
+}
+
+const WEB_DEMO_TEMPLATE_SLUGS = new Set(["company", "shop", "salon", "industry", "landing"]);
+const WEB_DEMO_LEAD_STATUSES = new Set(["new", "contacted", "qualified", "closed", "spam"]);
+
+function normalizeWebDemoSlug(value) {
+  const slug = String(value || "").trim().toLowerCase();
+  return WEB_DEMO_TEMPLATE_SLUGS.has(slug) ? slug : "";
+}
+
+function mapWebDemoTemplateRow(row) {
+  if (!row) return null;
+  return {
+    slug: row.template_slug,
+    displayName: row.display_name,
+    templateGroup: row.template_group,
+    config: row.config_json || {},
+    seo: row.seo_json || {},
+    updatedBy: row.updated_by || "",
+    updatedAt: row.updated_at,
+    createdAt: row.created_at
+  };
+}
+
+function mapWebDemoLeadRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    templateSlug: row.template_slug,
+    fullName: row.full_name,
+    phone: row.phone,
+    email: row.email || "",
+    companyName: row.company_name || "",
+    message: row.message || "",
+    metadata: row.metadata || {},
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function listWebDemoTemplates() {
+  const result = await pool.query(
+    `SELECT template_slug, display_name, template_group, config_json, seo_json, updated_by, updated_at, created_at
+     FROM web_demo_templates
+     ORDER BY template_slug ASC`
+  );
+  return result.rows.map(mapWebDemoTemplateRow);
+}
+
+async function getWebDemoTemplate(templateSlug) {
+  const safeSlug = normalizeWebDemoSlug(templateSlug);
+  if (!safeSlug) {
+    throw createStoreError("templateSlug không hợp lệ", 400);
+  }
+
+  const result = await pool.query(
+    `SELECT template_slug, display_name, template_group, config_json, seo_json, updated_by, updated_at, created_at
+     FROM web_demo_templates
+     WHERE template_slug = $1`,
+    [safeSlug]
+  );
+
+  if (result.rowCount === 0) {
+    throw createStoreError("Không tìm thấy mẫu web-demo", 404);
+  }
+
+  return mapWebDemoTemplateRow(result.rows[0]);
+}
+
+async function upsertWebDemoTemplate(templateSlug, input = {}, actor = {}) {
+  const safeSlug = normalizeWebDemoSlug(templateSlug);
+  if (!safeSlug) {
+    throw createStoreError("templateSlug không hợp lệ", 400);
+  }
+
+  const displayName = String(input.displayName || "").trim();
+  const templateGroup = String(input.templateGroup || safeSlug).trim().toLowerCase();
+  const config = typeof input.config === "object" && input.config !== null ? input.config : {};
+  const seo = typeof input.seo === "object" && input.seo !== null ? input.seo : {};
+  const updatedBy = String(actor?.username || input.updatedBy || "system").trim() || "system";
+
+  if (!displayName) {
+    throw createStoreError("displayName là bắt buộc", 400);
+  }
+
+  const result = await pool.query(
+    `INSERT INTO web_demo_templates(template_slug, display_name, template_group, config_json, seo_json, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $6, NOW(), NOW())
+     ON CONFLICT (template_slug)
+     DO UPDATE SET
+       display_name = EXCLUDED.display_name,
+       template_group = EXCLUDED.template_group,
+       config_json = EXCLUDED.config_json,
+       seo_json = EXCLUDED.seo_json,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW()
+     RETURNING template_slug, display_name, template_group, config_json, seo_json, updated_by, updated_at, created_at`,
+    [safeSlug, displayName, templateGroup, JSON.stringify(config), JSON.stringify(seo), updatedBy]
+  );
+
+  return mapWebDemoTemplateRow(result.rows[0]);
+}
+
+async function createWebDemoLead(templateSlug, input = {}) {
+  const safeSlug = normalizeWebDemoSlug(templateSlug);
+  if (!safeSlug) {
+    throw createStoreError("templateSlug không hợp lệ", 400);
+  }
+
+  const fullName = String(input.fullName || "").trim();
+  const phone = String(input.phone || "").trim();
+  const email = String(input.email || "").trim();
+  const companyName = String(input.companyName || "").trim();
+  const message = String(input.message || "").trim();
+  const metadata = typeof input.metadata === "object" && input.metadata !== null ? input.metadata : {};
+
+  if (!fullName || !phone) {
+    throw createStoreError("fullName và phone là bắt buộc", 400);
+  }
+
+  const result = await pool.query(
+    `INSERT INTO web_demo_leads(template_slug, full_name, phone, email, company_name, message, metadata, status, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, 'new', NOW(), NOW())
+     RETURNING id, template_slug, full_name, phone, email, company_name, message, metadata, status, created_at, updated_at`,
+    [safeSlug, fullName, phone, email || null, companyName || null, message || null, JSON.stringify(metadata)]
+  );
+
+  return mapWebDemoLeadRow(result.rows[0]);
+}
+
+async function listWebDemoLeads(filters = {}) {
+  const safeSlug = normalizeWebDemoSlug(filters.templateSlug || "");
+  const safeStatus = String(filters.status || "").trim().toLowerCase();
+  const safeLimit = Math.min(Math.max(Number(filters.limit) || 100, 1), 500);
+
+  const params = [];
+  const clauses = [];
+
+  if (safeSlug) {
+    params.push(safeSlug);
+    clauses.push(`template_slug = $${params.length}`);
+  }
+  if (WEB_DEMO_LEAD_STATUSES.has(safeStatus)) {
+    params.push(safeStatus);
+    clauses.push(`status = $${params.length}`);
+  }
+
+  params.push(safeLimit);
+
+  const whereClause = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const result = await pool.query(
+    `SELECT id, template_slug, full_name, phone, email, company_name, message, metadata, status, created_at, updated_at
+     FROM web_demo_leads
+     ${whereClause}
+     ORDER BY created_at DESC
+     LIMIT $${params.length}`,
+    params
+  );
+
+  return result.rows.map(mapWebDemoLeadRow);
+}
+
+async function updateWebDemoLeadStatus(leadId, nextStatus) {
+  const safeLeadId = String(leadId || "").trim();
+  const safeStatus = String(nextStatus || "").trim().toLowerCase();
+  if (!safeLeadId) {
+    throw createStoreError("leadId là bắt buộc", 400);
+  }
+  if (!WEB_DEMO_LEAD_STATUSES.has(safeStatus)) {
+    throw createStoreError("status không hợp lệ", 400);
+  }
+
+  const result = await pool.query(
+    `UPDATE web_demo_leads
+     SET status = $2,
+         updated_at = NOW()
+     WHERE id = $1::uuid
+     RETURNING id, template_slug, full_name, phone, email, company_name, message, metadata, status, created_at, updated_at`,
+    [safeLeadId, safeStatus]
+  );
+
+  if (result.rowCount === 0) {
+    throw createStoreError("Không tìm thấy lead", 404);
+  }
+
+  return mapWebDemoLeadRow(result.rows[0]);
 }

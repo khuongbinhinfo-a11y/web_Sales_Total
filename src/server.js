@@ -79,6 +79,12 @@ const {
   verifyAdminAppRegistryApp,
   verifyAllAdminAppRegistry,
   listAppRegistryCheckHistory,
+  listWebDemoTemplates,
+  getWebDemoTemplate,
+  upsertWebDemoTemplate,
+  createWebDemoLead,
+  listWebDemoLeads,
+  updateWebDemoLeadStatus,
   listPublicRouteRegistry,
   getPublicRouteRegistry,
   updatePublicRouteLock,
@@ -139,7 +145,10 @@ const webDemoOgImages = {
   shop: "/og/og-web-shop-ban-hang.png",
   education: "/og/og-web-giao-duc.png",
   spa: "/og/og-web-spa.png",
-  restaurant: "/og/og-web-nha-hang.png"
+  restaurant: "/og/og-web-nha-hang.png",
+  salon: "/og/og-web-spa.png",
+  industry: "/og/og-web-nha-hang.png",
+  landing: "/og/og-web-giao-duc.png"
 };
 
 const homePageMetadata = {
@@ -3426,6 +3435,76 @@ app.put(
   })
 );
 
+app.get(
+  "/api/admin/web-demo/templates",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const items = await listWebDemoTemplates();
+    return res.json({
+      ok: true,
+      message: "Đã tải danh sách mẫu web-demo",
+      items
+    });
+  })
+);
+
+app.get(
+  "/api/admin/web-demo/templates/:templateSlug",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const item = await getWebDemoTemplate(req.params.templateSlug);
+    return res.json({
+      ok: true,
+      message: "Đã tải cấu hình mẫu web-demo",
+      item
+    });
+  })
+);
+
+app.put(
+  "/api/admin/web-demo/templates/:templateSlug",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const actor = getAdminFromSession(req) || {};
+    const item = await upsertWebDemoTemplate(req.params.templateSlug, req.body || {}, actor);
+    return res.json({
+      ok: true,
+      message: "Đã cập nhật cấu hình mẫu web-demo",
+      item
+    });
+  })
+);
+
+app.get(
+  "/api/admin/web-demo/leads",
+  requireAdminPermission("admins:read"),
+  asyncHandler(async (req, res) => {
+    const items = await listWebDemoLeads({
+      templateSlug: req.query?.templateSlug,
+      status: req.query?.status,
+      limit: req.query?.limit
+    });
+    return res.json({
+      ok: true,
+      message: "Đã tải danh sách leads web-demo",
+      items
+    });
+  })
+);
+
+app.patch(
+  "/api/admin/web-demo/leads/:leadId",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const item = await updateWebDemoLeadStatus(req.params.leadId, req.body?.status);
+    return res.json({
+      ok: true,
+      message: "Đã cập nhật trạng thái lead",
+      item
+    });
+  })
+);
+
 // ═══════════════════ PUBLIC ROUTE LOCKING ═══════════════════
 
 app.get(
@@ -4695,6 +4774,41 @@ app.get("/san-pham/lam-viec", checkPublicRouteLockMiddleware, (req, res) => {
 app.get("/web-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });
+
+app.get(
+  "/api/web-demo/templates/:templateSlug",
+  asyncHandler(async (req, res) => {
+    const item = await getWebDemoTemplate(req.params.templateSlug);
+    return res.json({
+      ok: true,
+      item
+    });
+  })
+);
+
+app.post(
+  "/api/web-demo/leads/:templateSlug",
+  asyncHandler(async (req, res) => {
+    const item = await createWebDemoLead(req.params.templateSlug, {
+      fullName: req.body?.fullName,
+      phone: req.body?.phone,
+      email: req.body?.email,
+      companyName: req.body?.companyName,
+      message: req.body?.message,
+      metadata: {
+        source: req.body?.source || "web-demo",
+        userAgent: String(req.headers["user-agent"] || ""),
+        ip: getRequestIp(req)
+      }
+    });
+
+    return res.status(201).json({
+      ok: true,
+      message: "Đã nhận thông tin, đội ngũ sẽ liên hệ sớm",
+      leadId: item.id
+    });
+  })
+);
 
 app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-package.html"));
