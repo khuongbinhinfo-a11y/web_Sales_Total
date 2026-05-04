@@ -185,7 +185,7 @@ function renderDashboard(d){
   const ow = document.getElementById("ordersWrap");
   if(d.latestOrders && d.latestOrders.length){
     ow.innerHTML = `<table class="data-table"><thead><tr>
-      <th>Mã đơn</th><th>Khách hàng</th><th>App</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Ngày paid</th>
+      <th>Mã đơn</th><th>Khách hàng</th><th>App</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Ngày paid</th><th>Hành động</th>
     </tr></thead><tbody>${d.latestOrders.map(o=>`<tr>
       <td style="font-family:monospace;font-size:.78rem">${o.orderCode || `${o.id.slice(0,8)}…`}</td>
       <td>${o.customerId}</td>
@@ -194,7 +194,12 @@ function renderDashboard(d){
       <td>${badge(o.status)}</td>
       <td style="font-size:.8rem">${fmtDate(o.createdAt)}</td>
       <td style="font-size:.8rem">${fmtDate(o.paidAt)}</td>
+      <td>${o.appId === "app-web-demo-services" && o.status === "paid" ? `<button class="btn btn-outline js-send-webdemo-handover" data-order-id="${o.id}" data-order-code="${o.orderCode || ""}" style="min-height:32px;font-size:.78rem;padding:0 8px">Gửi mail bàn giao</button>` : `<span style="color:var(--muted);font-size:.78rem">—</span>`}</td>
     </tr>`).join("")}</tbody></table>`;
+
+    ow.querySelectorAll(".js-send-webdemo-handover").forEach((button) => {
+      button.addEventListener("click", () => handleWebDemoHandoverAction(button));
+    });
   } else {
     ow.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có đơn hàng</p>`;
   }
@@ -249,6 +254,54 @@ function renderDashboard(d){
     </tr>`).join("")}</tbody></table>`;
   } else {
     ww.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có dữ liệu ví credit</p>`;
+  }
+}
+
+async function handleWebDemoHandoverAction(button){
+  const orderId = button?.dataset?.orderId;
+  const orderCode = button?.dataset?.orderCode || "";
+  if(!orderId){
+    alert("Thiếu orderId");
+    return;
+  }
+
+  const deliveryUrl = window.prompt(`Link website bàn giao cho đơn ${orderCode || orderId}:`, "https://");
+  if(deliveryUrl === null){
+    return;
+  }
+  const driveLink = window.prompt("Link tài nguyên (Drive) - có thể bỏ trống:", "") || "";
+  const accountEmail = window.prompt("Tài khoản admin web (có thể bỏ trống):", "") || "";
+  const accountPassword = window.prompt("Mật khẩu tạm (có thể bỏ trống):", "") || "";
+  const adminNote = window.prompt("Ghi chú bàn giao (có thể bỏ trống):", "") || "";
+
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = "Đang gửi...";
+
+  try {
+    const res = await fetchAdmin(`/api/admin/web-demo/orders/${encodeURIComponent(orderId)}/send-handover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deliveryUrl: String(deliveryUrl || "").trim(),
+        driveLink: String(driveLink || "").trim(),
+        accountEmail: String(accountEmail || "").trim(),
+        accountPassword: String(accountPassword || "").trim(),
+        adminNote: String(adminNote || "").trim()
+      })
+    });
+
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      throw new Error(payload?.message || "Gửi mail bàn giao thất bại");
+    }
+
+    alert(payload?.message || "Đã gửi mail bàn giao");
+  } catch(error){
+    alert(error?.message || "Gửi mail bàn giao thất bại");
+  } finally {
+    button.disabled = false;
+    button.textContent = original || "Gửi mail bàn giao";
   }
 }
 

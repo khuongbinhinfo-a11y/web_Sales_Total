@@ -182,9 +182,58 @@ const parseSlug = () => {
   return PREVIEW_DATA[raw] ? raw : "company";
 };
 
+const parseCompanyDemoVariant = () => {
+  const params = new URLSearchParams(location.search || "");
+  const n = parseInt(params.get("demo") || "1", 10);
+  if (Number.isFinite(n) && n >= 1 && n <= 3) {
+    return n;
+  }
+  return 1;
+};
+
 const loadConfig = (slug) => {
   try { return JSON.parse(localStorage.getItem(`preview_config_${slug}`) || "{}"); }
   catch { return {}; }
+};
+
+const parseMoney = (v, fallback = 0) => {
+  const n = Number(String(v || "").replace(/[^\d]/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+
+const formatVnd = (n) => `${Number(n || 0).toLocaleString("vi-VN")}đ`;
+
+const NAV_SECTION_IDS = {
+  company: ["home", "services", "process", "proof", "contact"],
+  shop: ["home", "products", "benefits", "proof", "contact"],
+  salon: ["home", "services", "pricing", "gallery", "contact"],
+  industry: ["home", "products", "specs", "process", "contact"],
+  landing: ["home", "benefits", "pricing", "proof", "contact"]
+};
+
+const getSalesConfig = (config, fallbackPhone) => ({
+  websitePrice: parseMoney(config.saleWebsitePrice, 2990000),
+  hostingPrice: parseMoney(config.saleHostingPrice, 1200000),
+  domainPrice: parseMoney(config.saleDomainPrice, 350000),
+  hostingYears: String(config.saleHostingYears || "1,2,3").split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => Number.isFinite(n) && n > 0),
+  domainYears: String(config.saleDomainYears || "1,2,3").split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => Number.isFinite(n) && n > 0),
+  domainSuffixes: String(config.saleDomainSuffixes || ".com,.vn,.com.vn,.shop,.info")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  buttonText: config.saleButtonText || "Mua ngay",
+  salePhone: config.salePhone || fallbackPhone || "0901 234 567",
+  saleZalo: config.saleZalo || fallbackPhone || "0901 234 567",
+  saleNote: config.saleNote || "Bàn giao trong 24 giờ sau khi xác nhận thanh toán.",
+  showHosting: config.saleEnableHosting !== false,
+  showDomain: config.saleEnableDomain !== false
+});
+
+const renderBrand = (brand, config) => {
+  if (config.logoUrl) {
+    return `<img src="${e(config.logoUrl)}" alt="${e(brand)}" style="height:34px;width:auto;display:block" />`;
+  }
+  return e(brand);
 };
 
 const applyTheme = (config) => {
@@ -193,26 +242,186 @@ const applyTheme = (config) => {
   if (config.colorAccent) r.style.setProperty("--c-accent", config.colorAccent);
 };
 
-const renderTopbar = (slug, data, planSlug) => `
+const renderTopbar = (slug, data, planSlug) => {
+  const params = new URLSearchParams(location.search || "");
+  const demo = params.get("demo");
+  const adminHref = slug === "company" && demo
+    ? `/preview/${e(slug)}/admin?demo=${e(demo)}`
+    : `/preview/${e(slug)}/admin`;
+  return `
   <div class="preview-topbar">
     <span>👁 <strong>Đây là bản demo</strong> — mẫu web &ldquo;${e(data.name)}&rdquo;</span>
     <div class="preview-topbar-actions">
       <a class="preview-topbar-btn is-back" href="/mau-demo/khomau-${e(slug)}">← Xem kho mẫu</a>
-      <a class="preview-topbar-btn is-admin" href="/preview/${e(slug)}/admin">⚙ Thử admin</a>
-      <a class="preview-topbar-btn is-buy" href="/catalog/web-demo/${e(slug)}/goi/${e(planSlug)}">Mua gói này →</a>
+      <a class="preview-topbar-btn is-admin" href="${adminHref}">⚙ Thử admin</a>
+      <a class="preview-topbar-btn is-buy" href="#buy">Mua ngay →</a>
     </div>
   </div>
 `;
+};
 
-const renderNav = (brand, links, slug, planSlug) => `
+const renderNav = (brand, links, slug, planSlug, config) => {
+  const ids = NAV_SECTION_IDS[slug] || [];
+  return `
   <nav class="pv-nav">
-    <div class="pv-nav-logo">${e(brand)}</div>
+    <div class="pv-nav-logo">${renderBrand(brand, config || {})}</div>
     <ul class="pv-nav-links">
-      ${links.map((l) => `<li><a href="#">${e(l)}</a></li>`).join("")}
+      ${links.map((l, i) => `<li><a href="#${e(ids[i] || "home")}">${e(l)}</a></li>`).join("")}
     </ul>
-    <a class="pv-nav-cta" href="/catalog/web-demo/${e(slug)}/goi/${e(planSlug)}">Mua gói này</a>
+    <a class="pv-nav-cta" href="#buy">Mua ngay</a>
   </nav>
 `;
+};
+
+const renderPurchaseSection = (config, slug, data) => {
+  const sales = getSalesConfig(config, config.phone || config.zalo);
+  const hostYears = sales.hostingYears.length ? sales.hostingYears : [1];
+  const domainYears = sales.domainYears.length ? sales.domainYears : [1];
+  const suffixes = sales.domainSuffixes.length ? sales.domainSuffixes : [".com"];
+  return `
+  <section class="pv-section alt" id="buy">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Mua ngay mẫu này</span>
+        <h2>Giá mẫu web này: ${formatVnd(sales.websitePrice)}</h2>
+        <p>${e(sales.saleNote)}</p>
+      </div>
+      <div class="pv-form-wrap js-order-box" style="margin-top:22px"
+        data-template-slug="${e(slug)}"
+        data-base="${sales.websitePrice}"
+        data-host-price="${sales.hostingPrice}"
+        data-domain-price="${sales.domainPrice}">
+        <div class="pv-form-row">
+          ${sales.showDomain ? `
+          <div class="pv-form-group">
+            <label><input type="checkbox" class="js-domain-enable" checked /> Thêm domain</label>
+            <div class="pv-form-row">
+              <select class="js-domain-suffix">${suffixes.map((tld) => `<option>${e(tld)}</option>`).join("")}</select>
+              <select class="js-domain-years">${domainYears.map((y) => `<option value="${y}">${y} năm</option>`).join("")}</select>
+            </div>
+            <small>+ ${formatVnd(sales.domainPrice)} / năm</small>
+          </div>
+          ` : ""}
+          ${sales.showHosting ? `
+          <div class="pv-form-group">
+            <label><input type="checkbox" class="js-host-enable" checked /> Thêm hosting</label>
+            <select class="js-host-years">${hostYears.map((y) => `<option value="${y}">${y} năm</option>`).join("")}</select>
+            <small>+ ${formatVnd(sales.hostingPrice)} / năm</small>
+          </div>
+          ` : ""}
+        </div>
+        <div class="pv-form-group"><label>Tên domain mong muốn</label><input type="text" class="js-domain-name" placeholder="ten-thuong-hieu" /></div>
+        <div class="pv-form-group"><label>Tổng giá tạm tính</label><div class="pv-pricing-price js-order-total">${formatVnd(sales.websitePrice)}</div></div>
+        <button type="button" class="pv-form-submit js-order-checkout">Thanh toán tự động</button>
+        <div class="pv-form-group"><small class="js-order-note">Hệ thống sẽ lấy thông tin tài khoản đã đăng nhập để tạo đơn và chuyển qua trang thanh toán.</small></div>
+      </div>
+    </div>
+  </section>
+`;
+};
+
+const renderSupportPopup = (config) => {
+  const supportZalo = String(config.saleZalo || config.zalo || "0902964685").trim();
+  const supportPhone = String(config.salePhone || config.phone || "0902964685").trim();
+  return `
+  <aside class="pv-support-dock" id="pvSupportDock" aria-label="Ho tro nhanh">
+    <button class="pv-support-toggle" id="pvSupportToggle" type="button" aria-expanded="true" aria-controls="pvSupportBody">
+      <span class="pv-support-toggle-icon">-</span>
+      <span class="pv-support-toggle-text">Ho tro</span>
+    </button>
+    <div class="pv-support-body" id="pvSupportBody">
+      <p class="pv-support-title">Can ho tro nhanh?</p>
+      <p class="pv-support-copy">Popup nay luon hien tren tat ca trang de khach lien he ngay khi can.</p>
+      <div class="pv-support-actions">
+        <a class="pv-support-chip" href="https://zalo.me/${e(supportZalo)}" target="_blank" rel="noopener">Nhan Zalo</a>
+        <a class="pv-support-chip" href="tel:${e(supportPhone)}">Goi ${e(supportPhone)}</a>
+      </div>
+    </div>
+  </aside>
+`;
+};
+
+const renderPostsSection = (config) => {
+  const posts = Array.isArray(config?.posts) ? config.posts.filter((p) => p && (p.title || p.content)) : [];
+  return `
+  <section class="pv-section" id="posts">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Tin tuc</span>
+        <h2>Bai viet moi</h2>
+      </div>
+      ${posts.length ? `<div class="pv-posts-grid">
+        ${posts.map((p) => `
+          <article class="pv-post-card">
+            <div class="pv-post-cover">📰</div>
+            <div class="pv-post-body">
+              <div class="pv-post-meta">${e(p.tag || "Tin tuc")} · ${e(p.date || "")}</div>
+              <h3>${e(p.title || "Bai viet")}</h3>
+              <p>${e(p.content || "")}</p>
+            </div>
+          </article>
+        `).join("")}
+      </div>` : `<div class="pv-form-wrap" style="max-width:760px;text-align:center"><p style="margin:0;color:var(--c-muted)">Chưa có bài viết. Vào Admin → tab Bài viết để thêm nội dung và bấm Lưu thay đổi.</p></div>`}
+    </div>
+  </section>
+`;
+};
+
+const parseCompanyTripleLines = (raw, expectedParts) => String(raw || "")
+  .split("\n")
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .map((line) => line.split("|").map((part) => part.trim()))
+  .filter((parts) => parts.length >= expectedParts);
+
+const getCompanyContent = (data, config) => {
+  const cardsFromArray = Array.isArray(config.companyCards)
+    ? config.companyCards
+      .map((item) => ({
+        icon: String(item?.icon || "").trim() || "🏅",
+        imageUrl: String(item?.imageUrl || "").trim(),
+        title: String(item?.title || "").trim(),
+        desc: String(item?.desc || "").trim()
+      }))
+      .filter((item) => item.title || item.desc)
+    : [];
+  const flowFromArray = Array.isArray(config.companyFlow)
+    ? config.companyFlow
+      .map((item) => [String(item?.title || "").trim(), String(item?.desc || "").trim()])
+      .filter((item) => item[0] || item[1])
+    : [];
+  const cardsParsed = parseCompanyTripleLines(config.companyCardsRaw, 3)
+    .map((parts) => ({ icon: parts[0] || "🏅", imageUrl: "", title: parts[1] || "", desc: parts[2] || "" }));
+  const cardsDefault = Array.isArray(data.cards)
+    ? data.cards.map((parts) => ({ icon: parts[0] || "🏅", imageUrl: "", title: parts[1] || "", desc: parts[2] || "" }))
+    : [];
+  const flowParsed = parseCompanyTripleLines(config.companyFlowRaw, 2);
+  const faqParsed = parseCompanyTripleLines(config.companyFaqRaw, 2);
+
+  return {
+    heroEyebrow: config.companyHeroEyebrow || data.eyebrow,
+    heroTitle: config.companyHeroTitle || data.title,
+    heroDesc: config.companyHeroDesc || data.desc,
+    heroImage: String(config.companyHeroImage || "").trim(),
+    servicesTitle: config.companyServicesTitle || "Giải pháp toàn diện cho doanh nghiệp",
+    servicesDesc: config.companyServicesDesc || "Từ tư vấn chiến lược đến triển khai và vận hành, chúng tôi đồng hành từng bước.",
+    processTitle: config.companyProcessTitle || "Từ yêu cầu đến kết quả chỉ 3 bước",
+    processDesc: config.companyProcessDesc || "Minh bạch từng giai đoạn để bạn biết dự án đang ở đâu.",
+    proofTitle: config.companyProofTitle || "Giải đáp trước khi liên hệ",
+    contactTitle: config.companyContactTitle || data.contactTitle,
+    contactDesc: config.companyContactDesc || data.contactText,
+    cards: cardsFromArray.length ? cardsFromArray : (cardsParsed.length ? cardsParsed : cardsDefault),
+    flow: flowFromArray.length ? flowFromArray : (flowParsed.length ? flowParsed : data.flow),
+    faq: faqParsed.length ? faqParsed : data.faq
+  };
+};
+
+const renderCompanyCardMedia = (card) => {
+  if (card?.imageUrl) {
+    return `<img class="pv-card-media" src="${e(card.imageUrl)}" alt="${e(card.title || "Dịch vụ")}" loading="lazy" />`;
+  }
+  return `<div class="pv-card-icon">${e(card?.icon || "🏅")}</div>`;
+};
 
 const renderFooter = (slug, brand, config) => {
   const phone = config.phone || "0901 234 567";
@@ -258,8 +467,10 @@ const renderFooter = (slug, brand, config) => {
       </div>
     </div>
   </footer>
-  <div class="pv-sticky-cta">
-    <a href="/catalog/web-demo/${e(slug)}/goi/${e(PREVIEW_DATA[slug].planSlug)}">🛒 Mua gói website này ngay</a>
+  <div class="pv-sticky-cta" id="pvStickyCta">
+    <span class="pv-sticky-total-label">Tổng tạm tính:</span>
+    <span class="pv-sticky-total-amount" id="pvStickyTotal">—</span>
+    <a href="#buy">🛒 Thanh toán ngay</a>
   </div>
 `;
 };
@@ -269,52 +480,56 @@ const renderFooter = (slug, brand, config) => {
    ============================================================ */
 const renderCompany = (data, config) => `
   ${renderTopbar("company", data, data.planSlug)}
-  ${renderNav(config.siteName || data.brand, data.navLinks, "company", data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "company", data.planSlug, config)}
 
-  <section class="pv-hero hero-split">
+  ${(() => {
+    const c = getCompanyContent(data, config);
+    return `
+
+  <section class="pv-hero hero-split" id="home">
     <div class="pv-hero-content">
-      <span class="pv-hero-eyebrow">${e(data.eyebrow)}</span>
-      <h1>${data.title}</h1>
-      <p class="pv-hero-desc">${e(data.desc)}</p>
+      <span class="pv-hero-eyebrow">${e(c.heroEyebrow)}</span>
+      <h1>${c.heroTitle}</h1>
+      <p class="pv-hero-desc">${e(c.heroDesc)}</p>
       <div class="pv-hero-actions">
-        <a class="pv-btn pv-btn-primary" href="/catalog/web-demo/company/goi/${e(data.planSlug)}">Nhận tư vấn miễn phí</a>
-        <a class="pv-btn pv-btn-secondary" href="#">Xem dịch vụ</a>
+        <a class="pv-btn pv-btn-primary" href="#buy">Mua ngay mẫu này</a>
+        <a class="pv-btn pv-btn-secondary" href="#services">Xem dịch vụ</a>
       </div>
       <div class="pv-hero-stats">
         ${data.stats.map(([n, l]) => `<div class="pv-hero-stat"><strong>${e(n)}</strong><span>${e(l)}</span></div>`).join("")}
       </div>
     </div>
-    <div class="pv-hero-img"><span class="img-placeholder">🏢</span></div>
+    <div class="pv-hero-img">${c.heroImage ? `<img src="${e(c.heroImage)}" alt="${e(config.siteName || data.brand)}" loading="lazy" />` : `<span class="img-placeholder">🏢</span>`}</div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="services">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Dịch vụ cốt lõi</span>
-        <h2>Giải pháp toàn diện cho doanh nghiệp</h2>
-        <p>Từ tư vấn chiến lược đến triển khai và vận hành, chúng tôi đồng hành từng bước.</p>
+        <h2>${e(c.servicesTitle)}</h2>
+        <p>${e(c.servicesDesc)}</p>
       </div>
       <div class="pv-card-grid">
-        ${data.cards.map(([icon, title, desc]) => `
+        ${c.cards.map((card) => `
           <div class="pv-card">
-            <div class="pv-card-icon">${icon}</div>
-            <h3>${e(title)}</h3>
-            <p>${e(desc)}</p>
+            ${renderCompanyCardMedia(card)}
+            <h3>${e(card.title)}</h3>
+            <p>${e(card.desc)}</p>
           </div>
         `).join("")}
       </div>
     </div>
   </section>
 
-  <section class="pv-section dark">
+  <section class="pv-section dark" id="process">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Quy trình làm việc</span>
-        <h2>Từ yêu cầu đến kết quả chỉ 3 bước</h2>
-        <p>Minh bạch từng giai đoạn để bạn biết dự án đang ở đâu.</p>
+        <h2>${e(c.processTitle)}</h2>
+        <p>${e(c.processDesc)}</p>
       </div>
       <div class="pv-steps">
-        ${data.flow.map(([title, desc], i) => `
+        ${c.flow.map(([title, desc], i) => `
           <div class="pv-step">
             <div class="pv-step-num">${String(i + 1).padStart(2, "0")}</div>
             <h3>${e(title)}</h3>
@@ -325,14 +540,14 @@ const renderCompany = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="proof">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Câu hỏi thường gặp</span>
-        <h2>Giải đáp trước khi liên hệ</h2>
+        <h2>${e(c.proofTitle)}</h2>
       </div>
       <div class="pv-faq">
-        ${data.faq.map(([q, a]) => `
+        ${c.faq.map(([q, a]) => `
           <details class="pv-faq-item">
             <summary>${e(q)}</summary>
             <p>${e(a)}</p>
@@ -342,12 +557,14 @@ const renderCompany = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section alt">
+  ${renderPostsSection(config)}
+
+  <section class="pv-section alt" id="contact">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Liên hệ tư vấn</span>
-        <h2>${e(data.contactTitle)}</h2>
-        <p>${e(data.contactText)}</p>
+        <h2>${e(c.contactTitle)}</h2>
+        <p>${e(c.contactDesc)}</p>
       </div>
       <div class="pv-form-wrap">
         <div class="pv-form-row">
@@ -361,36 +578,283 @@ const renderCompany = (data, config) => `
     </div>
   </section>
 
+  ${renderPurchaseSection(config, "company", data)}
   ${renderFooter("company", data.brand, config)}
 `;
+  })()}
+`;
 
-/* ============================================================
-   TEMPLATE: SHOP
-   ============================================================ */
-const renderShop = (data, config) => `
-  ${renderTopbar("shop", data, data.planSlug)}
-  ${renderNav(config.siteName || data.brand, data.navLinks, "shop", data.planSlug)}
+const renderCompanyV2 = (data, config) => {
+  const c = getCompanyContent(data, config);
+  return `
+  ${renderTopbar("company", data, data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "company", data.planSlug, config)}
 
-  <section class="pv-hero" style="background:var(--c-hero-bg);padding:40px 24px;">
+  <section class="pv-hero" id="home">
+    <span class="pv-hero-eyebrow">Mau 2 · Service-first</span>
+    <h1>Bo cuc <em>tap trung dich vu</em> de khach hieu nhanh nang luc</h1>
+    <p class="pv-hero-desc">Mau nay dua nhom dich vu len som, de khach B2B nhin thay ngay pham vi va cach lam.</p>
+    <div class="pv-hero-actions">
+      <a class="pv-btn pv-btn-primary" href="#services">Xem dịch vụ trước</a>
+      <a class="pv-btn pv-btn-secondary" href="#buy">Mua mẫu này</a>
+    </div>
+  </section>
+
+  <section class="pv-section alt" id="services">
     <div class="pv-container">
-      <div class="pv-sale-banner">
-        <div>
-          <span class="pv-sale-tag">🔥 MEGA SALE THÁNG 5</span>
-          <h2>Giảm đến 40%<br>toàn bộ sản phẩm</h2>
-          <p>Miễn phí giao hàng từ 299.000đ. Hoàn tiền 7 ngày không điều kiện.</p>
-        </div>
-        <div class="pv-sale-price">
-          <div class="off">-40%</div>
-          <div class="ends">Kết thúc sau 2 ngày</div>
-        </div>
+      <div class="pv-section-head">
+        <span class="eyebrow">Dich vu theo nhom</span>
+        <h2>Khach xem la biet ban lam duoc gi</h2>
       </div>
-      <div class="pv-categories">
-        ${data.categories.map((c, i) => `<button class="pv-cat-chip${i === 0 ? " active" : ""}">${e(c)}</button>`).join("")}
+      <div class="pv-card-grid">
+        ${c.cards.slice(0, 4).map((card) => `
+          <div class="pv-card">
+            ${renderCompanyCardMedia(card)}
+            <h3>${e(card.title)}</h3>
+            <p>${e(card.desc)}</p>
+          </div>
+        `).join("")}
       </div>
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section" id="proof">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">So lieu & bang chung</span>
+        <h2>Day nhanh niem tin truoc khi de lai lead</h2>
+      </div>
+      <div class="pv-stats-row">
+        ${data.stats.map(([n, l]) => `<div class="pv-stat-item"><strong>${e(n)}</strong><span>${e(l)}</span></div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section dark" id="process">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Quy trinh</span>
+        <h2>Minh bach tung buoc trien khai</h2>
+      </div>
+      <div class="pv-steps">
+        ${c.flow.map(([title, desc], i) => `
+          <div class="pv-step">
+            <div class="pv-step-num">${String(i + 1).padStart(2, "0")}</div>
+            <h3>${e(title)}</h3>
+            <p>${e(desc)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section alt" id="contact">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Lien he</span>
+        <h2>${e(c.contactTitle)}</h2>
+        <p>${e(c.contactDesc)}</p>
+      </div>
+      <div class="pv-faq">
+        ${c.faq.slice(0, 2).map(([q, a]) => `
+          <details class="pv-faq-item" open>
+            <summary>${e(q)}</summary>
+            <p>${e(a)}</p>
+          </details>
+        `).join("")}
+      </div>
+    </div>
+  </section>
+
+  ${renderPurchaseSection(config, "company", data)}
+  ${renderFooter("company", data.brand, config)}
+`;
+};
+
+const renderCompanyV3 = (data, config) => {
+  const c = getCompanyContent(data, config);
+  return `
+  ${renderTopbar("company", data, data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "company", data.planSlug, config)}
+
+  <section class="pv-hero hero-split" id="home">
+    <div class="pv-hero-img">${c.heroImage ? `<img src="${e(c.heroImage)}" alt="${e(config.siteName || data.brand)}" loading="lazy" />` : `<span class="img-placeholder">📈</span>`}</div>
+    <div class="pv-hero-content">
+      <span class="pv-hero-eyebrow">Mau 3 · Brand + case style</span>
+      <h1>Bo cuc <em>thuong hieu</em> cho doanh nghiep can profile ro</h1>
+      <p class="pv-hero-desc">Sap xep theo kieu profile: mo dau bang ket qua, sau do moi den dich vu va quy trinh.</p>
+      <div class="pv-hero-actions">
+        <a class="pv-btn pv-btn-primary" href="#proof">Xem kết quả</a>
+        <a class="pv-btn pv-btn-secondary" href="#buy">Mua mẫu này</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section dark" id="proof">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Nang luc noi bat</span>
+        <h2>Ket qua duoc dat len truoc</h2>
+      </div>
+      <div class="pv-stats-row">
+        ${data.stats.map(([n, l]) => `<div class="pv-stat-item"><strong>${e(n)}</strong><span>${e(l)}</span></div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section" id="services">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">He sinh thai dich vu</span>
+        <h2>Dinh vi theo nhom dich vu chuyen sau</h2>
+      </div>
+      <div class="pv-card-grid">
+        ${c.cards.map((card) => `
+          <div class="pv-card">
+            ${renderCompanyCardMedia(card)}
+            <h3>${e(card.title)}</h3>
+            <p>${e(card.desc)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section alt" id="process">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">Cach lam viec</span>
+        <h2>Quy trinh 3 lop cho du an doanh nghiep</h2>
+      </div>
+      <div class="pv-steps">
+        ${c.flow.map(([title, desc], i) => `
+          <div class="pv-step">
+            <div class="pv-step-num">${String(i + 1).padStart(2, "0")}</div>
+            <h3>${e(title)}</h3>
+            <p>${e(desc)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section" id="contact">
+    <div class="pv-container">
+      <div class="pv-section-head">
+        <span class="eyebrow">FAQ ngan gon</span>
+        <h2>Tra loi nhanh truoc khi chot lich tu van</h2>
+      </div>
+      <div class="pv-faq">
+        ${c.faq.map(([q, a]) => `
+          <details class="pv-faq-item">
+            <summary>${e(q)}</summary>
+            <p>${e(a)}</p>
+          </details>
+        `).join("")}
+      </div>
+    </div>
+  </section>
+
+  ${renderPurchaseSection(config, "company", data)}
+  ${renderFooter("company", data.brand, config)}
+`;
+};
+
+/* ============================================================
+   TEMPLATE: SHOP
+   ============================================================ */
+/* helper: split textarea raw text into non-empty lines */
+const parseLines = (raw) => String(raw || "").split("\n").map((s) => s.trim()).filter(Boolean);
+
+/* helper: get features array from item (raw textarea or pre-parsed features[]) */
+const parseFeaturesRaw = (item) =>
+  Array.isArray(item.features) && item.features.length ? item.features : parseLines(item.featuresRaw);
+
+const getShopContent = (data, config) => ({
+  heroTag: e((config.shopHeroTag || "").trim() || "🔥 MEGA SALE THÁNG 5"),
+  heroHeadline: config.shopHeroHeadline ? e(config.shopHeroHeadline) : "Giảm đến 40%<br>toàn bộ sản phẩm",
+  heroDesc: e((config.shopHeroDesc || "").trim() || "Miễn phí giao hàng từ 299.000đ. Hoàn tiền 7 ngày không điều kiện."),
+  heroOff: e((config.shopHeroOff || "").trim() || "-40%"),
+  heroOffEnds: e((config.shopHeroOffEnds || "").trim() || "Kết thúc sau 2 ngày"),
+  categories: parseLines(config.shopCategoriesRaw).length ? parseLines(config.shopCategoriesRaw) : data.categories,
+  products: Array.isArray(config.shopProducts) && config.shopProducts.length ? config.shopProducts : data.products,
+  reviews: Array.isArray(config.shopReviews) && config.shopReviews.length ? config.shopReviews : data.reviews,
+  contactTitle: e((config.shopContactTitle || "").trim() || data.contactTitle),
+  contactDesc: e((config.shopContactDesc || "").trim() || data.contactText),
+});
+
+const getSalonContent = (data, config) => ({
+  heroEyebrow: e((config.salonHeroEyebrow || "").trim() || data.eyebrow),
+  heroTitle: e((config.salonHeroTitle || "").trim() || data.title),
+  heroDesc: e((config.salonHeroDesc || "").trim() || data.desc),
+  heroImage: (config.salonHeroImage || "").trim(),
+  services: Array.isArray(config.salonServices) && config.salonServices.length
+    ? config.salonServices.map((s) => ({ icon: s.icon || "✂️", imageUrl: s.imageUrl || "", name: s.name || "", desc: s.desc || "", price: s.price || "" }))
+    : data.services,
+  gallery: Array.isArray(config.salonGallery) && config.salonGallery.length
+    ? config.salonGallery.map((g) => ({ icon: g.icon || "✨", imageUrl: g.imageUrl || "", label: g.label || "" }))
+    : data.gallery,
+  pricing: Array.isArray(config.salonPricing) && config.salonPricing.length
+    ? config.salonPricing.map((p) => ({ name: p.name || "", price: p.price || "", features: parseFeaturesRaw(p), featured: !!p.featured }))
+    : data.pricing,
+  reviews: Array.isArray(config.salonReviews) && config.salonReviews.length ? config.salonReviews : data.reviews,
+});
+
+const getIndustryContent = (data, config) => ({
+  heroEyebrow: e((config.industryHeroEyebrow || "").trim() || data.eyebrow),
+  heroTitle: e((config.industryHeroTitle || "").trim() || data.title),
+  heroDesc: e((config.industryHeroDesc || "").trim() || data.desc),
+  heroImage: (config.industryHeroImage || "").trim(),
+  cards: Array.isArray(config.industryCards) && config.industryCards.length
+    ? config.industryCards.map((c) => ({ icon: c.icon || "⚙️", imageUrl: c.imageUrl || "", title: c.title || "", desc: c.desc || "" }))
+    : data.cards.map(([icon, title, desc]) => ({ icon, imageUrl: "", title, desc })),
+  flow: Array.isArray(config.industryFlow) && config.industryFlow.length
+    ? config.industryFlow.map((f) => [f.title || "", f.desc || ""])
+    : data.flow,
+  partners: parseLines(config.industryPartnersRaw).length ? parseLines(config.industryPartnersRaw) : data.partners,
+});
+
+const getLandingContent = (data, config) => ({
+  heroEyebrow: e((config.landingHeroEyebrow || "").trim() || data.eyebrow),
+  heroTitle: e((config.landingHeroTitle || "").trim() || data.title),
+  heroDesc: e((config.landingHeroDesc || "").trim() || data.desc),
+  benefits: Array.isArray(config.landingBenefits) && config.landingBenefits.length
+    ? config.landingBenefits.map((b) => ({ icon: b.icon || "🎯", imageUrl: b.imageUrl || "", title: b.title || "", desc: b.desc || "" }))
+    : data.benefits.map(([icon, title, desc]) => ({ icon, imageUrl: "", title, desc })),
+  pricing: Array.isArray(config.landingPricing) && config.landingPricing.length
+    ? config.landingPricing.map((p) => ({ name: p.name || "", price: p.price || "", period: p.period || "trọn đời", features: parseFeaturesRaw(p), featured: !!p.featured }))
+    : data.pricing,
+  faq: Array.isArray(config.landingFaq) && config.landingFaq.length
+    ? config.landingFaq.map((f) => [f.q || "", f.a || ""])
+    : data.faq,
+});
+
+const renderShop = (data, config) => {
+  const c = getShopContent(data, config);
+  return `
+  ${renderTopbar("shop", data, data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "shop", data.planSlug, config)}
+
+  <section class="pv-hero" id="home" style="background:var(--c-hero-bg);padding:40px 24px;">
+    <div class="pv-container">
+      <div class="pv-sale-banner">
+        <div>
+          <span class="pv-sale-tag">${c.heroTag}</span>
+          <h2>${c.heroHeadline}</h2>
+          <p>${c.heroDesc}</p>
+        </div>
+        <div class="pv-sale-price">
+          <div class="off">${c.heroOff}</div>
+          <div class="ends">${c.heroOffEnds}</div>
+        </div>
+      </div>
+      <div class="pv-categories">
+        ${c.categories.map((cat, i) => `<button class="pv-cat-chip${i === 0 ? " active" : ""}">${e(cat)}</button>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section alt" id="products">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Sản phẩm nổi bật</span>
@@ -398,11 +862,11 @@ const renderShop = (data, config) => `
         <p>Hàng chính hãng, đảm bảo chất lượng. Đổi trả miễn phí trong 30 ngày.</p>
       </div>
       <div class="pv-product-grid">
-        ${data.products.map((p) => `
+        ${c.products.map((p) => `
           <div class="pv-product-card">
             <div class="pv-product-img">
               ${p.badge ? `<span class="pv-product-badge">${e(p.badge)}</span>` : ""}
-              <span style="font-size:2.5rem">${p.icon}</span>
+              ${p.imageUrl ? `<img src="${e(p.imageUrl)}" alt="${e(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" loading="lazy" />` : `<span style="font-size:2.5rem">${e(p.icon)}</span>`}
             </div>
             <div class="pv-product-body">
               <div class="pv-product-name">${e(p.name)}</div>
@@ -418,7 +882,7 @@ const renderShop = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section dark">
+  <section class="pv-section dark" id="benefits">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Tại sao chọn chúng tôi</span>
@@ -432,14 +896,14 @@ const renderShop = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="proof">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Khách hàng nói gì</span>
         <h2>Đánh giá thực từ người mua</h2>
       </div>
       <div class="pv-testimonials">
-        ${data.reviews.map((r) => `
+        ${c.reviews.map((r) => `
           <div class="pv-testimonial">
             <div class="pv-testimonial-stars">★★★★★</div>
             <p>${e(r.text)}</p>
@@ -453,36 +917,37 @@ const renderShop = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-contact-section">
-    <h2>${e(data.contactTitle)}</h2>
-    <p>${e(data.contactText)}</p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a class="pv-btn pv-btn-primary" href="/catalog/web-demo/shop/goi/${e(data.planSlug)}">Xem gói triển khai</a>
-      <a class="pv-btn pv-btn-secondary" href="#">Chat tư vấn ngay</a>
-    </div>
+  <section class="pv-contact-section" id="contact">
+    <h2>${c.contactTitle}</h2>
+    <p>${c.contactDesc}</p>
   </section>
 
+  ${renderPostsSection(config)}
+
+  ${renderPurchaseSection(config, "shop", data)}
   ${renderFooter("shop", data.brand, config)}
-`;
+`; };
 
 /* ============================================================
    TEMPLATE: SALON
    ============================================================ */
-const renderSalon = (data, config) => `
+const renderSalon = (data, config) => {
+  const c = getSalonContent(data, config);
+  return `
   ${renderTopbar("salon", data, data.planSlug)}
-  ${renderNav(config.siteName || data.brand, data.navLinks, "salon", data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "salon", data.planSlug, config)}
 
-  <section class="pv-hero">
-    <span class="pv-hero-eyebrow">${e(data.eyebrow)}</span>
-    <h1>${data.title}</h1>
-    <p class="pv-hero-desc">${e(data.desc)}</p>
+  <section class="pv-hero" id="home" ${c.heroImage ? `style="background-image:url('${e(c.heroImage)}');background-size:cover;background-position:center"` : ""}>
+    <span class="pv-hero-eyebrow">${c.heroEyebrow}</span>
+    <h1>${c.heroTitle}</h1>
+    <p class="pv-hero-desc">${c.heroDesc}</p>
     <div class="pv-hero-actions">
       <a class="pv-btn pv-btn-primary" href="#">Đặt lịch ngay</a>
       <a class="pv-btn pv-btn-secondary" href="#">Xem bảng giá</a>
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="services">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Dịch vụ nổi bật</span>
@@ -490,9 +955,9 @@ const renderSalon = (data, config) => `
         <p>Đội ngũ kỹ thuật viên được đào tạo chuyên sâu, sử dụng sản phẩm nhập khẩu cao cấp.</p>
       </div>
       <div class="pv-card-grid">
-        ${data.services.map((s) => `
+        ${c.services.map((s) => `
           <div class="pv-card">
-            <div class="pv-card-icon">${s.icon}</div>
+            ${s.imageUrl ? `<img class="pv-card-media" src="${e(s.imageUrl)}" alt="${e(s.name)}" loading="lazy" />` : `<div class="pv-card-icon">${e(s.icon)}</div>`}
             <h3>${e(s.name)} <small style="color:var(--c-primary);font-size:.8rem">từ ${e(s.price)}</small></h3>
             <p>${e(s.desc)}</p>
           </div>
@@ -501,7 +966,7 @@ const renderSalon = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="gallery">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Gallery kết quả</span>
@@ -509,9 +974,9 @@ const renderSalon = (data, config) => `
         <p>Mỗi ghế là một trải nghiệm cá nhân hoá — không copy, không giống nhau.</p>
       </div>
       <div class="pv-gallery">
-        ${data.gallery.map((g) => `
+        ${c.gallery.map((g) => `
           <div class="pv-gallery-item">
-            <span>${g.icon}</span>
+            ${g.imageUrl ? `<img src="${e(g.imageUrl)}" alt="${e(g.label)}" loading="lazy" style="width:100%;height:100%;object-fit:cover" />` : `<span>${e(g.icon)}</span>`}
             <span class="label">${e(g.label)}</span>
           </div>
         `).join("")}
@@ -519,14 +984,14 @@ const renderSalon = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="pricing">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Bảng giá dịch vụ</span>
         <h2>Gói chăm sóc phù hợp mọi nhu cầu</h2>
       </div>
       <div class="pv-pricing-grid">
-        ${data.pricing.map((p) => `
+        ${c.pricing.map((p) => `
           <div class="pv-pricing-card${p.featured ? " featured" : ""}">
             ${p.featured ? '<span class="pv-pricing-badge">Khuyên dùng</span>' : ""}
             <div class="pv-pricing-name">${e(p.name)}</div>
@@ -541,14 +1006,14 @@ const renderSalon = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section dark">
+  <section class="pv-section dark" id="proof">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Khách hàng tin tưởng</span>
         <h2>Phản hồi từ khách đã trải nghiệm</h2>
       </div>
       <div class="pv-testimonials">
-        ${data.reviews.map((r) => `
+        ${c.reviews.map((r) => `
           <div class="pv-testimonial">
             <div class="pv-testimonial-stars">★★★★★</div>
             <p>${e(r.text)}</p>
@@ -562,7 +1027,7 @@ const renderSalon = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="contact">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Đặt lịch</span>
@@ -587,7 +1052,7 @@ const renderSalon = (data, config) => `
           <div class="pv-form-group">
             <label>Dịch vụ</label>
             <select>
-              ${data.services.map((s) => `<option>${s.name}</option>`).join("")}
+              ${c.services.map((s) => `<option>${s.name}</option>`).join("")}
             </select>
           </div>
           <div class="pv-form-row">
@@ -600,21 +1065,26 @@ const renderSalon = (data, config) => `
     </div>
   </section>
 
+  ${renderPostsSection(config)}
+
+  ${renderPurchaseSection(config, "salon", data)}
   ${renderFooter("salon", data.brand, config)}
-`;
+`; };
 
 /* ============================================================
    TEMPLATE: INDUSTRY
    ============================================================ */
-const renderIndustry = (data, config) => `
+const renderIndustry = (data, config) => {
+  const c = getIndustryContent(data, config);
+  return `
   ${renderTopbar("industry", data, data.planSlug)}
-  ${renderNav(config.siteName || data.brand, data.navLinks, "industry", data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "industry", data.planSlug, config)}
 
-  <section class="pv-hero hero-split">
+  <section class="pv-hero hero-split" id="home">
     <div class="pv-hero-content">
-      <span class="pv-hero-eyebrow">${e(data.eyebrow)}</span>
-      <h1>${data.title}</h1>
-      <p class="pv-hero-desc">${e(data.desc)}</p>
+      <span class="pv-hero-eyebrow">${c.heroEyebrow}</span>
+      <h1>${c.heroTitle}</h1>
+      <p class="pv-hero-desc">${c.heroDesc}</p>
       <div class="pv-hero-actions">
         <a class="pv-btn pv-btn-primary" href="#">Yêu cầu báo giá</a>
         <a class="pv-btn pv-btn-secondary" href="#">Xem danh mục</a>
@@ -623,10 +1093,10 @@ const renderIndustry = (data, config) => `
         ${data.stats.map(([n, l]) => `<div class="pv-hero-stat"><strong>${e(n)}</strong><span>${e(l)}</span></div>`).join("")}
       </div>
     </div>
-    <div class="pv-hero-img"><span class="img-placeholder">⚙️</span></div>
+    <div class="pv-hero-img">${c.heroImage ? `<img src="${e(c.heroImage)}" alt="${c.heroTitle}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />` : `<span class="img-placeholder">⚙️</span>`}</div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="products">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Danh mục sản phẩm</span>
@@ -634,18 +1104,18 @@ const renderIndustry = (data, config) => `
         <p>Phân phối trực tiếp từ hãng. Có kho sẵn, giao trong 24–72 giờ toàn quốc.</p>
       </div>
       <div class="pv-card-grid">
-        ${data.cards.map(([icon, title, desc]) => `
+        ${c.cards.map((card) => `
           <div class="pv-card">
-            <div class="pv-card-icon">${icon}</div>
-            <h3>${e(title)}</h3>
-            <p>${e(desc)}</p>
+            ${card.imageUrl ? `<img class="pv-card-media" src="${e(card.imageUrl)}" alt="${e(card.title)}" loading="lazy" />` : `<div class="pv-card-icon">${e(card.icon)}</div>`}
+            <h3>${e(card.title)}</h3>
+            <p>${e(card.desc)}</p>
           </div>
         `).join("")}
       </div>
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="specs">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Thông số kỹ thuật</span>
@@ -672,26 +1142,26 @@ const renderIndustry = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section dark">
+  <section class="pv-section dark" id="proof">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Đối tác thương hiệu</span>
         <h2>Phân phối chính thức từ các thương hiệu hàng đầu</h2>
       </div>
       <div class="pv-partners">
-        ${data.partners.map((p) => `<div class="pv-partner-logo">${e(p)}</div>`).join("")}
+        ${c.partners.map((p) => `<div class="pv-partner-logo">${e(p)}</div>`).join("")}
       </div>
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="process">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Quy trình</span>
         <h2>Từ yêu cầu đến lắp đặt</h2>
       </div>
       <div class="pv-steps">
-        ${data.flow.map(([title, desc], i) => `
+        ${c.flow.map(([title, desc], i) => `
           <div class="pv-step">
             <div class="pv-step-num">${String(i + 1).padStart(2, "0")}</div>
             <h3>${e(title)}</h3>
@@ -702,7 +1172,7 @@ const renderIndustry = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="contact">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Yêu cầu báo giá</span>
@@ -721,20 +1191,25 @@ const renderIndustry = (data, config) => `
     </div>
   </section>
 
+  ${renderPostsSection(config)}
+
+  ${renderPurchaseSection(config, "industry", data)}
   ${renderFooter("industry", data.brand, config)}
-`;
+`; };
 
 /* ============================================================
    TEMPLATE: LANDING
    ============================================================ */
-const renderLanding = (data, config) => `
+const renderLanding = (data, config) => {
+  const c = getLandingContent(data, config);
+  return `
   ${renderTopbar("landing", data, data.planSlug)}
-  ${renderNav(config.siteName || data.brand, data.navLinks, "landing", data.planSlug)}
+  ${renderNav(config.siteName || data.brand, data.navLinks, "landing", data.planSlug, config)}
 
-  <section class="pv-hero">
-    <span class="pv-hero-eyebrow">${e(data.eyebrow)}</span>
-    <h1>${data.title}</h1>
-    <p class="pv-hero-desc">${e(data.desc)}</p>
+  <section class="pv-hero" id="home">
+    <span class="pv-hero-eyebrow">${c.heroEyebrow}</span>
+    <h1>${c.heroTitle}</h1>
+    <p class="pv-hero-desc">${c.heroDesc}</p>
     <div class="pv-hero-actions">
       <a class="pv-btn pv-btn-primary" href="#">Đăng ký học thử miễn phí</a>
       <a class="pv-btn pv-btn-secondary" href="#">Xem chương trình học</a>
@@ -744,7 +1219,7 @@ const renderLanding = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="benefits">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Lợi ích nổi bật</span>
@@ -752,18 +1227,18 @@ const renderLanding = (data, config) => `
         <p>Thiết kế theo outcome thực tế — học xong biết làm việc ngay, không lý thuyết suông.</p>
       </div>
       <div class="pv-card-grid">
-        ${data.benefits.map(([icon, title, desc]) => `
+        ${c.benefits.map((b) => `
           <div class="pv-card">
-            <div class="pv-card-icon">${icon}</div>
-            <h3>${e(title)}</h3>
-            <p>${e(desc)}</p>
+            ${b.imageUrl ? `<img class="pv-card-media" src="${e(b.imageUrl)}" alt="${e(b.title)}" loading="lazy" />` : `<div class="pv-card-icon">${e(b.icon)}</div>`}
+            <h3>${e(b.title)}</h3>
+            <p>${e(b.desc)}</p>
           </div>
         `).join("")}
       </div>
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="proof">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Học viên nói gì</span>
@@ -784,7 +1259,7 @@ const renderLanding = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section alt">
+  <section class="pv-section alt" id="pricing">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Bảng giá</span>
@@ -792,7 +1267,7 @@ const renderLanding = (data, config) => `
         <p>Thanh toán một lần, học mãi mãi. Không thu phí ẩn.</p>
       </div>
       <div class="pv-pricing-grid">
-        ${data.pricing.map((p) => `
+        ${c.pricing.map((p) => `
           <div class="pv-pricing-card${p.featured ? " featured" : ""}">
             ${p.featured ? '<span class="pv-pricing-badge">Phổ biến nhất</span>' : ""}
             <div class="pv-pricing-name">${e(p.name)}</div>
@@ -800,7 +1275,7 @@ const renderLanding = (data, config) => `
             <ul class="pv-pricing-features">
               ${p.features.map((f) => `<li>${e(f)}</li>`).join("")}
             </ul>
-            <a class="pv-pricing-cta" href="/catalog/web-demo/landing/goi/${e(data.planSlug)}">Đăng ký gói này</a>
+            <a class="pv-pricing-cta" href="#buy">Mua ngay mẫu này</a>
           </div>
         `).join("")}
       </div>
@@ -814,7 +1289,7 @@ const renderLanding = (data, config) => `
         <h2>Giải đáp trước khi đăng ký</h2>
       </div>
       <div class="pv-faq" style="color:#fff">
-        ${data.faq.map(([q, a]) => `
+        ${c.faq.map(([q, a]) => `
           <details class="pv-faq-item" style="border-color:rgba(255,255,255,.15)">
             <summary style="color:#fff">${e(q)}</summary>
             <p style="color:rgba(255,255,255,.65)">${e(a)}</p>
@@ -824,7 +1299,7 @@ const renderLanding = (data, config) => `
     </div>
   </section>
 
-  <section class="pv-section">
+  <section class="pv-section" id="contact">
     <div class="pv-container">
       <div class="pv-section-head">
         <span class="eyebrow">Đăng ký</span>
@@ -840,7 +1315,7 @@ const renderLanding = (data, config) => `
         <div class="pv-form-group">
           <label>Gói quan tâm</label>
           <select>
-            ${data.pricing.map((p) => `<option>${p.name} — ${p.price}</option>`).join("")}
+            ${c.pricing.map((p) => `<option>${p.name} — ${p.price}</option>`).join("")}
           </select>
         </div>
         <button class="pv-form-submit">Đăng ký nhận tư vấn →</button>
@@ -848,8 +1323,11 @@ const renderLanding = (data, config) => `
     </div>
   </section>
 
+  ${renderPostsSection(config)}
+
+  ${renderPurchaseSection(config, "landing", data)}
   ${renderFooter("landing", data.brand, config)}
-`;
+`; };
 
 /* ============================================================
    MAIN
@@ -862,16 +1340,179 @@ const RENDERERS = {
   landing: renderLanding
 };
 
+const COMPANY_RENDERERS = {
+  1: renderCompany,
+  2: renderCompanyV2,
+  3: renderCompanyV3
+};
+
+const initPurchaseInteractions = () => {
+  const stickyCta = document.getElementById("pvStickyCta");
+  const stickyTotal = document.getElementById("pvStickyTotal");
+
+  const syncStickyTotal = (text) => {
+    if (stickyTotal) stickyTotal.textContent = text;
+  };
+
+  // show sticky bar only when buy section is out of viewport (user scrolled past it)
+  const buySection = document.getElementById("buy");
+  if (buySection && stickyCta) {
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        stickyCta.classList.toggle("is-visible", !entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px -60px 0px" }
+    );
+    obs.observe(buySection);
+  }
+
+  document.querySelectorAll(".js-order-box").forEach((box) => {
+    const templateSlug = box.dataset.templateSlug || "company";
+    const base = Number(box.dataset.base || 0);
+    const hostPrice = Number(box.dataset.hostPrice || 0);
+    const domainPrice = Number(box.dataset.domainPrice || 0);
+
+    const hostEnable = box.querySelector(".js-host-enable");
+    const domainEnable = box.querySelector(".js-domain-enable");
+    const hostYears = box.querySelector(".js-host-years");
+    const domainYears = box.querySelector(".js-domain-years");
+    const domainSuffix = box.querySelector(".js-domain-suffix");
+    const domainName = box.querySelector(".js-domain-name");
+    const checkoutBtn = box.querySelector(".js-order-checkout");
+    const noteEl = box.querySelector(".js-order-note");
+    const totalEl = box.querySelector(".js-order-total");
+
+    const getState = () => {
+      const useHost = hostEnable ? hostEnable.checked : false;
+      const useDomain = domainEnable ? domainEnable.checked : false;
+      const hostY = useHost && hostYears ? Number(hostYears.value || 1) : 0;
+      const domainY = useDomain && domainYears ? Number(domainYears.value || 1) : 0;
+      const total = base + (useHost ? hostPrice * hostY : 0) + (useDomain ? domainPrice * domainY : 0);
+      return { useHost, useDomain, hostY, domainY, total };
+    };
+
+    const calc = () => {
+      const state = getState();
+      const formatted = formatVnd(state.total);
+      if (totalEl) totalEl.textContent = formatted;
+      syncStickyTotal(formatted);
+      return state;
+    };
+
+    const setNote = (text, error = false) => {
+      if (!noteEl) return;
+      noteEl.textContent = text;
+      noteEl.style.color = error ? "#b42318" : "";
+    };
+
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener("click", async () => {
+        const state = calc();
+        const payload = {
+          templateSlug,
+          basePrice: base,
+          includeDomain: state.useDomain,
+          domainPrice,
+          domainYears: state.domainY,
+          domainSuffix: state.useDomain ? (domainSuffix?.value || ".com") : "",
+          domainName: state.useDomain ? String(domainName?.value || "").trim() : "",
+          includeHosting: state.useHost,
+          hostingPrice: hostPrice,
+          hostingYears: state.hostY,
+          amount: state.total
+        };
+
+        const originalText = checkoutBtn.textContent;
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = "Dang tao don...";
+        setNote("Dang tao don va chuyen sang trang thanh toan...");
+
+        try {
+          const response = await fetch("/api/web-demo/orders/create-checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || !result?.checkoutUrl) {
+            const message = result?.message || "Khong the tao don hang luc nay. Vui long thu lai.";
+            throw new Error(message);
+          }
+
+          setNote("Da tao don hang. Dang chuyen qua trang thanh toan...");
+          window.location.href = result.checkoutUrl;
+        } catch (error) {
+          setNote(error?.message || "Co loi xay ra khi tao don. Vui long thu lai.", true);
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = originalText || "Thanh toan tu dong";
+        }
+      });
+    }
+
+    [hostEnable, domainEnable, hostYears, domainYears, domainSuffix, domainName].forEach((el) => {
+      if (el) el.addEventListener("input", calc);
+      if (el) el.addEventListener("change", calc);
+    });
+
+    calc();
+  });
+};
+
+const initSupportPopup = (config) => {
+  if (document.getElementById("pvSupportDock")) {
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderSupportPopup(config);
+  const dock = wrapper.firstElementChild;
+  if (!dock) {
+    return;
+  }
+  document.body.appendChild(dock);
+
+  const toggle = document.getElementById("pvSupportToggle");
+  const STORAGE_KEY = "web_preview_support_collapsed";
+  const sync = (collapsed) => {
+    dock.classList.toggle("is-collapsed", collapsed);
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      const icon = toggle.querySelector(".pv-support-toggle-icon");
+      if (icon) {
+        icon.textContent = collapsed ? "+" : "-";
+      }
+    }
+  };
+
+  const collapsed = localStorage.getItem(STORAGE_KEY) === "1";
+  sync(collapsed);
+
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const nextCollapsed = !dock.classList.contains("is-collapsed");
+      sync(nextCollapsed);
+      localStorage.setItem(STORAGE_KEY, nextCollapsed ? "1" : "0");
+    });
+  }
+};
+
 const slug = parseSlug();
 const data = PREVIEW_DATA[slug];
 const config = loadConfig(slug);
+const companyDemoVariant = slug === "company" ? parseCompanyDemoVariant() : 1;
+const activeRenderer = slug === "company"
+  ? (COMPANY_RENDERERS[companyDemoVariant] || renderCompany)
+  : RENDERERS[slug];
 
 document.body.dataset.template = slug;
-document.title = `${config.siteName || data.brand} — ${data.name} | Mẫu web demo`;
+document.title = `${config.siteName || data.brand} — ${data.name}${slug === "company" ? ` (Mau ${companyDemoVariant})` : ""} | Mẫu web demo`;
 
 applyTheme(config);
 
 const root = document.getElementById("previewRoot");
-if (root && RENDERERS[slug]) {
-  root.innerHTML = RENDERERS[slug](data, config);
+if (root && activeRenderer) {
+  root.innerHTML = activeRenderer(data, config);
+  initPurchaseInteractions();
+  initSupportPopup(config);
 }

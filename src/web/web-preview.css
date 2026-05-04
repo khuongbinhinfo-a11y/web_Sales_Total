@@ -380,6 +380,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   margin-bottom: 14px;
   color: var(--c-primary);
 }
+.pv-card-media {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  margin-bottom: 14px;
+}
 .pv-card h3 {
   font-size: 1rem;
   font-weight: 700;
@@ -708,6 +716,90 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 .pv-form-submit:hover { opacity: .88; }
 
 /* ===========================================
+   FLOATING SUPPORT POPUP (all preview pages)
+   =========================================== */
+.pv-support-dock {
+  position: fixed;
+  right: 14px;
+  bottom: 76px;
+  z-index: 1300;
+  width: min(320px, calc(100vw - 24px));
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .2);
+  overflow: hidden;
+}
+
+.pv-support-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: .84rem;
+  font-weight: 700;
+}
+
+.pv-support-toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.pv-support-body {
+  padding: 12px;
+}
+
+.pv-support-title {
+  font-weight: 800;
+  color: var(--c-text);
+  margin-bottom: 4px;
+}
+
+.pv-support-copy {
+  font-size: .82rem;
+  color: var(--c-muted);
+}
+
+.pv-support-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pv-support-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--c-bg);
+  color: var(--c-primary);
+  font-size: .84rem;
+  font-weight: 700;
+  border: 1px solid var(--c-border);
+}
+
+.pv-support-dock.is-collapsed .pv-support-body {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .pv-support-dock {
+    right: 8px;
+    left: 8px;
+    bottom: 62px;
+    width: auto;
+  }
+}
+
+/* ===========================================
    STATS / NUMBERS
    =========================================== */
 .pv-stats-row {
@@ -931,7 +1023,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 /* ===========================================
-   STICKY CTA (mobile)
+   STICKY CTA / TOTAL BAR
    =========================================== */
 .pv-sticky-cta {
   display: none;
@@ -942,14 +1034,19 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   z-index: 800;
   background: var(--c-primary);
   color: #fff;
-  padding: 14px 20px;
-  text-align: center;
+  padding: 12px 20px;
   font-weight: 700;
   font-size: .95rem;
   box-shadow: 0 -4px 20px rgba(0,0,0,.2);
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
 }
-.pv-sticky-cta a { color: #fff; }
-@media (max-width: 640px) { .pv-sticky-cta { display: block; } }
+.pv-sticky-cta.is-visible { display: flex; }
+.pv-sticky-total-label { opacity: .85; font-size: .85rem; font-weight: 400; }
+.pv-sticky-total-amount { font-size: 1.15rem; }
+.pv-sticky-cta a { color: #fff; background: rgba(255,255,255,.18); border-radius: 6px; padding: 7px 18px; text-decoration: none; white-space: nowrap; }
+.pv-sticky-cta a:hover { background: rgba(255,255,255,.3); }
 
 /* ===========================================
    CONTACT / CTA SECTION

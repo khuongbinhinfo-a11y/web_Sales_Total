@@ -168,6 +168,82 @@ function asyncHandler(fn) {
   };
 }
 
+const WEB_DEMO_PRODUCT_BY_SLUG = {
+  company: "prod-web-demo-company-basic",
+  shop: "prod-web-demo-shop-sales",
+  salon: "prod-web-demo-salon-pro",
+  industry: "prod-web-demo-industry-pro",
+  landing: "prod-web-demo-landing-pro"
+};
+
+function normalizeWebDemoSlug(value) {
+  const slug = String(value || "").trim().toLowerCase();
+  return WEB_DEMO_PRODUCT_BY_SLUG[slug] ? slug : "";
+}
+
+function parsePositiveMoney(value, fallback = 0) {
+  const n = Number(String(value || "").replace(/[^\d]/g, ""));
+  if (Number.isFinite(n) && n > 0) {
+    return n;
+  }
+  return fallback;
+}
+
+function parsePositiveInt(value, fallback = 0) {
+  const n = parseInt(String(value || "").trim(), 10);
+  if (Number.isFinite(n) && n > 0) {
+    return n;
+  }
+  return fallback;
+}
+
+function toBool(value) {
+  return value === true || String(value || "").trim().toLowerCase() === "true" || String(value || "") === "1";
+}
+
+function generateWebDemoOrderCode() {
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randomPart = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `WST-${timePart}-${randomPart}`;
+}
+
+function escHtmlServer(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildWebDemoHandoverEmailPayload({ order, customer, deliveryUrl, adminNote, accountEmail, accountPassword, driveLink }) {
+  const orderCode = order?.order_code || order?.id || "(unknown)";
+  const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
+  const currency = order?.currency || "VND";
+  const metadata = (order?.metadata && typeof order.metadata === "object") ? order.metadata : {};
+  const templateSlug = String(metadata.templateSlug || "web-demo").trim();
+
+  const subject = `Ban giao website - Don ${orderCode}`;
+  const text = [
+    "Thong tin ban giao website",
+    `Ma don: ${orderCode}`,
+    `Mau web: ${templateSlug}`,
+    `Tong thanh toan: ${amount} ${currency}`,
+    "",
+    deliveryUrl ? `Link website: ${deliveryUrl}` : "Link website: se cap nhat sau",
+    driveLink ? `Link tai nguyen: ${driveLink}` : "",
+    accountEmail ? `Tai khoan quan tri: ${accountEmail}` : "",
+    accountPassword ? `Mat khau tam: ${accountPassword}` : "",
+    adminNote ? `Ghi chu: ${adminNote}` : "",
+    "",
+    "Zalo chi de ho tro sau ban giao."
+  ].filter(Boolean).join("\n");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f5f7fa;font-family:Segoe UI,Arial,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:24px 12px"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><tr><td style="padding:20px 24px;background:linear-gradient(135deg,#0b4f7c,#1d7cf8);color:#fff"><div style="font-size:20px;font-weight:700">Ban giao website</div><div style="margin-top:6px;font-size:13px;opacity:.9">Don ${escHtmlServer(orderCode)}</div></td></tr><tr><td style="padding:20px 24px"><p style="margin:0 0 12px;color:#111827">Website cua ban da san sang ban giao.</p><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px"><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280;width:36%">Khach hang</td><td style="padding:10px 12px;color:#111827;font-weight:600">${escHtmlServer(customer?.email || "")}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(templateSlug)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tong thanh toan</td><td style="padding:10px 12px;color:#0f766e;font-weight:700">${escHtmlServer(amount)} ${escHtmlServer(currency)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Link website</td><td style="padding:10px 12px;color:#111827">${deliveryUrl ? `<a href="${escHtmlServer(deliveryUrl)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(deliveryUrl)}</a>` : "Se cap nhat sau"}</td></tr>${driveLink ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai nguyen</td><td style="padding:10px 12px;color:#111827"><a href="${escHtmlServer(driveLink)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(driveLink)}</a></td></tr>` : ""}${accountEmail ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai khoan admin</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountEmail)}</td></tr>` : ""}${accountPassword ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mat khau tam</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountPassword)}</td></tr>` : ""}</table>${adminNote ? `<p style="margin:12px 0 0;color:#374151;line-height:1.6">Ghi chu: ${escHtmlServer(adminNote)}</p>` : ""}<p style="margin:12px 0 0;color:#6b7280">Neu can ho tro nhanh, vui long lien he Zalo ho tro.</p></td></tr></table></td></tr></table></body></html>`;
+
+  return { subject, text, html };
+}
+
 function getRequestIp(req) {
   const forwardedFor = String(req?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
   const realIp = String(req?.headers?.["x-real-ip"] || "").trim();
@@ -1833,6 +1909,139 @@ async function handleCreateOrder(req, res) {
 
 app.post("/api/orders", asyncHandler(handleCreateOrder));
 app.post("/api/checkout", asyncHandler(handleCreateOrder));
+
+app.post(
+  "/api/web-demo/orders/create-checkout",
+  asyncHandler(async (req, res) => {
+    const templateSlug = normalizeWebDemoSlug(req.body?.templateSlug);
+
+    if (!templateSlug) {
+      return res.status(400).json({ message: "templateSlug không hợp lệ" });
+    }
+
+    const basePrice = parsePositiveMoney(req.body?.basePrice, 0);
+    const domainPrice = parsePositiveMoney(req.body?.domainPrice, 0);
+    const hostingPrice = parsePositiveMoney(req.body?.hostingPrice, 0);
+
+    const includeDomain = toBool(req.body?.includeDomain);
+    const includeHosting = toBool(req.body?.includeHosting);
+    const domainYears = includeDomain ? Math.min(parsePositiveInt(req.body?.domainYears, 1), 10) : 0;
+    const hostingYears = includeHosting ? Math.min(parsePositiveInt(req.body?.hostingYears, 1), 10) : 0;
+    const domainSuffix = String(req.body?.domainSuffix || ".com").trim();
+    const domainName = String(req.body?.domainName || "").trim();
+
+    if (basePrice <= 0) {
+      return res.status(400).json({ message: "Giá web không hợp lệ" });
+    }
+
+    const domainTotal = includeDomain ? domainPrice * domainYears : 0;
+    const hostingTotal = includeHosting ? hostingPrice * hostingYears : 0;
+    const amount = basePrice + domainTotal + hostingTotal;
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: "Tổng tiền không hợp lệ" });
+    }
+
+    let customer = null;
+    const sessionCustomer = getCustomerFromSession(req);
+    if (sessionCustomer?.customerId) {
+      const customerQuery = await pool.query(
+        `SELECT id, email, full_name FROM customers WHERE id = $1 LIMIT 1`,
+        [sessionCustomer.customerId]
+      );
+      customer = customerQuery.rows[0] || null;
+    }
+
+    if (!customer) {
+      const email = String(req.body?.email || "").trim().toLowerCase();
+      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        const fullName = String(req.body?.fullName || "").trim();
+        customer = await findCustomerByEmail(email);
+        if (!customer) {
+          const tempPasswordHash = hashPassword(`webdemo_${crypto.randomBytes(8).toString("hex")}`);
+          const created = await registerCustomerByEmail(email, fullName || email.split("@")[0], tempPasswordHash);
+          customer = created.customer;
+        }
+      }
+    }
+
+    if (!customer) {
+      return res.status(401).json({
+        message: "Vui lòng đăng nhập tài khoản để mua và thanh toán tự động"
+      });
+    }
+
+    const metadata = {
+      source: "web-demo-preview",
+      templateSlug,
+      contact: {
+        fullName: customer.full_name || customer.fullName || "",
+        email: customer.email || "",
+        phone: String(req.body?.phone || "").trim()
+      },
+      pricing: {
+        basePrice,
+        includeDomain,
+        domainPrice,
+        domainYears,
+        domainName,
+        domainSuffix,
+        includeHosting,
+        hostingPrice,
+        hostingYears,
+        domainTotal,
+        hostingTotal,
+        amount
+      }
+    };
+
+    const insert = await pool.query(
+      `
+        INSERT INTO orders (
+          order_code,
+          customer_id,
+          app_id,
+          product_id,
+          amount,
+          subtotal_amount,
+          discount_amount,
+          discount_percent,
+          currency,
+          status,
+          metadata
+        )
+        VALUES (
+          $1,
+          $2,
+          'app-web-demo-services',
+          $3,
+          $4,
+          $4,
+          0,
+          0,
+          'VND',
+          'pending',
+          $5::jsonb
+        )
+        RETURNING id, order_code, amount, currency, status, created_at
+      `,
+      [
+        generateWebDemoOrderCode(),
+        customer.id,
+        WEB_DEMO_PRODUCT_BY_SLUG[templateSlug],
+        amount,
+        JSON.stringify(metadata)
+      ]
+    );
+
+    const order = insert.rows[0];
+    return res.status(201).json({
+      ok: true,
+      order,
+      checkoutUrl: `/pay/${order.id}`
+    });
+  })
+);
 
 // ── Desktop app license activation endpoint (Google Apps Script-compatible format)
 // Used by map-pro (GG Map Pro) Python desktop app.  Request/response format
@@ -3511,6 +3720,127 @@ app.patch(
       message: "Đã cập nhật trạng thái lead",
       item
     });
+  })
+);
+
+app.post(
+  "/api/admin/web-demo/orders/:orderId/send-handover",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const orderId = String(req.params.orderId || "").trim();
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId là bắt buộc" });
+    }
+
+    const orderQuery = await pool.query(
+      `
+        SELECT o.id, o.order_code, o.amount, o.currency, o.status, o.metadata,
+               c.id AS customer_id, c.email AS customer_email, c.full_name AS customer_full_name
+          FROM orders o
+          JOIN customers c ON c.id = o.customer_id
+         WHERE o.id = $1
+           AND o.app_id = 'app-web-demo-services'
+      `,
+      [orderId]
+    );
+
+    if (!orderQuery.rowCount) {
+      return res.status(404).json({ message: "Không tìm thấy đơn web-demo" });
+    }
+
+    const order = orderQuery.rows[0];
+    if (order.status !== "paid") {
+      return res.status(400).json({ message: "Đơn chưa thanh toán, chưa thể gửi mail bàn giao" });
+    }
+
+    const deliveryUrl = String(req.body?.deliveryUrl || "").trim();
+    const driveLink = String(req.body?.driveLink || "").trim();
+    const accountEmail = String(req.body?.accountEmail || "").trim();
+    const accountPassword = String(req.body?.accountPassword || "").trim();
+    const adminNote = String(req.body?.adminNote || "").trim();
+
+    if (!deliveryUrl && !driveLink && !accountEmail && !adminNote) {
+      return res.status(400).json({ message: "Cần ít nhất một thông tin bàn giao (link web, drive, tài khoản hoặc ghi chú)" });
+    }
+
+    const customer = {
+      id: order.customer_id,
+      email: order.customer_email,
+      fullName: order.customer_full_name
+    };
+
+    const message = buildWebDemoHandoverEmailPayload({
+      order,
+      customer,
+      deliveryUrl,
+      adminNote,
+      accountEmail,
+      accountPassword,
+      driveLink
+    });
+
+    const idempotencyKey = `web_demo_handover:${order.id}:${Date.now()}`;
+    await pool.query(
+      `
+        INSERT INTO email_notification_events(event_type, order_id, idempotency_key, provider, recipient, payload)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+      `,
+      [
+        "web_demo_handover",
+        order.id,
+        idempotencyKey,
+        "gmail",
+        customer.email,
+        JSON.stringify({
+          orderCode: order.order_code,
+          deliveryUrl,
+          driveLink,
+          accountEmail,
+          adminNote,
+          requestedAt: new Date().toISOString()
+        })
+      ]
+    );
+
+    try {
+      const sendResult = await sendGmailMessage({
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+        to: [customer.email],
+        purpose: "web_demo_handover"
+      });
+
+      await pool.query(
+        `
+          UPDATE email_notification_events
+             SET status = $1,
+                 provider_message_id = $2,
+                 updated_at = NOW()
+           WHERE idempotency_key = $3
+        `,
+        ["sent", sendResult?.messageId || null, idempotencyKey]
+      );
+
+      return res.json({
+        ok: true,
+        message: "Đã gửi mail bàn giao cho khách",
+        eventType: "web_demo_handover",
+        recipient: customer.email
+      });
+    } catch (error) {
+      await pool.query(
+        `
+          UPDATE email_notification_events
+             SET status = $1,
+                 reason = $2,
+                 updated_at = NOW()
+           WHERE idempotency_key = $3
+        `,
+        ["failed", String(error?.message || "send_failed"), idempotencyKey]
+      );
+      throw error;
+    }
   })
 );
 

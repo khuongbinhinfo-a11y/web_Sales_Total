@@ -551,7 +551,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* ═══════════════════ PORTAL & ADMIN SHARED ═══════════════════ */
 .page-shell{min-height:100vh;display:flex;flex-direction:column}
-.page-header{background:rgba(255,255,255,.94);border-bottom:1px solid rgba(124,109,216,.14);padding:0 0;backdrop-filter:blur(16px)}
+.page-header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(124,109,216,.14);padding:0 0;backdrop-filter:blur(16px)}
 .page-header .container{display:flex;align-items:center;min-height:58px;gap:12px}
 .page-header .logo{display:flex;align-items:center;justify-content:center;gap:10px;width:auto;height:50px;padding:4px 10px;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.82);box-shadow:0 12px 24px rgba(76,62,159,.12),0 0 0 1px rgba(124,109,216,.12)}
 .page-header .logo-img{width:auto;height:42px;max-width:190px;object-fit:contain}

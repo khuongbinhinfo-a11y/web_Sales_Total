@@ -59,6 +59,13 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>\"']/g, (char) =>
   "'": "&#39;"
 }[char]));
 
+const parseMoney = (value, fallback = 2990000) => {
+  const n = Number(String(value || "").replace(/[^\d]/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+
+const formatVnd = (n) => `${Number(n || 0).toLocaleString("vi-VN")}đ`;
+
 const parseSlug = () => {
   const parts = location.pathname.split("/").filter(Boolean);
   const idx = parts.findIndex((part) => part === "mau-demo");
@@ -67,8 +74,19 @@ const parseSlug = () => {
   return COLLECTIONS[slug] ? slug : "company";
 };
 
-const buildSampleCard = (slug, sample, index) => {
-  const sampleHref = `/preview/${encodeURIComponent(slug)}`;
+const getWebsitePriceForSlug = (slug) => {
+  try {
+    const cfg = JSON.parse(localStorage.getItem(`preview_config_${slug}`) || "{}");
+    return formatVnd(parseMoney(cfg.saleWebsitePrice));
+  } catch {
+    return formatVnd(2990000);
+  }
+};
+
+const buildSampleCard = (slug, sample, index, websitePriceText) => {
+  const sampleHref = slug === "company"
+    ? `/preview/${encodeURIComponent(slug)}?demo=${index + 1}`
+    : `/preview/${encodeURIComponent(slug)}`;
   return `
     <article class="demo-mini-card">
       <div class="demo-mini-media">
@@ -77,6 +95,7 @@ const buildSampleCard = (slug, sample, index) => {
       </div>
       <div class="demo-mini-body">
         <h3>${escapeHtml(sample.title)}</h3>
+        <div class="demo-mini-price">Giá web: <strong>${escapeHtml(websitePriceText)}</strong></div>
         <p>${escapeHtml(sample.note)}</p>
         <div class="demo-mini-actions">
           <a class="is-buy" href="${sampleHref}">Xem mẫu →</a>
@@ -92,6 +111,7 @@ const renderCollectionPage = () => {
 
   const slug = parseSlug();
   const data = COLLECTIONS[slug];
+  const websitePriceText = getWebsitePriceForSlug(slug);
   document.title = `${data.title} | Kho mẫu web`;
 
   root.innerHTML = `
@@ -111,7 +131,7 @@ const renderCollectionPage = () => {
       </div>
 
       <div class="demo-collection-grid">
-        ${data.samples.map((sample, index) => buildSampleCard(slug, sample, index)).join("")}
+        ${data.samples.map((sample, index) => buildSampleCard(slug, sample, index, websitePriceText)).join("")}
       </div>
     </section>
   `;

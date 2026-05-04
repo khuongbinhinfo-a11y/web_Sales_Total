@@ -28,8 +28,8 @@
         <nav class="adm-sidebar-nav">
           <a class="adm-nav-item active" data-tab="general">🏠 Thông tin site</a>
           <a class="adm-nav-item" data-tab="colors">🎨 Màu sắc</a>
-          <a class="adm-nav-item" data-tab="posts">📝 Bài viết / Blog</a>
-          <a class="adm-nav-item" data-tab="pricing">💰 Bảng giá</a>
+          <a class="adm-nav-item" data-tab="content">🧩 Nội dung trang</a>
+          <a class="adm-nav-item" data-tab="posts">📝 Bài viết</a>
           <a class="adm-nav-item" data-tab="contact">📞 Liên hệ</a>
         </nav>
         <div class="adm-sidebar-footer">
@@ -57,8 +57,16 @@
               <input type="text" id="tagline" placeholder="VD: Giải pháp tin cậy cho doanh nghiệp" />
             </div>
             <div class="adm-form-group">
-              <label>Logo (URL ảnh hoặc để trống dùng tên)</label>
-              <input type="url" id="logoUrl" placeholder="https://domain.vn/logo.png" />
+              <label>Logo (có thể dán URL nếu bạn có sẵn)</label>
+              <input type="url" id="logoUrl" placeholder="Để trống nếu dùng nút chọn ảnh từ máy" />
+            </div>
+            <div class="adm-form-group" style="grid-column:1/-1">
+              <div class="adm-upload-row">
+                <button type="button" class="adm-btn-add" id="pickLogoFileBtn">📁 Chọn logo từ máy</button>
+                <button type="button" class="adm-btn-add" id="clearLogoFileBtn">🗑 Xoá logo</button>
+                <input type="file" id="logoFileInput" accept="image/*" class="hidden" />
+              </div>
+              <p class="adm-help" style="margin:8px 0 0">Không cần biết URL. Chỉ cần chọn file ảnh từ máy và bấm Lưu thay đổi.</p>
             </div>
           </div>
         </div>
@@ -89,6 +97,241 @@
           </div>
         </div>
 
+        <!-- Tab: Content -->
+        <div class="adm-tab hidden" id="tab-content">
+
+          <!-- ===== COMPANY ===== -->
+          <div class="adm-content-block hidden" id="content-company">
+            <div class="adm-section-title">📐 Company — bố cục: hero → dịch vụ → quy trình → FAQ → liên hệ</div>
+            <p class="adm-help">Thêm ảnh cho hero hoặc từng card dịch vụ bằng nút chọn ảnh từ máy, không cần URL.</p>
+            <div class="adm-section-sub">① Hero</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group">
+                <label>Hero eyebrow</label>
+                <input type="text" id="companyHeroEyebrow" placeholder="Mẫu web công ty / dịch vụ" />
+              </div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Hero tiêu đề</label>
+                <input type="text" id="companyHeroTitle" placeholder="Website tin cậy để lấy lead tư vấn" />
+              </div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Hero mô tả</label>
+                <textarea id="companyHeroDesc" placeholder="Mô tả ngắn cho section hero..."></textarea>
+              </div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Ảnh hero (có thể dán URL)</label>
+                <input type="url" id="companyHeroImage" placeholder="Để trống nếu không dùng ảnh" />
+              </div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <div class="adm-upload-row">
+                  <button type="button" class="adm-btn-add" id="pickCompanyHeroImageBtn">📁 Chọn ảnh hero từ máy</button>
+                  <button type="button" class="adm-btn-add" id="clearCompanyHeroImageBtn">🗑 Xoá ảnh hero</button>
+                  <input type="file" id="companyHeroImageInput" accept="image/*" class="hidden" />
+                </div>
+              </div>
+            </div>
+            <div class="adm-section-sub">② Section dịch vụ</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group">
+                <label>Tiêu đề</label>
+                <input type="text" id="companyServicesTitle" placeholder="Giải pháp toàn diện cho doanh nghiệp" />
+              </div>
+              <div class="adm-form-group">
+                <label>Mô tả</label>
+                <input type="text" id="companyServicesDesc" placeholder="Từ tư vấn chiến lược đến triển khai..." />
+              </div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">Card dịch vụ (thêm/xoá từng card)</div>
+              <button type="button" class="adm-btn-add" id="addCompanyCardBtn">+ Thêm card</button>
+            </div>
+            <div id="companyCardsList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-section-sub">③ Section quy trình</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group">
+                <label>Tiêu đề</label>
+                <input type="text" id="companyProcessTitle" placeholder="Từ yêu cầu đến kết quả chỉ 3 bước" />
+              </div>
+              <div class="adm-form-group">
+                <label>Mô tả</label>
+                <input type="text" id="companyProcessDesc" placeholder="Minh bạch từng giai đoạn..." />
+              </div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">Các bước quy trình</div>
+              <button type="button" class="adm-btn-add" id="addCompanyFlowBtn">+ Thêm bước</button>
+            </div>
+            <div id="companyFlowList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-section-sub">④ Section FAQ &amp; Liên hệ</div>
+            <div class="adm-form-grid">
+              <div class="adm-form-group">
+                <label>FAQ - tiêu đề</label>
+                <input type="text" id="companyProofTitle" placeholder="Giải đáp trước khi liên hệ" />
+              </div>
+              <div class="adm-form-group">
+                <label>Liên hệ - tiêu đề</label>
+                <input type="text" id="companyContactTitle" placeholder="Muốn làm web công ty theo ngành của bạn?" />
+              </div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Liên hệ - mô tả</label>
+                <textarea id="companyContactDesc" placeholder="Đổi màu, ngành nghề, nội dung và cấu trúc theo yêu cầu..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== SHOP ===== -->
+          <div class="adm-content-block hidden" id="content-shop">
+            <div class="adm-section-title">📐 Shop — bố cục: banner → danh mục → sản phẩm → đánh giá</div>
+            <p class="adm-help">Chỉnh từng mục theo đúng thứ tự hiển thị trên trang shop.</p>
+            <div class="adm-section-sub">① Banner / Hero</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group"><label>Tag khuyến mãi</label>
+                <input type="text" id="shopHeroTag" placeholder="🔥 MEGA SALE THÁNG 5" /></div>
+              <div class="adm-form-group"><label>% giảm giá</label>
+                <input type="text" id="shopHeroOff" placeholder="-40%" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề banner</label>
+                <input type="text" id="shopHeroHeadline" placeholder="Giảm đến 40% toàn bộ sản phẩm" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Mô tả banner</label>
+                <input type="text" id="shopHeroDesc" placeholder="Miễn phí giao hàng từ 299.000đ. Hoàn tiền 7 ngày..." /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Thời hạn khuyến mãi</label>
+                <input type="text" id="shopHeroOffEnds" placeholder="Kết thúc sau 2 ngày" /></div>
+            </div>
+            <div class="adm-section-sub">② Danh mục sản phẩm</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Mỗi danh mục một dòng</label>
+                <textarea id="shopCategoriesRaw" rows="4" placeholder="Tất cả&#10;Mới nhất&#10;Bán chạy&#10;Khuyến mãi&#10;Nam&#10;Nữ"></textarea>
+              </div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">③ Sản phẩm nổi bật</div>
+              <button type="button" class="adm-btn-add" id="addShopProductBtn">+ Thêm sản phẩm</button>
+            </div>
+            <div id="shopProductsList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">④ Đánh giá khách hàng</div>
+              <button type="button" class="adm-btn-add" id="addShopReviewBtn">+ Thêm đánh giá</button>
+            </div>
+            <div id="shopReviewsList" class="adm-items-list"></div>
+          </div>
+
+          <!-- ===== SALON ===== -->
+          <div class="adm-content-block hidden" id="content-salon">
+            <div class="adm-section-title">📐 Salon — bố cục: hero → dịch vụ → gallery → bảng giá → đánh giá</div>
+            <p class="adm-help">Thêm ảnh cho hero, từng dịch vụ hoặc gallery bằng nút chọn ảnh từ máy.</p>
+            <div class="adm-section-sub">① Hero</div>
+            <div class="adm-form-grid" style="margin-bottom:6px">
+              <div class="adm-form-group"><label>Eyebrow</label>
+                <input type="text" id="salonHeroEyebrow" placeholder="Mẫu web salon / beauty" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
+                <input type="text" id="salonHeroTitle" placeholder="Trang salon cao cấp để khách đặt lịch" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Mô tả</label>
+                <textarea id="salonHeroDesc" placeholder="Mô tả ngắn..."></textarea></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Ảnh hero (URL hoặc chọn từ máy)</label>
+                <input type="url" id="salonHeroImage" placeholder="Để trống nếu không dùng ảnh" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <div class="adm-upload-row">
+                  <button type="button" class="adm-btn-add" id="pickSalonHeroImageBtn">📁 Chọn ảnh hero từ máy</button>
+                  <button type="button" class="adm-btn-add" id="clearSalonHeroImageBtn">🗑 Xoá ảnh</button>
+                  <input type="file" id="salonHeroImageInput" accept="image/*" class="hidden" />
+                </div>
+              </div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px;margin-top:20px">
+              <div class="adm-section-sub" style="margin:0">② Dịch vụ nổi bật</div>
+              <button type="button" class="adm-btn-add" id="addSalonServiceBtn">+ Thêm dịch vụ</button>
+            </div>
+            <div id="salonServicesList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">③ Gallery kết quả</div>
+              <button type="button" class="adm-btn-add" id="addSalonGalleryBtn">+ Thêm ảnh</button>
+            </div>
+            <div id="salonGalleryList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">④ Bảng giá (gói dịch vụ)</div>
+              <button type="button" class="adm-btn-add" id="addSalonPricingBtn">+ Thêm gói</button>
+            </div>
+            <div id="salonPricingList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">⑤ Đánh giá khách hàng</div>
+              <button type="button" class="adm-btn-add" id="addSalonReviewBtn">+ Thêm đánh giá</button>
+            </div>
+            <div id="salonReviewsList" class="adm-items-list"></div>
+          </div>
+
+          <!-- ===== INDUSTRY ===== -->
+          <div class="adm-content-block hidden" id="content-industry">
+            <div class="adm-section-title">📐 Industry — bố cục: hero → sản phẩm/thiết bị → quy trình → đối tác</div>
+            <p class="adm-help">Sửa trực tiếp từng mục theo đúng bố cục trang B2B kỹ thuật.</p>
+            <div class="adm-section-sub">① Hero</div>
+            <div class="adm-form-grid" style="margin-bottom:6px">
+              <div class="adm-form-group"><label>Eyebrow</label>
+                <input type="text" id="industryHeroEyebrow" placeholder="Mẫu web industry / kỹ thuật" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
+                <input type="text" id="industryHeroTitle" placeholder="Trang kỹ thuật B2B để nhận yêu cầu báo giá" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Mô tả</label>
+                <textarea id="industryHeroDesc" placeholder="Mô tả ngắn..."></textarea></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Ảnh hero (URL hoặc chọn từ máy)</label>
+                <input type="url" id="industryHeroImage" placeholder="Để trống nếu không dùng ảnh" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <div class="adm-upload-row">
+                  <button type="button" class="adm-btn-add" id="pickIndustryHeroImageBtn">📁 Chọn ảnh hero từ máy</button>
+                  <button type="button" class="adm-btn-add" id="clearIndustryHeroImageBtn">🗑 Xoá ảnh</button>
+                  <input type="file" id="industryHeroImageInput" accept="image/*" class="hidden" />
+                </div>
+              </div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px;margin-top:20px">
+              <div class="adm-section-sub" style="margin:0">② Danh mục sản phẩm / thiết bị</div>
+              <button type="button" class="adm-btn-add" id="addIndustryCardBtn">+ Thêm mục</button>
+            </div>
+            <div id="industryCardsList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">③ Quy trình làm việc</div>
+              <button type="button" class="adm-btn-add" id="addIndustryFlowBtn">+ Thêm bước</button>
+            </div>
+            <div id="industryFlowList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-section-sub" style="margin-top:4px">④ Đối tác thương hiệu</div>
+            <div class="adm-form-grid">
+              <div class="adm-form-group" style="grid-column:1/-1">
+                <label>Mỗi thương hiệu một dòng</label>
+                <textarea id="industryPartnersRaw" rows="4" placeholder="Grundfos&#10;ABB&#10;Schneider&#10;Danfoss"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== LANDING ===== -->
+          <div class="adm-content-block hidden" id="content-landing">
+            <div class="adm-section-title">📐 Landing — bố cục: hero → lợi ích → đánh giá → bảng giá → FAQ</div>
+            <p class="adm-help">Thiết lập từng mục theo đúng thứ tự hiển thị trên landing page.</p>
+            <div class="adm-section-sub">① Hero</div>
+            <div class="adm-form-grid" style="margin-bottom:20px">
+              <div class="adm-form-group"><label>Eyebrow</label>
+                <input type="text" id="landingHeroEyebrow" placeholder="Mẫu landing chuyển đổi" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
+                <input type="text" id="landingHeroTitle" placeholder="Landing page tập trung để chuyển đổi đăng ký" /></div>
+              <div class="adm-form-group" style="grid-column:1/-1"><label>Mô tả</label>
+                <textarea id="landingHeroDesc" placeholder="Mô tả ngắn..."></textarea></div>
+            </div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">② Lợi ích nổi bật</div>
+              <button type="button" class="adm-btn-add" id="addLandingBenefitBtn">+ Thêm lợi ích</button>
+            </div>
+            <div id="landingBenefitsList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">③ Bảng giá (gói đăng ký)</div>
+              <button type="button" class="adm-btn-add" id="addLandingPricingBtn">+ Thêm gói</button>
+            </div>
+            <div id="landingPricingList" class="adm-items-list" style="margin-bottom:24px"></div>
+            <div class="adm-tab-header" style="margin-bottom:12px">
+              <div class="adm-section-sub" style="margin:0">④ FAQ — Câu hỏi thường gặp</div>
+              <button type="button" class="adm-btn-add" id="addLandingFaqBtn">+ Thêm câu hỏi</button>
+            </div>
+            <div id="landingFaqList" class="adm-items-list"></div>
+          </div>
+
+        </div>
+
         <!-- Tab: Posts -->
         <div class="adm-tab hidden" id="tab-posts">
           <div class="adm-tab-header">
@@ -98,14 +341,8 @@
           <div id="postsList" class="adm-items-list"></div>
         </div>
 
-        <!-- Tab: Pricing -->
-        <div class="adm-tab hidden" id="tab-pricing">
-          <div class="adm-tab-header">
-            <div class="adm-section-title">Bảng giá dịch vụ</div>
-            <button class="adm-btn-add" id="addPriceBtn">+ Thêm gói giá</button>
-          </div>
-          <div id="pricingList" class="adm-items-list"></div>
-        </div>
+        <!-- Tab: Sales -->
+        <div class="adm-tab hidden" id="tab-sales">
 
         <!-- Tab: Contact -->
         <div class="adm-tab hidden" id="tab-contact">

@@ -316,6 +316,10 @@ async function sendResendMessage({ subject, text, html, to, purpose }) {
 }
 
 function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) {
+  if (String(order?.appId || "").trim().toLowerCase() === "app-web-demo-services") {
+    return buildWebDemoPaidOrderMessage({ order, customerEmail });
+  }
+
   const orderId = order?.orderCode || order?.id || "(unknown)";
   const appId = order?.appId || "(unknown)";
   const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
@@ -472,6 +476,68 @@ function buildGmailPaidOrderMessage({ order, keyDelivery, customerEmail = "" }) 
   </td>
 </tr>
 
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  return { subject, text, html };
+}
+
+function buildWebDemoPaidOrderMessage({ order, customerEmail = "" }) {
+  const orderId = order?.orderCode || order?.id || "(unknown)";
+  const amount = Number(order?.amount || 0).toLocaleString("vi-VN");
+  const currency = order?.currency || "VND";
+  const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
+  const supportEmail = resolveSupportReplyAddress() || sanitizeMailboxAddress(env.emailFromSupport) || "ungdungthongminh.info@gmail.com";
+  const md = (order?.metadata && typeof order.metadata === "object") ? order.metadata : {};
+
+  const customerDisplay = customerEmail || order?.customerId || "(unknown)";
+  const templateSlug = String(md.templateSlug || "").trim() || "web-demo";
+  const selectedDomain = String(md.domainSelection || "Khong chon").trim();
+  const selectedHosting = String(md.hostingSelection || "Khong chon").trim();
+
+  const subject = `Xac nhan thanh toan don web mau - ${orderId}`;
+
+  const text = [
+    "Xac nhan thanh toan don web mau",
+    "Cam on ban da dat mua mau web.",
+    "",
+    `Ma don: ${orderId}`,
+    `Mau web: ${templateSlug}`,
+    `Tong thanh toan: ${amount} ${currency}`,
+    `Email mua hang: ${customerDisplay}`,
+    `Domain: ${selectedDomain}`,
+    `Hosting: ${selectedHosting}`,
+    "",
+    "Email nay la thong bao thanh toan thanh cong.",
+    "Email ban giao (link/admin thong tin trien khai) se duoc gui tiep theo tu trang Admin tong.",
+    "",
+    `${supportEmail} | ${websiteUrl}`
+  ].join("\n");
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:'Segoe UI',Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f7fa;padding:28px 12px">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+<tr><td style="padding:22px 24px;background:linear-gradient(135deg,#0f4c81,#1d7cf8);color:#fff">
+  <div style="font-size:20px;font-weight:700">Thong bao thanh toan web mau</div>
+  <div style="margin-top:6px;font-size:13px;opacity:.9">Ma don ${_escHtml(orderId)}</div>
+</td></tr>
+<tr><td style="padding:22px 24px">
+  <p style="margin:0 0 12px;color:#111827">Cam on ban da dat mua mau web. Don hang da ghi nhan thanh toan thanh cong.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280;width:38%">Email mua hang</td><td style="padding:10px 12px;color:#111827;font-weight:600">${_escHtml(customerDisplay)}</td></tr>
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827;font-weight:600">${_escHtml(templateSlug)}</td></tr>
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tong thanh toan</td><td style="padding:10px 12px;color:#0f766e;font-weight:700">${_escHtml(amount)} ${_escHtml(currency)}</td></tr>
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Domain</td><td style="padding:10px 12px;color:#111827">${_escHtml(selectedDomain)}</td></tr>
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Hosting</td><td style="padding:10px 12px;color:#111827">${_escHtml(selectedHosting)}</td></tr>
+  </table>
+  <p style="margin:14px 0 0;color:#374151;line-height:1.6">Day la email thong bao #1. Email #2 ban giao se duoc gui tiep theo tu trang Admin tong ngay khi hoan tat cau hinh ban giao.</p>
+  <p style="margin:14px 0 0;color:#6b7280;font-size:12px">${_escHtml(supportEmail)} | <a href="${websiteUrl}" style="color:#1d4ed8;text-decoration:none">${_escHtml(websiteUrl)}</a></p>
+</td></tr>
 </table>
 </td></tr>
 </table>
