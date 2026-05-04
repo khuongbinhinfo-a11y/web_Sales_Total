@@ -51,6 +51,7 @@ const pageHeroDesc = document.getElementById("pageHeroDesc");
 const pageHeroTags = document.getElementById("pageHeroTags");
 const pageHeroActions = document.getElementById("pageHeroActions");
 const pageHeroSide = document.getElementById("pageHeroSide");
+const pageHeroImage = document.querySelector(".page-hero-image");
 const pageHeroVideo = document.querySelector(".page-hero-video");
 const pageHeroVideoSource = document.querySelector(".page-hero-video source");
 const routeStoryContent = document.getElementById("routeStoryContent");
@@ -1238,7 +1239,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    videoSrc: "/Video/hero-phamem.mp4"
+    imageSrc: "/image/hero.jpeg"
   },
   side: null,
   story: {
@@ -1396,7 +1397,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    videoSrc: "/Video/hero-phamem.mp4"
+    imageSrc: "/image/hero.jpeg"
   },
   side: null,
   story: {
@@ -1813,13 +1814,31 @@ function renderHomeContent(homeContent) {
 function renderPageHero(routeContent) {
   if (!routeContent?.hero) return;
   const hero = routeContent.hero;
+  const nextImageSrc = String(hero.imageSrc || "").trim();
+  if (pageHeroImage) {
+    if (nextImageSrc) {
+      if (pageHeroImage.getAttribute("src") !== nextImageSrc) {
+        pageHeroImage.setAttribute("src", nextImageSrc);
+      }
+      pageHeroImage.setAttribute("alt", String(hero.imageAlt || hero.title || ""));
+      pageHeroImage.style.display = "block";
+    } else {
+      pageHeroImage.style.display = "none";
+    }
+  }
   if (pageHeroVideo && pageHeroVideoSource) {
     const nextVideoSrc = String(hero.videoSrc || "/Video/hero-web-brand.mp4").trim();
-    if (pageHeroVideoSource.getAttribute("src") !== nextVideoSrc) {
-      pageHeroVideoSource.setAttribute("src", nextVideoSrc);
-      pageHeroVideo.load();
+    if (nextImageSrc) {
+      pageHeroVideo.pause();
+      pageHeroVideo.style.display = "none";
+    } else {
+      pageHeroVideo.style.display = "block";
+      if (pageHeroVideoSource.getAttribute("src") !== nextVideoSrc) {
+        pageHeroVideoSource.setAttribute("src", nextVideoSrc);
+        pageHeroVideo.load();
+      }
+      pageHeroVideo.play().catch(() => {});
     }
-    pageHeroVideo.play().catch(() => {});
   }
   if (pageHeroKicker) {
     const kicker = String(hero.kicker || "").trim();

@@ -1929,6 +1929,7 @@ button{font-family:inherit;cursor:pointer}
   box-shadow:0 30px 70px rgba(8,23,44,.18);
   overflow:hidden
 }
+.page-hero-image,
 .page-hero-video,
 .page-hero-video-overlay{
   display:none
@@ -2026,6 +2027,9 @@ body[data-route="web"] .page-hero-card{
   box-shadow:0 34px 86px rgba(5,22,44,.24);
   isolation:isolate
 }
+body[data-route="web"] .page-hero-image{
+  display:none!important
+}
 body[data-route="web"] .page-hero-video{
   position:absolute;
   inset:0;
@@ -2108,6 +2112,16 @@ body[data-route="software"] .page-hero-card{
   border:1px solid rgba(18,184,197,.18);
   box-shadow:0 34px 86px rgba(5,22,44,.24);
   isolation:isolate
+}
+body[data-route="software"] .page-hero-image{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:.95
 }
 body[data-route="software"] .page-hero-video{
   position:absolute;
