@@ -1245,7 +1245,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero.jpeg",
+    imageSrc: "/image/hero-phanmem.jpeg?v=1",
     imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
@@ -1408,7 +1408,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero.jpeg",
+    imageSrc: "/image/hero-phanmem.jpeg?v=1",
     imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
@@ -1833,7 +1833,7 @@ function renderPageHero(routeContent) {
   const fallbackHeroImageByRoute = {
     web: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
     demo: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
-    software: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
+    software: { src: "/image/hero-phanmem.jpeg?v=1", alt: "Phần mềm ứng dụng thông minh" },
     study: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
     work: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" }
   };
