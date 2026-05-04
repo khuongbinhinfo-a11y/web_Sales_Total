@@ -41,7 +41,7 @@ button{font-family:inherit;cursor:pointer}
 .announce-bar{background:var(--grad-primary);color:#fff;text-align:center;padding:10px 16px;font-size:.82rem;font-weight:600;letter-spacing:.01em}
 
 /* ═══════════════════ HEADER ═══════════════════ */
-.header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(246,242,255,.86));backdrop-filter:blur(18px);border-bottom:1px solid rgba(124,109,216,.16);box-shadow:0 10px 30px rgba(42,35,90,.08)}
+.header{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(246,242,255,.86));backdrop-filter:blur(18px);border-bottom:1px solid rgba(124,109,216,.16);box-shadow:0 10px 30px rgba(42,35,90,.08)}
 .header::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#7c6dd8,#49c7df,#e8845a,#7c6dd8);background-size:220% 100%;animation:headerGradient 7s linear infinite}
 @keyframes headerGradient{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 .header-inner{display:flex;align-items:center;gap:14px;min-height:58px}
@@ -550,9 +550,10 @@ button{font-family:inherit;cursor:pointer}
 .support-dock.is-collapsed .support-dock-toggle{padding-right:16px}
 
 /* ═══════════════════ PORTAL & ADMIN SHARED ═══════════════════ */
-.page-shell{min-height:100vh;display:flex;flex-direction:column}
-.page-header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(124,109,216,.14);padding:0 0;backdrop-filter:blur(16px)}
+.page-shell{min-height:100vh;display:flex;flex-direction:column;padding-top:58px}
+.page-header{position:fixed;top:0;left:0;right:0;z-index:80;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(124,109,216,.14);padding:0 0;backdrop-filter:blur(16px)}
 .page-header .container{display:flex;align-items:center;min-height:58px;gap:12px}
+.with-fixed-header{padding-top:58px}
 .page-header .logo{display:flex;align-items:center;justify-content:center;gap:10px;width:auto;height:50px;padding:4px 10px;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.82);box-shadow:0 12px 24px rgba(76,62,159,.12),0 0 0 1px rgba(124,109,216,.12)}
 .page-header .logo-img{width:auto;height:42px;max-width:190px;object-fit:contain}
 .page-header .logo-text strong{font-size:.98rem;font-weight:800}
@@ -635,7 +636,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* ═══════════════════ ADMIN ═══════════════════ */
 .admin-page{--bg:#08111d;--surface:#101b2c;--surface-2:#17263d;--line:rgba(145,180,255,.18);--ink:#ecf4ff;--muted:#9ab0cf;--primary:#7dd3fc;--primary-dark:#dbeafe;--primary-light:#93c5fd;--accent:#f59e0b;--success:#4ade80;--danger:#fb7185;--shadow-sm:0 16px 30px rgba(1,8,20,.24);--shadow:0 20px 44px rgba(1,8,20,.36);--shadow-lg:0 32px 80px rgba(1,8,20,.48);background:radial-gradient(circle at top left,rgba(56,189,248,.15),transparent 30%),radial-gradient(circle at top right,rgba(245,158,11,.12),transparent 24%),linear-gradient(180deg,#07111d 0%,#091424 100%);color:var(--ink);font-family:"Manrope",sans-serif;min-height:100vh;height:100vh;overflow:hidden}
-.admin-page .page-header{position:sticky;top:0;z-index:50;background:rgba(6,14,25,.82);border-bottom:1px solid rgba(145,180,255,.14);backdrop-filter:blur(18px)}
+.admin-page .page-header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(6,14,25,.82);border-bottom:1px solid rgba(145,180,255,.14);backdrop-filter:blur(18px)}
 .admin-page .page-header .logo{background:rgba(15,27,44,.82);box-shadow:0 12px 28px rgba(0,0,0,.24),0 0 0 1px rgba(145,180,255,.12)}
 .admin-page .page-header-nav a,.admin-page .page-header-nav button{border-color:rgba(145,180,255,.18);background:rgba(16,27,44,.84);color:var(--ink)}
 .admin-page .page-header-nav a:hover,.admin-page .page-header-nav button:hover{border-color:rgba(125,211,252,.42);color:#fff;background:rgba(20,38,61,.92)}
@@ -3399,6 +3400,8 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
 }
 
 @media(max-width:768px){
+  .with-fixed-header,
+  .page-shell{padding-top:56px}
   .header-inner{position:relative}
   .header-nav-shell{margin-left:auto}
   .header-utilities{

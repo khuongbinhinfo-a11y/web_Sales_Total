@@ -16,11 +16,19 @@
 }
 
 .demo-collection-topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 40;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 14px;
   margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(16, 56, 102, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
 }
 
 .demo-collection-back {

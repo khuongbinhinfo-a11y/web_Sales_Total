@@ -1115,6 +1115,11 @@ function renderPlanZone(product) {
         const grade = Number(button.dataset.grade);
         if (!Number.isInteger(grade)) return;
         const alreadySelected = selectedCap01Grades.includes(grade);
+        if (requiredCount === 1 && !alreadySelected) {
+          selectedCap01Grades = [grade];
+          paintPlanCards(false);
+          return;
+        }
         if (alreadySelected) {
           selectedCap01Grades = selectedCap01Grades.filter((item) => item !== grade);
         } else {

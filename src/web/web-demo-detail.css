@@ -1,6 +1,6 @@
-.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d}
+.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d;padding-top:62px}
 .demo-container{width:min(1180px,100% - 32px);margin-inline:auto}
-.demo-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);border-bottom:1px solid rgba(124,109,216,.14);backdrop-filter:blur(16px)}
+.demo-header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.86);border-bottom:1px solid rgba(124,109,216,.14);backdrop-filter:blur(16px)}
 .demo-header-inner{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px}
 .demo-header-nav{display:flex;align-items:center;gap:8px}
 .demo-header-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(124,109,216,.16);color:#342d65;font-size:.84rem;font-weight:800}
@@ -189,6 +189,7 @@ body[data-demo="spa"]{--demo-main:#c4a484;--demo-accent:#d8b4fe}
 body[data-demo="restaurant"]{--demo-main:#7c2d12;--demo-accent:#f59e0b}
 
 @media(max-width:860px){
+  .demo-page{padding-top:58px}
   .demo-header-inner{min-height:58px}
   .demo-header-nav{gap:6px}
   .demo-header-nav a{min-height:34px;padding:0 10px;font-size:.76rem}
