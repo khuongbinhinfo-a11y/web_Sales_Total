@@ -148,13 +148,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   align-items: center;
   justify-content: space-between;
   height: 60px;
+  position: -webkit-sticky;
   position: sticky;
-  top: 48px;
+  top: var(--pv-nav-top, 48px);
   z-index: 100;
   box-shadow: var(--shadow);
 }
 .preview-topbar ~ * .pv-nav,
-.pv-nav.has-topbar { top: 48px; }
+.pv-nav.has-topbar { top: var(--pv-nav-top, 48px); }
 
 .pv-nav-logo {
   font-weight: 800;
@@ -720,14 +721,15 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
    =========================================== */
 .pv-support-dock {
   position: fixed;
-  right: 14px;
-  bottom: 76px;
+  right: 12px;
+  bottom: 80px;
   z-index: 1300;
-  width: min(320px, calc(100vw - 24px));
-  border: 1px solid var(--c-border);
-  border-radius: 14px;
-  background: var(--c-surface);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, .2);
+  width: min(270px, calc(100vw - 24px));
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(13,36,71,.96), rgba(26,60,110,.94));
+  box-shadow: 0 14px 30px rgba(6, 13, 30, .34);
+  backdrop-filter: blur(8px);
   overflow: hidden;
 }
 
@@ -737,10 +739,10 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
-  background: var(--c-primary);
+  padding: 9px 11px;
+  background: rgba(255,255,255,.08);
   color: #fff;
-  font-size: .84rem;
+  font-size: .8rem;
   font-weight: 700;
 }
 
@@ -750,25 +752,25 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 .pv-support-body {
-  padding: 12px;
+  padding: 10px;
 }
 
 .pv-support-title {
   font-weight: 800;
-  color: var(--c-text);
-  margin-bottom: 4px;
+  color: #eaf2ff;
+  margin-bottom: 3px;
+  font-size: .82rem;
 }
 
 .pv-support-copy {
-  font-size: .82rem;
-  color: var(--c-muted);
+  font-size: .75rem;
+  color: rgba(226,232,240,.78);
 }
 
 .pv-support-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .pv-support-chip {
@@ -776,14 +778,15 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 38px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--c-bg);
-  color: var(--c-primary);
-  font-size: .84rem;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  font-size: .78rem;
   font-weight: 700;
-  border: 1px solid var(--c-border);
+  border: 1px solid rgba(255,255,255,.24);
+  flex: 1;
 }
 
 .pv-support-dock.is-collapsed .pv-support-body {
@@ -792,11 +795,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 
 @media (max-width: 640px) {
   .pv-support-dock {
-    right: 8px;
-    left: 8px;
-    bottom: 62px;
-    width: auto;
+    right: 10px;
+    left: auto;
+    width: min(220px, calc(100vw - 20px));
+    bottom: 74px;
   }
+  .pv-support-copy { display: none; }
 }
 
 /* ===========================================

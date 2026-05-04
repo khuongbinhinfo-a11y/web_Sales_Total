@@ -540,81 +540,26 @@ const planPackageVariantByApp = {
         }
       },
       {
-        key: "cap01_grade_la_1year",
-        label: "Gói 01 năm / Lớp Lá",
-        standardName: "Gói 01 năm / Lớp Lá",
-        standardPrice: 299000,
-        standardProductId: "cap01_grade_la_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [0],
-        standardTag: "01 lớp",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Đúng 1 lớp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
-        },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_1_1year",
-        label: "Gói 01 năm / Lớp 01",
-        standardName: "Gói 01 năm / Lớp 01",
+        key: "cap01_grade_1class_1year",
+        label: "Gói 01 năm / Theo lớp",
+        standardName: "Gói 01 năm / Theo lớp",
         standardPrice: 299000,
         standardProductId: "cap01_grade_1_1year",
         requiredGradeCount: 1,
         selectedGrades: [1],
         standardTag: "01 lớp",
-        standardSaveText: "2 hồ sơ học sinh",
-        standardCompare: { classes: "1", profiles: "2" }
-      },
-      {
-        key: "cap01_grade_2_1year",
-        label: "Gói 01 năm / Lớp 02",
-        standardName: "Gói 01 năm / Lớp 02",
-        standardPrice: 299000,
-        standardProductId: "cap01_grade_2_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [2],
-        standardTag: "01 lớp",
-        standardSaveText: "2 hồ sơ học sinh",
-        standardCompare: { classes: "1", profiles: "2" }
-      },
-      {
-        key: "cap01_grade_3_1year",
-        label: "Gói 01 năm / Lớp 03",
-        standardName: "Gói 01 năm / Lớp 03",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_3_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [3],
-        standardTag: "01 lớp",
-        standardSaveText: "2 hồ sơ học sinh",
-        standardCompare: { classes: "1", profiles: "2" }
-      },
-      {
-        key: "cap01_grade_4_1year",
-        label: "Gói 01 năm / Lớp 04",
-        standardName: "Gói 01 năm / Lớp 04",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_4_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [4],
-        standardTag: "01 lớp",
-        standardSaveText: "2 hồ sơ học sinh",
-        standardCompare: { classes: "1", profiles: "2" }
-      },
-      {
-        key: "cap01_grade_5_1year",
-        label: "Gói 01 năm / Lớp 05",
-        standardName: "Gói 01 năm / Lớp 05",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_5_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [5],
-        standardTag: "01 lớp",
-        standardSaveText: "2 hồ sơ học sinh",
-        standardCompare: { classes: "1", profiles: "2" }
+        standardImage: productImageLibrary.study01Alt,
+        standardFeatures: ["Tất cả môn học", "Chọn 1 lớp phù hợp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        productIdByGrade: {
+          0: "cap01_grade_la_1year",
+          1: "cap01_grade_1_1year",
+          2: "cap01_grade_2_1year"
+        },
+        standardCompare: {
+          classes: "1",
+          profiles: "2"
+        },
+        standardSaveText: "2 hồ sơ học sinh"
       }
     ]
   }
@@ -622,11 +567,21 @@ const planPackageVariantByApp = {
 const CAP01_GRADE_OPTIONS = [
   { value: 0, label: "Lớp Lá" },
   { value: 1, label: "Lớp 01" },
-  { value: 2, label: "Lớp 02" },
-  { value: 3, label: "Lớp 03" },
-  { value: 4, label: "Lớp 04" },
-  { value: 5, label: "Lớp 05" }
+  { value: 2, label: "Lớp 02" }
 ];
+
+function parseCap01GradeFromProductId(productId) {
+  const id = String(productId || "").trim().toLowerCase();
+  if (id.includes("grade_la")) return 0;
+  const m = id.match(/grade_(\d+)_/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isInteger(n) ? n : null;
+}
+
+function isCap01SimpleYear(appId, period) {
+  return String(appId || "").trim().toLowerCase() === "app-study-12" && period === "year";
+}
 
 function fmtVnd(v){
   return new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(v);
@@ -855,6 +810,10 @@ function inferPackageKeyByProduct(appId, period, productId) {
     return null;
   }
 
+  if (isCap01SimpleYear(appId, period) && normalizedProductId.startsWith("cap01_grade_")) {
+    return "cap01_grade_1class_1year";
+  }
+
   const variants = getPackageVariants(appId, period);
   const matched = variants.find((item) => String(item.standardProductId || "").trim().toLowerCase() === normalizedProductId);
   if (matched) {
@@ -986,6 +945,10 @@ function renderPlanZone(product) {
   selectedPlanPeriod = periodFromCycle(product.cycle);
   selectedPlanPackage = inferPackageKeyByProduct(product.appId, selectedPlanPeriod, product.id)
     || getDefaultPackageKey(product.appId, selectedPlanPeriod);
+  const inferredCap01Grade = parseCap01GradeFromProductId(product.id);
+  if (isCap01SimpleYear(product.appId, selectedPlanPeriod) && Number.isInteger(inferredCap01Grade) && inferredCap01Grade >= 0) {
+    selectedCap01Grades = [inferredCap01Grade];
+  }
 
   const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
   selectedPlanTier = inferTierByProduct(initialTargets, product);
@@ -1125,9 +1088,14 @@ function renderPlanZone(product) {
     const baseTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
     const targets = { ...baseTargets };
     if (variant?.standardProductId && selectedPlanPeriod === "year") {
-      const fromCatalog = catalogProducts.find((item) => item.id === variant.standardProductId) || null;
+      let productIdForVariant = variant.standardProductId;
+      if (variant?.productIdByGrade && Array.isArray(selectedCap01Grades) && selectedCap01Grades.length) {
+        const selectedGrade = selectedCap01Grades[0];
+        productIdForVariant = variant.productIdByGrade[selectedGrade] || productIdForVariant;
+      }
+      const fromCatalog = catalogProducts.find((item) => item.id === productIdForVariant) || null;
       targets.standard = fromCatalog || {
-        id: variant.standardProductId,
+        id: productIdForVariant,
         appId: product.appId,
         name: product.name,
         cycle: cycleFromPeriod(selectedPlanPeriod),
@@ -1178,8 +1146,13 @@ function renderPlanZone(product) {
 
     const resolveStandardTarget = (standardVariant) => {
       if (standardVariant?.standardProductId) {
-        return catalogProducts.find((item) => item.id === standardVariant.standardProductId) || {
-          id: standardVariant.standardProductId,
+        let productIdForVariant = standardVariant.standardProductId;
+        if (standardVariant?.productIdByGrade && Array.isArray(selectedCap01Grades) && selectedCap01Grades.length) {
+          const selectedGrade = selectedCap01Grades[0];
+          productIdForVariant = standardVariant.productIdByGrade[selectedGrade] || productIdForVariant;
+        }
+        return catalogProducts.find((item) => item.id === productIdForVariant) || {
+          id: productIdForVariant,
           appId: product.appId,
           name: standardVariant.standardName || product.name,
           cycle: cycleFromPeriod(selectedPlanPeriod),
@@ -1223,6 +1196,9 @@ function renderPlanZone(product) {
       const displayName = isStandardCard && standardVariant?.standardName
         ? standardVariant.standardName
         : tier.name;
+      const displayLabel = isStandardCard && standardVariant?.productIdByGrade && selectedCap01Grades.length
+        ? `${displayName} (${CAP01_GRADE_OPTIONS.find((g) => g.value === selectedCap01Grades[0])?.label || "Theo lớp"})`
+        : displayName;
       const packageKey = isStandardCard ? (standardVariant?.key || "default") : "";
 
       return `
@@ -1230,7 +1206,7 @@ function renderPlanZone(product) {
           ${topTag ? `<span class="pd-plan-top-tag">${escapeHtml(topTag)}</span>` : ""}
           ${media}
           <p class="pd-plan-tier">${tier.icon}</p>
-          <h3 class="pd-plan-name">${escapeHtml(displayName)}</h3>
+          <h3 class="pd-plan-name">${escapeHtml(displayLabel)}</h3>
           <p class="pd-plan-price">${formatPlanPrice(price)}</p>
           <p class="pd-plan-unit">${unit}</p>
           <p class="pd-plan-save">${escapeHtml(saveText)}</p>
@@ -1300,6 +1276,11 @@ function renderPlanZone(product) {
     compare.classList.toggle("is-hidden");
     compareBtn.textContent = opening ? "Ẩn bảng so sánh chi tiết" : "Mở bảng so sánh chi tiết";
   };
+
+  if (isCap01SimpleYear(product.appId, selectedPlanPeriod) && window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
+    compare.classList.add("is-hidden");
+    compareBtn.classList.add("is-hidden");
+  }
 }
 
 /* ── Tab switching ── */
@@ -1557,6 +1538,13 @@ function renderProduct(p){
     </div>`
   ).join("");
   document.getElementById("pdFeatureList").innerHTML = `${renderLongDescription(content, productName)}${featureHtml}`;
+
+  // always restore default tab state to avoid hidden description on mobile revisits
+  document.querySelectorAll(".pd-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === "desc");
+  });
+  document.getElementById("tabDesc")?.classList.remove("is-hidden");
+  document.getElementById("tabGuide")?.classList.add("is-hidden");
 
   // guide tab
   document.getElementById("pdGuideSteps").innerHTML = content.guide.map(s=>

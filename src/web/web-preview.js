@@ -327,18 +327,24 @@ const renderSupportPopup = (config) => {
   <aside class="pv-support-dock" id="pvSupportDock" aria-label="Ho tro nhanh">
     <button class="pv-support-toggle" id="pvSupportToggle" type="button" aria-expanded="true" aria-controls="pvSupportBody">
       <span class="pv-support-toggle-icon">-</span>
-      <span class="pv-support-toggle-text">Ho tro</span>
+      <span class="pv-support-toggle-text">Ho tro nhanh</span>
     </button>
     <div class="pv-support-body" id="pvSupportBody">
-      <p class="pv-support-title">Can ho tro nhanh?</p>
-      <p class="pv-support-copy">Popup nay luon hien tren tat ca trang de khach lien he ngay khi can.</p>
+      <p class="pv-support-title">Can tu van ngay?</p>
+      <p class="pv-support-copy">Nhan de lien he nhanh, khong che noi dung trang.</p>
       <div class="pv-support-actions">
         <a class="pv-support-chip" href="https://zalo.me/${e(supportZalo)}" target="_blank" rel="noopener">Nhan Zalo</a>
-        <a class="pv-support-chip" href="tel:${e(supportPhone)}">Goi ${e(supportPhone)}</a>
+        <a class="pv-support-chip" href="tel:${e(supportPhone)}">Goi ngay</a>
       </div>
     </div>
   </aside>
 `;
+};
+
+const initStickyNavOffset = () => {
+  const topbar = document.querySelector(".preview-topbar");
+  const h = topbar ? Math.max(44, topbar.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--pv-nav-top", `${Math.round(h)}px`);
 };
 
 const renderPostsSection = (config) => {
@@ -1485,7 +1491,9 @@ const initSupportPopup = (config) => {
     }
   };
 
-  const collapsed = localStorage.getItem(STORAGE_KEY) === "1";
+  const mobileDefaultCollapsed = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const collapsed = stored == null ? mobileDefaultCollapsed : stored === "1";
   sync(collapsed);
 
   if (toggle) {
@@ -1517,6 +1525,8 @@ applyTheme(config);
 const root = document.getElementById("previewRoot");
 if (root && activeRenderer) {
   root.innerHTML = activeRenderer(data, config);
+  initStickyNavOffset();
+  window.addEventListener("resize", initStickyNavOffset);
   initPurchaseInteractions();
   initSupportPopup(config);
 }
