@@ -1191,7 +1191,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
     title: "Thiết Kế Website Theo Ngành",
     desc: "",
     tags: [],
-    actions: []
+    actions: [],
+    imageSrc: "/image/hero-ưeb.jpeg"
   },
   side: null,
   story: {
@@ -1294,7 +1295,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
     title: "Industry-Focused Website Design",
     desc: "",
     tags: [],
-    actions: []
+    actions: [],
+    imageSrc: "/image/hero-ưeb.jpeg"
   },
   side: null,
   story: {

@@ -2028,7 +2028,14 @@ body[data-route="web"] .page-hero-card{
   isolation:isolate
 }
 body[data-route="web"] .page-hero-image{
-  display:none!important
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:.96
 }
 body[data-route="web"] .page-hero-video{
   position:absolute;
