@@ -52,8 +52,6 @@ const pageHeroTags = document.getElementById("pageHeroTags");
 const pageHeroActions = document.getElementById("pageHeroActions");
 const pageHeroSide = document.getElementById("pageHeroSide");
 const pageHeroImage = document.querySelector(".page-hero-image");
-const pageHeroVideo = document.querySelector(".page-hero-video");
-const pageHeroVideoSource = document.querySelector(".page-hero-video source");
 const routeStoryContent = document.getElementById("routeStoryContent");
 const webBuildContent = document.getElementById("webBuildContent");
 const catalogEyebrow = document.getElementById("catalogEyebrow");
@@ -636,6 +634,8 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Mẫu Demo",
           title: "Kho mẫu để chọn phong cách web nhanh hơn",
           desc: "Trang này dành cho bước xem nhanh trước khi tư vấn: nhìn bố cục, tone nội dung và cách website phù hợp với từng ngành.",
+          imageSrc: "/image/hero-web.jpeg",
+          imageAlt: "Dịch vụ thiết kế website theo ngành",
           tags: ["Demo theo ngành", "Xem trước giao diện", "Dễ chọn hướng", "Không lẫn catalog"],
           actions: [
             { label: "Quay lại nhánh web", href: "/thiet-ke-web", variant: "outline" },
@@ -752,6 +752,8 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Nhánh Học tập",
           title: "Khu phần mềm dành cho học sinh, ôn tập và luyện kiến thức",
           desc: "Trang này lọc sẵn đúng nhóm học tập để phụ huynh hoặc học sinh không phải lướt qua các công cụ làm việc không liên quan.",
+          imageSrc: "/image/hero.jpeg",
+          imageAlt: "Phần mềm ứng dụng thông minh",
           tags: ["Ôn tập", "Học sinh", "Luyện kiến thức", "Lọc đúng nhóm"],
           actions: [
             { label: "Xem tất cả phần mềm", href: "/phan-mem", variant: "outline" },
@@ -813,6 +815,8 @@ const PUBLIC_PAGE_CONTENT = {
           kicker: "Nhánh Làm việc",
           title: "Công cụ giúp làm việc nhanh hơn, gọn hơn và bớt thao tác lặp",
           desc: "Trang này lọc riêng cho nhóm app phục vụ công việc: video, quản lý, bán hàng, vận hành và các tiện ích tải về.",
+          imageSrc: "/image/hero.jpeg",
+          imageAlt: "Phần mềm ứng dụng thông minh",
           tags: ["Video Creator", "Quản lý", "Tự động hóa", "App vận hành"],
           actions: [
             { label: "Xem tất cả phần mềm", href: "/phan-mem", variant: "outline" },
@@ -1192,7 +1196,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-ưeb.jpeg"
+    imageSrc: "/image/hero-web.jpeg",
+    imageAlt: "Dịch vụ thiết kế website theo ngành"
   },
   side: null,
   story: {
@@ -1240,7 +1245,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero.jpeg"
+    imageSrc: "/image/hero.jpeg",
+    imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
   story: {
@@ -1296,7 +1302,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero-ưeb.jpeg"
+    imageSrc: "/image/hero-web.jpeg",
+    imageAlt: "Dịch vụ thiết kế website theo ngành"
   },
   side: null,
   story: {
@@ -1342,6 +1349,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.demo, {
     kicker: "Demo Library",
     title: "Preview web styles before you talk scope",
     desc: "This page is for fast comparison: layout direction, content tone, and industry fit before consultation.",
+    imageSrc: "/image/hero-web.jpeg",
+    imageAlt: "Dịch vụ thiết kế website theo ngành",
     tags: ["Industry demos", "Fast comparison", "Preview first", "Separate from catalog"],
     actions: [
       { label: "Back to Web Design", href: "/thiet-ke-web", variant: "outline" },
@@ -1399,7 +1408,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.software, {
     desc: "",
     tags: [],
     actions: [],
-    imageSrc: "/image/hero.jpeg"
+    imageSrc: "/image/hero.jpeg",
+    imageAlt: "Phần mềm ứng dụng thông minh"
   },
   side: null,
   story: {
@@ -1475,6 +1485,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.study, {
     kicker: "Study branch",
     title: "Learning software for students and practice flow",
     desc: "This page filters directly to study products so parents and students do not need to scroll through unrelated work tools.",
+    imageSrc: "/image/hero.jpeg",
+    imageAlt: "Phần mềm ứng dụng thông minh",
     tags: ["Study", "Learning", "Students", "Filtered catalog"],
     actions: [
       { label: "View all software", href: "/phan-mem", variant: "outline" },
@@ -1536,6 +1548,8 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.work, {
     kicker: "Work branch",
     title: "Tools for daily work, operations, and content flow",
     desc: "This page filters to apps used for work: video, management, selling support, operations, and downloadable utilities.",
+    imageSrc: "/image/hero.jpeg",
+    imageAlt: "Phần mềm ứng dụng thông minh",
     tags: ["Video Creator", "Management", "Automation", "Work tools"],
     actions: [
       { label: "View all software", href: "/phan-mem", variant: "outline" },
@@ -1816,30 +1830,24 @@ function renderHomeContent(homeContent) {
 function renderPageHero(routeContent) {
   if (!routeContent?.hero) return;
   const hero = routeContent.hero;
-  const nextImageSrc = String(hero.imageSrc || "").trim();
+  const fallbackHeroImageByRoute = {
+    web: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
+    demo: { src: "/image/hero-web.jpeg", alt: "Dịch vụ thiết kế website theo ngành" },
+    software: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
+    study: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" },
+    work: { src: "/image/hero.jpeg", alt: "Phần mềm ứng dụng thông minh" }
+  };
+  const heroImageConfig = fallbackHeroImageByRoute[currentRoute] || {};
+  const nextImageSrc = String(hero.imageSrc || heroImageConfig.src || "").trim();
   if (pageHeroImage) {
     if (nextImageSrc) {
       if (pageHeroImage.getAttribute("src") !== nextImageSrc) {
         pageHeroImage.setAttribute("src", nextImageSrc);
       }
-      pageHeroImage.setAttribute("alt", String(hero.imageAlt || hero.title || ""));
+      pageHeroImage.setAttribute("alt", String(hero.imageAlt || heroImageConfig.alt || hero.title || ""));
       pageHeroImage.style.display = "block";
     } else {
       pageHeroImage.style.display = "none";
-    }
-  }
-  if (pageHeroVideo && pageHeroVideoSource) {
-    const nextVideoSrc = String(hero.videoSrc || "/Video/hero-web-brand.mp4").trim();
-    if (nextImageSrc) {
-      pageHeroVideo.pause();
-      pageHeroVideo.style.display = "none";
-    } else {
-      pageHeroVideo.style.display = "block";
-      if (pageHeroVideoSource.getAttribute("src") !== nextVideoSrc) {
-        pageHeroVideoSource.setAttribute("src", nextVideoSrc);
-        pageHeroVideo.load();
-      }
-      pageHeroVideo.play().catch(() => {});
     }
   }
   if (pageHeroKicker) {
