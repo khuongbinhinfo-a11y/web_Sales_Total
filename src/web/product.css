@@ -891,6 +891,8 @@ main{
   .pd-buy-filter-label{min-width:0;font-size:.66rem;letter-spacing:.01em}
   .pd-buy-filter-row .pd-plan-toggle{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-width:0}
   .pd-plan-tier-btn,.pd-plan-period-btn{width:100%;min-height:29px;padding:0 4px;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #pdBuyPackageRow .pd-plan-toggle{grid-template-columns:1fr}
+  #pdBuyPackageRow .pd-plan-period-btn{min-height:34px;padding:6px 10px;font-size:.76rem;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
   .pd-plan-zone{padding:10px}
   .pd-plan-zone-filter{padding:6px 8px;gap:6px;margin-bottom:10px}
   .pd-plan-zone-label{min-width:42px;font-size:.68rem}

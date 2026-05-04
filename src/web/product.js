@@ -540,101 +540,33 @@ const planPackageVariantByApp = {
         }
       },
       {
-        key: "cap01_grade_la_1year",
-        label: "Gói 01 năm / Lớp Lá",
-        standardName: "Gói 01 năm / Lớp Lá",
-        standardPrice: 299000,
-        standardProductId: "cap01_grade_la_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [0],
-        standardTag: "Lớp Lá",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp Lá", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
-        },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_1_1year",
-        label: "Gói 01 năm / Lớp 01",
-        standardName: "Gói 01 năm / Lớp 01",
+        key: "cap01_grade_1class_1year",
+        label: "Gói 01 năm / 01 lớp",
+        standardName: "Gói 01 năm / 01 lớp",
         standardPrice: 299000,
         standardProductId: "cap01_grade_1_1year",
         requiredGradeCount: 1,
+        requiresGradeSelection: true,
         selectedGrades: [1],
-        standardTag: "Lớp 01",
+        standardTag: "01 lớp",
         standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp 01", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
+        standardFeatures: ["Tất cả môn học", "Chọn 1 lớp phù hợp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
+        productIdByGrade: {
+          0: "cap01_grade_la_1year",
+          1: "cap01_grade_1_1year",
+          2: "cap01_grade_2_1year",
+          3: "cap01_grade_3_1year",
+          4: "cap01_grade_4_1year",
+          5: "cap01_grade_5_1year"
         },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_2_1year",
-        label: "Gói 01 năm / Lớp 02",
-        standardName: "Gói 01 năm / Lớp 02",
-        standardPrice: 299000,
-        standardProductId: "cap01_grade_2_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [2],
-        standardTag: "Lớp 02",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp 02", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
+        priceByGrade: {
+          0: 299000,
+          1: 299000,
+          2: 299000,
+          3: 349000,
+          4: 349000,
+          5: 349000
         },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_3_1year",
-        label: "Gói 01 năm / Lớp 03",
-        standardName: "Gói 01 năm / Lớp 03",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_3_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [3],
-        standardTag: "Lớp 03",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp 03", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
-        },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_4_1year",
-        label: "Gói 01 năm / Lớp 04",
-        standardName: "Gói 01 năm / Lớp 04",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_4_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [4],
-        standardTag: "Lớp 04",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp 04", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
-        standardCompare: {
-          classes: "1",
-          profiles: "2"
-        },
-        standardSaveText: "2 hồ sơ học sinh"
-      },
-      {
-        key: "cap01_grade_5_1year",
-        label: "Gói 01 năm / Lớp 05",
-        standardName: "Gói 01 năm / Lớp 05",
-        standardPrice: 349000,
-        standardProductId: "cap01_grade_5_1year",
-        requiredGradeCount: 1,
-        selectedGrades: [5],
-        standardTag: "Lớp 05",
-        standardImage: productImageLibrary.study01Alt,
-        standardFeatures: ["Tất cả môn học", "Lớp 05", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
         standardCompare: {
           classes: "1",
           profiles: "2"
@@ -925,6 +857,10 @@ function inferPackageKeyByProduct(appId, period, productId) {
     return null;
   }
 
+  if (isCap01SimpleYear(appId, period) && normalizedProductId.startsWith("cap01_grade_")) {
+    return "cap01_grade_1class_1year";
+  }
+
   const variants = getPackageVariants(appId, period);
   const matched = variants.find((item) => String(item.standardProductId || "").trim().toLowerCase() === normalizedProductId);
   if (matched) {
@@ -1134,9 +1070,13 @@ function renderPlanZone(product) {
     packageToggles.forEach((toggleNode) => {
       toggleNode.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
         button.addEventListener("click", () => {
+          const nextPackage = button.dataset.package || "default";
+          const selectedVariant = variants.find((item) => item.key === nextPackage) || null;
           selectedPlanTier = "standard";
-          selectedPlanPackage = button.dataset.package || "default";
-          selectedCap01Grades = [];
+          selectedPlanPackage = nextPackage;
+          selectedCap01Grades = Array.isArray(selectedVariant?.selectedGrades)
+            ? selectedVariant.selectedGrades.slice()
+            : [];
           renderPackageToggle();
           paintPlanCards(false);
         });
@@ -1158,6 +1098,12 @@ function renderPlanZone(product) {
 
     gradeRow.classList.remove("is-hidden");
     const requiredCount = Number(variant.requiredGradeCount || 0);
+    if (requiredCount === 1 && !selectedCap01Grades.length) {
+      const defaultGrade = Array.isArray(variant.selectedGrades) && Number.isInteger(variant.selectedGrades[0])
+        ? variant.selectedGrades[0]
+        : CAP01_GRADE_OPTIONS[0].value;
+      selectedCap01Grades = [defaultGrade];
+    }
     const buttonsHtml = CAP01_GRADE_OPTIONS.map((item) => {
       const active = selectedCap01Grades.includes(item.value);
       return `<button class="pd-plan-period-btn ${active ? "is-active" : ""}" data-grade="${item.value}" type="button">${escapeHtml(item.label)}</button>`;
@@ -1192,8 +1138,15 @@ function renderPlanZone(product) {
     renderPlanCompare(blueprint, variant);
     const basePrices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const prices = { ...basePrices };
-    if (variant && Number(variant.standardPrice) > 0) {
-      prices.standard = Number(variant.standardPrice);
+    if (variant) {
+      let standardPrice = Number(variant.standardPrice || 0);
+      if (variant?.priceByGrade && Array.isArray(selectedCap01Grades) && selectedCap01Grades.length) {
+        const selectedGrade = selectedCap01Grades[0];
+        standardPrice = Number(variant.priceByGrade[selectedGrade] || standardPrice);
+      }
+      if (standardPrice > 0) {
+        prices.standard = standardPrice;
+      }
     }
 
     const baseTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
@@ -1281,8 +1234,9 @@ function renderPlanZone(product) {
 
     grid.innerHTML = cardEntries.map(({ tier, standardVariant }) => {
       const isStandardCard = tier.key === "standard";
+      const resolvedStandardTarget = isStandardCard ? resolveStandardTarget(standardVariant) : null;
       const price = isStandardCard
-        ? Number(standardVariant?.standardPrice || basePrices.standard || 0)
+        ? Number(resolvedStandardTarget?.price || standardVariant?.standardPrice || basePrices.standard || 0)
         : Number(prices?.[tier.key] || 0);
       const saveText = isStandardCard && standardVariant?.standardSaveText
         ? String(standardVariant.standardSaveText).trim()
@@ -1291,7 +1245,7 @@ function renderPlanZone(product) {
         ? standardVariant.standardFeatures
         : (tier.features || []);
       const features = featureList.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-      const targetProduct = isStandardCard ? resolveStandardTarget(standardVariant) : targets[tier.key];
+      const targetProduct = isStandardCard ? resolvedStandardTarget : targets[tier.key];
       const targetPrice = Number(targetProduct?.price || 0);
       const isPurchasable = tier.key !== "free" && !!targetProduct && targetPrice === price;
       const isCurrent = targetProduct && currentProduct && targetProduct.id === currentProduct.id;
