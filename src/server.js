@@ -4781,6 +4781,11 @@ app.get("/san-pham/lam-viec", checkPublicRouteLockMiddleware, (req, res) => {
 });
 
 app.get("/web-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
+  // Legacy URL — redirect sang route canonical mới
+  return res.redirect(301, `/mau-demo/${encodeURIComponent(req.params.id)}`);
+});
+
+app.get("/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });
 

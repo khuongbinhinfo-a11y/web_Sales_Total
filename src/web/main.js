@@ -2447,8 +2447,8 @@ function renderWebDemoMarketLayout(demos) {
               ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
             </div>
             <div class="web-demo-market-actions">
-              <a href="/web-demo/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
-              <a class="is-buy" href="/web-demo/${encodeURIComponent(id)}#demoPricing">${lang === "en" ? "View package" : "Xem gói"}</a>
+              <a href="/mau-demo/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="/mau-demo/${encodeURIComponent(id)}#demoPricing">${lang === "en" ? "View package" : "Xem gói"}</a>
             </div>
           </div>
         </article>
@@ -2502,7 +2502,7 @@ function renderWebDemo(nextId) {
     webDemoFeatures.innerHTML = item.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
   }
   if (webDemoViewLink) {
-    webDemoViewLink.href = `/web-demo/${encodeURIComponent(activeWebDemo)}`;
+    webDemoViewLink.href = `/mau-demo/${encodeURIComponent(activeWebDemo)}`;
     webDemoViewLink.textContent = demoViewLabel;
   }
 }
