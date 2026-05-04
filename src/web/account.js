@@ -47,6 +47,36 @@ function getAppName(snapshot, appId) {
   return item?.appName || appId || "San pham";
 }
 
+function maskKey(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (text.length <= 8) return text;
+  return `${text.slice(0, 4)}-****-****-${text.slice(-4)}`;
+}
+
+function formatGradesLabel(grades) {
+  if (!Array.isArray(grades) || !grades.length) {
+    return "-";
+  }
+  const labels = grades
+    .map((grade) => Number(grade))
+    .filter((grade) => Number.isInteger(grade) && grade >= 0)
+    .sort((a, b) => a - b)
+    .map((grade) => (grade === 0 ? "Lớp Lá" : `Lớp ${String(grade).padStart(2, "0")}`));
+  return labels.length ? labels.join(", ") : "-";
+}
+
+function resolveLicensePackageName(license) {
+  const metadata = (license?.metadata && typeof license.metadata === "object") ? license.metadata : {};
+  if (metadata.packageName) {
+    return String(metadata.packageName);
+  }
+  if (metadata.planId) {
+    return String(metadata.planId);
+  }
+  return String(license?.productId || "Gói đã mua");
+}
+
 function renderSummary(snapshot) {
   const items = getDownloadItems(snapshot);
   document.getElementById("accountName").textContent = snapshot.customer?.fullName || snapshot.customer?.email || "Tai khoan cua toi";
@@ -147,16 +177,46 @@ function renderKeys(snapshot) {
   }
 
   for (const license of licenses) {
+    const metadata = (license?.metadata && typeof license.metadata === "object") ? license.metadata : {};
+    const selectedGrades = Array.isArray(metadata.standardGrades) && metadata.standardGrades.length
+      ? metadata.standardGrades
+      : (Array.isArray(metadata.allowedGrades) ? metadata.allowedGrades : []);
+    const requiredGradeCount = Number(metadata.standardGradesRequiredCount || metadata.grades || 0);
+    const profileLimit = Number(metadata.profiles || metadata.profileLimit || 0);
+    const packageName = resolveLicensePackageName(license);
+    const masked = maskKey(license.licenseKey || "");
+
     blocks.push(`<article class="account-line-card">
       <div>
         <strong>${escapeHtml(getAppName(snapshot, license.appId))}</strong>
+        <p>${escapeHtml(packageName)}</p>
         <p>${escapeHtml(orderStatusLabel(license.status))} · ${license.activatedAt ? `Kich hoat ${escapeHtml(fmtDate(license.activatedAt))}` : "Chua kich hoat"}</p>
+        <p>Lop: ${escapeHtml(formatGradesLabel(selectedGrades))} · Ho so: ${profileLimit > 0 ? profileLimit : "-"} · Yeu cau: ${requiredGradeCount > 0 ? requiredGradeCount : "-"}</p>
+        <p>Het han: ${escapeHtml(fmtDate(license.expiresAt))} · Thiet bi: ${escapeHtml(license.deviceName || license.deviceId || "-")}</p>
       </div>
-      <div class="key-box">${escapeHtml(license.licenseKey || "")}</div>
+      <div>
+        <div class="key-box">${escapeHtml(masked)}</div>
+        ${license.licenseKey ? `<button type="button" class="btn btn-outline account-copy-key-btn" data-key="${escapeHtml(license.licenseKey)}">Copy key</button>` : ""}
+      </div>
     </article>`);
   }
 
   wrap.innerHTML = blocks.join("");
+
+  wrap.querySelectorAll(".account-copy-key-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const text = String(button.dataset.key || "");
+      try {
+        await navigator.clipboard.writeText(text);
+        button.textContent = "Da copy";
+      } catch {
+        button.textContent = "Copy loi";
+      }
+      setTimeout(() => {
+        button.textContent = "Copy key";
+      }, 1200);
+    });
+  });
 }
 
 function renderSubscriptions(snapshot) {

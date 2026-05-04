@@ -8,6 +8,71 @@ const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates")
 const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
 const CAP01_PRIMARY_APP_ID = "hoctap-cap-01";
 const CAP01_APP_ID_ALIASES = new Set(["hoctap-cap-01", "app-study-12"]);
+const CAP01_SELLABLE_PRODUCT_IDS = new Set([
+  "cap01_standard_1year_3grades",
+  "cap01_grade_la_1year",
+  "cap01_grade_1_1year",
+  "cap01_grade_2_1year",
+  "cap01_grade_3_1year",
+  "cap01_grade_4_1year",
+  "cap01_grade_5_1year"
+]);
+const CAP01_PRODUCT_LICENSE_CONFIG = {
+  cap01_standard_1year_3grades: {
+    planId: "cap01_standard_1year_3grades",
+    packageName: "Goi Standard 01 nam - 03 lop",
+    requiredGradeCount: 3,
+    profileLimit: 3,
+    fixedGrades: []
+  },
+  cap01_grade_la_1year: {
+    planId: "cap01_grade_la_1year",
+    packageName: "Goi 01 nam - Lop La",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [0]
+  },
+  cap01_grade_1_1year: {
+    planId: "cap01_grade_1_1year",
+    packageName: "Goi 01 nam - Lop 01",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [1]
+  },
+  cap01_grade_2_1year: {
+    planId: "cap01_grade_2_1year",
+    packageName: "Goi 01 nam - Lop 02",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [2]
+  },
+  cap01_grade_3_1year: {
+    planId: "cap01_grade_3_1year",
+    packageName: "Goi 01 nam - Lop 03",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [3]
+  },
+  cap01_grade_4_1year: {
+    planId: "cap01_grade_4_1year",
+    packageName: "Goi 01 nam - Lop 04",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [4]
+  },
+  cap01_grade_5_1year: {
+    planId: "cap01_grade_5_1year",
+    packageName: "Goi 01 nam - Lop 05",
+    requiredGradeCount: 1,
+    profileLimit: 2,
+    fixedGrades: [5]
+  }
+};
+
+function getCap01ProductLicenseConfig(productIdRaw) {
+  const productId = String(productIdRaw || "").trim().toLowerCase();
+  return CAP01_PRODUCT_LICENSE_CONFIG[productId] || null;
+}
 
 function normalizePublicAppId(appIdRaw) {
   const normalized = String(appIdRaw || "").trim().toLowerCase();
@@ -49,6 +114,7 @@ function mapOrder(row) {
     discountPercent,
     discountCode: row.discount_code || null,
     currency: row.currency,
+    metadata: row.metadata || {},
     status: row.status,
     createdAt: row.created_at,
     paidAt: row.paid_at
@@ -1233,11 +1299,38 @@ async function issueAppLicenseForOrder({ client, order, product }) {
   }
 
   const expiresAt = computeLicenseExpiry(product.cycle);
+  const orderMetadata = (order?.metadata && typeof order.metadata === "object") ? order.metadata : {};
+  const cap01Config = getCap01ProductLicenseConfig(product?.id);
   const metadata = {
     source: "auto_after_paid",
     orderCode: order.order_code,
     cycle: product.cycle
   };
+
+  if (cap01Config) {
+    const orderSelectedGrades = normalizeStandardGrades(orderMetadata.selectedGrades);
+    const fixedGrades = normalizeStandardGrades(cap01Config.fixedGrades);
+    const selectedGrades = fixedGrades.length > 0 ? fixedGrades : orderSelectedGrades;
+    metadata.planId = cap01Config.planId;
+    metadata.packageName = cap01Config.packageName;
+    metadata.basePlan = "standard";
+    metadata.subjects = "all";
+    metadata.grades = cap01Config.requiredGradeCount;
+    metadata.profiles = cap01Config.profileLimit;
+    metadata.allowedGrades = selectedGrades;
+    metadata.standardGrades = selectedGrades;
+    metadata.standardGradesRequiredCount = cap01Config.requiredGradeCount;
+    metadata.features = {
+      desktopOfflineTts: true,
+      downloadByGrade: true,
+      downloadAllGrades: selectedGrades.length >= 3,
+      aiTutor: false,
+    };
+    metadata.license = {
+      deviceLimit: 1,
+      offlineGraceDays: 7,
+    };
+  }
 
   if (String(product.id || "").trim().toLowerCase() === "prod-study-year") {
     metadata.planId = "standard_1year_3grade";
@@ -1361,7 +1454,19 @@ async function getPublicCatalog() {
   const catalog = await getCatalog({ includeHidden: false });
   return {
     ...catalog,
-    products: (catalog.products || []).filter((product) => String(product?.id || '').trim().toLowerCase() !== 'prod-study-topup'),
+    products: (catalog.products || []).filter((product) => {
+      const productId = String(product?.id || "").trim().toLowerCase();
+      if (productId === "prod-study-topup") {
+        return false;
+      }
+
+      const appId = String(product?.appId || "").trim().toLowerCase();
+      if (appId === "app-study-12") {
+        return CAP01_SELLABLE_PRODUCT_IDS.has(productId);
+      }
+
+      return true;
+    }),
   };
 }
 
@@ -1547,7 +1652,7 @@ async function applyDiscountToOrderWithClient({ client, orderId, discountCode })
   };
 }
 
-async function createOrder({ customerId, appId, productId, discountCode }) {
+async function createOrder({ customerId, appId, productId, discountCode, selectedGrades = [] }) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -1569,6 +1674,34 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
     }
 
     const product = productResult.rows[0];
+    const cap01Config = getCap01ProductLicenseConfig(product.id);
+    let orderMetadata = {};
+
+    if (cap01Config) {
+      const normalizedSelectedGrades = normalizeStandardGrades(selectedGrades);
+      const fixedGrades = normalizeStandardGrades(cap01Config.fixedGrades);
+      let finalGrades = normalizedSelectedGrades;
+
+      if (fixedGrades.length > 0) {
+        finalGrades = fixedGrades;
+        if (normalizedSelectedGrades.length > 0 && !sameGradeSet(normalizedSelectedGrades, fixedGrades)) {
+          throw createStoreError("Goi da co lop co dinh, khong duoc doi lop", 400);
+        }
+      }
+
+      if (finalGrades.length !== cap01Config.requiredGradeCount) {
+        throw createStoreError(`Vui long chon dung ${cap01Config.requiredGradeCount} lop truoc khi thanh toan`, 400);
+      }
+
+      orderMetadata = {
+        selectedGrades: finalGrades,
+        requiredGradeCount: cap01Config.requiredGradeCount,
+        profileLimit: cap01Config.profileLimit,
+        planId: cap01Config.planId,
+        packageName: cap01Config.packageName
+      };
+    }
+
     if (String(product?.id || '').trim().toLowerCase() === 'prod-study-topup') {
       throw createStoreError("Top-up 300 Credit đã tạm dừng bán trên web", 409);
     }
@@ -1595,13 +1728,13 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
           `INSERT INTO orders(
              id, order_code, customer_id, app_id, product_id,
              amount, subtotal_amount, discount_amount, discount_percent,
-             currency, status
+             currency, status, metadata
            )
-           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $5, 0, 0, $6, 'pending')
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $5, 0, 0, $6, 'pending', $7::jsonb)
            RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
-                     discount_amount, discount_percent, discount_code, discount_code_id,
+                    discount_amount, discount_percent, discount_code, discount_code_id, metadata,
                      currency, status, created_at, paid_at`,
-          [orderCode, customerId, appId, productId, pricing.effectivePrice, product.currency]
+          [orderCode, customerId, appId, productId, pricing.effectivePrice, product.currency, JSON.stringify(orderMetadata)]
         );
         orderRow = orderResult.rows[0];
         break;
@@ -1633,6 +1766,7 @@ async function createOrder({ customerId, appId, productId, discountCode }) {
         discount_amount: discounted.order.discountAmount,
         discount_percent: discounted.order.discountPercent,
         discount_code: discounted.order.discountCode,
+        metadata: orderRow.metadata || {},
         currency: discounted.order.currency,
         created_at: discounted.order.createdAt,
         paid_at: discounted.order.paidAt
@@ -1878,7 +2012,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     const orderResult = await client.query(
       `SELECT id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
               discount_amount, discount_percent, discount_code, discount_code_id,
-              currency, status, created_at, paid_at
+              currency, status, metadata, created_at, paid_at
        FROM orders
        WHERE id = $1::uuid
        FOR UPDATE`,
@@ -1938,7 +2072,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
        WHERE id = $1::uuid
        RETURNING id, order_code, customer_id, app_id, product_id, amount, subtotal_amount,
                  discount_amount, discount_percent, discount_code, discount_code_id,
-                 currency, status, created_at, paid_at`,
+                 currency, status, metadata, created_at, paid_at`,
       [orderId]
     );
     const paidOrder = paidOrderResult.rows[0];

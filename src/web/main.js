@@ -116,12 +116,13 @@ initSupportDock();
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
-  { id:"prod-study-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:89000,  credits:120 },
-  { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
-  { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
-  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1299000,  credits:9990 },
-  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1599000,  credits:15990 },
+  { id:"cap01_standard_1year_3grades", appId:"app-study-12",  name:"CAP01 - Standard 01 năm / 03 lớp", cycle:"yearly", price:599000,  credits:1800 },
+  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_1_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 01", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_2_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 02", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_3_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 03", cycle:"yearly", price:349000,  credits:900 },
+  { id:"cap01_grade_4_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 04", cycle:"yearly", price:349000,  credits:900 },
+  { id:"cap01_grade_5_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 05", cycle:"yearly", price:349000,  credits:900 },
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"map-pro", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:0 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
@@ -2511,12 +2512,13 @@ function getProductDisplayPrice(product) {
 
 function pickStudyCap01Representative(products) {
   const preferredIds = [
-    "prod-study-month",
-    "prod-study-year",
-    "prod-study-standard-lifetime",
-    "prod-study-premium-month",
-    "prod-study-premium-year",
-    "prod-study-premium-lifetime"
+    "cap01_standard_1year_3grades",
+    "cap01_grade_la_1year",
+    "cap01_grade_1_1year",
+    "cap01_grade_2_1year",
+    "cap01_grade_3_1year",
+    "cap01_grade_4_1year",
+    "cap01_grade_5_1year"
   ];
   for (const id of preferredIds) {
     const found = products.find((item) => item.id === id);

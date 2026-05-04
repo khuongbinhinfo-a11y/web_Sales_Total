@@ -3,13 +3,13 @@
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
-  { id:"prod-study-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:89000,  credits:120 },
-  { id:"standard_1year_1grade", appId:"app-study-12",  name:"Gói 1 năm / Lớp", cycle:"yearly", price:299000,  credits:1800 },
-  { id:"prod-study-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"prod-study-premium-month", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"monthly", price:119000,  credits:240 },
-  { id:"prod-study-premium-year", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"yearly", price:899000,  credits:3600 },
-  { id:"prod-study-standard-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1299000,  credits:9990 },
-  { id:"prod-study-premium-lifetime", appId:"app-study-12",  name:"Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học", cycle:"one_time", price:1599000,  credits:15990 },
+  { id:"cap01_standard_1year_3grades", appId:"app-study-12",  name:"CAP01 - Standard 01 năm / 03 lớp", cycle:"yearly", price:599000,  credits:1800 },
+  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_1_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 01", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_2_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 02", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_3_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 03", cycle:"yearly", price:349000,  credits:900 },
+  { id:"cap01_grade_4_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 04", cycle:"yearly", price:349000,  credits:900 },
+  { id:"cap01_grade_5_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 05", cycle:"yearly", price:349000,  credits:900 },
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"map-pro", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:0 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
@@ -458,9 +458,12 @@ let selectedPlanPeriod = "month";
 let selectedPlanTier = "standard";
 let selectedPlanUnavailable = false;
 let selectedPlanPackage = "default";
+let selectedPlanGradeIncomplete = false;
+let selectedCap01Grades = [];
 
 const planBlueprintByApp = {
   hoctap: {
+    periods: ["year"],
     periodLabels: { month: "Tháng", year: "Năm", lifetime: "Trọn đời" },
     tiers: [
       {
@@ -481,77 +484,40 @@ const planBlueprintByApp = {
       {
         key: "standard",
         icon: "⭐",
-        name: "Tiêu chuẩn",
+        name: "Gói trả phí",
         tag: "Phổ biến nhất",
-        saveByPeriod: { month: "Tiết kiệm 30%", year: "Tiết kiệm 44%", lifetime: "" },
+        saveByPeriod: { month: "", year: "Mua 1 key / 1 gói", lifetime: "" },
         features: [
           "Tất cả môn học",
-          "Tối đa 3 lớp",
-          "3 hồ sơ học sinh",
+          "01 gói tương ứng 01 key",
+          "Linh hoạt gói 01 lớp hoặc 03 lớp",
           "Ôn tập thông minh AI",
           "Bảng phụ huynh cơ bản",
           "Phòng trí nhớ + TTS",
           "Báo cáo tiến độ cơ bản",
           "Không quảng cáo"
         ]
-      },
-      {
-        key: "premium",
-        icon: "👑",
-        name: "Cao cấp",
-        saveByPeriod: { month: "Tiết kiệm 35%", year: "Tiết kiệm 37%", lifetime: "" },
-        features: [
-          "Tất cả môn + tất cả lớp",
-          "5 hồ sơ học sinh",
-          "Toàn bộ tính năng AI nâng cao",
-          "Thi đấu Bot & PvP",
-          "Cửa hàng Avatar",
-          "Ngoại tuyến + xuất backup",
-          "Hỗ trợ ưu tiên 24/7",
-          "Cập nhật nội dung sớm",
-          "Badge & Theme độc quyền",
-          "Báo cáo tiến bộ chi tiết",
-          "Tùy chỉnh giáo trình"
-        ]
       }
     ],
     prices: {
-      month: { free: 0, standard: 89000, premium: 119000 },
-      year: { free: 0, standard: 599000, premium: 899000 },
-      lifetime: { free: 0, standard: 1299000, premium: 1599000 }
+      year: { free: 0, standard: 599000 }
     },
     compareRows: [
-      { label: "Số môn học", values: { free: "1", standard: "Tất cả", premium: "Tất cả" } },
-      { label: "Số lớp", values: { free: "1", standard: "3", premium: "Tất cả" } },
-      { label: "Hồ sơ học sinh", values: { free: "1", standard: "3", premium: "5" } },
-      { label: "Thử thách hằng ngày", values: { free: false, standard: true, premium: true } },
-      { label: "Thi đấu", values: { free: false, standard: false, premium: true } },
-      { label: "Cửa hàng Avatar", values: { free: false, standard: false, premium: true } },
-      { label: "Ôn tập thông minh", values: { free: false, standard: true, premium: true } },
-      { label: "Bảng phụ huynh", values: { free: false, standard: true, premium: true } },
-      { label: "Ngoại tuyến", values: { free: false, standard: false, premium: true } },
-      { label: "Giọng đọc TTS", values: { free: false, standard: true, premium: true } },
-      { label: "Xuất dữ liệu", values: { free: false, standard: false, premium: true } },
-      { label: "Không quảng cáo", values: { free: false, standard: true, premium: true } },
-      { label: "Badge & Theme", values: { free: false, standard: false, premium: true } },
-      { label: "Hỗ trợ ưu tiên", values: { free: false, standard: false, premium: true } }
+      { label: "Số môn học", values: { free: "1", standard: "Tất cả" } },
+      { label: "Số lớp", values: { free: "1", standard: "Theo gói đã chọn" } },
+      { label: "Hồ sơ học sinh", values: { free: "1", standard: "2 hoặc 3" } },
+      { label: "Ôn tập thông minh", values: { free: false, standard: true } },
+      { label: "Bảng phụ huynh", values: { free: false, standard: true } },
+      { label: "Giọng đọc TTS", values: { free: false, standard: true } },
+      { label: "Không quảng cáo", values: { free: false, standard: true } }
     ]
   }
 };
 
 const planProductIdMapByApp = {
   "app-study-12": {
-    month: {
-      standard: "prod-study-month",
-      premium: "prod-study-premium-month"
-    },
     year: {
-      standard: "prod-study-year",
-      premium: "prod-study-premium-year"
-    },
-    lifetime: {
-      standard: "prod-study-standard-lifetime",
-      premium: "prod-study-premium-lifetime"
+      standard: "cap01_standard_1year_3grades"
     }
   }
 };
@@ -560,39 +526,107 @@ const planPackageVariantByApp = {
   "app-study-12": {
     year: [
       {
-        key: "default",
-        label: "Gói 1 năm / 3 lớp",
-        standardName: "Gói 1 năm / 3 lớp",
+        key: "cap01_standard_1year_3grades",
+        label: "Gói Standard 01 năm / 03 lớp",
+        standardName: "Standard 01 năm / 03 lớp",
         standardPrice: 599000,
-        standardSaveText: "3 hồ sơ học sinh"
+        standardProductId: "cap01_standard_1year_3grades",
+        standardSaveText: "Chọn đúng 3 lớp",
+        requiredGradeCount: 3,
+        requiresGradeSelection: true,
+        standardCompare: {
+          classes: "3",
+          profiles: "3"
+        }
       },
       {
-        key: "onegrade",
-        label: "Gói 1 năm / Lớp",
-        standardName: "Gói 1 năm / Lớp",
+        key: "cap01_grade_la_1year",
+        label: "Gói 01 năm / Lớp Lá",
+        standardName: "Gói 01 năm / Lớp Lá",
         standardPrice: 299000,
-        standardProductId: "standard_1year_1grade",
-        standardTag: "Nhu cầu cao nhất",
+        standardProductId: "cap01_grade_la_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [0],
+        standardTag: "01 lớp",
         standardImage: productImageLibrary.study01Alt,
-        standardFeatures: [
-          "Tất cả môn học",
-          "Đúng 1 lớp",
-          "Tối đa 2 hồ sơ học sinh",
-          "Ôn tập thông minh AI",
-          "Bảng phụ huynh cơ bản",
-          "Phòng trí nhớ + TTS",
-          "Báo cáo tiến độ cơ bản",
-          "Không quảng cáo"
-        ],
+        standardFeatures: ["Tất cả môn học", "Đúng 1 lớp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
         standardCompare: {
           classes: "1",
           profiles: "2"
         },
         standardSaveText: "2 hồ sơ học sinh"
+      },
+      {
+        key: "cap01_grade_1_1year",
+        label: "Gói 01 năm / Lớp 01",
+        standardName: "Gói 01 năm / Lớp 01",
+        standardPrice: 299000,
+        standardProductId: "cap01_grade_1_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [1],
+        standardTag: "01 lớp",
+        standardSaveText: "2 hồ sơ học sinh",
+        standardCompare: { classes: "1", profiles: "2" }
+      },
+      {
+        key: "cap01_grade_2_1year",
+        label: "Gói 01 năm / Lớp 02",
+        standardName: "Gói 01 năm / Lớp 02",
+        standardPrice: 299000,
+        standardProductId: "cap01_grade_2_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [2],
+        standardTag: "01 lớp",
+        standardSaveText: "2 hồ sơ học sinh",
+        standardCompare: { classes: "1", profiles: "2" }
+      },
+      {
+        key: "cap01_grade_3_1year",
+        label: "Gói 01 năm / Lớp 03",
+        standardName: "Gói 01 năm / Lớp 03",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_3_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [3],
+        standardTag: "01 lớp",
+        standardSaveText: "2 hồ sơ học sinh",
+        standardCompare: { classes: "1", profiles: "2" }
+      },
+      {
+        key: "cap01_grade_4_1year",
+        label: "Gói 01 năm / Lớp 04",
+        standardName: "Gói 01 năm / Lớp 04",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_4_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [4],
+        standardTag: "01 lớp",
+        standardSaveText: "2 hồ sơ học sinh",
+        standardCompare: { classes: "1", profiles: "2" }
+      },
+      {
+        key: "cap01_grade_5_1year",
+        label: "Gói 01 năm / Lớp 05",
+        standardName: "Gói 01 năm / Lớp 05",
+        standardPrice: 349000,
+        standardProductId: "cap01_grade_5_1year",
+        requiredGradeCount: 1,
+        selectedGrades: [5],
+        standardTag: "01 lớp",
+        standardSaveText: "2 hồ sơ học sinh",
+        standardCompare: { classes: "1", profiles: "2" }
       }
     ]
   }
 };
+const CAP01_GRADE_OPTIONS = [
+  { value: 0, label: "Lớp Lá" },
+  { value: 1, label: "Lớp 01" },
+  { value: 2, label: "Lớp 02" },
+  { value: 3, label: "Lớp 03" },
+  { value: 4, label: "Lớp 04" },
+  { value: 5, label: "Lớp 05" }
+];
 
 function fmtVnd(v){
   return new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(v);
@@ -896,10 +930,17 @@ async function startCheckoutForProduct(product) {
   }
 
   try {
+    const selectedGrades = Array.isArray(product.selectedGrades) ? product.selectedGrades : [];
+    const requiredGradeCount = Number(product.requiredGradeCount || 0);
+    if (requiredGradeCount > 0 && selectedGrades.length !== requiredGradeCount) {
+      alert(`Vui lòng chọn đúng ${requiredGradeCount} lớp trước khi thanh toán.`);
+      return;
+    }
+
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ appId: product.appId, productId: product.id })
+      body: JSON.stringify({ appId: product.appId, productId: product.id, selectedGrades })
     });
     const d = await res.json();
     if (!res.ok) {
@@ -925,6 +966,8 @@ function renderPlanZone(product) {
   const packageToggle = document.getElementById("pdPackageToggle");
   const packageRowTop = document.getElementById("pdBuyPackageRow");
   const packageToggleTop = document.getElementById("pdPackageToggleTop");
+  const gradeRow = document.getElementById("pdGradeFilterRow");
+  const gradeToggle = document.getElementById("pdGradeToggle");
   const grid = document.getElementById("pdPlanGrid");
   const compare = document.getElementById("pdPlanCompare");
   const compareBtn = document.getElementById("pdCompareToggle");
@@ -947,7 +990,7 @@ function renderPlanZone(product) {
   const initialTargets = pickPlanTargets(product.appId, selectedPlanPeriod, product);
   selectedPlanTier = inferTierByProduct(initialTargets, product);
 
-  const periods = ["month", "year", "lifetime"];
+  const periods = Array.isArray(blueprint.periods) && blueprint.periods.length ? blueprint.periods : ["month", "year", "lifetime"];
   const periodButtons = periods.map((period) => `
     <button class="pd-plan-period-btn ${selectedPlanPeriod === period ? "is-active" : ""}" data-period="${period}" type="button">
       ${blueprint.periodLabels[period]}
@@ -1005,7 +1048,7 @@ function renderPlanZone(product) {
     selectedPlanPackage = activeKey;
 
     const buttonsHtml = variants.map((variant) => `
-      <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""} ${variant.key === "onegrade" ? "is-recommended" : ""}" data-package="${variant.key}" type="button">
+      <button class="pd-plan-period-btn ${variant.key === activeKey ? "is-active" : ""}" data-package="${variant.key}" type="button">
         ${escapeHtml(variant.label)}
       </button>
     `).join("");
@@ -1019,9 +1062,48 @@ function renderPlanZone(product) {
         button.addEventListener("click", () => {
           selectedPlanTier = "standard";
           selectedPlanPackage = button.dataset.package || "default";
+          selectedCap01Grades = [];
           renderPackageToggle();
           paintPlanCards(false);
         });
+      });
+    });
+  }
+
+  function renderGradeToggle(variant) {
+    if (!gradeRow || !gradeToggle) {
+      return;
+    }
+
+    if (!variant?.requiresGradeSelection) {
+      gradeRow.classList.add("is-hidden");
+      gradeToggle.innerHTML = "";
+      selectedCap01Grades = Array.isArray(variant?.selectedGrades) ? variant.selectedGrades.slice() : [];
+      return;
+    }
+
+    gradeRow.classList.remove("is-hidden");
+    const requiredCount = Number(variant.requiredGradeCount || 0);
+    const buttonsHtml = CAP01_GRADE_OPTIONS.map((item) => {
+      const active = selectedCap01Grades.includes(item.value);
+      return `<button class="pd-plan-period-btn ${active ? "is-active" : ""}" data-grade="${item.value}" type="button">${escapeHtml(item.label)}</button>`;
+    }).join("");
+
+    gradeToggle.innerHTML = buttonsHtml;
+    gradeToggle.querySelectorAll(".pd-plan-period-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const grade = Number(button.dataset.grade);
+        if (!Number.isInteger(grade)) return;
+        const alreadySelected = selectedCap01Grades.includes(grade);
+        if (alreadySelected) {
+          selectedCap01Grades = selectedCap01Grades.filter((item) => item !== grade);
+        } else {
+          if (requiredCount > 0 && selectedCap01Grades.length >= requiredCount) {
+            return;
+          }
+          selectedCap01Grades = [...selectedCap01Grades, grade].sort((a, b) => a - b);
+        }
+        paintPlanCards(false);
       });
     });
   }
@@ -1032,6 +1114,7 @@ function renderPlanZone(product) {
     }
 
     const variant = getSelectedPackageVariant(product.appId, selectedPlanPeriod);
+    renderGradeToggle(variant);
     renderPlanCompare(blueprint, variant);
     const basePrices = blueprint.prices[selectedPlanPeriod] || blueprint.prices.month;
     const prices = { ...basePrices };
@@ -1064,9 +1147,20 @@ function renderPlanZone(product) {
     const selectedPrice = Number(prices?.[selectedPlanTier] || 0);
     const selectedTargetPrice = Number(selectedTarget?.price || 0);
     const selectedPriceMatched = selectedTarget && selectedTargetPrice === selectedPrice;
+    const selectedGrades = variant?.requiresGradeSelection
+      ? selectedCap01Grades.slice()
+      : (Array.isArray(variant?.selectedGrades) ? variant.selectedGrades.slice() : []);
+    const requiredGradeCount = Number(variant?.requiredGradeCount || 0);
+    selectedPlanGradeIncomplete = selectedPlanTier === "standard"
+      && requiredGradeCount > 0
+      && selectedGrades.length !== requiredGradeCount;
     const selectedDisplayPrice = selectedTarget ? getProductDisplayPrice(selectedTarget) : getProductDisplayPrice({ price: selectedPrice });
-    selectedPlanUnavailable = selectedPlanTier !== "free" && !selectedPriceMatched;
-    selectedCheckoutProduct = (selectedPlanTier === "free" || selectedPlanUnavailable) ? null : selectedTarget;
+    selectedPlanUnavailable = selectedPlanTier !== "free" && (!selectedPriceMatched || selectedPlanGradeIncomplete);
+    selectedCheckoutProduct = (selectedPlanTier === "free" || selectedPlanUnavailable || !selectedTarget) ? null : {
+      ...selectedTarget,
+      selectedGrades,
+      requiredGradeCount
+    };
     document.getElementById("pdPrice").innerHTML = selectedDisplayPrice.hasDirectSale
       ? `${fmtVnd(selectedDisplayPrice.effectivePrice)} <span class="p-card-old-price" style="font-size:.95rem">${fmtVnd(selectedDisplayPrice.comparePrice)}</span>`
       : fmtVnd(selectedDisplayPrice.effectivePrice);
@@ -1132,7 +1226,7 @@ function renderPlanZone(product) {
       const packageKey = isStandardCard ? (standardVariant?.key || "default") : "";
 
       return `
-        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"} ${isStandardCard && standardVariant?.key === "onegrade" ? "is-hot" : ""}" data-tier="${tier.key}" data-package="${escapeHtml(packageKey)}">
+        <article class="pd-plan-card ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : "is-muted"}" data-tier="${tier.key}" data-package="${escapeHtml(packageKey)}">
           ${topTag ? `<span class="pd-plan-top-tag">${escapeHtml(topTag)}</span>` : ""}
           ${media}
           <p class="pd-plan-tier">${tier.icon}</p>
@@ -1327,9 +1421,11 @@ function updateBuyBtn(){
     return;
   }
   if (hasPlanBlueprint && selectedPlanUnavailable) {
-    btn.textContent = "⏳ Sắp mở bán";
+    btn.textContent = selectedPlanGradeIncomplete ? "✅ Chọn đủ lớp" : "⏳ Sắp mở bán";
     btn.disabled = true;
-    if(note) note.textContent = "Chu kỳ/gói này chưa có mã sản phẩm đúng giá, tạm thời chưa thanh toán được.";
+    if(note) note.textContent = selectedPlanGradeIncomplete
+      ? "Gói Standard 03 lớp bắt buộc chọn đúng 3 lớp trước khi thanh toán."
+      : "Chu kỳ/gói này chưa có mã sản phẩm đúng giá, tạm thời chưa thanh toán được.";
     return;
   }
   if(!active){

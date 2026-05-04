@@ -666,6 +666,13 @@ function buildAiAppLicenseView(license) {
   const normalizedProductId = String(license?.productId || '').trim().toLowerCase();
   const metadataPlanId = String(license?.metadata?.planId || '').trim();
   const planByProductId = {
+    'cap01_standard_1year_3grades': 'cap01_standard_1year_3grades',
+    'cap01_grade_la_1year': 'cap01_grade_la_1year',
+    'cap01_grade_1_1year': 'cap01_grade_1_1year',
+    'cap01_grade_2_1year': 'cap01_grade_2_1year',
+    'cap01_grade_3_1year': 'cap01_grade_3_1year',
+    'cap01_grade_4_1year': 'cap01_grade_4_1year',
+    'cap01_grade_5_1year': 'cap01_grade_5_1year',
     'prod-study-month': 'standard_month',
     'prod-study-year': 'standard_year',
     'standard_1year_1grade': 'standard_1year_1grade',
@@ -696,10 +703,17 @@ function buildCap01Entitlement(aiLicense) {
   const metadata = (aiLicense?.metadata && typeof aiLicense.metadata === 'object') ? aiLicense.metadata : {};
   const normalizedProductId = String(aiLicense?.productId || '').trim().toLowerCase();
   const lockedStandardGrades = Array.isArray(metadata?.standardGrades)
-    ? metadata.standardGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade > 0)
+    ? metadata.standardGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade >= 0)
     : [];
 
   const planByProductId = {
+    'cap01_standard_1year_3grades': 'cap01_standard_1year_3grades',
+    'cap01_grade_la_1year': 'cap01_grade_la_1year',
+    'cap01_grade_1_1year': 'cap01_grade_1_1year',
+    'cap01_grade_2_1year': 'cap01_grade_2_1year',
+    'cap01_grade_3_1year': 'cap01_grade_3_1year',
+    'cap01_grade_4_1year': 'cap01_grade_4_1year',
+    'cap01_grade_5_1year': 'cap01_grade_5_1year',
     'prod-study-month': 'standard_month',
     'prod-study-year': 'standard_year',
     'standard_1year_1grade': 'standard_1year_1grade',
@@ -712,6 +726,41 @@ function buildCap01Entitlement(aiLicense) {
   };
 
   const defaultEntitlementByProduct = {
+    'cap01_standard_1year_3grades': {
+      allowedGrades: [],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_la_1year': {
+      allowedGrades: [0],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_1_1year': {
+      allowedGrades: [1],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_2_1year': {
+      allowedGrades: [2],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_3_1year': {
+      allowedGrades: [3],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_4_1year': {
+      allowedGrades: [4],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
+    'cap01_grade_5_1year': {
+      allowedGrades: [5],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
+      license: { deviceLimit: 1, offlineGraceDays: 7 },
+    },
     'prod-study-month': {
       allowedGrades: [1, 2],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
@@ -759,11 +808,11 @@ function buildCap01Entitlement(aiLicense) {
     },
   };
 
-  const defaultEntitlement = defaultEntitlementByProduct[normalizedProductId] || defaultEntitlementByProduct['prod-study-year'];
+  const defaultEntitlement = defaultEntitlementByProduct[normalizedProductId] || defaultEntitlementByProduct['cap01_standard_1year_3grades'];
   const allowedGrades = (normalizedProductId === 'cap01_beta_year_299' && lockedStandardGrades.length > 0)
     ? lockedStandardGrades
     : Array.isArray(metadata?.allowedGrades)
-    ? metadata.allowedGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade > 0)
+    ? metadata.allowedGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade >= 0)
     : defaultEntitlement.allowedGrades;
   const featureFlags = (metadata?.features && typeof metadata.features === 'object')
     ? metadata.features
@@ -776,8 +825,8 @@ function buildCap01Entitlement(aiLicense) {
     || 7
   );
   const deviceLimit = Number(metadata?.license?.deviceLimit || defaultEntitlement.license.deviceLimit || 1);
-  const productId = String(aiLicense?.productId || '').trim() || 'prod-study-year';
-  const plan = String(metadata?.planId || planByProductId[normalizedProductId] || aiLicense?.planId || 'standard_year').trim() || 'standard_year';
+  const productId = String(aiLicense?.productId || '').trim() || 'cap01_standard_1year_3grades';
+  const plan = String(metadata?.planId || planByProductId[normalizedProductId] || aiLicense?.planId || 'cap01_standard_1year_3grades').trim() || 'cap01_standard_1year_3grades';
 
   return {
     appId: 'hoctap-cap-01',
@@ -1754,8 +1803,8 @@ app.patch(
 async function handleCreateOrder(req, res) {
   const session = getCustomerFromSession(req);
   const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
-  const { appId, productId, discountCode } = req.body;
-  const { order, product } = await createOrder({ customerId, appId, productId, discountCode });
+  const { appId, productId, discountCode, selectedGrades } = req.body;
+  const { order, product } = await createOrder({ customerId, appId, productId, discountCode, selectedGrades });
 
   res.status(201).json({
     order,
