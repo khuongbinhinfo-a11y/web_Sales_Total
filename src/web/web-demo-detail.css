@@ -1,6 +1,7 @@
-﻿.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d;padding-top:62px}
+.demo-page{min-height:100vh;background:#f7f4ff;color:#19152d;padding-top:62px}
+.demo-page{overflow-x:hidden}
 .demo-container{width:min(1180px,100% - 32px);margin-inline:auto}
-.demo-header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.86);border-bottom:1px solid rgba(124,109,216,.14);backdrop-filter:blur(16px)}
+.demo-header{position:fixed;top:0;left:0;right:0;z-index:260;background:rgba(255,255,255,.86);border-bottom:1px solid rgba(124,109,216,.14);backdrop-filter:blur(16px)}
 .demo-header-inner{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px}
 .demo-header-nav{display:flex;align-items:center;gap:8px}
 .demo-header-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(124,109,216,.16);color:#342d65;font-size:.84rem;font-weight:800}
@@ -43,6 +44,7 @@
 
 .demo-live-section{padding:34px 0;background:#fff}
 .demo-live-preview{border-radius:30px;overflow:hidden;background:#101828;box-shadow:0 24px 60px rgba(35,24,80,.14)}
+.demo-live-preview{max-width:100%}
 .live-company,.live-shop,.live-education,.live-spa,.live-restaurant{min-height:420px;padding:24px;display:grid;gap:18px}
 .live-company{grid-template-columns:1.2fr .8fr;background:#f8fafc;color:#102033}
 .live-company-showcase{position:relative;grid-column:1 / -1;margin:0;border-radius:26px;overflow:hidden;background:#0f2742;box-shadow:0 22px 44px rgba(15,39,66,.18)}
@@ -95,7 +97,7 @@
 .live-edu-signup button{border:0;border-radius:999px;min-height:40px;padding:0 16px;background:#2f80ed;color:#fff;font-weight:900}
 
 .live-spa{grid-template-columns:1fr 1fr;background:linear-gradient(135deg,#fff7ed,#f5f3ff);color:#4a2f35}
-.live-spa-hero{grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:350px;padding:28px;border-radius:28px;background:linear-gradient(180deg,rgba(196,164,132,.34),rgba(107,70,85,.86)),url('https://cdn.ungdungthongminh.shop/web-demo-photo.jpg') center/cover;color:#fff}
+.live-spa-hero{grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:350px;padding:28px;border-radius:28px;background:linear-gradient(180deg,rgba(196,164,132,.34),rgba(107,70,85,.86)),url('https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg') center/cover;color:#fff}
 .live-spa-before{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .live-spa-before div{min-height:150px;border-radius:24px;background:linear-gradient(135deg,#f5e7da,#e9d5ff);display:flex;align-items:flex-end;padding:16px;color:#6b4b5a;font-weight:900}
 .live-spa-pricing{display:grid;gap:12px}
@@ -103,7 +105,7 @@
 .live-spa-pricing span{padding:6px 10px;border-radius:999px;background:#f5e7da;color:#7a5b42;font-weight:900;font-size:.76rem}
 
 .live-restaurant{grid-template-columns:1.1fr .9fr;background:#1b0f0a;color:#fff}
-.live-restaurant-hero{display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;padding:30px;border-radius:28px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(27,15,10,.88)),url('https://cdn.ungdungthongminh.shop/web-demo-photo.jpg') center/cover}
+.live-restaurant-hero{display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;padding:30px;border-radius:28px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(27,15,10,.88)),url('https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg') center/cover}
 .live-restaurant-hero a{color:#7c2d12}
 .live-restaurant-menu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .live-restaurant-menu article{min-height:130px;padding:16px;border-radius:22px;background:linear-gradient(135deg,#7c2d12,#f59e0b);display:flex;flex-direction:column;justify-content:space-between}
@@ -135,6 +137,7 @@
 .demo-full-preview-head{max-width:760px}
 .demo-full-preview-head p{margin:0;color:#6c657d;font-weight:600;line-height:1.7}
 .demo-full-preview-frame{margin:0;border-radius:28px;background:linear-gradient(135deg,#f8fafc,#f4f1ff);border:1px solid rgba(124,109,216,.14);box-shadow:0 24px 54px rgba(35,24,80,.12);overflow:hidden}
+.demo-full-preview-frame{max-width:100%}
 .demo-full-preview-frame img{width:100%;height:auto;max-height:82vh;object-fit:contain;background:#fff;display:block}
 .demo-full-preview-frame figcaption{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:#fff;border-top:1px solid rgba(124,109,216,.12)}
 .demo-full-preview-frame figcaption span{color:#5f5871;font-size:.84rem;font-weight:800}
@@ -190,6 +193,7 @@ body[data-demo="restaurant"]{--demo-main:#7c2d12;--demo-accent:#f59e0b}
 
 @media(max-width:860px){
   .demo-page{padding-top:58px}
+  .demo-container{width:min(1180px,100% - 20px)}
   .demo-header-inner{min-height:58px}
   .demo-header-nav{gap:6px}
   .demo-header-nav a{min-height:34px;padding:0 10px;font-size:.76rem}
