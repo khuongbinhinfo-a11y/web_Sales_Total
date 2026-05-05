@@ -92,7 +92,8 @@ const {
   getPublicRouteLocks,
   isPublicRouteLocked,
   getPublicRoutesForAdminUI,
-  handleMauDemoLockedMigration
+  handleMauDemoLockedMigration,
+  syncPublicRouteRegistry
 } = require("./modules/store");
 const {
   verifyInternalWebhookSignature,
@@ -182,6 +183,24 @@ const WEB_DEMO_PRODUCT_BY_SLUG = {
 };
 
 const WEB_PRICING_CONFIG_KEY = "web_pricing_config";
+
+// ═══════════════════ CANONICAL PUBLIC ROUTE REGISTRY ═══════════════════
+// Single source of truth for all lockable public routes.
+// Add a new entry here → it will automatically appear in admin after next restart.
+// parentId references routeId of the parent route (for tree display).
+const CANONICAL_PUBLIC_ROUTES = [
+  { routeId: "home",           displayName: "Trang chủ",                path: "/",                             lockable: true,  sortOrder: 0 },
+  { routeId: "thiet-ke-web",   displayName: "Thiết kế web",             path: "/thiet-ke-web",                 lockable: true,  sortOrder: 10 },
+  { routeId: "kho-mau",        displayName: "Kho mẫu web nhanh",        path: "/kho-mau",                      lockable: true,  sortOrder: 20 },
+  { routeId: "theo-nganh",     displayName: "Thiết kế theo ngành",      path: "/thiet-ke-web/theo-nganh",      parentId: "thiet-ke-web", lockable: true, sortOrder: 11 },
+  { routeId: "demo",           displayName: "Mẫu demo (cũ)",            path: "/mau-demo",                     lockable: true,  sortOrder: 30 },
+  { routeId: "phan-mem",       displayName: "Phần mềm",                 path: "/phan-mem",                     lockable: true,  sortOrder: 40 },
+  { routeId: "san-pham",       displayName: "Sản phẩm",                 path: "/san-pham",                     lockable: true,  sortOrder: 41 },
+  { routeId: "study",          displayName: "Học tập",                  path: "/phan-mem/hoc-tap",             parentId: "phan-mem", lockable: true, sortOrder: 42 },
+  { routeId: "work",           displayName: "Làm việc",                 path: "/phan-mem/lam-viec",            parentId: "phan-mem", lockable: true, sortOrder: 43 },
+  { routeId: "guide",          displayName: "Hướng dẫn",               path: "/huong-dan",                    lockable: true,  sortOrder: 50 },
+  { routeId: "contact",        displayName: "Liên hệ",                  path: "/lien-he",                      lockable: true,  sortOrder: 60 }
+];
 
 function getDefaultWebPricingConfig() {
   return {
@@ -4272,6 +4291,26 @@ app.get(
   })
 );
 
+app.post(
+  "/api/admin/routes-registry/sync",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const results = await syncPublicRouteRegistry(CANONICAL_PUBLIC_ROUTES);
+    const actor = getAdminFromSession(req);
+    console.info("[admin][routes-registry] manual sync", {
+      upserted: results.upserted,
+      errors: results.errors,
+      actorUsername: actor?.username || "unknown"
+    });
+    return res.json({
+      ok: true,
+      upserted: results.upserted,
+      errors: results.errors,
+      total: CANONICAL_PUBLIC_ROUTES.length
+    });
+  })
+);
+
 app.get(
   "/api/admin/route-locks/:routeId",
   requireAdminPermission("admins:read"),
@@ -5839,6 +5878,7 @@ async function prepareServer() {
         await ensureEmailOtpSchema();
         await ensureAdminLoginSecuritySchema();
         await handleMauDemoLockedMigration();
+        await syncPublicRouteRegistry(CANONICAL_PUBLIC_ROUTES);
         console.log("✅ Customer auth schema ready");
       } catch (error) {
         if (isDatabaseUnavailableError(error)) {

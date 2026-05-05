@@ -4548,7 +4548,8 @@ module.exports = {
   getPublicRouteLocks,
   isPublicRouteLocked,
   getPublicRoutesForAdminUI,
-  handleMauDemoLockedMigration
+  handleMauDemoLockedMigration,
+  syncPublicRouteRegistry
 };
 
 async function listPublicRouteRegistry() {
@@ -4785,6 +4786,49 @@ async function getPublicRoutesForAdminUI() {
   }
 
   return rootNodes;
+}
+
+// Upsert route definitions into public_route_registry from code's canonical list.
+// Called at startup so any new route added to CANONICAL_PUBLIC_ROUTES automatically
+// appears in admin without requiring a DB migration.
+async function syncPublicRouteRegistry(routeDefinitions) {
+  const results = { upserted: 0, errors: [] };
+  for (const route of routeDefinitions) {
+    try {
+      await pool.query(
+        `INSERT INTO public_route_registry
+           (route_id, display_name, path, parent_id, lockable, sort_order, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (route_id) DO UPDATE SET
+           display_name = EXCLUDED.display_name,
+           path         = EXCLUDED.path,
+           parent_id    = EXCLUDED.parent_id,
+           sort_order   = EXCLUDED.sort_order,
+           description  = EXCLUDED.description,
+           updated_at   = NOW()`,
+        [
+          route.routeId,
+          route.displayName,
+          route.path,
+          route.parentId || null,
+          route.lockable !== false,
+          route.sortOrder || 0,
+          route.description || null
+        ]
+      );
+      // Ensure a lock row exists (don't overwrite existing lock state)
+      await pool.query(
+        `INSERT INTO public_route_locks (route_id, is_locked, lock_scope)
+         VALUES ($1, FALSE, 'exact')
+         ON CONFLICT (route_id) DO NOTHING`,
+        [route.routeId]
+      );
+      results.upserted++;
+    } catch (err) {
+      results.errors.push({ routeId: route.routeId, error: err.message });
+    }
+  }
+  return results;
 }
 
 async function handleMauDemoLockedMigration() {

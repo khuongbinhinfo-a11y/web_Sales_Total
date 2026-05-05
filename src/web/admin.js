@@ -276,7 +276,7 @@ function bindWebPricingControls(){
     } finally {
       if(submitBtn){
         submitBtn.disabled = false;
-        submitBtn.textContent = "Lưu giá hiển thị";
+        submitBtn.textContent = "Lưu cấu hình giá";
       }
     }
   });
@@ -3696,10 +3696,33 @@ async function saveRouteLock(routeId) {
 
 function initRouteLocksUI() {
   const refreshBtn = document.getElementById("routeLockRefreshBtn");
+  const syncBtn = document.getElementById("routeLockSyncBtn");
   const closeBtn = document.getElementById("routeLockDetailCloseBtn");
 
   if (refreshBtn) {
     refreshBtn.addEventListener("click", loadRouteLocksUI);
+  }
+
+  if (syncBtn) {
+    syncBtn.addEventListener("click", async () => {
+      syncBtn.disabled = true;
+      syncBtn.textContent = "⏳ Đang đồng bộ...";
+      try {
+        const res = await fetchAdmin("/api/admin/routes-registry/sync", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert("Lỗi sync: " + (data.message || res.status));
+        } else {
+          alert(`✅ Đồng bộ xong: ${data.upserted}/${data.total} routes cập nhật.${data.errors?.length ? "\n⚠️ Lỗi: " + data.errors.map(e=>e.routeId).join(", ") : ""}`);
+          await loadRouteLocksUI();
+        }
+      } catch (err) {
+        alert("Lỗi: " + err.message);
+      } finally {
+        syncBtn.disabled = false;
+        syncBtn.textContent = "⚡ Đồng bộ routes từ code";
+      }
+    });
   }
 
   if (closeBtn) {
