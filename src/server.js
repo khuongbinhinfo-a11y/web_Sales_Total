@@ -146,22 +146,25 @@ const appUpdatesRoot = path.join(__dirname, "..", "public", "app-updates");
 const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 let prepareServerPromise;
 
+const R2_PUBLIC_BASE = "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev";
+const DEFAULT_OG_IMAGE = `${R2_PUBLIC_BASE}/og/og-trang-chu.png`;
+
 const webDemoOgImages = {
-  company: "/og/og-web-cong-ty.png",
-  shop: "/og/og-web-shop-ban-hang.png",
-  education: "/og/og-web-giao-duc.png",
-  spa: "/og/og-web-spa.png",
-  restaurant: "/og/og-web-nha-hang.png",
-  salon: "/og/og-web-spa.png",
-  industry: "/og/og-web-nha-hang.png",
-  landing: "/og/og-web-giao-duc.png"
+  company: `${R2_PUBLIC_BASE}/og/og-web-cong-ty.png`,
+  shop: `${R2_PUBLIC_BASE}/og/og-web-shop-ban-hang.png`,
+  education: `${R2_PUBLIC_BASE}/og/og-web-giao-duc.png`,
+  spa: `${R2_PUBLIC_BASE}/og/og-web-spa.png`,
+  restaurant: `${R2_PUBLIC_BASE}/og/og-web-nha-hang.png`,
+  salon: `${R2_PUBLIC_BASE}/og/og-web-spa.png`,
+  industry: `${R2_PUBLIC_BASE}/og/og-web-nha-hang.png`,
+  landing: `${R2_PUBLIC_BASE}/og/og-web-giao-duc.png`
 };
 
 const homePageMetadata = {
   title: "Ứng Dụng Thông Minh - Giải pháp số gọn, nhanh, dùng được ngay",
   description: "Ứng Dụng Thông Minh cung cấp phần mềm, công cụ AI, giải pháp học tập, làm việc và dịch vụ thiết kế website chuyên nghiệp.",
   canonicalPath: "/",
-  image: "/og/og-trang-chu.png"
+  image: DEFAULT_OG_IMAGE
 };
 
 app.disable("x-powered-by");
@@ -644,8 +647,13 @@ function buildPublicUrl(pathname = "/") {
 }
 
 function buildAssetUrl(pathname = "/") {
+  const normalizedPath = String(pathname || "/").trim();
+  if (/^(?:[a-z]+:)?\/\//i.test(normalizedPath) || normalizedPath.startsWith("data:")) {
+    return normalizedPath;
+  }
+
   const base = String(env.publicAssetBaseUrl || env.publicAppBaseUrl || "https://ungdungthongminh.shop").replace(/\/+$/, "");
-  const suffix = String(pathname || "/").startsWith("/") ? pathname : `/${pathname}`;
+  const suffix = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
   return `${base}${suffix}`;
 }
 
@@ -653,7 +661,7 @@ function buildMetadataTags(metadata) {
   const title = escapeHtmlAttr(metadata.title);
   const description = escapeHtmlAttr(metadata.description);
   const canonical = escapeHtmlAttr(buildPublicUrl(metadata.canonicalPath || "/"));
-  const image = escapeHtmlAttr(buildAssetUrl(metadata.image || "/og/og-trang-chu.png"));
+  const image = escapeHtmlAttr(buildAssetUrl(metadata.image || DEFAULT_OG_IMAGE));
 
   return [
     `<meta name="description" content="${description}" />`,

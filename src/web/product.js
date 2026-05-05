@@ -19,8 +19,10 @@ const fallbackProducts = [
   { id:"prod-salon-manager-lifetime", appId:"hair-spa-manager", name:"Salon Manager", cycle:"one_time", price:990000, credits:0 }
 ];
 
+const R2_PUBLIC_BASE = "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev";
+
 function imagePathByName(fileName) {
-  return `/products/image/${encodeURIComponent(fileName)}`;
+  return `${R2_PUBLIC_BASE}/products/image/${encodeURIComponent(fileName)}`;
 }
 
 const productImageLibrary = {

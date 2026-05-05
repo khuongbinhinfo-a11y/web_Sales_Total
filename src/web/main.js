@@ -112,6 +112,8 @@ function initSupportDock() {
 
 initSupportDock();
 
+const R2_PUBLIC_BASE = "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev";
+
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
@@ -132,7 +134,7 @@ const fallbackProducts = [
 ];
 
 function imagePathByName(fileName) {
-  return `/products/image/${encodeURIComponent(fileName)}`;
+  return `${R2_PUBLIC_BASE}/products/image/${encodeURIComponent(fileName)}`;
 }
 
 const productImageLibrary = {
