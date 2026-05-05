@@ -6,6 +6,9 @@ backups/
 .env*.local
 _external/
 public/app-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe
+public/app-updates/app-prompt-image-video/Setup_VideoCreator.exe
+public/app-updates/app-bds-website-manager/Setup_BDS.exe
+public/app-updates/map-pro/Setup_MapPro.exe
 
 # === CDN/R2 Phase 1: Media assets moved to CDN ===
 # Untrack after confirmed uploaded to CDN (run: git rm --cached -r public/Video public/image public/og products/image)
