@@ -465,6 +465,7 @@ function getRouteName(pathname = window.location.pathname) {
   const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
   if (cleaned === "/" || cleaned === "/pricing") return "home";
   if (cleaned === "/thiet-ke-web") return "web";
+  if (cleaned === "/thiet-ke-web/kho-mau") return "web";
   if (cleaned === "/thiet-ke-web/theo-nganh") return "theo-nganh";
   if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo" || cleaned === "/web-demo") return "demo";
   if (cleaned === "/phan-mem" || cleaned === "/san-pham") return "software";
@@ -1265,7 +1266,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
         previewTitle: "Web mẫu<br/>dùng ngay",
         previewDesc: "Mẫu có sẵn, mua gói, tự chỉnh — không cần thiết kế từ đầu.",
         actions: [
-          { label: "Xem kho mẫu web", href: "/kho-mau", variant: "accent" },
+          { label: "Xem kho mẫu web", href: "/thiet-ke-web/kho-mau", variant: "accent" },
           { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
         ]
       },
@@ -1385,7 +1386,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
       title: "Quick-launch option when you need a website sooner",
       copy: "You can pick a fast web template package to go live quickly, then edit content based on guided steps. Detailed expansion will continue in the next phase.",
       actions: [
-        { label: "View website samples", href: "/mau-demo", variant: "accent" },
+        { label: "View website samples", href: "/thiet-ke-web/kho-mau", variant: "accent" },
         { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "outline", external: true }
       ]
     }

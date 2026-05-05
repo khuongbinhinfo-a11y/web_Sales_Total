@@ -194,7 +194,7 @@ const WEB_PRICING_CONFIG_KEY = "web_pricing_config";
 const CANONICAL_PUBLIC_ROUTES = [
   { routeId: "home",           displayName: "Trang chủ",                path: "/",                             lockable: true,  sortOrder: 0 },
   { routeId: "thiet-ke-web",   displayName: "Thiết kế web",             path: "/thiet-ke-web",                 lockable: true,  sortOrder: 10 },
-  { routeId: "kho-mau",        displayName: "Kho mẫu web nhanh",        path: "/kho-mau",                      lockable: true,  sortOrder: 20 },
+  { routeId: "kho-mau",        displayName: "Kho mẫu web nhanh",        path: "/thiet-ke-web/kho-mau",        lockable: true,  sortOrder: 20 },
   { routeId: "theo-nganh",     displayName: "Thiết kế theo ngành",      path: "/thiet-ke-web/theo-nganh",      parentId: "thiet-ke-web", lockable: true, sortOrder: 11 },
   { routeId: "demo",           displayName: "Mẫu demo (cũ)",            path: "/mau-demo",                     lockable: true,  sortOrder: 30 },
   { routeId: "phan-mem",       displayName: "Phần mềm",                 path: "/phan-mem",                     lockable: true,  sortOrder: 40 },
@@ -792,6 +792,8 @@ const ROUTE_PATH_TO_ID = {
   "/web-demo": "web",  // alias
   "/thiet-ke-web": "web",
   "/thiet-ke-web/": "web",
+  "/thiet-ke-web/kho-mau": "kho-mau",
+  "/kho-mau": "kho-mau",
   "/thiet-ke-web/mau-demo": "demo",
   "/mau-demo": "demo",
   "/phan-mem": "software",
@@ -5532,6 +5534,10 @@ app.get("/thiet-ke-web/mau-demo", checkPublicRouteLockMiddleware, (req, res) => 
 });
 
 app.get("/thiet-ke-web/theo-nganh", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/thiet-ke-web/kho-mau", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
