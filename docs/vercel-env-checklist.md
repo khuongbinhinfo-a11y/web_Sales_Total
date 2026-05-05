@@ -57,7 +57,23 @@ AI_APP_SHARED_KEY=<shared-secret>
 AI_APP_OFFLINE_GRACE_DAYS=7
 ```
 
-## 5. Neu dung Gmail thong bao
+## 5. Bat buoc cho private app-update artifact (R2)
+
+```env
+R2_PRIVATE_ARTIFACTS_ENABLED=true
+R2_PRIVATE_ARTIFACTS_PREFIX=app-updates
+R2_BUCKET_ENDPOINT=...
+R2_BUCKET_NAME=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+```
+
+Luu y quan trong:
+- Neu thieu nhom nay, endpoint signed artifact cho desktop update co the fallback local hoac tra loi loi khi artifact khong con tren filesystem.
+- Prefix phai khop voi key da sync len R2. Hien tai flow dang dung `app-updates`.
+- Khong commit gia tri secret vao repo. Chi set trong Vercel Environment Variables.
+
+## 6. Neu dung Gmail thong bao
 
 ```env
 GMAIL_NOTIFY_ENABLED=true
@@ -68,7 +84,7 @@ GOOGLE_REFRESH_TOKEN=<refresh-token>
 
 Khong co nhom nay thi site van chay, chi mat tinh nang gui mail.
 
-## 6. Neu dung admin commit AI gate len GitHub
+## 7. Neu dung admin commit AI gate len GitHub
 
 ```env
 GITHUB_TOKEN=<github-token>
@@ -77,7 +93,7 @@ GITHUB_REPO_NAME=web_Sales_Total
 GITHUB_REPO_BRANCH=main
 ```
 
-## 7. Bo copy nhanh theo 2 muc dich
+## 8. Bo copy nhanh theo 2 muc dich
 
 ### Preview cho giao dien homepage tren Vercel
 
@@ -109,12 +125,20 @@ GOOGLE_CLIENT_ID=<google-client-id>
 GOOGLE_CLIENT_SECRET=<google-client-secret>
 AI_APP_SHARED_KEY=<shared-secret>
 AI_APP_OFFLINE_GRACE_DAYS=7
+R2_PRIVATE_ARTIFACTS_ENABLED=true
+R2_PRIVATE_ARTIFACTS_PREFIX=app-updates
+R2_BUCKET_ENDPOINT=...
+R2_BUCKET_NAME=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
 ```
 
-## 8. Cach kiem tra sau khi set env
+## 9. Cach kiem tra sau khi set env
 
 1. Mo `/api/health`
 2. Neu tot, phai thay `ok: true` va `database: connected`
 3. Mo `/api/catalog`
 4. Mo homepage, notice fallback phai bien mat hoac chuyen sang trang thai live
 5. Dang nhap customer va mo `/account?tab=downloads` de xac nhan luong account hoat dong
+6. Goi `/api/v1/app-updates/app-prompt-image-video/manifest` va kiem tra `downloadPath` la signed artifact URL
+7. Goi signed artifact URL tren cung host deployment, ky vong HTTP `200`
