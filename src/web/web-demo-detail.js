@@ -200,6 +200,66 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
 
 const WEB_DEMO_PLAN_PRODUCT_IDS = (window.WebDemoCatalogMap && window.WebDemoCatalogMap.planProductIds) || {};
+const CONSULTING_PACKAGE_LABELS = ["Gói cơ bản", "Gói chuyên nghiệp", "Gói nâng cao"];
+const CONSULTING_PACKAGE_FALLBACK = [
+  {
+    name: CONSULTING_PACKAGE_LABELS[0],
+    slug: "co-ban",
+    price: "Từ 3.900.000đ",
+    fit: "Cá nhân, dịch vụ nhỏ, công ty mới cần web giới thiệu nhanh",
+    note: "Phù hợp khi cần lên hiện diện online gọn, tập trung giới thiệu dịch vụ và nhận liên hệ.",
+    features: [
+      "Hero giới thiệu dịch vụ",
+      "Giới thiệu và dịch vụ chính",
+      "Form tư vấn/CTA",
+      "SEO cơ bản",
+      "Responsive mobile",
+      "Bàn giao và chỉnh sửa trong phạm vi gói"
+    ]
+  },
+  {
+    name: CONSULTING_PACKAGE_LABELS[1],
+    slug: "chuyen-nghiep",
+    price: "Từ 6.900.000đ",
+    badge: "Khuyên dùng",
+    featured: true,
+    fit: "Công ty nhỏ, agency, dịch vụ tư vấn, B2B",
+    note: "Có đủ trang và nội dung để khách hiểu năng lực, xem dịch vụ chi tiết và gửi yêu cầu tư vấn.",
+    features: [
+      "Hero lớn và điểm mạnh thương hiệu",
+      "Giới thiệu/dịch vụ + trang chi tiết",
+      "Sản phẩm hoặc dịch vụ chính",
+      "Form tư vấn/CTA tối ưu chuyển đổi",
+      "SEO cơ bản + tracking cơ bản",
+      "Responsive mobile + bàn giao/chỉnh sửa"
+    ]
+  },
+  {
+    name: CONSULTING_PACKAGE_LABELS[2],
+    slug: "nang-cao",
+    price: "Từ 12.900.000đ",
+    badge: "Mở rộng",
+    fit: "Doanh nghiệp cần nội dung đầy đủ và cấu trúc triển khai sâu",
+    note: "Dành cho doanh nghiệp muốn đầu tư hình ảnh thương hiệu, nội dung sâu và cấu trúc SEO tốt hơn.",
+    features: [
+      "Hero theo nhận diện thương hiệu",
+      "Giới thiệu/dịch vụ chuyên sâu",
+      "Sản phẩm hoặc dịch vụ chính theo nhóm",
+      "Form tư vấn/CTA nhiều điểm chạm",
+      "SEO cơ bản theo ngành",
+      "Responsive mobile, bàn giao và chỉnh sửa phạm vi gói"
+    ]
+  }
+];
+const IMPLEMENTATION_DETAIL_ITEMS = [
+  "Hero",
+  "Giới thiệu/dịch vụ",
+  "Sản phẩm hoặc dịch vụ chính",
+  "Form tư vấn/CTA",
+  "SEO cơ bản",
+  "Responsive mobile",
+  "Bàn giao/chỉnh sửa"
+];
 
 function formatFromCatalogPrice(amount) {
   const n = Number(amount || 0);
@@ -255,6 +315,39 @@ function MaintenanceNote(shared) {
           </div>
         `).join("")}
       </dl>
+    </div>
+  `;
+}
+
+function getPricingPlansForDemo(industryId, plans) {
+  const fromData = Array.isArray(plans) ? plans.filter(Boolean) : [];
+  if (industryId !== "company") {
+    return fromData;
+  }
+
+  const source = fromData.length ? fromData.slice(0, 3) : CONSULTING_PACKAGE_FALLBACK;
+  return source.map((plan, index) => {
+    const fallback = CONSULTING_PACKAGE_FALLBACK[index] || CONSULTING_PACKAGE_FALLBACK[CONSULTING_PACKAGE_FALLBACK.length - 1];
+    return {
+      ...fallback,
+      ...plan,
+      name: CONSULTING_PACKAGE_LABELS[index] || plan?.name || fallback.name,
+      slug: plan?.slug || fallback.slug,
+      features: Array.isArray(plan?.features) && plan.features.length ? plan.features : fallback.features
+    };
+  });
+}
+
+function ImplementationDetailSection() {
+  return `
+    <div class="demo-implementation-detail">
+      <div class="demo-implementation-head">
+        <span>Nội dung triển khai chi tiết</span>
+        <h3>Phạm vi nội dung chuẩn trên trang con mẫu demo</h3>
+      </div>
+      <div class="demo-implementation-grid">
+        ${IMPLEMENTATION_DETAIL_ITEMS.map((item) => `<article><b>${escapeHtml(item)}</b></article>`).join("")}
+      </div>
     </div>
   `;
 }
@@ -357,7 +450,7 @@ function PricingSection(id) {
   const section = document.getElementById("demoPricing");
   const data = window.webDemoPricingData?.[id];
   const shared = window.webDemoPricingShared || {};
-  const plans = Array.isArray(data?.plans) ? data.plans : [];
+  const plans = getPricingPlansForDemo(id, data?.plans);
 
   if (!section || !plans.length) return;
 
@@ -372,6 +465,7 @@ function PricingSection(id) {
       <div class="demo-pricing-grid">
         ${plans.map((plan, index) => PricingCard(plan, index, shared, id)).join("")}
       </div>
+      ${ImplementationDetailSection()}
       <div class="demo-pricing-notes">
         ${ContentIncludedNote(shared)}
         ${MaintenanceNote(shared)}

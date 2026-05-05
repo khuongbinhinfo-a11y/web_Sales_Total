@@ -244,7 +244,6 @@ const getWebsitePriceForSlug = (slug) => {
 const buildSampleCard = (slug, sample, index, websitePriceText) => {
   const demoVariant = Number(sample.demoVariant || (index + 1));
   const previewHref = `/preview/${encodeURIComponent(slug)}?demo=${encodeURIComponent(demoVariant)}`;
-  const sampleHref = `/kho-mau/${encodeURIComponent(slug)}/goi/${encodeURIComponent(sample.planSlug || `goi-${index + 1}`)}?demo=${encodeURIComponent(demoVariant)}`;
   const toneClass = `tone-${String(sample.tone || `demo-${demoVariant}`).trim().toLowerCase()}`;
   const highlights = Array.isArray(sample.highlights) ? sample.highlights.slice(0, 3) : [];
 
@@ -269,7 +268,6 @@ const buildSampleCard = (slug, sample, index, websitePriceText) => {
         ` : ""}
         <div class="demo-mini-actions">
           <a class="is-buy" href="${previewHref}">Xem mẫu con →</a>
-          <a class="is-preview" href="${sampleHref}">Xem hồ sơ gói</a>
         </div>
       </div>
     </article>
