@@ -2432,11 +2432,11 @@ const WEB_DEMOS = {
 
 let activeWebDemo = "company";
 const WEB_DEMO_IMAGES = {
-  company: "/web-demo-company.jpg",
-  shop: "/web-demo-shop-hero.png",
-  salon: "/web-demo-photo.jpg",
-  industry: "/web-demo-photo.jpg",
-  landing: "/web-demo-photo.jpg"
+  company: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+  shop: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-hero.png",
+  salon: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+  industry: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+  landing: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg"
 };
 const webDemoButtons = Array.from(document.querySelectorAll("[data-web-demo]"));
 const webDemoFrame = document.getElementById("webDemoFrame");
@@ -2478,7 +2478,7 @@ function renderWebDemoMarketLayout(demos) {
                 <small>${escapeHtml(item.mockSub || item.cardKind || "")}</small>
               </div>
               <figure>
-                <img src="${escapeHtml(WEB_DEMO_IMAGES[id] || "/web-demo-photo.jpg")}" alt="${escapeHtml(item.title || item.cardTitle || "")}" loading="lazy" />
+                <img src="${escapeHtml(WEB_DEMO_IMAGES[id] || "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg")}" alt="${escapeHtml(item.title || item.cardTitle || "")}" loading="lazy" />
               </figure>
               <i></i><i></i><i></i>
             </div>
@@ -2539,7 +2539,7 @@ function renderWebDemo(nextId) {
   if (webDemoMockTitle) webDemoMockTitle.textContent = item.mockTitle;
   if (webDemoMockSub) webDemoMockSub.textContent = item.mockSub;
   if (webDemoImage) {
-    webDemoImage.src = WEB_DEMO_IMAGES[activeWebDemo] || "/web-demo-photo.jpg";
+    webDemoImage.src = WEB_DEMO_IMAGES[activeWebDemo] || "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg";
     webDemoImage.alt = item.title;
   }
   if (webDemoFeatures) {
