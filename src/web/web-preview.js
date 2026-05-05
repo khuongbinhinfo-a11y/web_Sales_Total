@@ -168,7 +168,248 @@ const PREVIEW_DATA = {
   }
 };
 
+const PREVIEW_VARIANT_OVERRIDES = {
+  shop: {
+    2: {
+      brand: "Casa Corner",
+      eyebrow: "Mẫu web nội thất / decor",
+      title: "Cửa hàng <em>decor hiện đại</em> để bán combo theo phòng",
+      desc: "Biến thể này hợp cho decor, đồ gia dụng và lifestyle. Trọng tâm là combo, ảnh moodboard và upsell theo không gian sống.",
+      categories: ["Phòng khách", "Phòng ngủ", "Bếp", "Best seller", "Combo", "New drop"],
+      products: [
+        { icon: "🛋️", name: "Sofa vải 2 chỗ", price: "6.900.000đ", old: "8.200.000đ", badge: "-16%" },
+        { icon: "🪑", name: "Ghế accent tối giản", price: "1.850.000đ", old: null, badge: "Mới" },
+        { icon: "🪞", name: "Gương khung oval", price: "920.000đ", old: "1.150.000đ", badge: "-20%" },
+        { icon: "🕯️", name: "Combo nến thơm + khay", price: "490.000đ", old: null, badge: "Hot" },
+        { icon: "🛏️", name: "Bộ ga cotton stone-wash", price: "1.250.000đ", old: "1.590.000đ", badge: "-21%" },
+        { icon: "🧺", name: "Giỏ mây lưu trữ", price: "360.000đ", old: null, badge: "Best" }
+      ],
+      reviews: [
+        { name: "An Khê", sub: "Khách decor căn hộ", text: "Website chia rõ từng không gian nên chọn combo rất nhanh, chốt đơn trong 5 phút." },
+        { name: "Tuệ Minh", sub: "Mua tháng 4/2026", text: "Moodboard đẹp, ảnh sản phẩm đồng bộ nên nhìn phát là muốn mua luôn." },
+        { name: "Gia Hân", sub: "Khách cũ", text: "Có gợi ý mua kèm rất hợp lý, không bị cảm giác bán ép." }
+      ],
+      contactTitle: "Muốn có web decor bán combo đẹp mắt?",
+      contactText: "Tùy biến theo không gian, moodboard, combo sản phẩm và ưu đãi theo bộ sưu tập."
+    },
+    3: {
+      brand: "Pet Daily",
+      eyebrow: "Mẫu web pet shop",
+      title: "Pet shop <em>thân thiện</em> để bán nhanh theo nhu cầu thú cưng",
+      desc: "Biến thể này dành cho pet shop với luồng bán theo giống, độ tuổi, cân nặng và combo định kỳ.",
+      categories: ["Chó", "Mèo", "Hạt", "Pate", "Phụ kiện", "Combo tháng"],
+      products: [
+        { icon: "🐶", name: "Hạt cho chó trưởng thành 3kg", price: "420.000đ", old: "490.000đ", badge: "-14%" },
+        { icon: "🐱", name: "Pate cá ngừ cho mèo", price: "28.000đ", old: null, badge: "Bán chạy" },
+        { icon: "🦴", name: "Snack thưởng vị bò", price: "85.000đ", old: "110.000đ", badge: "-23%" },
+        { icon: "🛁", name: "Sữa tắm khử mùi pet", price: "145.000đ", old: null, badge: "Hot" },
+        { icon: "🪢", name: "Dây dắt phản quang", price: "160.000đ", old: null, badge: "Mới" },
+        { icon: "📦", name: "Combo dinh dưỡng 30 ngày", price: "990.000đ", old: "1.190.000đ", badge: "-17%" }
+      ],
+      reviews: [
+        { name: "Phương Nhi", sub: "Chủ pet cưng", text: "Chọn combo theo tuổi và cân nặng rất tiện, đỡ phải hỏi nhiều." },
+        { name: "Khánh Toàn", sub: "Mua định kỳ", text: "Có gói tháng nên đặt nhanh, shop gọi xác nhận và giao đều." },
+        { name: "Momo Corgi", sub: "Feedback khách", text: "Thiết kế nhìn vui, tin tưởng hơn hẳn mấy shop đăng bài lộn xộn." }
+      ],
+      contactTitle: "Muốn pet shop có luồng bán theo combo định kỳ?",
+      contactText: "Thêm tư vấn khẩu phần, combo theo giống và upsell phụ kiện theo từng đơn."
+    }
+  },
+  salon: {
+    2: {
+      brand: "Gentlemen Hub",
+      eyebrow: "Mẫu web barber / grooming",
+      title: "Barbershop <em>chuẩn lịch hẹn</em> cho khách nam hiện đại",
+      desc: "Biến thể này nghiêng về barber cao cấp với combo cắt tóc, cạo râu, chăm sóc da và membership định kỳ.",
+      navLinks: ["Trang chủ", "Combo", "Bảng giá", "Không gian", "Đặt lịch"],
+      services: [
+        { icon: "💈", name: "Haircut Premium", desc: "Cắt theo form khuôn mặt, fade chuẩn và tạo kiểu cuối buổi.", price: "220.000đ" },
+        { icon: "🧔", name: "Beard Sculpt", desc: "Cạo râu nóng, định hình viền và dưỡng da sau shave.", price: "180.000đ" },
+        { icon: "🧴", name: "Scalp Detox", desc: "Làm sạch sâu da đầu, giảm gàu và massage cổ vai gáy.", price: "290.000đ" },
+        { icon: "🎟️", name: "Membership 4 buổi", desc: "Đặt lịch ưu tiên, giảm giá sản phẩm grooming và giữ khung giờ đẹp.", price: "750.000đ" }
+      ],
+      gallery: [
+        { icon: "💈", label: "Fade cổ điển" },
+        { icon: "🪒", label: "Hot towel shave" },
+        { icon: "🧴", label: "Góc grooming" },
+        { icon: "🥃", label: "Lounge tiếp khách" },
+        { icon: "🛋️", label: "Nội thất da nâu" },
+        { icon: "🎧", label: "Không gian private" }
+      ],
+      contactTitle: "Muốn barbershop có lịch hẹn gọn và sang?",
+      contactText: "Thêm combo membership, gói chăm sóc định kỳ và lịch hẹn theo barber yêu thích."
+    },
+    3: {
+      brand: "Pure Skin Clinic",
+      eyebrow: "Mẫu web clinic / skin care",
+      title: "Clinic da liễu <em>tin cậy</em> để khách đặt phác đồ",
+      desc: "Biến thể này tập trung vào điều trị da, case before-after, bác sĩ phụ trách và phác đồ theo liệu trình.",
+      navLinks: ["Trang chủ", "Phác đồ", "Chi phí", "Case study", "Đặt lịch"],
+      services: [
+        { icon: "🧬", name: "Điều trị mụn viêm", desc: "Khám soi da, lên phác đồ 6 tuần và theo dõi tiến triển từng mốc.", price: "650.000đ" },
+        { icon: "✨", name: "Laser nám", desc: "Kết hợp laser + serum phục hồi để giảm thâm nám theo từng cấp độ.", price: "1.800.000đ" },
+        { icon: "💧", name: "Meso phục hồi", desc: "Cấp ẩm, phục hồi hàng rào bảo vệ da cho da nhạy cảm sau treatment.", price: "1.200.000đ" },
+        { icon: "📋", name: "Tái khám phác đồ", desc: "Đánh giá tiến độ, cập nhật sản phẩm chăm sóc tại nhà và chế độ sinh hoạt.", price: "350.000đ" }
+      ],
+      gallery: [
+        { icon: "🔬", label: "Phòng soi da" },
+        { icon: "📸", label: "Case before-after" },
+        { icon: "🧴", label: "Tủ dược mỹ phẩm" },
+        { icon: "🩺", label: "Bác sĩ tư vấn" },
+        { icon: "💡", label: "Phòng laser" },
+        { icon: "🛏️", label: "Phòng điều trị" }
+      ],
+      contactTitle: "Muốn clinic có luồng chốt liệu trình rõ ràng?",
+      contactText: "Thêm case study, phác đồ theo tình trạng da và booking tái khám nhiều chặng."
+    }
+  },
+  industry: {
+    2: {
+      brand: "SolarGrid EPC",
+      eyebrow: "Mẫu web năng lượng / EPC",
+      title: "Website <em>EPC năng lượng</em> để lấy lead dự án lớn",
+      desc: "Biến thể này dành cho EPC điện mặt trời, rooftop solar và giải pháp tiết kiệm năng lượng cho doanh nghiệp.",
+      cards: [
+        ["☀️", "Rooftop solar", "Khảo sát tải tiêu thụ, thiết kế công suất tối ưu và hoàn vốn theo từng kịch bản."],
+        ["🔋", "Lưu trữ năng lượng", "Giải pháp BESS cho nhà máy, khách sạn và cụm thương mại có phụ tải lớn."],
+        ["📈", "Dashboard sản lượng", "Theo dõi sản lượng điện, cảnh báo suy giảm và hiệu suất theo chuỗi thời gian."],
+        ["🧰", "EPC trọn gói", "Thiết kế, thi công, nghiệm thu và vận hành bảo trì theo SLA rõ ràng."],
+        ["📑", "Hồ sơ pháp lý", "Hỗ trợ bản vẽ, an toàn điện, hồ sơ nghiệm thu và báo cáo đầu tư."],
+        ["🏭", "Case study nhà máy", "Mẫu nhấn vào lead B2B với thông tin sản lượng, tải nền và ROI ước tính."]
+      ],
+      partners: ["Huawei", "Sungrow", "Longi", "JA Solar", "Schneider", "ABB"],
+      contactTitle: "Muốn có web EPC năng lượng dễ chốt lead dự án?",
+      contactText: "Tùy biến theo công suất, giải pháp rooftop, BESS và hồ sơ kỹ thuật từng dự án."
+    },
+    3: {
+      brand: "CoolTech MEP",
+      eyebrow: "Mẫu web MEP / HVAC",
+      title: "Trang <em>MEP - HVAC</em> để nhận yêu cầu khảo sát công trình",
+      desc: "Biến thể này phù hợp nhà thầu HVAC, phòng sạch, PCCC và MEP tổng thể cho toà nhà, bệnh viện, nhà máy.",
+      cards: [
+        ["❄️", "Hệ HVAC trung tâm", "Chiller, AHU, FCU và BMS cho toà nhà văn phòng, bệnh viện, nhà máy."],
+        ["🔥", "PCCC tiêu chuẩn", "Tư vấn, thi công và bảo trì hệ thống chữa cháy theo tiêu chuẩn hiện hành."],
+        ["💨", "Phòng sạch", "Thiết kế áp suất dương, lọc HEPA và giám sát độ sạch cho phòng lab, dược phẩm."],
+        ["🏢", "MEP tổng thể", "Điện nhẹ, cấp thoát nước, thông gió và đồng bộ bản vẽ shopdrawing."],
+        ["📐", "Bóc tách khối lượng", "Tối ưu ngân sách công trình với BOQ rõ ràng theo từng hạng mục."],
+        ["🛠️", "Bảo trì định kỳ", "Đội kỹ thuật hỗ trợ on-site, kiểm tra hệ thống và xử lý sự cố 24/7."]
+      ],
+      partners: ["Daikin", "Trane", "Mitsubishi", "Victaulic", "Tyco", "Carrier"],
+      contactTitle: "Muốn có web MEP để chốt khảo sát nhanh?",
+      contactText: "Thêm module dự án, năng lực đội ngũ, BOQ và form yêu cầu khảo sát công trình."
+    }
+  },
+  landing: {
+    2: {
+      brand: "Fit Sprint 21",
+      eyebrow: "Mẫu landing fitness challenge",
+      title: "Landing <em>fitness challenge</em> để chốt đăng ký theo đợt",
+      desc: "Biến thể này tối ưu cho chiến dịch giảm mỡ, thử thách 21 ngày và bán theo cohort có thời gian đóng mở.",
+      benefits: [
+        ["🔥", "Lộ trình 21 ngày", "Chia rõ từng tuần để người đăng ký hiểu ngay họ sẽ làm gì mỗi ngày."],
+        ["🥗", "Meal plan sẵn", "Có thực đơn theo mục tiêu giảm mỡ, tăng cơ hoặc giữ vóc dáng."],
+        ["🎥", "Video ngắn dễ theo", "Mỗi buổi tập gói gọn 20–30 phút, phù hợp người bận rộn."],
+        ["🏋️", "Coach theo nhóm", "Livestream review form tập và giải đáp theo từng cohort."],
+        ["📊", "Theo dõi chỉ số", "Cập nhật cân nặng, vòng eo và ảnh trước sau trong dashboard riêng."],
+        ["🎁", "Ưu đãi chốt sớm", "Landing ưu tiên countdown, bonus và quà tặng cho nhóm đăng ký đầu tiên."]
+      ],
+      contactTitle: "Muốn landing challenge có countdown và bonus?",
+      contactText: "Thêm giới hạn chỗ, bonus theo đợt và upsell gói coach riêng sau khi đăng ký."
+    },
+    3: {
+      brand: "AI Revenue Workshop",
+      eyebrow: "Mẫu landing webinar / workshop",
+      title: "Landing <em>workshop bán vé</em> để chốt đăng ký sự kiện",
+      desc: "Biến thể này phù hợp webinar, workshop thu phí, event doanh nghiệp và chuỗi hội thảo chuyên đề.",
+      benefits: [
+        ["🎤", "Speaker rõ uy tín", "Đưa mạnh hồ sơ diễn giả, case study và kết quả từng chương trình trước đó."],
+        ["🗓️", "Agenda chi tiết", "Khách thấy ngay timeline sự kiện, nội dung từng phiên và quyền lợi tham dự."],
+        ["🎫", "Bán vé nhiều hạng", "Có early bird, standard và VIP để tăng doanh thu theo từng lớp giá."],
+        ["🤝", "Networking thực chiến", "Nhấn mạnh kết nối founder, sales leader và nhà đầu tư sau sự kiện."],
+        ["📽️", "Replay có kiểm soát", "Upsell gói xem lại và tài liệu sau workshop cho khách không đi được."],
+        ["📬", "Nuôi lead sau sự kiện", "Landing tối ưu form thu dữ liệu để remarketing workshop tiếp theo."]
+      ],
+      pricing: [
+        { name: "Early Bird", price: "490.000đ", period: "1 vé", features: ["Tham dự trực tiếp", "Tài liệu PDF", "Q&A cuối buổi"], featured: false },
+        { name: "Standard", price: "790.000đ", period: "1 vé", features: ["Toàn bộ quyền lợi Early Bird", "Networking tea break", "Slide speaker"], featured: true },
+        { name: "VIP Pass", price: "1.490.000đ", period: "1 vé", features: ["Ghế ưu tiên", "Dinner networking", "Replay 30 ngày", "Bộ checklist triển khai"], featured: false }
+      ],
+      contactTitle: "Muốn landing workshop có nhiều hạng vé?",
+      contactText: "Tùy biến theo sự kiện, agenda, hồ sơ speaker và chính sách bán vé theo giai đoạn."
+    }
+  }
+};
+
+const PREVIEW_VARIANT_CONFIG = {
+  company: {
+    1: { colorPrimary: "#0f766e", colorAccent: "#f59e0b", saleWebsitePrice: 2990000 },
+    2: { colorPrimary: "#1d4ed8", colorAccent: "#06b6d4", saleWebsitePrice: 3590000 },
+    3: { colorPrimary: "#4f46e5", colorAccent: "#f97316", saleWebsitePrice: 4290000 }
+  },
+  shop: {
+    1: { colorPrimary: "#c2410c", colorAccent: "#fb7185", saleWebsitePrice: 3990000 },
+    2: { colorPrimary: "#0f766e", colorAccent: "#f59e0b", saleWebsitePrice: 4590000 },
+    3: { colorPrimary: "#15803d", colorAccent: "#f97316", saleWebsitePrice: 4290000 }
+  },
+  salon: {
+    1: { colorPrimary: "#be185d", colorAccent: "#f59e0b", saleWebsitePrice: 4990000 },
+    2: { colorPrimary: "#92400e", colorAccent: "#eab308", saleWebsitePrice: 4490000 },
+    3: { colorPrimary: "#0f766e", colorAccent: "#38bdf8", saleWebsitePrice: 5590000 }
+  },
+  industry: {
+    1: { colorPrimary: "#1d4ed8", colorAccent: "#f59e0b", saleWebsitePrice: 6490000 },
+    2: { colorPrimary: "#ca8a04", colorAccent: "#1d4ed8", saleWebsitePrice: 6990000 },
+    3: { colorPrimary: "#0f766e", colorAccent: "#64748b", saleWebsitePrice: 6890000 }
+  },
+  landing: {
+    1: { colorPrimary: "#2563eb", colorAccent: "#f97316", saleWebsitePrice: 3490000 },
+    2: { colorPrimary: "#15803d", colorAccent: "#ef4444", saleWebsitePrice: 3890000 },
+    3: { colorPrimary: "#0f172a", colorAccent: "#06b6d4", saleWebsitePrice: 4290000 }
+  }
+};
+
 /* ============================================================ */
+
+const isPlainObject = (value) => Object.prototype.toString.call(value) === "[object Object]";
+
+const deepClone = (value) => {
+  if (Array.isArray(value) || isPlainObject(value)) {
+    return JSON.parse(JSON.stringify(value));
+  }
+  return value;
+};
+
+const mergeDeep = (...sources) => {
+  const result = {};
+  sources.forEach((source) => {
+    if (!isPlainObject(source)) {
+      return;
+    }
+    Object.entries(source).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        result[key] = deepClone(value);
+        return;
+      }
+      if (isPlainObject(value)) {
+        const current = isPlainObject(result[key]) ? result[key] : {};
+        result[key] = mergeDeep(current, value);
+        return;
+      }
+      result[key] = value;
+    });
+  });
+  return result;
+};
+
+const getPreviewData = (slug, demoVariant = 1) => {
+  const baseData = PREVIEW_DATA[slug] || PREVIEW_DATA.company;
+  const variantOverrides = PREVIEW_VARIANT_OVERRIDES[slug]?.[demoVariant] || {};
+  return mergeDeep(baseData, variantOverrides);
+};
+
+const getVariantSeedConfig = (slug, demoVariant = 1) => {
+  return mergeDeep(PREVIEW_VARIANT_CONFIG[slug]?.[demoVariant] || {});
+};
 
 const e = (v) =>
   String(v || "").replace(/[&<>"']/g, (c) =>
@@ -182,7 +423,7 @@ const parseSlug = () => {
   return PREVIEW_DATA[raw] ? raw : "company";
 };
 
-const parseCompanyDemoVariant = () => {
+const parseDemoVariant = () => {
   const params = new URLSearchParams(location.search || "");
   const n = parseInt(params.get("demo") || "1", 10);
   if (Number.isFinite(n) && n >= 1 && n <= 3) {
@@ -191,9 +432,42 @@ const parseCompanyDemoVariant = () => {
   return 1;
 };
 
-const loadConfig = (slug) => {
-  try { return JSON.parse(localStorage.getItem(`preview_config_${slug}`) || "{}"); }
-  catch { return {}; }
+const loadLocalConfig = (slug, demoVariant = 1) => {
+  const normalizedVariant = Number.isFinite(Number(demoVariant)) ? Math.max(1, Math.min(3, Number(demoVariant))) : 1;
+  const scopedKey = `preview_config_${slug}_demo${normalizedVariant}`;
+  const legacyKey = `preview_config_${slug}`;
+
+  try {
+    const scopedRaw = localStorage.getItem(scopedKey);
+    if (scopedRaw) {
+      const scoped = JSON.parse(scopedRaw);
+      if (scoped && typeof scoped === "object") {
+        return scoped;
+      }
+    }
+  } catch {
+    // ignore scoped parse error
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(legacyKey) || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const loadRemoteConfig = async (slug, demoVariant = 1) => {
+  try {
+    const res = await fetch(`/api/web-demo/templates/${encodeURIComponent(slug)}?variant=${encodeURIComponent(String(demoVariant))}`);
+    if (!res.ok) {
+      return {};
+    }
+    const payload = await res.json().catch(() => ({}));
+    const config = payload?.item?.config;
+    return isPlainObject(config) ? config : {};
+  } catch {
+    return {};
+  }
 };
 
 const parseMoney = (v, fallback = 0) => {
@@ -202,6 +476,40 @@ const parseMoney = (v, fallback = 0) => {
 };
 
 const formatVnd = (n) => `${Number(n || 0).toLocaleString("vi-VN")}đ`;
+
+const WEB_DEMO_PRODUCT_NAME_MAP = {
+  company: {
+    1: "Company - Hero trust + dich vu",
+    2: "Company - Nhieu trang dich vu",
+    3: "Company - Ban thuong hieu"
+  },
+  shop: {
+    1: "Shop - Gioi thieu",
+    2: "Shop - Ban hang",
+    3: "Shop - Nang cao"
+  },
+  salon: {
+    1: "Salon - Mini",
+    2: "Salon - Chuyen nghiep",
+    3: "Salon - Ban hang + booking"
+  },
+  industry: {
+    1: "Industry - Co ban",
+    2: "Industry - Chuyen nghiep",
+    3: "Industry - Nang cao"
+  },
+  landing: {
+    1: "Landing - Co ban",
+    2: "Landing - Chuyen nghiep",
+    3: "Landing - He thong"
+  }
+};
+
+const resolveWebDemoProductName = (slug, demoVariant) => {
+  const variant = Number.isFinite(Number(demoVariant)) ? Math.max(1, Math.min(3, Number(demoVariant))) : 1;
+  const byVariant = WEB_DEMO_PRODUCT_NAME_MAP[slug] || {};
+  return byVariant[variant] || `${slug || "web-demo"} - Mau ${variant}`;
+};
 
 const NAV_SECTION_IDS = {
   company: ["home", "services", "process", "proof", "contact"],
@@ -244,15 +552,13 @@ const applyTheme = (config) => {
 
 const renderTopbar = (slug, data, planSlug) => {
   const params = new URLSearchParams(location.search || "");
-  const demo = params.get("demo");
-  const adminHref = slug === "company" && demo
-    ? `/preview/${e(slug)}/admin?demo=${e(demo)}`
-    : `/preview/${e(slug)}/admin`;
+  const demo = parseDemoVariant();
+  const adminHref = `/preview/${e(slug)}/admin?demo=${e(demo)}`;
   return `
   <div class="preview-topbar">
     <span>👁 <strong>Đây là bản demo</strong> — mẫu web &ldquo;${e(data.name)}&rdquo;</span>
     <div class="preview-topbar-actions">
-      <a class="preview-topbar-btn is-back" href="/mau-demo/khomau-${e(slug)}">← Xem kho mẫu</a>
+      <a class="preview-topbar-btn is-back" href="/kho-mau/${e(slug)}">← Xem kho mẫu</a>
       <a class="preview-topbar-btn is-admin" href="${adminHref}">⚙ Thử admin</a>
       <a class="preview-topbar-btn is-buy" href="#buy">Mua ngay →</a>
     </div>
@@ -275,6 +581,8 @@ const renderNav = (brand, links, slug, planSlug, config) => {
 
 const renderPurchaseSection = (config, slug, data) => {
   const sales = getSalesConfig(config, config.phone || config.zalo);
+  const demoVariant = parseDemoVariant();
+  const productName = resolveWebDemoProductName(slug, demoVariant);
   const hostYears = sales.hostingYears.length ? sales.hostingYears : [1];
   const domainYears = sales.domainYears.length ? sales.domainYears : [1];
   const suffixes = sales.domainSuffixes.length ? sales.domainSuffixes : [".com"];
@@ -288,6 +596,9 @@ const renderPurchaseSection = (config, slug, data) => {
       </div>
       <div class="pv-form-wrap js-order-box" style="margin-top:22px"
         data-template-slug="${e(slug)}"
+        data-demo-variant="${e(String(demoVariant))}"
+        data-product-name="${e(productName)}"
+        data-plan-slug="${e(data?.planSlug || "")}" 
         data-base="${sales.websitePrice}"
         data-host-price="${sales.hostingPrice}"
         data-domain-price="${sales.domainPrice}">
@@ -469,7 +780,7 @@ const renderFooter = (slug, brand, config) => {
     <div class="pv-footer-bottom">
       <span>© 2026 ${e(config.siteName || brand)}. All rights reserved.</span>
       <div class="pv-footer-back">
-        <a href="/mau-demo/khomau-${e(slug)}">← Xem thêm mẫu ${e(PREVIEW_DATA[slug].name)}</a>
+        <a href="/kho-mau/${e(slug)}">← Xem thêm mẫu ${e(PREVIEW_DATA[slug].name)}</a>
       </div>
     </div>
   </footer>
@@ -1374,6 +1685,9 @@ const initPurchaseInteractions = () => {
 
   document.querySelectorAll(".js-order-box").forEach((box) => {
     const templateSlug = box.dataset.templateSlug || "company";
+    const demoVariant = Number(box.dataset.demoVariant || parseDemoVariant());
+    const productName = String(box.dataset.productName || resolveWebDemoProductName(templateSlug, demoVariant)).trim();
+    const planSlug = String(box.dataset.planSlug || "").trim();
     const base = Number(box.dataset.base || 0);
     const hostPrice = Number(box.dataset.hostPrice || 0);
     const domainPrice = Number(box.dataset.domainPrice || 0);
@@ -1416,6 +1730,9 @@ const initPurchaseInteractions = () => {
         const state = calc();
         const payload = {
           templateSlug,
+          demoVariant,
+          productName,
+          planSlug,
           basePrice: base,
           includeDomain: state.useDomain,
           domainPrice,
@@ -1509,24 +1826,34 @@ const initSupportPopup = (config) => {
 const htmlEl = document.documentElement;
 const templateFromAttr = htmlEl.dataset.template;
 const variantFromAttr = parseInt(htmlEl.dataset.variant || "1", 10);
-const slug = templateFromAttr || parseSlug();
-const data = PREVIEW_DATA[slug];
-const config = loadConfig(slug);
-const companyDemoVariant = slug === "company" ? (templateFromAttr ? variantFromAttr : parseCompanyDemoVariant()) : 1;
-const activeRenderer = slug === "company"
-  ? (COMPANY_RENDERERS[companyDemoVariant] || renderCompany)
-  : RENDERERS[slug];
+const initPreview = async () => {
+  const slug = templateFromAttr || parseSlug();
+  const demoVariant = templateFromAttr
+    ? (Number.isFinite(variantFromAttr) && variantFromAttr >= 1 && variantFromAttr <= 3 ? variantFromAttr : 1)
+    : parseDemoVariant();
+  const data = getPreviewData(slug, demoVariant);
+  const localConfig = loadLocalConfig(slug, demoVariant);
+  const remoteConfig = await loadRemoteConfig(slug, demoVariant);
+  const config = mergeDeep(getVariantSeedConfig(slug, demoVariant), remoteConfig, localConfig);
+  const companyDemoVariant = slug === "company" ? demoVariant : 1;
+  const activeRenderer = slug === "company"
+    ? (COMPANY_RENDERERS[companyDemoVariant] || renderCompany)
+    : RENDERERS[slug];
 
-document.body.dataset.template = slug;
-document.title = `${config.siteName || data.brand} — ${data.name}${slug === "company" ? ` (Mau ${companyDemoVariant})` : ""} | Mẫu web demo`;
+  document.body.dataset.template = slug;
+  document.body.dataset.variant = String(demoVariant);
+  document.title = `${config.siteName || data.brand} — ${data.name} (Mau ${demoVariant}) | Mẫu web demo`;
 
-applyTheme(config);
+  applyTheme(config);
 
-const root = document.getElementById("previewRoot");
-if (root && activeRenderer) {
-  root.innerHTML = activeRenderer(data, config);
-  initStickyNavOffset();
-  window.addEventListener("resize", initStickyNavOffset);
-  initPurchaseInteractions();
-  initSupportPopup(config);
-}
+  const root = document.getElementById("previewRoot");
+  if (root && activeRenderer) {
+    root.innerHTML = activeRenderer(data, config);
+    initStickyNavOffset();
+    window.addEventListener("resize", initStickyNavOffset);
+    initPurchaseInteractions();
+    initSupportPopup(config);
+  }
+};
+
+initPreview();

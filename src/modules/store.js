@@ -4925,10 +4925,45 @@ function normalizeWebDemoSlug(value) {
   return WEB_DEMO_TEMPLATE_SLUGS.has(slug) ? slug : "";
 }
 
+function parseWebDemoTemplateSlug(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  const match = raw.match(/^(company|shop|salon|industry|landing)(?:__demo([123]))?$/);
+  if (!match) {
+    return null;
+  }
+  const baseSlug = match[1];
+  const variant = match[2] ? Number(match[2]) : 1;
+  return {
+    baseSlug,
+    variant,
+    storageSlug: variant > 1 ? `${baseSlug}__demo${variant}` : baseSlug,
+    isVariantScoped: variant > 1
+  };
+}
+
+function buildWebDemoTemplateSlug(templateSlug, variant = 1) {
+  const baseSlug = normalizeWebDemoSlug(templateSlug);
+  if (!baseSlug) {
+    return "";
+  }
+  const parsedVariant = Number.parseInt(String(variant || "1"), 10);
+  const safeVariant = Number.isFinite(parsedVariant) && parsedVariant >= 1 && parsedVariant <= 3 ? parsedVariant : 1;
+  return safeVariant > 1 ? `${baseSlug}__demo${safeVariant}` : baseSlug;
+}
+
 function mapWebDemoTemplateRow(row) {
   if (!row) return null;
+  const parsedSlug = parseWebDemoTemplateSlug(row.template_slug) || {
+    baseSlug: row.template_slug,
+    variant: 1,
+    storageSlug: row.template_slug,
+    isVariantScoped: false
+  };
   return {
     slug: row.template_slug,
+    baseSlug: parsedSlug.baseSlug,
+    variant: parsedSlug.variant,
+    isVariantScoped: parsedSlug.isVariantScoped,
     displayName: row.display_name,
     templateGroup: row.template_group,
     config: row.config_json || {},
@@ -4960,39 +4995,53 @@ async function listWebDemoTemplates() {
   const result = await pool.query(
     `SELECT template_slug, display_name, template_group, config_json, seo_json, updated_by, updated_at, created_at
      FROM web_demo_templates
-     ORDER BY template_slug ASC`
+     ORDER BY template_group ASC, template_slug ASC`
   );
   return result.rows.map(mapWebDemoTemplateRow);
 }
 
-async function getWebDemoTemplate(templateSlug) {
-  const safeSlug = normalizeWebDemoSlug(templateSlug);
-  if (!safeSlug) {
+async function getWebDemoTemplate(templateSlug, variant = 1) {
+  const baseSlug = normalizeWebDemoSlug(templateSlug);
+  const scopedSlug = buildWebDemoTemplateSlug(templateSlug, variant);
+  if (!baseSlug || !scopedSlug) {
     throw createStoreError("templateSlug không hợp lệ", 400);
   }
+
+  const requestedVariant = Number.parseInt(String(variant || "1"), 10);
+  const safeVariant = Number.isFinite(requestedVariant) && requestedVariant >= 1 && requestedVariant <= 3 ? requestedVariant : 1;
+  const querySlugs = safeVariant > 1 ? [scopedSlug, baseSlug] : [baseSlug];
 
   const result = await pool.query(
     `SELECT template_slug, display_name, template_group, config_json, seo_json, updated_by, updated_at, created_at
      FROM web_demo_templates
-     WHERE template_slug = $1`,
-    [safeSlug]
+     WHERE template_slug = ANY($1::text[])
+     ORDER BY CASE WHEN template_slug = $2 THEN 0 ELSE 1 END
+     LIMIT 1`,
+    [querySlugs, scopedSlug]
   );
 
   if (result.rowCount === 0) {
     throw createStoreError("Không tìm thấy mẫu web-demo", 404);
   }
 
-  return mapWebDemoTemplateRow(result.rows[0]);
+  const item = mapWebDemoTemplateRow(result.rows[0]);
+  return {
+    ...item,
+    requestedVariant: safeVariant,
+    resolvedVariant: item.variant || 1,
+    isFallback: safeVariant > 1 && (item.variant || 1) !== safeVariant
+  };
 }
 
-async function upsertWebDemoTemplate(templateSlug, input = {}, actor = {}) {
-  const safeSlug = normalizeWebDemoSlug(templateSlug);
-  if (!safeSlug) {
+async function upsertWebDemoTemplate(templateSlug, input = {}, actor = {}, variant = 1) {
+  const baseSlug = normalizeWebDemoSlug(templateSlug);
+  const safeSlug = buildWebDemoTemplateSlug(templateSlug, variant);
+  if (!baseSlug || !safeSlug) {
     throw createStoreError("templateSlug không hợp lệ", 400);
   }
 
   const displayName = String(input.displayName || "").trim();
-  const templateGroup = String(input.templateGroup || safeSlug).trim().toLowerCase();
+  const templateGroup = String(input.templateGroup || baseSlug).trim().toLowerCase();
   const config = typeof input.config === "object" && input.config !== null ? input.config : {};
   const seo = typeof input.seo === "object" && input.seo !== null ? input.seo : {};
   const updatedBy = String(actor?.username || input.updatedBy || "system").trim() || "system";

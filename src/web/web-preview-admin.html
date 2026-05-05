@@ -26,9 +26,9 @@
       <aside class="adm-sidebar">
         <div class="adm-sidebar-logo" id="admSidebarLogo">Admin</div>
         <nav class="adm-sidebar-nav">
-          <a class="adm-nav-item active" data-tab="general">🏠 Thông tin site</a>
+          <a class="adm-nav-item active" data-tab="general">🏠 Thông tin chung</a>
           <a class="adm-nav-item" data-tab="colors">🎨 Màu sắc</a>
-          <a class="adm-nav-item" data-tab="content">🧩 Nội dung trang</a>
+          <a class="adm-nav-item" data-tab="content">🧩 Nội dung demo con</a>
           <a class="adm-nav-item" data-tab="posts">📝 Bài viết</a>
           <a class="adm-nav-item" data-tab="contact">📞 Liên hệ</a>
         </nav>
@@ -40,25 +40,26 @@
 
       <main class="adm-main">
         <div class="adm-topbar">
-          <h2 id="admTabTitle">Thông tin site</h2>
+          <h2 id="admTabTitle">Thông tin chung</h2>
           <div class="adm-topbar-actions">
-            <button class="adm-btn-save" id="admSaveBtn">💾 Lưu bản nháp</button>
-            <button class="adm-btn-publish" id="admPublishBtn">🚀 Publish lên preview</button>
-            <button class="adm-btn-reset" id="admResetDraftBtn">↺ Đồng bộ từ bản công bố</button>
+            <button class="adm-btn-save" id="admSaveBtn">💾 Lưu tạm</button>
+            <button class="adm-btn-publish" id="admPublishBtn">🚀 Áp dụng lên demo con</button>
+            <button class="adm-btn-reset" id="admResetDraftBtn">↺ Lấy lại bản đang hiển thị</button>
           </div>
         </div>
-        <p class="adm-draft-hint" id="admDraftHint">Đang chỉnh sửa bản nháp. Preview công bố sẽ chỉ đổi khi bấm Publish.</p>
+        <p class="adm-draft-hint" id="admDraftHint">Bạn đang sửa bản tạm. Demo con ngoài trang chỉ đổi khi bấm "Áp dụng lên demo con".</p>
 
         <!-- Tab: General -->
         <div class="adm-tab active" id="tab-general">
           <div class="adm-section-title">Thông tin cơ bản</div>
+          <p class="adm-help">Nhóm này đổi phần tên thương hiệu, logo và thông tin đầu/cuối trang của demo con.</p>
           <div class="adm-form-grid">
             <div class="adm-form-group">
               <label>Tên website / công ty</label>
               <input type="text" id="siteName" placeholder="VD: Công ty ABC, Shop Hoa, Salon Minh..." />
             </div>
             <div class="adm-form-group">
-              <label>Tagline / Slogan</label>
+              <label>Dòng mô tả ngắn dưới tên thương hiệu</label>
               <input type="text" id="tagline" placeholder="VD: Giải pháp tin cậy cho doanh nghiệp" />
             </div>
             <div class="adm-form-group">
@@ -79,17 +80,17 @@
         <!-- Tab: Colors -->
         <div class="adm-tab hidden" id="tab-colors">
           <div class="adm-section-title">Bộ màu website</div>
-          <p class="adm-help">Thay đổi màu sẽ áp dụng cho toàn bộ website sau khi lưu.</p>
+          <p class="adm-help">Đổi màu ở đây sẽ ảnh hưởng toàn bộ demo con: nút bấm, điểm nhấn và một số tiêu đề.</p>
           <div class="adm-color-grid">
             <div class="adm-form-group">
-              <label>Màu chủ đạo (primary)</label>
+              <label>Màu chính</label>
               <div class="adm-color-row">
                 <input type="color" id="colorPrimary" value="#1a3c6e" />
                 <input type="text" id="colorPrimaryText" placeholder="#1a3c6e" />
               </div>
             </div>
             <div class="adm-form-group">
-              <label>Màu nhấn (accent)</label>
+              <label>Màu phụ / màu nhấn</label>
               <div class="adm-color-row">
                 <input type="color" id="colorAccent" value="#1e88e5" />
                 <input type="text" id="colorAccentText" placeholder="#1e88e5" />
@@ -104,6 +105,11 @@
 
         <!-- Tab: Content -->
         <div class="adm-tab hidden" id="tab-content">
+          <div id="admContentMapBox" style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(148,163,184,.35);border-radius:10px;background:rgba(15,23,42,.35)">
+            <div style="font-size:.92rem;font-weight:700;color:#e2e8f0">Bản đồ chỉnh sửa</div>
+            <p id="admContentMapIntro" class="adm-help" style="margin:6px 0 0">Mục này giúp bạn biết chính xác sửa ô nào thì phần nào trên demo con thay đổi.</p>
+            <ul id="admContentMapList" style="margin:8px 0 0;padding-left:18px;color:#cbd5e1;font-size:.84rem;line-height:1.55"></ul>
+          </div>
 
           <!-- ===== COMPANY ===== -->
           <div class="adm-content-block hidden" id="content-company">
@@ -112,7 +118,7 @@
             <div class="adm-section-sub">① Hero</div>
             <div class="adm-form-grid" style="margin-bottom:20px">
               <div class="adm-form-group">
-                <label>Hero eyebrow</label>
+                <label>Dòng chữ nhỏ phía trên tiêu đề lớn</label>
                 <input type="text" id="companyHeroEyebrow" placeholder="Mẫu web công ty / dịch vụ" />
               </div>
               <div class="adm-form-group" style="grid-column:1/-1">
@@ -226,7 +232,7 @@
             <p class="adm-help">Thêm ảnh cho hero, từng dịch vụ hoặc gallery bằng nút chọn ảnh từ máy.</p>
             <div class="adm-section-sub">① Hero</div>
             <div class="adm-form-grid" style="margin-bottom:6px">
-              <div class="adm-form-group"><label>Eyebrow</label>
+              <div class="adm-form-group"><label>Dòng chữ nhỏ phía trên tiêu đề lớn</label>
                 <input type="text" id="salonHeroEyebrow" placeholder="Mẫu web salon / beauty" /></div>
               <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
                 <input type="text" id="salonHeroTitle" placeholder="Trang salon cao cấp để khách đặt lịch" /></div>
@@ -270,7 +276,7 @@
             <p class="adm-help">Sửa trực tiếp từng mục theo đúng bố cục trang B2B kỹ thuật.</p>
             <div class="adm-section-sub">① Hero</div>
             <div class="adm-form-grid" style="margin-bottom:6px">
-              <div class="adm-form-group"><label>Eyebrow</label>
+              <div class="adm-form-group"><label>Dòng chữ nhỏ phía trên tiêu đề lớn</label>
                 <input type="text" id="industryHeroEyebrow" placeholder="Mẫu web industry / kỹ thuật" /></div>
               <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
                 <input type="text" id="industryHeroTitle" placeholder="Trang kỹ thuật B2B để nhận yêu cầu báo giá" /></div>
@@ -311,7 +317,7 @@
             <p class="adm-help">Thiết lập từng mục theo đúng thứ tự hiển thị trên landing page.</p>
             <div class="adm-section-sub">① Hero</div>
             <div class="adm-form-grid" style="margin-bottom:20px">
-              <div class="adm-form-group"><label>Eyebrow</label>
+              <div class="adm-form-group"><label>Dòng chữ nhỏ phía trên tiêu đề lớn</label>
                 <input type="text" id="landingHeroEyebrow" placeholder="Mẫu landing chuyển đổi" /></div>
               <div class="adm-form-group" style="grid-column:1/-1"><label>Tiêu đề</label>
                 <input type="text" id="landingHeroTitle" placeholder="Landing page tập trung để chuyển đổi đăng ký" /></div>

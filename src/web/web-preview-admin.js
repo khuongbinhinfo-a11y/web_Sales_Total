@@ -20,23 +20,74 @@ const parseSlug = () => {
   return idx >= 0 ? (parts[idx + 1] || "company") : "company";
 };
 
+const parseDemoVariant = () => {
+  const params = new URLSearchParams(location.search || "");
+  const n = parseInt(params.get("demo") || "1", 10);
+  if (Number.isFinite(n) && n >= 1 && n <= 3) {
+    return n;
+  }
+  return 1;
+};
+
 /* AUTO-DETECT TEMPLATE FROM HTML ATTRIBUTES (for standalone folder deployment) */
 const htmlEl = document.documentElement;
 const templateFromAttr = htmlEl.dataset.template;
+const variantFromAttr = parseInt(htmlEl.dataset.variant || "1", 10);
 const slug = templateFromAttr || parseSlug();
-const PUBLIC_CONFIG_KEY = `preview_config_${slug}`;
-const DRAFT_CONFIG_KEY = `admin_draft_${slug}`;
+const demoVariant = templateFromAttr
+  ? (Number.isFinite(variantFromAttr) && variantFromAttr >= 1 && variantFromAttr <= 3 ? variantFromAttr : 1)
+  : parseDemoVariant();
+const LEGACY_PUBLIC_CONFIG_KEY = `preview_config_${slug}`;
+const LEGACY_DRAFT_CONFIG_KEY = `admin_draft_${slug}`;
+const PUBLIC_CONFIG_KEY = `preview_config_${slug}_demo${demoVariant}`;
+const DRAFT_CONFIG_KEY = `admin_draft_${slug}_demo${demoVariant}`;
+let remoteTemplateConfig = {};
 
 const loadJson = (key) => {
   try { return JSON.parse(localStorage.getItem(key) || "{}"); }
   catch { return {}; }
 };
 
-const loadPublicConfig = () => loadJson(PUBLIC_CONFIG_KEY);
+const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
+
+const loadRemoteTemplateConfig = async () => {
+  try {
+    const res = await fetch(`/api/web-demo/templates/${encodeURIComponent(slug)}?variant=${encodeURIComponent(String(demoVariant))}`);
+    if (!res.ok) return {};
+    const data = await res.json().catch(() => ({}));
+    const config = data?.item?.config;
+    remoteTemplateConfig = isObject(config) ? config : {};
+    return remoteTemplateConfig;
+  } catch {
+    remoteTemplateConfig = {};
+    return remoteTemplateConfig;
+  }
+};
+
+const loadPublicConfig = () => {
+  const scoped = loadJson(PUBLIC_CONFIG_KEY);
+  if (Object.keys(scoped).length) {
+    return scoped;
+  }
+
+  const legacy = loadJson(LEGACY_PUBLIC_CONFIG_KEY);
+  if (Object.keys(legacy).length) {
+    return legacy;
+  }
+
+  return isObject(remoteTemplateConfig) ? remoteTemplateConfig : {};
+};
 
 const loadDraftConfig = () => {
   const draft = loadJson(DRAFT_CONFIG_KEY);
   if (Object.keys(draft).length) return draft;
+
+  const legacyDraft = loadJson(LEGACY_DRAFT_CONFIG_KEY);
+  if (Object.keys(legacyDraft).length) {
+    localStorage.setItem(DRAFT_CONFIG_KEY, JSON.stringify(legacyDraft));
+    return legacyDraft;
+  }
+
   const legacy = loadPublicConfig();
   if (Object.keys(legacy).length) {
     localStorage.setItem(DRAFT_CONFIG_KEY, JSON.stringify(legacy));
@@ -77,7 +128,7 @@ const setDraftHint = (msg, tone = "info") => {
   hint.style.background = tone === "warn" ? "rgba(161,98,7,.12)" : tone === "ok" ? "rgba(22,163,74,.12)" : "rgba(37,99,235,.12)";
 };
 
-const showToast = (text = "✅ Đã lưu bản nháp!") => {
+const showToast = (text = "✅ Đã lưu tạm!") => {
   const t = $("admToast");
   t.textContent = text;
   t.classList.remove("hidden");
@@ -87,7 +138,50 @@ const showToast = (text = "✅ Đã lưu bản nháp!") => {
 /* ================================================================
    TABS
    ================================================================ */
-const TABS = { general: "Thông tin site", colors: "Màu sắc", content: "Nội dung trang", posts: "Bài viết", sales: "Mua hàng", contact: "Liên hệ" };
+const TABS = { general: "Thông tin chung", colors: "Màu sắc", content: "Nội dung demo con", posts: "Bài viết", sales: "Mua hàng", contact: "Liên hệ" };
+
+const CONTENT_FIELD_MAP = {
+  company: [
+    "Hero: đổi tiêu đề lớn, mô tả mở đầu và ảnh đầu trang.",
+    "Dịch vụ: đổi tiêu đề nhóm dịch vụ và từng card dịch vụ ở giữa trang.",
+    "Quy trình: đổi các bước hiển thị ngay dưới nhóm dịch vụ.",
+    "FAQ + liên hệ: đổi phần chốt tư vấn ở cuối trang."
+  ],
+  shop: [
+    "Banner: đổi câu khuyến mãi, % giảm và thời hạn khuyến mãi.",
+    "Danh mục: mỗi dòng sẽ thành 1 nút lọc trong khối danh mục.",
+    "Sản phẩm nổi bật: thêm/sửa từng ô sản phẩm trong lưới bán hàng.",
+    "Đánh giá khách hàng: đổi phản hồi ở phần gần cuối trang."
+  ],
+  salon: [
+    "Hero: đổi thông điệp chính và ảnh đầu trang salon.",
+    "Dịch vụ nổi bật: mỗi mục là 1 dịch vụ trong khối dịch vụ.",
+    "Gallery kết quả: mỗi mục là 1 ảnh/ô trong thư viện ảnh.",
+    "Bảng giá + đánh giá: đổi phần giá gói và phản hồi khách."
+  ],
+  industry: [
+    "Hero: đổi thông điệp chính cho trang kỹ thuật/B2B.",
+    "Danh mục thiết bị: mỗi mục là 1 ô thiết bị trong khối sản phẩm.",
+    "Quy trình làm việc: mỗi bước là 1 bước trong phần quy trình.",
+    "Đối tác: mỗi dòng là 1 tên thương hiệu đối tác."
+  ],
+  landing: [
+    "Hero: đổi thông điệp mở đầu landing page.",
+    "Lợi ích: mỗi mục là 1 ô lợi ích ở phần giữa trang.",
+    "Bảng giá: mỗi gói là 1 cột giá trong phần chốt đăng ký.",
+    "FAQ: mỗi mục là 1 câu hỏi thường gặp ở cuối trang."
+  ]
+};
+
+const renderContentMapping = () => {
+  const intro = $("admContentMapIntro");
+  const list = $("admContentMapList");
+  if (!intro || !list) return;
+
+  intro.textContent = `Bạn đang sửa mẫu con ${demoVariant} của nhóm "${slug}". Các mục bên dưới sẽ tác động đúng vị trí tương ứng trên demo con này.`;
+  const lines = CONTENT_FIELD_MAP[slug] || [];
+  list.innerHTML = lines.map((line) => `<li>${escText(line)}</li>`).join("");
+};
 
 document.querySelectorAll(".adm-nav-item").forEach((el) => {
   el.addEventListener("click", () => {
@@ -239,7 +333,7 @@ const makeListEditor = ({ listId, getArr, setArr, defaultItem, renderItem }) => 
 const imgUploadRow = (item, i) => `
   <div class="adm-form-group" style="grid-column:1/-1">
     <label>Ảnh (có thể dán URL hoặc chọn từ máy)</label>
-    <input type="url" value="${escAttr(item.imageUrl || "")}" data-field="imageUrl" data-idx="${i}" placeholder="Để trống nếu dùng icon" />
+    <input type="url" value="${escAttr(item.imageUrl || "")}" data-field="imageUrl" data-idx="${i}" placeholder="Để trống nếu dùng biểu tượng" />
   </div>
   <div class="adm-upload-row" style="margin-bottom:10px">
     ${item.imageUrl ? `<img class="adm-thumb-preview" src="${escAttr(item.imageUrl)}" alt="thumb" />` : ""}
@@ -272,7 +366,7 @@ const shopProductsEditor = makeListEditor({
     <div class="adm-item-card">
       <div class="adm-item-header"><span class="adm-item-title">Sản phẩm ${i + 1}</span><button class="adm-item-del" data-idx="${i}">Xoá</button></div>
       <div class="adm-item-grid">
-        <div class="adm-form-group"><label>Icon (khi không có ảnh)</label>
+        <div class="adm-form-group"><label>Biểu tượng (khi không có ảnh)</label>
           <input type="text" value="${escAttr(item.icon)}" data-field="icon" data-idx="${i}" placeholder="📦" /></div>
         <div class="adm-form-group"><label>Badge</label>
           <input type="text" value="${escAttr(item.badge)}" data-field="badge" data-idx="${i}" placeholder="-20%, Hot, Mới..." /></div>
@@ -310,7 +404,7 @@ const salonServicesEditor = makeListEditor({
     <div class="adm-item-card">
       <div class="adm-item-header"><span class="adm-item-title">Dịch vụ ${i + 1}</span><button class="adm-item-del" data-idx="${i}">Xoá</button></div>
       <div class="adm-item-grid">
-        <div class="adm-form-group"><label>Icon</label>
+        <div class="adm-form-group"><label>Biểu tượng</label>
           <input type="text" value="${escAttr(item.icon)}" data-field="icon" data-idx="${i}" placeholder="✂️" /></div>
         <div class="adm-form-group"><label>Giá từ</label>
           <input type="text" value="${escAttr(item.price)}" data-field="price" data-idx="${i}" placeholder="150.000đ" /></div>
@@ -331,7 +425,7 @@ const salonGalleryEditor = makeListEditor({
     <div class="adm-item-card">
       <div class="adm-item-header"><span class="adm-item-title">Ảnh gallery ${i + 1}</span><button class="adm-item-del" data-idx="${i}">Xoá</button></div>
       <div class="adm-item-grid">
-        <div class="adm-form-group"><label>Icon (khi không có ảnh)</label>
+        <div class="adm-form-group"><label>Biểu tượng (khi không có ảnh)</label>
           <input type="text" value="${escAttr(item.icon)}" data-field="icon" data-idx="${i}" placeholder="✨" /></div>
         <div class="adm-form-group"><label>Nhãn tác phẩm</label>
           <input type="text" value="${escAttr(item.label)}" data-field="label" data-idx="${i}" /></div>
@@ -385,7 +479,7 @@ const industryCardsEditor = makeListEditor({
     <div class="adm-item-card">
       <div class="adm-item-header"><span class="adm-item-title">Mục ${i + 1}</span><button class="adm-item-del" data-idx="${i}">Xoá</button></div>
       <div class="adm-item-grid">
-        <div class="adm-form-group"><label>Icon</label>
+        <div class="adm-form-group"><label>Biểu tượng</label>
           <input type="text" value="${escAttr(item.icon)}" data-field="icon" data-idx="${i}" placeholder="⚙️" /></div>
         <div class="adm-form-group"><label>Tiêu đề</label>
           <input type="text" value="${escAttr(item.title)}" data-field="title" data-idx="${i}" /></div>
@@ -424,7 +518,7 @@ const landingBenefitsEditor = makeListEditor({
     <div class="adm-item-card">
       <div class="adm-item-header"><span class="adm-item-title">Lợi ích ${i + 1}</span><button class="adm-item-del" data-idx="${i}">Xoá</button></div>
       <div class="adm-item-grid">
-        <div class="adm-form-group"><label>Icon</label>
+        <div class="adm-form-group"><label>Biểu tượng</label>
           <input type="text" value="${escAttr(item.icon)}" data-field="icon" data-idx="${i}" placeholder="🎯" /></div>
         <div class="adm-form-group"><label>Tiêu đề</label>
           <input type="text" value="${escAttr(item.title)}" data-field="title" data-idx="${i}" /></div>
@@ -558,7 +652,7 @@ const renderCompanyCardsAdmin = () => {
       </div>
       <div class="adm-item-grid">
         <div class="adm-form-group">
-          <label>Icon (dùng khi không có ảnh)</label>
+          <label>Biểu tượng (dùng khi không có ảnh)</label>
           <input type="text" value="${escAttr(item.icon)}" data-kind="card" data-field="icon" data-idx="${i}" placeholder="🏅" />
         </div>
         <div class="adm-form-group">
@@ -568,7 +662,7 @@ const renderCompanyCardsAdmin = () => {
       </div>
       <div class="adm-form-group">
         <label>Ảnh card (có thể dán URL)</label>
-        <input type="url" value="${escAttr(item.imageUrl)}" data-kind="card" data-field="imageUrl" data-idx="${i}" placeholder="Để trống nếu dùng icon" />
+        <input type="url" value="${escAttr(item.imageUrl)}" data-kind="card" data-field="imageUrl" data-idx="${i}" placeholder="Để trống nếu dùng biểu tượng" />
       </div>
       <div class="adm-upload-row" style="margin-bottom:10px">
         ${item.imageUrl ? `<img class="adm-thumb-preview" src="${escAttr(item.imageUrl)}" alt="Ảnh card ${i + 1}" />` : ""}
@@ -777,27 +871,27 @@ $("admSaveBtn")?.addEventListener("click", () => {
   cfg.posts = JSON.parse(JSON.stringify(posts));
   saveDraftConfig(cfg);
   hasUnpublishedChanges = true;
-  setDraftHint("Đã lưu bản nháp. Bản demo công bố chưa đổi cho tới khi bạn bấm Publish.", "warn");
-  showToast("✅ Đã lưu bản nháp!");
+  setDraftHint("Đã lưu tạm. Demo con chưa đổi cho tới khi bạn bấm \"Áp dụng lên demo con\".", "warn");
+  showToast("✅ Đã lưu tạm!");
 });
 
 $("admPublishBtn")?.addEventListener("click", () => {
   const cfg = loadDraftConfig();
   publishDraftConfig(cfg);
   hasUnpublishedChanges = false;
-  setDraftHint("Đã publish lên preview công bố. Khách xem demo sẽ thấy nội dung mới.", "ok");
-  showToast("🚀 Đã publish lên preview!");
+  setDraftHint("Đã áp dụng lên demo con. Khách mở demo sẽ thấy nội dung mới.", "ok");
+  showToast("🚀 Đã áp dụng lên demo con!");
 });
 
 $("admResetDraftBtn")?.addEventListener("click", () => {
-  const confirmed = window.confirm("Đồng bộ bản nháp theo bản công bố hiện tại?\nCác chỉnh sửa nháp chưa publish sẽ bị ghi đè.");
+  const confirmed = window.confirm("Lấy lại bản đang hiển thị ngoài demo?\nCác chỉnh sửa tạm chưa áp dụng sẽ bị ghi đè.");
   if (!confirmed) return;
   const publicCfg = loadPublicConfig();
   saveDraftConfig(publicCfg);
   populateForm(publicCfg);
   hasUnpublishedChanges = false;
-  setDraftHint("Bản nháp đã đồng bộ từ bản công bố.", "info");
-  showToast("↺ Đã đồng bộ bản nháp từ bản công bố");
+  setDraftHint("Đã lấy lại bản đang hiển thị thành bản tạm để bạn sửa tiếp.", "info");
+  showToast("↺ Đã lấy lại bản đang hiển thị");
 });
 
 /* ================================================================
@@ -893,9 +987,10 @@ const populateForm = (cfg) => {
 /* ================================================================
    LOGIN
    ================================================================ */
-const showPanel = () => {
+const showPanel = async () => {
   $("admLogin").classList.add("hidden");
   $("admPanel").classList.remove("hidden");
+  await loadRemoteTemplateConfig();
   const cfg = loadDraftConfig();
   populateForm(cfg);
   renderPresets();
@@ -903,7 +998,7 @@ const showPanel = () => {
   syncColor("colorAccent", "colorAccentText");
   $("admSidebarLogo").textContent = `Admin: ${slug}`;
   const viewLink = $("admViewSite");
-  if (viewLink) viewLink.href = `/preview/${slug}`;
+  if (viewLink) viewLink.href = `/preview/${slug}?demo=${demoVariant}`;
   bindImagePicker("logoFileInput", "pickLogoFileBtn", "clearLogoFileBtn", "logoUrl");
   bindImagePicker("companyHeroImageInput", "pickCompanyHeroImageBtn", "clearCompanyHeroImageBtn", "companyHeroImage");
   bindImagePicker("salonHeroImageInput", "pickSalonHeroImageBtn", "clearSalonHeroImageBtn", "salonHeroImage");
@@ -912,11 +1007,12 @@ const showPanel = () => {
   document.querySelectorAll(".adm-content-block").forEach((el) => el.classList.add("hidden"));
   const contentBlock = $(`content-${slug}`);
   if (contentBlock) contentBlock.classList.remove("hidden");
-  setDraftHint("Đang chỉnh sửa bản nháp. Preview công bố chỉ đổi sau khi Publish.", "info");
+  renderContentMapping();
+  setDraftHint("Bạn đang sửa bản tạm. Demo con ngoài trang chỉ đổi khi bấm \"Áp dụng lên demo con\".", "info");
 };
 
 $("loginBtn")?.addEventListener("click", () => {
-  if ($("loginPwd").value === ADMIN_PASSWORD) { login(); showPanel(); }
+  if ($("loginPwd").value === ADMIN_PASSWORD) { login(); void showPanel(); }
   else {
     $("loginPwd").style.borderColor = "#f87171";
     setTimeout(() => { $("loginPwd").style.borderColor = ""; }, 1500);
@@ -936,10 +1032,10 @@ document.addEventListener("input", () => {
 window.addEventListener("beforeunload", (e) => {
   if (!hasUnpublishedChanges) return;
   e.preventDefault();
-  e.returnValue = "Bạn có thay đổi chưa publish.";
+  e.returnValue = "Bạn còn thay đổi chưa áp dụng lên demo con.";
 });
 
 /* ================================================================
    INIT
    ================================================================ */
-if (isLoggedIn()) showPanel();
+if (isLoggedIn()) void showPanel();

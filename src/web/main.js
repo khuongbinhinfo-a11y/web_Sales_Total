@@ -651,18 +651,7 @@ const PUBLIC_PAGE_CONTENT = {
             "Nếu cần, đi tiếp sang Zalo để chốt phạm vi triển khai."
           ]
         },
-        story: {
-          eyebrow: "Lợi ích",
-          title: "Demo không còn nằm lẫn ở home",
-          copy: "Khối demo được chuyển về đúng chỗ để homepage không giống một trang bán template, nhưng khách vẫn xem mẫu rất nhanh khi cần.",
-          cards: [],
-          checklistTitle: "Bạn nên vào trang này khi",
-          checklist: [
-            "Đang cân nhắc kiểu trình bày phù hợp với ngành.",
-            "Muốn xem cách một trang web có thể chốt lead hoặc chốt đơn.",
-            "Muốn giảm thời gian mô tả ý tưởng ban đầu."
-          ]
-        },
+        story: null,
         support: {
           eyebrow: "Khu demo",
           title: "Đã thấy mẫu gần đúng với nhu cầu?",
@@ -2439,8 +2428,8 @@ function renderWebDemoMarketLayout(demos) {
               ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
             </div>
             <div class="web-demo-market-actions">
-              <a href="/mau-demo/khomau-${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
-              <a class="is-buy" href="/mau-demo/khomau-${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
+              <a href="/kho-mau/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="/kho-mau/${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
             </div>
           </div>
         </article>
@@ -2544,6 +2533,20 @@ function softwareCode(appId) {
   if (normalized === "app-bds-website-manager") return "APP-BDS-WEB";
   if (normalized === "hair-spa-manager") return "APP-SALON";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function getCatalogScope(product) {
+  if (window.CatalogScope && typeof window.CatalogScope.getProductScope === "function") {
+    return window.CatalogScope.getProductScope(product);
+  }
+  return "software";
+}
+
+function isCatalogScopeAllowedForRoute(product, route) {
+  if (!routeNeedsCatalog(route)) {
+    return true;
+  }
+  return getCatalogScope(product) === "software";
 }
 
 function getCatalogCategory(product) {
@@ -3220,6 +3223,10 @@ function buildTabs(){
 function renderProducts(){
   const q = (searchInput.value||"").toLowerCase();
   const filtered = allProducts.filter(p => {
+    const matchScope = isCatalogScopeAllowedForRoute(p, currentRoute);
+    if (!matchScope) {
+      return false;
+    }
     const displayName = canonicalProductName(p).toLowerCase();
     const matchCat = activeCat==="all" || getCatalogCategory(p)===activeCat;
     const matchQ   = !q || p.name.toLowerCase().includes(q) || displayName.includes(q) || (p.appId||"").toLowerCase().includes(q);

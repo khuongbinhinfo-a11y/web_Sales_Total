@@ -492,11 +492,35 @@ function buildWebDemoPaidOrderMessage({ order, customerEmail = "" }) {
   const websiteUrl = env.publicAppBaseUrl || env.appBaseUrl || "https://ungdungthongminh.shop";
   const supportEmail = resolveSupportReplyAddress() || sanitizeMailboxAddress(env.emailFromSupport) || "ungdungthongminh.info@gmail.com";
   const md = (order?.metadata && typeof order.metadata === "object") ? order.metadata : {};
+  const pricing = (md.pricing && typeof md.pricing === "object") ? md.pricing : {};
 
   const customerDisplay = customerEmail || order?.customerId || "(unknown)";
   const templateSlug = String(md.templateSlug || "").trim() || "web-demo";
-  const selectedDomain = String(md.domainSelection || "Khong chon").trim();
-  const selectedHosting = String(md.hostingSelection || "Khong chon").trim();
+  const productName = String(md.productName || md.planName || "").trim() || templateSlug;
+  const selectedDomain = (() => {
+    const explicit = String(md.domainSelection || "").trim();
+    if (explicit) {
+      return explicit;
+    }
+    if (pricing.includeDomain) {
+      const name = String(pricing.domainName || "").trim() || "ten-mien-chua-nhap";
+      const suffix = String(pricing.domainSuffix || ".com").trim() || ".com";
+      const years = Number(pricing.domainYears || 1);
+      return `${name}${suffix} / ${years} nam`;
+    }
+    return "Khong chon";
+  })();
+  const selectedHosting = (() => {
+    const explicit = String(md.hostingSelection || "").trim();
+    if (explicit) {
+      return explicit;
+    }
+    if (pricing.includeHosting) {
+      const years = Number(pricing.hostingYears || 1);
+      return `${years} nam`;
+    }
+    return "Khong chon";
+  })();
 
   const subject = `Xac nhan thanh toan don web mau - ${orderId}`;
 
@@ -505,7 +529,7 @@ function buildWebDemoPaidOrderMessage({ order, customerEmail = "" }) {
     "Cam on ban da dat mua mau web.",
     "",
     `Ma don: ${orderId}`,
-    `Mau web: ${templateSlug}`,
+    `Mau web: ${productName}`,
     `Tong thanh toan: ${amount} ${currency}`,
     `Email mua hang: ${customerDisplay}`,
     `Domain: ${selectedDomain}`,
@@ -531,7 +555,7 @@ function buildWebDemoPaidOrderMessage({ order, customerEmail = "" }) {
   <p style="margin:0 0 12px;color:#111827">Cam on ban da dat mua mau web. Don hang da ghi nhan thanh toan thanh cong.</p>
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
     <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280;width:38%">Email mua hang</td><td style="padding:10px 12px;color:#111827;font-weight:600">${_escHtml(customerDisplay)}</td></tr>
-    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827;font-weight:600">${_escHtml(templateSlug)}</td></tr>
+    <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827;font-weight:600">${_escHtml(productName)}</td></tr>
     <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tong thanh toan</td><td style="padding:10px 12px;color:#0f766e;font-weight:700">${_escHtml(amount)} ${_escHtml(currency)}</td></tr>
     <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Domain</td><td style="padding:10px 12px;color:#111827">${_escHtml(selectedDomain)}</td></tr>
     <tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Hosting</td><td style="padding:10px 12px;color:#111827">${_escHtml(selectedHosting)}</td></tr>

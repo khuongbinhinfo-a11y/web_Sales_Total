@@ -90,6 +90,20 @@ function productSaleStatusMeta(value){
   };
 }
 
+function getCatalogProductScope(product){
+  if (window.CatalogScope && typeof window.CatalogScope.getProductScope === "function") {
+    return window.CatalogScope.getProductScope(product);
+  }
+  return "software";
+}
+
+function getCatalogProductScopeLabel(scope){
+  if (window.CatalogScope && typeof window.CatalogScope.getProductScopeLabel === "function") {
+    return window.CatalogScope.getProductScopeLabel(scope);
+  }
+  return scope === "web_design" ? "Web Design" : "Software";
+}
+
 function toDatetimeLocalValue(value){
   if(!value) return "";
   const parsed = new Date(value);
@@ -274,21 +288,107 @@ async function handleWebDemoHandoverAction(button){
   const accountPassword = window.prompt("Mật khẩu tạm (có thể bỏ trống):", "") || "";
   const adminNote = window.prompt("Ghi chú bàn giao (có thể bỏ trống):", "") || "";
 
+  const handoverPayload = {
+    deliveryUrl: String(deliveryUrl || "").trim(),
+    driveLink: String(driveLink || "").trim(),
+    accountEmail: String(accountEmail || "").trim(),
+    accountPassword: String(accountPassword || "").trim(),
+    adminNote: String(adminNote || "").trim()
+  };
+
+  const showHandoverPreviewDialog = (previewData = {}) => new Promise((resolve) => {
+    const subject = String(previewData.subject || "").trim();
+    const recipient = String(previewData.recipient || "").trim();
+    const text = String(previewData.text || "").trim();
+    const html = String(previewData.html || "").trim();
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10010;display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = `
+      <div style="width:min(960px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:16px;border:1px solid #e2e8f0;box-shadow:0 18px 45px rgba(0,0,0,.25)">
+        <h3 style="margin:0 0 10px">Preview email bàn giao (#2)</h3>
+        <p style="margin:0 0 10px;color:#64748b;font-size:.88rem">Kiểm tra kỹ nội dung trước khi gửi thật để tránh gửi nhầm thông tin.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="font-size:.75rem;color:#64748b;font-weight:700">Người nhận</label>
+            <input readonly value="${escapeHtml(recipient)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px" />
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:#64748b;font-weight:700">Tiêu đề</label>
+            <input readonly value="${escapeHtml(subject)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:.75rem;color:#64748b;font-weight:700">Bản text</label>
+            <textarea readonly style="width:100%;min-height:260px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:Consolas,monospace;font-size:.78rem">${escapeHtml(text)}</textarea>
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:#64748b;font-weight:700">Bản HTML</label>
+            <iframe style="width:100%;min-height:260px;border:1px solid #cbd5e1;border-radius:8px;background:#fff" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+          <button type="button" class="btn btn-outline" data-role="cancel">Huỷ</button>
+          <button type="button" class="btn btn-accent" data-role="confirm">Gửi email thật</button>
+        </div>
+      </div>
+    `;
+
+    const iframe = overlay.querySelector("iframe");
+    if (iframe) {
+      iframe.srcdoc = html;
+    }
+
+    const cleanup = () => {
+      overlay.remove();
+    };
+
+    overlay.querySelector("[data-role='cancel']")?.addEventListener("click", () => {
+      cleanup();
+      resolve(false);
+    });
+    overlay.querySelector("[data-role='confirm']")?.addEventListener("click", () => {
+      cleanup();
+      resolve(true);
+    });
+
+    document.body.appendChild(overlay);
+  });
+
   button.disabled = true;
   const original = button.textContent;
-  button.textContent = "Đang gửi...";
+  button.textContent = "Đang tạo preview...";
 
   try {
+    const previewRes = await fetchAdmin(`/api/admin/web-demo/orders/${encodeURIComponent(orderId)}/handover-preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(handoverPayload)
+    });
+
+    const previewPayload = await previewRes.json().catch(()=>({}));
+    if(!previewRes.ok){
+      throw new Error(previewPayload?.message || "Không tạo được preview email bàn giao");
+    }
+
+    const shouldSend = await showHandoverPreviewDialog({
+      recipient: previewPayload?.recipient || "",
+      subject: previewPayload?.preview?.subject || "",
+      text: previewPayload?.preview?.text || "",
+      html: previewPayload?.preview?.html || ""
+    });
+
+    if(!shouldSend){
+      return;
+    }
+
+    button.textContent = "Đang gửi thật...";
+
     const res = await fetchAdmin(`/api/admin/web-demo/orders/${encodeURIComponent(orderId)}/send-handover`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        deliveryUrl: String(deliveryUrl || "").trim(),
-        driveLink: String(driveLink || "").trim(),
-        accountEmail: String(accountEmail || "").trim(),
-        accountPassword: String(accountPassword || "").trim(),
-        adminNote: String(adminNote || "").trim()
-      })
+      body: JSON.stringify(handoverPayload)
     });
 
     const payload = await res.json().catch(()=>({}));
@@ -296,7 +396,12 @@ async function handleWebDemoHandoverAction(button){
       throw new Error(payload?.message || "Gửi mail bàn giao thất bại");
     }
 
-    alert(payload?.message || "Đã gửi mail bàn giao");
+    console.info("[web-demo-handover] sent", {
+      orderId,
+      recipient: payload?.recipient,
+      eventType: payload?.eventType || "web_demo_handover"
+    });
+    alert(`${payload?.message || "Đã gửi mail bàn giao"}\nNgười nhận: ${payload?.recipient || "(không rõ)"}`);
   } catch(error){
     alert(error?.message || "Gửi mail bàn giao thất bại");
   } finally {
@@ -800,19 +905,21 @@ function renderWebDemoLeadsTable(items){
 
 async function loadWebDemoTemplate(){
   const slugEl = document.getElementById("webDemoTemplateSlug");
+  const variantEl = document.getElementById("webDemoTemplateVariant");
   const displayEl = document.getElementById("webDemoTemplateDisplayName");
   const groupEl = document.getElementById("webDemoTemplateGroup");
   const configEl = document.getElementById("webDemoTemplateConfig");
   const seoEl = document.getElementById("webDemoTemplateSeo");
   const msgEl = document.getElementById("webDemoTemplateMsg");
-  if(!slugEl || !displayEl || !groupEl || !configEl || !seoEl || !msgEl) return;
+  if(!slugEl || !variantEl || !displayEl || !groupEl || !configEl || !seoEl || !msgEl) return;
 
   const slug = String(slugEl.value || "company").trim().toLowerCase();
+  const variant = Math.min(3, Math.max(1, parseInt(String(variantEl.value || "1"), 10) || 1));
   msgEl.textContent = "Đang tải cấu hình...";
   msgEl.style.color = "var(--muted)";
 
   try {
-    const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}`);
+    const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}?variant=${variant}`);
     if(res.status===401){ redirectToAdminLogin("/api/admin/web-demo/templates"); return; }
     const data = await res.json().catch(()=>({}));
     if(!res.ok){
@@ -825,7 +932,12 @@ async function loadWebDemoTemplate(){
     groupEl.value = item.templateGroup || slug;
     configEl.value = JSON.stringify(item.config || {}, null, 2);
     seoEl.value = JSON.stringify(item.seo || {}, null, 2);
-    msgEl.textContent = `Đã tải cấu hình template ${slug}.`;
+    if(Number(item.requestedVariant || variant) !== Number(item.resolvedVariant || variant) && item.isFallback){
+      msgEl.textContent = `Đang dùng cấu hình gốc của ${slug} vì demo ${variant} chưa có bản riêng trong DB.`;
+      msgEl.style.color = "#b7791f";
+      return;
+    }
+    msgEl.textContent = `Đã tải cấu hình template ${slug} cho demo ${variant}.`;
     msgEl.style.color = "var(--success)";
   } catch(err){
     msgEl.textContent = "Lỗi tải cấu hình: " + err.message;
@@ -858,14 +970,16 @@ function bindWebDemoAdminControls(){
   const refreshLeadsBtn = document.getElementById("webDemoLeadRefreshBtn");
   const msgEl = document.getElementById("webDemoTemplateMsg");
   const slugEl = document.getElementById("webDemoTemplateSlug");
+  const variantEl = document.getElementById("webDemoTemplateVariant");
   const displayEl = document.getElementById("webDemoTemplateDisplayName");
   const groupEl = document.getElementById("webDemoTemplateGroup");
   const configEl = document.getElementById("webDemoTemplateConfig");
   const seoEl = document.getElementById("webDemoTemplateSeo");
-  if(!form || !loadBtn || !msgEl || !slugEl || !displayEl || !groupEl || !configEl || !seoEl) return;
+  if(!form || !loadBtn || !msgEl || !slugEl || !variantEl || !displayEl || !groupEl || !configEl || !seoEl) return;
 
   loadBtn.addEventListener("click", loadWebDemoTemplate);
   slugEl.addEventListener("change", loadWebDemoTemplate);
+  variantEl.addEventListener("change", loadWebDemoTemplate);
   if(refreshLeadsBtn){
     refreshLeadsBtn.addEventListener("click", loadWebDemoLeads);
   }
@@ -873,6 +987,7 @@ function bindWebDemoAdminControls(){
   form.addEventListener("submit", async (e)=>{
     e.preventDefault();
     const slug = String(slugEl.value || "company").trim().toLowerCase();
+    const variant = Math.min(3, Math.max(1, parseInt(String(variantEl.value || "1"), 10) || 1));
     let config;
     let seo;
     try {
@@ -888,12 +1003,13 @@ function bindWebDemoAdminControls(){
     msgEl.style.color = "var(--muted)";
 
     try {
-      const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}`, {
+      const res = await fetchAdmin(`/api/admin/web-demo/templates/${encodeURIComponent(slug)}?variant=${variant}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName: String(displayEl.value || "").trim(),
           templateGroup: String(groupEl.value || slug).trim().toLowerCase(),
+          variant,
           config,
           seo
         })
@@ -905,7 +1021,7 @@ function bindWebDemoAdminControls(){
         msgEl.style.color = "var(--danger)";
         return;
       }
-      msgEl.textContent = data.message || "Đã lưu cấu hình web-demo.";
+      msgEl.textContent = data.message || `Đã lưu cấu hình web-demo cho demo ${variant}.`;
       msgEl.style.color = "var(--success)";
       if(data.item){
         configEl.value = JSON.stringify(data.item.config || {}, null, 2);
@@ -3042,6 +3158,7 @@ function bindProductCardManager() {
 
       wrap.innerHTML = `<table class="data-table admin-product-card-table"><thead><tr>
         <th>App / sản phẩm</th>
+        <th>Scope</th>
         <th>Hiển thị</th>
         <th>Trạng thái card</th>
         <th>Giá & ghi chú ngoài web</th>
@@ -3049,6 +3166,9 @@ function bindProductCardManager() {
       </tr></thead><tbody>${products.map((product) => {
         const normalizedStatus = normalizeProductSaleStatus(product.saleStatus);
         const meta = productSaleStatusMeta(normalizedStatus);
+        const scope = getCatalogProductScope(product);
+        const scopeLabel = getCatalogProductScopeLabel(scope);
+        const scopeClass = scope === "web_design" ? "status-badge" : "status-badge status-active";
         const basePrice = Number(product.basePrice ?? product.price ?? 0);
         const comparePrice = Number(product.comparePrice ?? basePrice);
         const salePrice = Number(product.salePrice ?? 0);
@@ -3057,6 +3177,10 @@ function bindProductCardManager() {
           <td>
             <strong>${escapeHtml(product.name || product.id)}</strong>
             <div class="admin-product-card-subline">${escapeHtml(product.appId || "")} · ${escapeHtml(product.id || "")} · ${escapeHtml(product.cycle || "")}</div>
+          </td>
+          <td>
+            <span class="${scopeClass}">${escapeHtml(scopeLabel)}</span>
+            <div class="admin-product-card-subline">${escapeHtml(scope)}</div>
           </td>
           <td>
             <div class="admin-inline-actions">

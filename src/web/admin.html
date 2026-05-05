@@ -269,7 +269,7 @@
           <div class="info-card" style="margin-bottom:12px">
             <p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">Chỉnh cấu hình mẫu cho 5 ngành ưu tiên: company, shop, salon, industry, landing. Dữ liệu lưu DB để render ở public.</p>
             <form id="webDemoTemplateForm" style="display:grid;gap:10px">
-              <div style="display:grid;grid-template-columns:220px 1fr;gap:10px;align-items:end">
+              <div style="display:grid;grid-template-columns:220px 140px 1fr;gap:10px;align-items:end">
                 <div>
                   <label style="font-size:.75rem;color:var(--muted);font-weight:700">Template</label>
                   <select id="webDemoTemplateSlug" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff">
@@ -278,6 +278,14 @@
                     <option value="salon">salon</option>
                     <option value="industry">industry</option>
                     <option value="landing">landing</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--muted);font-weight:700">Mẫu con</label>
+                  <select id="webDemoTemplateVariant" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff">
+                    <option value="1">Demo 1</option>
+                    <option value="2">Demo 2</option>
+                    <option value="3">Demo 3</option>
                   </select>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -841,6 +849,7 @@
       </main>
     </div>
 
+    <script src="/catalog-scope.js"></script>
     <script src="./admin.js"></script>
   </body>
 </html>

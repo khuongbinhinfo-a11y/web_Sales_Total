@@ -737,7 +737,7 @@ window.webDemoPricingShared = {
       plan.slug = meta.slug || `goi-${index + 1}`;
       plan.industrySlug = industrySlug;
       plan.industryName = industryInfo.name;
-      plan.detailUrl = `/catalog/web-demo/${industrySlug}/goi/${plan.slug}`;
+      plan.detailUrl = `/kho-mau/${industrySlug}/goi/${plan.slug}`;
       plan.detail = {
         summary: plan.note,
         useCases: [plan.fit, ...(industryInfo.useCases || [])].filter(Boolean),

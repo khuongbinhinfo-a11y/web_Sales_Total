@@ -1,41 +1,7 @@
 const packageRoot = document.getElementById("packageRoot");
 const WEB_DEMO_APP_ID = "app-web-demo-services";
 
-const INDUSTRY_TO_TEMPLATE = {
-  company: "company",
-  shop: "shop",
-  salon: "salon",
-  industry: "industry",
-  landing: "landing"
-};
-
-const PLAN_PRODUCT_IDS = {
-  company: {
-    "co-ban": "prod-web-demo-company-basic",
-    "chuyen-nghiep": "prod-web-demo-company-pro",
-    "thuong-hieu": "prod-web-demo-company-brand"
-  },
-  shop: {
-    "shop-gioi-thieu": "prod-web-demo-shop-showcase",
-    "shop-ban-hang": "prod-web-demo-shop-sales",
-    "shop-nang-cao": "prod-web-demo-shop-advanced"
-  },
-  salon: {
-    "spa-mini": "prod-web-demo-salon-mini",
-    "spa-chuyen-nghiep": "prod-web-demo-salon-pro",
-    "spa-ban-hang-dat-lich": "prod-web-demo-salon-booking"
-  },
-  industry: {
-    "local-co-ban": "prod-web-demo-industry-basic",
-    "menu-chuyen-nghiep": "prod-web-demo-industry-pro",
-    "dat-ban-dat-mon": "prod-web-demo-industry-booking"
-  },
-  landing: {
-    "tuyen-sinh-co-ban": "prod-web-demo-landing-basic",
-    "trung-tam-dao-tao": "prod-web-demo-landing-pro",
-    "he-thong-khoa-hoc": "prod-web-demo-landing-system"
-  }
-};
+const WEB_DEMO_MAP = window.WebDemoCatalogMap || {};
 
 const ADDON_PRODUCT_IDS = {
   domain: "prod-web-demo-addon-domain",
@@ -54,7 +20,9 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 
 const parsePackageRoute = () => {
   const parts = location.pathname.split("/").filter(Boolean);
-  const industryIndex = parts.findIndex((part, index) => part === "web-demo" && parts[index - 1] === "catalog") + 1;
+  const khoMauIndex = parts.findIndex((part) => part === "kho-mau");
+  const legacyIndustryIndex = parts.findIndex((part, index) => part === "web-demo" && parts[index - 1] === "catalog");
+  const industryIndex = khoMauIndex >= 0 ? khoMauIndex + 1 : legacyIndustryIndex + 1;
   const planIndex = parts.findIndex((part) => part === "goi") + 1;
   return {
     industrySlug: industryIndex > 0 ? decodeURIComponent(parts[industryIndex] || "") : "",
@@ -95,11 +63,18 @@ const formatVnd = (amount) => `${Number(amount || 0).toLocaleString("vi-VN")}đ`
 const escapeAttribute = (value) => escapeHtml(value).replace(/`/g, "&#96;");
 
 function getPlanProductId(industrySlug, planSlug) {
-  return PLAN_PRODUCT_IDS?.[industrySlug]?.[planSlug] || "";
+  if (typeof WEB_DEMO_MAP.getPlanProductId === "function") {
+    return WEB_DEMO_MAP.getPlanProductId(industrySlug, planSlug);
+  }
+  const byIndustry = WEB_DEMO_MAP.planProductIds?.[industrySlug] || {};
+  return byIndustry[planSlug] || "";
 }
 
 function getTemplateSlugForOrder(industrySlug) {
-  return INDUSTRY_TO_TEMPLATE[industrySlug] || industrySlug;
+  if (typeof WEB_DEMO_MAP.getTemplateSlugForIndustry === "function") {
+    return WEB_DEMO_MAP.getTemplateSlugForIndustry(industrySlug);
+  }
+  return WEB_DEMO_MAP.templateByIndustry?.[industrySlug] || industrySlug;
 }
 
 async function getCatalogProductsById() {
@@ -266,7 +241,7 @@ function renderNotFound() {
         <span>Không tìm thấy gói</span>
         <h1>Gói triển khai này chưa sẵn sàng</h1>
         <p>Vui lòng quay lại danh sách mẫu web demo để chọn lại gói phù hợp.</p>
-        <a href="/#web-demo">Quay lại mẫu web demo</a>
+        <a href="/kho-mau/company">Quay lại kho mẫu triển khai nhanh</a>
       </div>
     </section>
   `;
@@ -290,7 +265,7 @@ async function renderPackagePage() {
     <section class="package-hero">
       <div class="package-container package-hero-grid">
         <div class="package-hero-copy">
-          <a class="package-back" href="/mau-demo/${encodeURIComponent(industrySlug)}">← Quay lại kho mẫu</a>
+          <a class="package-back" href="/kho-mau/${encodeURIComponent(industrySlug)}">← Quay lại kho mẫu</a>
           <span class="package-eyebrow">Hồ sơ gói triển khai</span>
           <h1>${escapeHtml(plan.name)}</h1>
           <p>${escapeHtml(detail.summary || plan.note)}</p>

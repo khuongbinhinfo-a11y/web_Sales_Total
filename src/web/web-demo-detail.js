@@ -199,33 +199,7 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 
 const renderList = (items, className) => items.map((item) => `<span class="${className || ""}">${escapeHtml(item)}</span>`).join("");
 
-const WEB_DEMO_PLAN_PRODUCT_IDS = {
-  company: {
-    "co-ban": "prod-web-demo-company-basic",
-    "chuyen-nghiep": "prod-web-demo-company-pro",
-    "thuong-hieu": "prod-web-demo-company-brand"
-  },
-  shop: {
-    "shop-gioi-thieu": "prod-web-demo-shop-showcase",
-    "shop-ban-hang": "prod-web-demo-shop-sales",
-    "shop-nang-cao": "prod-web-demo-shop-advanced"
-  },
-  salon: {
-    "spa-mini": "prod-web-demo-salon-mini",
-    "spa-chuyen-nghiep": "prod-web-demo-salon-pro",
-    "spa-ban-hang-dat-lich": "prod-web-demo-salon-booking"
-  },
-  industry: {
-    "local-co-ban": "prod-web-demo-industry-basic",
-    "menu-chuyen-nghiep": "prod-web-demo-industry-pro",
-    "dat-ban-dat-mon": "prod-web-demo-industry-booking"
-  },
-  landing: {
-    "tuyen-sinh-co-ban": "prod-web-demo-landing-basic",
-    "trung-tam-dao-tao": "prod-web-demo-landing-pro",
-    "he-thong-khoa-hoc": "prod-web-demo-landing-system"
-  }
-};
+const WEB_DEMO_PLAN_PRODUCT_IDS = (window.WebDemoCatalogMap && window.WebDemoCatalogMap.planProductIds) || {};
 
 function formatFromCatalogPrice(amount) {
   const n = Number(amount || 0);
@@ -301,7 +275,7 @@ function PricingCard(plan, index, shared, industryId) {
   const badge = plan?.badge || (index === 1 ? "Khuyên dùng" : index === 2 ? "Mở rộng" : "");
   const isFeatured = Boolean(plan?.featured) || index === 1;
   const isExpanded = badge === "Mở rộng" || index === 2;
-  const detailUrl = plan?.detailUrl || `/catalog/web-demo/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan?.slug || `goi-${index + 1}`)}`;
+  const detailUrl = `/kho-mau/${encodeURIComponent(industryId)}`;
   const consultUrl = shared?.consultUrl || "https://zalo.me/0902964685";
   const cardClass = [
     "demo-pricing-card",
@@ -336,6 +310,43 @@ function PricingCard(plan, index, shared, industryId) {
   `;
 }
 
+function ChildVariantsSection(industryId) {
+  const data = window.webDemoPricingData?.[industryId];
+  const plans = Array.isArray(data?.plans) ? data.plans.slice(0, 3) : [];
+  if (!plans.length) {
+    return "";
+  }
+
+  return `
+    <div class="demo-child-variants" aria-label="Mẫu con triển khai nhanh">
+      <div class="demo-child-variants-head">
+        <span>Mẫu con triển khai nhanh</span>
+        <h3>3 mẫu con đã tách riêng theo từng demo</h3>
+      </div>
+      <div class="demo-child-variants-grid">
+        ${plans.map((plan, index) => {
+          const demoVariant = index + 1;
+          const previewHref = `/preview/${encodeURIComponent(industryId)}?demo=${demoVariant}`;
+          const adminHref = `/preview/${encodeURIComponent(industryId)}/admin?demo=${demoVariant}`;
+          const packageHref = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
+          return `
+            <article class="demo-child-variant-card">
+              <b>Mẫu ${demoVariant}</b>
+              <h4>${escapeHtml(plan.name || `Mẫu ${demoVariant}`)}</h4>
+              <p>${escapeHtml(plan.note || "Bản mẫu con để triển khai nhanh theo gói.")}</p>
+              <div class="demo-child-variant-actions">
+                <a href="${previewHref}">Xem live</a>
+                <a href="${adminHref}">Admin local</a>
+                <a class="is-primary" href="${packageHref}">Vào gói triển khai</a>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function PricingSection(id) {
   const section = document.getElementById("demoPricing");
   const data = window.webDemoPricingData?.[id];
@@ -351,6 +362,7 @@ function PricingSection(id) {
         <h2 id="demoPricingTitle">${escapeHtml(shared.title || "Gói triển khai phù hợp")}</h2>
         <p>${escapeHtml(shared.description || "")}</p>
       </div>
+      ${ChildVariantsSection(id)}
       <div class="demo-pricing-grid">
         ${plans.map((plan, index) => PricingCard(plan, index, shared, id)).join("")}
       </div>

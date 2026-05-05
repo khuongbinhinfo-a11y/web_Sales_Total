@@ -176,9 +176,60 @@ const WEB_DEMO_PRODUCT_BY_SLUG = {
   landing: "prod-web-demo-landing-pro"
 };
 
+const WEB_DEMO_PRODUCT_NAME_BY_SLUG_AND_VARIANT = {
+  company: {
+    1: "Company - Hero trust + dich vu",
+    2: "Company - Nhieu trang dich vu",
+    3: "Company - Ban thuong hieu"
+  },
+  shop: {
+    1: "Shop - Gioi thieu",
+    2: "Shop - Ban hang",
+    3: "Shop - Nang cao"
+  },
+  salon: {
+    1: "Salon - Mini",
+    2: "Salon - Chuyen nghiep",
+    3: "Salon - Ban hang + booking"
+  },
+  industry: {
+    1: "Industry - Co ban",
+    2: "Industry - Chuyen nghiep",
+    3: "Industry - Nang cao"
+  },
+  landing: {
+    1: "Landing - Co ban",
+    2: "Landing - Chuyen nghiep",
+    3: "Landing - He thong"
+  }
+};
+
 function normalizeWebDemoSlug(value) {
   const slug = String(value || "").trim().toLowerCase();
   return WEB_DEMO_PRODUCT_BY_SLUG[slug] ? slug : "";
+}
+
+function parseWebDemoVariant(value) {
+  const parsed = parseInt(String(value || "1").trim(), 10);
+  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 3) {
+    return parsed;
+  }
+  return 1;
+}
+
+function resolveWebDemoProductName({ templateSlug, variant, explicitName }) {
+  const normalizedExplicit = String(explicitName || "").trim();
+  if (normalizedExplicit) {
+    return normalizedExplicit.slice(0, 140);
+  }
+
+  const normalizedVariant = parseWebDemoVariant(variant);
+  const byVariant = WEB_DEMO_PRODUCT_NAME_BY_SLUG_AND_VARIANT[templateSlug] || {};
+  if (byVariant[normalizedVariant]) {
+    return byVariant[normalizedVariant];
+  }
+
+  return `${templateSlug || "web-demo"} - Mau ${normalizedVariant}`;
 }
 
 function parsePositiveMoney(value, fallback = 0) {
@@ -222,12 +273,13 @@ function buildWebDemoHandoverEmailPayload({ order, customer, deliveryUrl, adminN
   const currency = order?.currency || "VND";
   const metadata = (order?.metadata && typeof order.metadata === "object") ? order.metadata : {};
   const templateSlug = String(metadata.templateSlug || "web-demo").trim();
+  const productName = String(metadata.productName || "").trim() || templateSlug;
 
   const subject = `Ban giao website - Don ${orderCode}`;
   const text = [
     "Thong tin ban giao website",
     `Ma don: ${orderCode}`,
-    `Mau web: ${templateSlug}`,
+    `Mau web: ${productName}`,
     `Tong thanh toan: ${amount} ${currency}`,
     "",
     deliveryUrl ? `Link website: ${deliveryUrl}` : "Link website: se cap nhat sau",
@@ -239,7 +291,7 @@ function buildWebDemoHandoverEmailPayload({ order, customer, deliveryUrl, adminN
     "Zalo chi de ho tro sau ban giao."
   ].filter(Boolean).join("\n");
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f5f7fa;font-family:Segoe UI,Arial,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:24px 12px"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><tr><td style="padding:20px 24px;background:linear-gradient(135deg,#0b4f7c,#1d7cf8);color:#fff"><div style="font-size:20px;font-weight:700">Ban giao website</div><div style="margin-top:6px;font-size:13px;opacity:.9">Don ${escHtmlServer(orderCode)}</div></td></tr><tr><td style="padding:20px 24px"><p style="margin:0 0 12px;color:#111827">Website cua ban da san sang ban giao.</p><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px"><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280;width:36%">Khach hang</td><td style="padding:10px 12px;color:#111827;font-weight:600">${escHtmlServer(customer?.email || "")}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(templateSlug)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tong thanh toan</td><td style="padding:10px 12px;color:#0f766e;font-weight:700">${escHtmlServer(amount)} ${escHtmlServer(currency)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Link website</td><td style="padding:10px 12px;color:#111827">${deliveryUrl ? `<a href="${escHtmlServer(deliveryUrl)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(deliveryUrl)}</a>` : "Se cap nhat sau"}</td></tr>${driveLink ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai nguyen</td><td style="padding:10px 12px;color:#111827"><a href="${escHtmlServer(driveLink)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(driveLink)}</a></td></tr>` : ""}${accountEmail ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai khoan admin</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountEmail)}</td></tr>` : ""}${accountPassword ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mat khau tam</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountPassword)}</td></tr>` : ""}</table>${adminNote ? `<p style="margin:12px 0 0;color:#374151;line-height:1.6">Ghi chu: ${escHtmlServer(adminNote)}</p>` : ""}<p style="margin:12px 0 0;color:#6b7280">Neu can ho tro nhanh, vui long lien he Zalo ho tro.</p></td></tr></table></td></tr></table></body></html>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f5f7fa;font-family:Segoe UI,Arial,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:24px 12px"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><tr><td style="padding:20px 24px;background:linear-gradient(135deg,#0b4f7c,#1d7cf8);color:#fff"><div style="font-size:20px;font-weight:700">Ban giao website</div><div style="margin-top:6px;font-size:13px;opacity:.9">Don ${escHtmlServer(orderCode)}</div></td></tr><tr><td style="padding:20px 24px"><p style="margin:0 0 12px;color:#111827">Website cua ban da san sang ban giao.</p><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px"><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280;width:36%">Khach hang</td><td style="padding:10px 12px;color:#111827;font-weight:600">${escHtmlServer(customer?.email || "")}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mau web</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(productName)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tong thanh toan</td><td style="padding:10px 12px;color:#0f766e;font-weight:700">${escHtmlServer(amount)} ${escHtmlServer(currency)}</td></tr><tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Link website</td><td style="padding:10px 12px;color:#111827">${deliveryUrl ? `<a href="${escHtmlServer(deliveryUrl)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(deliveryUrl)}</a>` : "Se cap nhat sau"}</td></tr>${driveLink ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai nguyen</td><td style="padding:10px 12px;color:#111827"><a href="${escHtmlServer(driveLink)}" style="color:#1d4ed8;text-decoration:none">${escHtmlServer(driveLink)}</a></td></tr>` : ""}${accountEmail ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Tai khoan admin</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountEmail)}</td></tr>` : ""}${accountPassword ? `<tr><td style="padding:10px 12px;background:#f9fafb;color:#6b7280">Mat khau tam</td><td style="padding:10px 12px;color:#111827">${escHtmlServer(accountPassword)}</td></tr>` : ""}</table>${adminNote ? `<p style="margin:12px 0 0;color:#374151;line-height:1.6">Ghi chu: ${escHtmlServer(adminNote)}</p>` : ""}<p style="margin:12px 0 0;color:#6b7280">Neu can ho tro nhanh, vui long lien he Zalo ho tro.</p></td></tr></table></td></tr></table></body></html>`;
 
   return { subject, text, html };
 }
@@ -1920,6 +1972,13 @@ app.post(
   "/api/web-demo/orders/create-checkout",
   asyncHandler(async (req, res) => {
     const templateSlug = normalizeWebDemoSlug(req.body?.templateSlug);
+    const demoVariant = parseWebDemoVariant(req.body?.demoVariant);
+    const productName = resolveWebDemoProductName({
+      templateSlug,
+      variant: demoVariant,
+      explicitName: req.body?.productName
+    });
+    const planSlug = String(req.body?.planSlug || "").trim();
 
     if (!templateSlug) {
       return res.status(400).json({ message: "templateSlug không hợp lệ" });
@@ -1980,6 +2039,15 @@ app.post(
     const metadata = {
       source: "web-demo-preview",
       templateSlug,
+      demoVariant,
+      productName,
+      planSlug,
+      domainSelection: includeDomain
+        ? `${domainName || "ten-mien-chua-nhap"}${domainSuffix} / ${domainYears} nam`
+        : "Khong chon",
+      hostingSelection: includeHosting
+        ? `${hostingYears} nam`
+        : "Khong chon",
       contact: {
         fullName: customer.full_name || customer.fullName || "",
         email: customer.email || "",
@@ -3676,7 +3744,8 @@ app.get(
   "/api/admin/web-demo/templates/:templateSlug",
   requireAdminPermission("admins:read"),
   asyncHandler(async (req, res) => {
-    const item = await getWebDemoTemplate(req.params.templateSlug);
+    const variant = parseWebDemoVariant(req.query?.variant);
+    const item = await getWebDemoTemplate(req.params.templateSlug, variant);
     return res.json({
       ok: true,
       message: "Đã tải cấu hình mẫu web-demo",
@@ -3690,7 +3759,8 @@ app.put(
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
     const actor = getAdminFromSession(req) || {};
-    const item = await upsertWebDemoTemplate(req.params.templateSlug, req.body || {}, actor);
+    const variant = parseWebDemoVariant(req.query?.variant || req.body?.variant);
+    const item = await upsertWebDemoTemplate(req.params.templateSlug, req.body || {}, actor, variant);
     return res.json({
       ok: true,
       message: "Đã cập nhật cấu hình mẫu web-demo",
@@ -3725,6 +3795,80 @@ app.patch(
       ok: true,
       message: "Đã cập nhật trạng thái lead",
       item
+    });
+  })
+);
+
+app.post(
+  "/api/admin/web-demo/orders/:orderId/handover-preview",
+  requireAdminPermission("admins:write"),
+  asyncHandler(async (req, res) => {
+    const orderId = String(req.params.orderId || "").trim();
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId là bắt buộc" });
+    }
+
+    const orderQuery = await pool.query(
+      `
+        SELECT o.id, o.order_code, o.amount, o.currency, o.status, o.metadata,
+               c.id AS customer_id, c.email AS customer_email, c.full_name AS customer_full_name
+          FROM orders o
+          JOIN customers c ON c.id = o.customer_id
+         WHERE o.id = $1
+           AND o.app_id = 'app-web-demo-services'
+      `,
+      [orderId]
+    );
+
+    if (!orderQuery.rowCount) {
+      return res.status(404).json({ message: "Không tìm thấy đơn web-demo" });
+    }
+
+    const order = orderQuery.rows[0];
+    if (order.status !== "paid") {
+      return res.status(400).json({ message: "Đơn chưa thanh toán, chưa thể gửi mail bàn giao" });
+    }
+
+    const deliveryUrl = String(req.body?.deliveryUrl || "").trim();
+    const driveLink = String(req.body?.driveLink || "").trim();
+    const accountEmail = String(req.body?.accountEmail || "").trim();
+    const accountPassword = String(req.body?.accountPassword || "").trim();
+    const adminNote = String(req.body?.adminNote || "").trim();
+
+    if (!deliveryUrl && !driveLink && !accountEmail && !adminNote) {
+      return res.status(400).json({ message: "Cần ít nhất một thông tin bàn giao (link web, drive, tài khoản hoặc ghi chú)" });
+    }
+
+    const customer = {
+      id: order.customer_id,
+      email: order.customer_email,
+      fullName: order.customer_full_name
+    };
+
+    const message = buildWebDemoHandoverEmailPayload({
+      order,
+      customer,
+      deliveryUrl,
+      adminNote,
+      accountEmail,
+      accountPassword,
+      driveLink
+    });
+
+    return res.json({
+      ok: true,
+      message: "Đã dựng nội dung preview mail bàn giao",
+      order: {
+        id: order.id,
+        orderCode: order.order_code,
+        status: order.status
+      },
+      recipient: customer.email,
+      preview: {
+        subject: message.subject,
+        text: message.text,
+        html: message.html
+      }
     });
   })
 );
@@ -5126,11 +5270,19 @@ app.get("/mau-demo/:id/chi-tiet", checkPublicRouteLockMiddleware, (req, res) => 
 });
 
 app.get("/mau-demo/khomau-:id", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "web-demo-collection.html"));
+  return res.redirect(301, `/kho-mau/${encodeURIComponent(req.params.id)}`);
 });
 
 app.get("/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
+});
+
+app.get("/kho-mau", checkPublicRouteLockMiddleware, (req, res) => {
+  return res.redirect(301, "/kho-mau/company");
+});
+
+app.get("/kho-mau/:id", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "web-demo-collection.html"));
 });
 
 const VALID_PREVIEW_SLUGS = ["company", "shop", "salon", "industry", "landing"];
@@ -5148,7 +5300,8 @@ app.get("/preview/:slug", (req, res) => {
 app.get(
   "/api/web-demo/templates/:templateSlug",
   asyncHandler(async (req, res) => {
-    const item = await getWebDemoTemplate(req.params.templateSlug);
+    const variant = parseWebDemoVariant(req.query?.variant);
+    const item = await getWebDemoTemplate(req.params.templateSlug, variant);
     return res.json({
       ok: true,
       item
@@ -5181,6 +5334,13 @@ app.post(
 );
 
 app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
+  return res.redirect(
+    301,
+    `/kho-mau/${encodeURIComponent(req.params.industrySlug)}/goi/${encodeURIComponent(req.params.planSlug)}`
+  );
+});
+
+app.get("/kho-mau/:industrySlug/goi/:planSlug", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "web-demo-package.html"));
 });
 
