@@ -193,6 +193,13 @@ const env = {
   githubRepoOwner: process.env.GITHUB_REPO_OWNER || "khuongbinhinfo-a11y",
   githubRepoName: process.env.GITHUB_REPO_NAME || "web_Sales_Total",
   githubRepoBranch: process.env.GITHUB_REPO_BRANCH || "main",
+  r2PrivateArtifactsEnabled: toBool(process.env.R2_PRIVATE_ARTIFACTS_ENABLED, false),
+  r2AccountId: String(process.env.R2_ACCOUNT_ID || "").trim(),
+  r2AccessKeyId: String(process.env.R2_ACCESS_KEY_ID || "").trim(),
+  r2SecretAccessKey: String(process.env.R2_SECRET_ACCESS_KEY || "").trim(),
+  r2BucketName: String(process.env.R2_BUCKET_NAME || "").trim(),
+  r2BucketEndpoint: String(process.env.R2_BUCKET_ENDPOINT || "").trim(),
+  r2PrivateArtifactsPrefix: String(process.env.R2_PRIVATE_ARTIFACTS_PREFIX || "app-updates").trim(),
   publicAssetBaseUrl: (function () {
     const explicit = String(process.env.PUBLIC_ASSET_BASE_URL || "").trim();
     return explicit || resolvePublicAppBaseUrl(process.env.APP_BASE_URL || "http://localhost:3900");

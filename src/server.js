@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
+const { pipeline } = require("stream/promises");
 const express = require("express");
 const cors = require("cors");
 const yaml = require("js-yaml");
@@ -131,6 +132,10 @@ const {
   verifyOtpCode,
   isEmailOtpConfigured
 } = require("./modules/emailOtp");
+const {
+  isR2PrivateArtifactsEnabled,
+  getR2ArtifactStream
+} = require("./modules/artifactStorage");
 const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/licenseFeatures");
 
 const app = express();
@@ -1401,6 +1406,128 @@ function verifyAccountDownloadTicket(ticket) {
   }
 }
 
+function parseAppUpdatesRelativePathFromDownloadPath(rawDownloadPath, appId = "") {
+  const downloadPath = String(rawDownloadPath || "").trim();
+  let pathname = downloadPath;
+  if (/^https?:\/\//i.test(downloadPath)) {
+    try {
+      pathname = new URL(downloadPath).pathname || "";
+    } catch {
+      return "";
+    }
+  }
+
+  if (!pathname.startsWith("/app-updates/")) {
+    return "";
+  }
+
+  const relativePath = pathname.slice("/app-updates/".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
+  if (!relativePath || relativePath.includes("..")) {
+    return "";
+  }
+
+  const normalizedAppId = String(appId || "").trim();
+  if (normalizedAppId && !relativePath.startsWith(`${normalizedAppId}/`)) {
+    return "";
+  }
+
+  return relativePath;
+}
+
+function createAppUpdateArtifactTicket(payload) {
+  const body = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac("sha256", env.sessionSigningSecret)
+    .update(body)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+  return `${body}.${signature}`;
+}
+
+function verifyAppUpdateArtifactTicket(ticket) {
+  const [body, signature] = String(ticket || "").split(".");
+  if (!body || !signature) {
+    return null;
+  }
+
+  const expected = crypto
+    .createHmac("sha256", env.sessionSigningSecret)
+    .update(body)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+  const signatureBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(body));
+    const relativePath = String(payload?.relativePath || "").replace(/\\/g, "/").replace(/^[/\\]+/, "");
+    if (!relativePath || relativePath.includes("..")) {
+      return null;
+    }
+    if (Number(payload.expiresAt || 0) < Date.now()) {
+      return null;
+    }
+
+    return {
+      appId: String(payload.appId || "").trim(),
+      relativePath,
+      fileName: String(payload.fileName || path.basename(relativePath)).trim(),
+      expiresAt: Number(payload.expiresAt || 0)
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function streamArtifactToResponse({ res, relativePath, fileName }) {
+  const normalizedRelativePath = String(relativePath || "").replace(/\\/g, "/").replace(/^[/\\]+/, "");
+  if (!normalizedRelativePath || normalizedRelativePath.includes("..")) {
+    return res.status(400).json({ message: "Đường dẫn artifact không hợp lệ." });
+  }
+
+  if (isR2PrivateArtifactsEnabled()) {
+    const artifact = await getR2ArtifactStream(normalizedRelativePath);
+    if (artifact && artifact.stream) {
+      const finalFileName = String(fileName || artifact.fileName || path.basename(normalizedRelativePath));
+      res.setHeader("Cache-Control", "no-store");
+      if (artifact.contentType) {
+        res.setHeader("Content-Type", artifact.contentType);
+      }
+      if (Number.isFinite(artifact.contentLength) && artifact.contentLength > 0) {
+        res.setHeader("Content-Length", String(artifact.contentLength));
+      }
+      res.setHeader("Content-Disposition", `attachment; filename=\"${finalFileName.replace(/\"/g, "")}\"`);
+
+      await pipeline(artifact.stream, res);
+      return undefined;
+    }
+  }
+
+  const absolutePath = path.resolve(appUpdatesRoot, normalizedRelativePath);
+  const rootPath = `${path.resolve(appUpdatesRoot)}${path.sep}`;
+  if (absolutePath.startsWith(rootPath) && fs.existsSync(absolutePath)) {
+    res.setHeader("Cache-Control", "no-store");
+    if (isR2PrivateArtifactsEnabled()) {
+      res.setHeader("X-Artifact-Source", "local-fallback");
+    }
+    return res.download(absolutePath, fileName || path.basename(absolutePath));
+  }
+
+  if (!isR2PrivateArtifactsEnabled()) {
+    return res.status(404).json({ message: "Không tìm thấy bộ cài hoặc bộ cài chưa được publish." });
+  }
+
+  return res.status(404).json({ message: "Không tìm thấy bộ cài trên kho private." });
+}
+
 function isLicenseEntitledForAccountDownload(license) {
   if (!license || String(license.status || "").toLowerCase() === "revoked") {
     return false;
@@ -1437,13 +1564,21 @@ function resolveManifestDownloadAsset(manifestRecord) {
     }
   }
 
-  if (!rawDownloadPath.startsWith("/app-updates/")) {
+  const relativePath = parseAppUpdatesRelativePathFromDownloadPath(rawDownloadPath, manifestRecord.appId);
+  if (!relativePath) {
     return null;
   }
 
-  const relativePath = rawDownloadPath.slice("/app-updates/".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
   if (!relativePath.startsWith(`${manifestRecord.appId}/`)) {
     return null;
+  }
+
+  if (isR2PrivateArtifactsEnabled()) {
+    return {
+      type: "r2",
+      relativePath,
+      fileName: path.basename(relativePath)
+    };
   }
 
   const absolutePath = path.resolve(appUpdatesRoot, relativePath);
@@ -2349,6 +2484,27 @@ app.post(
           appName: app.appName
         });
       }
+
+      if (artifact?.type === "r2") {
+        const expiresAt = Date.now() + ACCOUNT_DOWNLOAD_TICKET_TTL_SECONDS * 1000;
+        const ticket = createAccountDownloadTicket({
+          customerId,
+          appId: app.appId,
+          relativePath: artifact.relativePath,
+          fileName: artifact.fileName,
+          expiresAt
+        });
+
+        return res.json({
+          ok: true,
+          action: "download",
+          href: `/api/account/download-tickets/${ticket}`,
+          expiresAt,
+          fileName: artifact.fileName,
+          appId: app.appId,
+          appName: app.appName
+        });
+      }
     }
 
     return res.json({
@@ -2386,14 +2542,11 @@ app.get(
       return res.status(403).json({ message: "Bạn không có quyền dùng link tải này." });
     }
 
-    const absolutePath = path.resolve(appUpdatesRoot, payload.relativePath);
-    const rootPath = `${path.resolve(appUpdatesRoot)}${path.sep}`;
-    if (!absolutePath.startsWith(rootPath) || !fs.existsSync(absolutePath)) {
-      return res.status(404).json({ message: "Không tìm thấy bộ cài hoặc bộ cài chưa được publish." });
-    }
-
-    res.setHeader("Cache-Control", "no-store");
-    return res.download(absolutePath, payload.fileName || path.basename(absolutePath));
+    return streamArtifactToResponse({
+      res,
+      relativePath: payload.relativePath,
+      fileName: payload.fileName || path.basename(String(payload.relativePath || ""))
+    });
   })
 );
 
@@ -2905,6 +3058,18 @@ app.get(
     const deviceId = String(req.query.deviceId || "").trim() || null;
     const deviceName = String(req.query.deviceName || "").trim() || null;
     const manifest = normalizeManifestPublicPaths(manifestRecord.manifest);
+    const relativePath = parseAppUpdatesRelativePathFromDownloadPath(manifest?.downloadPath, manifestRecord.appId);
+    if (relativePath) {
+      const fileName = path.basename(relativePath);
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+      const artifactTicket = createAppUpdateArtifactTicket({
+        appId: manifestRecord.appId,
+        relativePath,
+        fileName,
+        expiresAt
+      });
+      manifest.downloadPath = buildPublicUrl(`/api/v1/app-updates/artifacts/${artifactTicket}`);
+    }
 
     let updateEntitlement = {
       licenseValid: null,
@@ -2973,6 +3138,22 @@ app.get(
         manifest,
         updateEntitlement
       }
+    });
+  })
+);
+
+app.get(
+  "/api/v1/app-updates/artifacts/:ticket",
+  asyncHandler(async (req, res) => {
+    const payload = verifyAppUpdateArtifactTicket(req.params.ticket);
+    if (!payload) {
+      return res.status(410).json({ success: false, error: "Artifact link expired or invalid" });
+    }
+
+    return streamArtifactToResponse({
+      res,
+      relativePath: payload.relativePath,
+      fileName: payload.fileName
     });
   })
 );
@@ -5378,9 +5559,19 @@ app.use(
   "/image",
   express.static(path.join(__dirname, "..", "public", "image"))
 );
+app.use("/Video", express.static(path.join(__dirname, "..", "public", "Video")));
 app.use("/og", express.static(ogRoot));
-app.use("/app-updates", express.static(appUpdatesRoot));
-app.use("/desktop-updates", express.static(path.join(appUpdatesRoot, "app-study-12")));
+if (isR2PrivateArtifactsEnabled()) {
+  app.use("/app-updates", (req, res) => {
+    res.status(410).json({ message: "Direct artifact URL is disabled. Please use signed download link." });
+  });
+  app.use("/desktop-updates", (req, res) => {
+    res.status(410).json({ message: "Direct artifact URL is disabled. Please use signed download link." });
+  });
+} else {
+  app.use("/app-updates", express.static(appUpdatesRoot));
+  app.use("/desktop-updates", express.static(path.join(appUpdatesRoot, "app-study-12")));
+}
 app.get("/logo_2.png", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "logo_2.png"));
 });

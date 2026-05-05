@@ -3,6 +3,11 @@ const fs = require("fs");
 const path = require("path");
 const { pool } = require("../db/pool");
 
+function isR2PrivateArtifactsEnabledForRegistry() {
+  const value = String(process.env.R2_PRIVATE_ARTIFACTS_ENABLED || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes" || value === "on";
+}
+
 const LICENSE_RUNTIME_LEASE_SECONDS = 180;
 const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates");
 const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
@@ -825,7 +830,8 @@ async function verifyAdminAppRegistryApp(appId, options = {}) {
   if (requiresDownloadUrl && hasDownloadUrl) {
     const localArtifactPath = getLocalArtifactPathFromDownloadUrl(app.appId, app.downloadUrl);
     if (localArtifactPath) {
-      downloadReachable = fs.existsSync(localArtifactPath);
+      // In private-artifacts mode, local binaries may be intentionally removed after sync to R2.
+      downloadReachable = isR2PrivateArtifactsEnabledForRegistry() || fs.existsSync(localArtifactPath);
     } else {
       downloadReachable = isValidAppRegistryUrl(app.downloadUrl);
     }
