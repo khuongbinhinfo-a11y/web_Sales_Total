@@ -5688,7 +5688,20 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.use(express.static(webRoot));
+app.use(express.static(webRoot, {
+  etag: true,
+  maxAge: "10m",
+  setHeaders(res, filePath) {
+    if (/\.html$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    if (/\.(js|css)$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      return;
+    }
+  }
+}));
 app.use(
   "/image",
   express.static(path.join(__dirname, "..", "public", "image"))

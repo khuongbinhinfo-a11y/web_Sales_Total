@@ -3312,7 +3312,7 @@ function renderProducts(){
     const pricing = getProductDisplayPrice(p);
     const resolvedImage = resolveProductImage(p);
     const visual = resolvedImage
-      ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${productName}">`
+      ? `<img class="p-card-img-photo" src="${resolvedImage}" alt="${productName}" loading="lazy" decoding="async">`
       : `<div class="p-card-img-fallback">
           <span class="p-card-img-kicker">${softwareCode(p.appId)}</span>
           <strong>${productName}</strong>

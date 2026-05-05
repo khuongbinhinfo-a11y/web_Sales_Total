@@ -13,7 +13,7 @@
     <header class="header" id="top">
       <div class="container header-inner">
         <a class="logo" href="/">
-          <img class="logo-img" src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/logo_2.png" alt="Logo Ứng Dụng Thông Minh" />
+          <img class="logo-img" src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/logo_2.png" alt="Logo Ứng Dụng Thông Minh" decoding="async" fetchpriority="high" />
           <span class="logo-wordmark"><span>Ứng Dụng</span><span>Thông Minh</span></span>
         </a>
         <div class="header-search" id="headerSearchWrap">
@@ -68,14 +68,14 @@
           </div>
           <video
             class="home-hero-video hero-video"
-            autoplay
+            data-defer-video="true"
             muted
             loop
             playsinline
-            preload="metadata"
+            preload="none"
             poster="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/image/hero.jpeg"
           >
-            <source src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/Video/hero-web-brand.mp4" type="video/mp4" />
+            <source data-src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/Video/hero-web-brand.mp4" type="video/mp4" />
           </video>
           <div class="hero-media-tint"></div>
           <div class="hero-bottom-overlay"></div>
@@ -318,7 +318,7 @@
       <div class="container footer-inner">
         <div class="footer-brand">
           <div class="footer-brand-mark">
-            <img class="footer-logo" src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/logo_2.png" alt="Logo Ứng Dụng Thông Minh" />
+            <img class="footer-logo" src="https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/logo_2.png" alt="Logo Ứng Dụng Thông Minh" loading="lazy" decoding="async" fetchpriority="low" />
             <strong>Ứng Dụng Thông Minh</strong>
           </div>
           <p>Giải pháp số gọn, dễ dùng cho người kinh doanh nhỏ: website, phần mềm mini và công cụ hỗ trợ công việc.</p>
@@ -441,6 +441,39 @@
     </div>
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      (function () {
+        var heroVideo = document.querySelector("video[data-defer-video='true']");
+        if (!heroVideo) return;
+        var source = heroVideo.querySelector("source[data-src]");
+        if (!source) return;
+
+        var loaded = false;
+        var triggerEvents = ["pointerdown", "keydown", "touchstart", "wheel"];
+
+        var hydrateVideo = function () {
+          if (loaded) return;
+          loaded = true;
+          source.src = source.getAttribute("data-src");
+          source.removeAttribute("data-src");
+          heroVideo.load();
+          var playPromise = heroVideo.play();
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(function () {});
+          }
+          triggerEvents.forEach(function (eventName) {
+            window.removeEventListener(eventName, hydrateVideo);
+          });
+        };
+
+        triggerEvents.forEach(function (eventName) {
+          window.addEventListener(eventName, hydrateVideo, { once: true, passive: true });
+        });
+
+        // Fallback: defer video network request until page becomes idle for a while.
+        window.setTimeout(hydrateVideo, 7000);
+      })();
+    </script>
     <script src="/catalog-scope.js"></script>
     <script src="/main.js"></script>
     <script>
