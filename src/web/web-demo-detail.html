@@ -105,5 +105,15 @@
     <script src="/web-demo-pricing-data.js"></script>
     <script src="/web-demo-catalog-map.js"></script>
     <script src="/web-demo-detail.js"></script>
+    <script>
+      (function () {
+        if (location.pathname.includes("/thiet-ke-web/theo-nganh/")) {
+          const backBase = "/thiet-ke-web/theo-nganh";
+          document.querySelectorAll('a[href="/mau-demo"]').forEach(function (a) {
+            a.href = backBase;
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

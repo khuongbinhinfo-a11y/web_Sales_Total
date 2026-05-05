@@ -19,6 +19,78 @@ let appRegistryState = {
   lastDetail: null
 };
 
+const WEB_FAST_PRODUCT_LABELS = {
+  "prod-web-demo-company-basic": { branch: "Web nhanh", label: "Công ty · Mẫu 1: Hero trust + dịch vụ" },
+  "prod-web-demo-company-pro": { branch: "Web nhanh", label: "Công ty · Mẫu 2: Nhiều trang dịch vụ" },
+  "prod-web-demo-company-brand": { branch: "Web nhanh", label: "Công ty · Mẫu 3: Bản thương hiệu" },
+  "prod-web-demo-shop-showcase": { branch: "Web nhanh", label: "Shop · Mẫu 1: Shop giới thiệu" },
+  "prod-web-demo-shop-sales": { branch: "Web nhanh", label: "Shop · Mẫu 2: Shop bán hàng" },
+  "prod-web-demo-shop-advanced": { branch: "Web nhanh", label: "Shop · Mẫu 3: Shop nâng cao" },
+  "prod-web-demo-salon-mini": { branch: "Web nhanh", label: "Salon · Mẫu 1: Salon mini" },
+  "prod-web-demo-salon-pro": { branch: "Web nhanh", label: "Salon · Mẫu 2: Salon chuyên nghiệp" },
+  "prod-web-demo-salon-booking": { branch: "Web nhanh", label: "Salon · Mẫu 3: Salon bán hàng + booking" },
+  "prod-web-demo-industry-basic": { branch: "Web nhanh", label: "Industry · Mẫu 1: Industry cơ bản" },
+  "prod-web-demo-industry-pro": { branch: "Web nhanh", label: "Industry · Mẫu 2: Industry chuyên nghiệp" },
+  "prod-web-demo-industry-booking": { branch: "Web nhanh", label: "Industry · Mẫu 3: Industry nâng cao" },
+  "prod-web-demo-landing-basic": { branch: "Web nhanh", label: "Landing · Mẫu 1: Landing cơ bản" },
+  "prod-web-demo-landing-pro": { branch: "Web nhanh", label: "Landing · Mẫu 2: Landing chuyên nghiệp" },
+  "prod-web-demo-landing-system": { branch: "Web nhanh", label: "Landing · Mẫu 3: Landing hệ thống" },
+  "prod-web-demo-addon-domain": { branch: "Addon chung", label: "Tên miền dùng chung" },
+  "prod-web-demo-addon-hosting": { branch: "Addon chung", label: "Hosting dùng chung" }
+};
+
+const WEB_CUSTOM_PRICE_FIELDS = [
+  "company-chuyen-nghiep",
+  "company-thuong-hieu",
+  "shop-ban-hang",
+  "shop-nang-cao",
+  "spa-chuyen-nghiep",
+  "menu-chuyen-nghiep",
+  "trung-tam-dao-tao"
+];
+
+function getDefaultWebPricingConfig(){
+  return {
+    sharedAddons: {
+      domainAnnual: "350.000đ - 850.000đ/năm",
+      hostingAnnual: "2.400.000đ - 4.800.000đ/năm"
+    },
+    customPlanPrices: {
+      "company-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "company-thuong-hieu": "Báo giá tùy nhu cầu",
+      "shop-ban-hang": "Báo giá tùy nhu cầu",
+      "shop-nang-cao": "Báo giá tùy nhu cầu",
+      "spa-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "menu-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "trung-tam-dao-tao": "Báo giá tùy nhu cầu"
+    }
+  };
+}
+
+function normalizeWebPricingConfig(config){
+  const defaults = getDefaultWebPricingConfig();
+  const payload = config && typeof config === "object" ? config : {};
+  const sharedAddons = payload.sharedAddons && typeof payload.sharedAddons === "object" ? payload.sharedAddons : {};
+  const customPlanPrices = payload.customPlanPrices && typeof payload.customPlanPrices === "object" ? payload.customPlanPrices : {};
+  return {
+    sharedAddons: {
+      domainAnnual: String(sharedAddons.domainAnnual || defaults.sharedAddons.domainAnnual).trim() || defaults.sharedAddons.domainAnnual,
+      hostingAnnual: String(sharedAddons.hostingAnnual || defaults.sharedAddons.hostingAnnual).trim() || defaults.sharedAddons.hostingAnnual
+    },
+    customPlanPrices: Object.fromEntries(
+      WEB_CUSTOM_PRICE_FIELDS.map((planSlug) => [
+        planSlug,
+        String(customPlanPrices[planSlug] || defaults.customPlanPrices[planSlug]).trim() || defaults.customPlanPrices[planSlug]
+      ])
+    )
+  };
+}
+
+function getWebFastProductLabel(product){
+  const productId = String(product?.id || "").trim();
+  return WEB_FAST_PRODUCT_LABELS[productId] || null;
+}
+
 function wait(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -102,6 +174,114 @@ function getCatalogProductScopeLabel(scope){
     return window.CatalogScope.getProductScopeLabel(scope);
   }
   return scope === "web_design" ? "Web Design" : "Software";
+}
+
+async function loadWebPricingConfig(){
+  const msgEl = document.getElementById("webPricingConfigMsg");
+  const domainEl = document.getElementById("webPricingSharedDomain");
+  const hostingEl = document.getElementById("webPricingSharedHosting");
+  if(!domainEl || !hostingEl) return;
+
+  if(msgEl){
+    msgEl.textContent = "Đang tải cấu hình giá web...";
+    msgEl.style.color = "var(--muted)";
+  }
+
+  try {
+    const res = await fetchAdmin("/api/admin/web-pricing-config");
+    if(res.status === 401){ redirectToAdminLogin("/api/admin/web-pricing-config"); return; }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      throw new Error(data.message || "Không tải được cấu hình giá web");
+    }
+    const config = normalizeWebPricingConfig(data.config || {});
+    domainEl.value = config.sharedAddons.domainAnnual || "";
+    hostingEl.value = config.sharedAddons.hostingAnnual || "";
+    WEB_CUSTOM_PRICE_FIELDS.forEach((planSlug) => {
+      const input = document.getElementById(`webPricingCustom-${planSlug}`);
+      if(input){
+        input.value = config.customPlanPrices[planSlug] || "";
+      }
+    });
+    if(msgEl){
+      msgEl.textContent = "Đã tải cấu hình giá web.";
+      msgEl.style.color = "var(--muted)";
+    }
+  } catch (err) {
+    if(msgEl){
+      msgEl.textContent = `Lỗi tải giá web: ${err.message}`;
+      msgEl.style.color = "var(--danger)";
+    }
+  }
+}
+
+function bindWebPricingControls(){
+  const form = document.getElementById("webPricingConfigForm");
+  const reloadBtn = document.getElementById("webPricingReloadBtn");
+  const msgEl = document.getElementById("webPricingConfigMsg");
+  if(!form) return;
+
+  reloadBtn?.addEventListener("click", loadWebPricingConfig);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const payload = normalizeWebPricingConfig({
+      sharedAddons: {
+        domainAnnual: document.getElementById("webPricingSharedDomain")?.value || "",
+        hostingAnnual: document.getElementById("webPricingSharedHosting")?.value || ""
+      },
+      customPlanPrices: Object.fromEntries(
+        WEB_CUSTOM_PRICE_FIELDS.map((planSlug) => [planSlug, document.getElementById(`webPricingCustom-${planSlug}`)?.value || ""])
+      )
+    });
+
+    if(submitBtn){
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Đang lưu...";
+    }
+    if(msgEl){
+      msgEl.textContent = "Đang lưu cấu hình giá web...";
+      msgEl.style.color = "var(--muted)";
+    }
+
+    try {
+      const res = await fetchAdmin("/api/admin/web-pricing-config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if(res.status === 401){ redirectToAdminLogin("/api/admin/web-pricing-config"); return; }
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        throw new Error(data.message || "Lưu cấu hình giá web thất bại");
+      }
+      const nextConfig = normalizeWebPricingConfig(data.config || payload);
+      document.getElementById("webPricingSharedDomain").value = nextConfig.sharedAddons.domainAnnual || "";
+      document.getElementById("webPricingSharedHosting").value = nextConfig.sharedAddons.hostingAnnual || "";
+      WEB_CUSTOM_PRICE_FIELDS.forEach((planSlug) => {
+        const input = document.getElementById(`webPricingCustom-${planSlug}`);
+        if(input){
+          input.value = nextConfig.customPlanPrices[planSlug] || "";
+        }
+      });
+      if(msgEl){
+        msgEl.textContent = "Đã lưu cấu hình giá web.";
+        msgEl.style.color = "var(--success)";
+      }
+    } catch (err) {
+      if(msgEl){
+        msgEl.textContent = `Lỗi lưu giá web: ${err.message}`;
+        msgEl.style.color = "var(--danger)";
+      }
+    } finally {
+      if(submitBtn){
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Lưu giá hiển thị";
+      }
+    }
+  });
+
+  loadWebPricingConfig();
 }
 
 function toDatetimeLocalValue(value){
@@ -2580,6 +2760,7 @@ bindChangeMyAdminPasswordForm();
 bindSepayForm();
 bindPublicPageControls();
 bindWebDemoAdminControls();
+bindWebPricingControls();
 bindAiAppSecretControls();
 bindAiGateControls();
 bindAppRegistryControls();
@@ -3173,9 +3354,11 @@ function bindProductCardManager() {
         const comparePrice = Number(product.comparePrice ?? basePrice);
         const salePrice = Number(product.salePrice ?? 0);
         const hasDirectSale = Boolean(product.hasDirectSale) && comparePrice > salePrice;
+        const friendlyLabel = getWebFastProductLabel(product);
         return `<tr data-product-id="${escapeHtml(product.id)}">
           <td>
-            <strong>${escapeHtml(product.name || product.id)}</strong>
+            <strong>${escapeHtml(friendlyLabel?.label || product.name || product.id)}</strong>
+            ${friendlyLabel ? `<div class="admin-product-card-subline">${escapeHtml(friendlyLabel.branch)}</div>` : ""}
             <div class="admin-product-card-subline">${escapeHtml(product.appId || "")} · ${escapeHtml(product.id || "")} · ${escapeHtml(product.cycle || "")}</div>
           </td>
           <td>

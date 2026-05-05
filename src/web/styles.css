@@ -2911,6 +2911,21 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
   border-color:rgba(255,255,255,.18);
   color:#fff
 }
+.web-build-summary-card[data-tone="custom"]{
+  background:linear-gradient(160deg,#0f1d24,#0d2030);
+  border-color:rgba(6,182,212,.2)
+}
+.web-build-summary-card[data-tone="custom"] .web-build-summary-browser{
+  background:linear-gradient(180deg,#e8f8ff,#cceeff)
+}
+.web-build-summary-card[data-tone="custom"] .web-build-summary-copy{
+  background:linear-gradient(135deg,#0891b2,#0e7490)
+}
+.web-build-summary-card[data-tone="custom"] .web-build-summary-content .section-eyebrow{
+  color:#67e8f9;
+  background:rgba(6,182,212,.12);
+  border-color:rgba(6,182,212,.2)
+}
 .web-build-block,
 .web-zero-panel,
 .web-process-block,

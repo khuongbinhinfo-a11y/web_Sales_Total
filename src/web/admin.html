@@ -322,6 +322,71 @@
             </div>
             <div class="table-wrap" id="webDemoLeadsWrap"><p style="padding:12px;color:var(--muted)">Đang tải...</p></div>
           </div>
+
+          <div class="info-card" style="margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <div>
+                <h4 style="margin:0">Giá web nhanh / web theo ngành</h4>
+                <p style="margin:4px 0 0;color:var(--muted);font-size:.84rem">Web nhanh chỉnh giá thật ở Catalog. Khu này dùng để map tên mẫu rõ ràng trong admin và chỉnh giá hiển thị cho nhánh thiết kế theo ngành.</p>
+              </div>
+              <button type="button" id="webPricingReloadBtn" class="btn btn-outline" style="min-height:34px">Tải lại giá web</button>
+            </div>
+
+            <form id="webPricingConfigForm" style="display:grid;gap:14px">
+              <div style="padding:12px;border:1px solid var(--line);border-radius:10px;background:#f8fbff">
+                <h5 style="margin:0 0 10px">Chi phí chung công khai</h5>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Tên miền / năm</label>
+                    <input id="webPricingSharedDomain" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" placeholder="350.000đ - 850.000đ/năm" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Hosting / năm</label>
+                    <input id="webPricingSharedHosting" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" placeholder="2.400.000đ - 4.800.000đ/năm" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff">
+                <h5 style="margin:0 0 10px">Giá hiển thị nhánh thiết kế theo ngành</h5>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Công ty · Gói Chuyên nghiệp</label>
+                    <input id="webPricingCustom-company-chuyen-nghiep" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Công ty · Gói Thương hiệu Premium</label>
+                    <input id="webPricingCustom-company-thuong-hieu" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Shop · Gói Shop bán hàng</label>
+                    <input id="webPricingCustom-shop-ban-hang" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Shop · Gói Marketplace Pro</label>
+                    <input id="webPricingCustom-shop-nang-cao" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Salon · Gói Salon chuyên nghiệp</label>
+                    <input id="webPricingCustom-spa-chuyen-nghiep" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Industry · Gói Catalog chuyên nghiệp</label>
+                    <input id="webPricingCustom-menu-chuyen-nghiep" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                  <div>
+                    <label style="font-size:.75rem;color:var(--muted);font-weight:700">Landing · Gói Landing cao cấp</label>
+                    <input id="webPricingCustom-trung-tam-dao-tao" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button type="submit" class="btn btn-accent" style="min-height:38px">Lưu giá hiển thị</button>
+                <p id="webPricingConfigMsg" style="margin:0;font-size:.82rem;color:var(--muted)"></p>
+              </div>
+            </form>
+          </div>
         </section>
 
         <!-- Expanded route lock detail form (initially hidden) -->

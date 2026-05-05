@@ -275,7 +275,7 @@ function PricingCard(plan, index, shared, industryId) {
   const badge = plan?.badge || (index === 1 ? "Khuyên dùng" : index === 2 ? "Mở rộng" : "");
   const isFeatured = Boolean(plan?.featured) || index === 1;
   const isExpanded = badge === "Mở rộng" || index === 2;
-  const detailUrl = `/kho-mau/${encodeURIComponent(industryId)}`;
+  const detailUrl = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan?.slug || `goi-${index + 1}`)}`;
   const consultUrl = shared?.consultUrl || "https://zalo.me/0902964685";
   const cardClass = [
     "demo-pricing-card",
@@ -311,6 +311,12 @@ function PricingCard(plan, index, shared, industryId) {
 }
 
 function ChildVariantsSection(industryId) {
+  const pathname = window.location.pathname || "";
+  const isOnMauDemoPage = pathname.includes("/mau-demo/");
+  if (isOnMauDemoPage) {
+    return "";
+  }
+  
   const data = window.webDemoPricingData?.[industryId];
   const plans = Array.isArray(data?.plans) ? data.plans.slice(0, 3) : [];
   if (!plans.length) {
@@ -595,11 +601,14 @@ if (heroImage) {
 
 const switchEl = document.getElementById("demoSwitch");
 if (switchEl) {
+  const mauDemoBase = location.pathname.includes("/thiet-ke-web/theo-nganh/")
+    ? "/thiet-ke-web/theo-nganh/mau-demo"
+    : "/mau-demo";
   switchEl.innerHTML = ids.map((id) => {
     const item = DEMO_DATA[id];
     const current = id === activeId ? " active" : "";
     const aria = id === activeId ? ' aria-current="page"' : "";
-    return `<a class="${current.trim()}" href="/mau-demo/${id}"${aria}>${escapeHtml(item.name)}</a>`;
+    return `<a class="${current.trim()}" href="${mauDemoBase}/${id}"${aria}>${escapeHtml(item.name)}</a>`;
   }).join("");
 }
 

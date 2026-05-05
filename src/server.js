@@ -181,6 +181,50 @@ const WEB_DEMO_PRODUCT_BY_SLUG = {
   landing: "prod-web-demo-landing-pro"
 };
 
+const WEB_PRICING_CONFIG_KEY = "web_pricing_config";
+
+function getDefaultWebPricingConfig() {
+  return {
+    sharedAddons: {
+      domainAnnual: "350.000đ - 850.000đ/năm",
+      hostingAnnual: "2.400.000đ - 4.800.000đ/năm"
+    },
+    customPlanPrices: {
+      "company-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "company-thuong-hieu": "Báo giá tùy nhu cầu",
+      "shop-ban-hang": "Báo giá tùy nhu cầu",
+      "shop-nang-cao": "Báo giá tùy nhu cầu",
+      "spa-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "menu-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "trung-tam-dao-tao": "Báo giá tùy nhu cầu"
+    }
+  };
+}
+
+function normalizeWebPricingConfig(input) {
+  const defaults = getDefaultWebPricingConfig();
+  const payload = (input && typeof input === "object") ? input : {};
+  const sharedAddons = (payload.sharedAddons && typeof payload.sharedAddons === "object") ? payload.sharedAddons : {};
+  const customPlanPrices = (payload.customPlanPrices && typeof payload.customPlanPrices === "object") ? payload.customPlanPrices : {};
+  return {
+    sharedAddons: {
+      domainAnnual: String(sharedAddons.domainAnnual || defaults.sharedAddons.domainAnnual).trim() || defaults.sharedAddons.domainAnnual,
+      hostingAnnual: String(sharedAddons.hostingAnnual || defaults.sharedAddons.hostingAnnual).trim() || defaults.sharedAddons.hostingAnnual
+    },
+    customPlanPrices: Object.fromEntries(
+      Object.keys(defaults.customPlanPrices).map((planSlug) => {
+        const value = String(customPlanPrices[planSlug] || defaults.customPlanPrices[planSlug]).trim();
+        return [planSlug, value || defaults.customPlanPrices[planSlug]];
+      })
+    )
+  };
+}
+
+async function getWebPricingConfig() {
+  const persisted = await getRuntimeConfigValue(WEB_PRICING_CONFIG_KEY);
+  return normalizeWebPricingConfig(persisted);
+}
+
 const WEB_DEMO_PRODUCT_NAME_BY_SLUG_AND_VARIANT = {
   company: {
     1: "Company - Hero trust + dich vu",
@@ -2054,6 +2098,14 @@ app.get(
 );
 
 app.get(
+  "/api/web-pricing-config",
+  asyncHandler(async (req, res) => {
+    const config = await getWebPricingConfig();
+    res.json({ ok: true, config });
+  })
+);
+
+app.get(
   "/api/admin/catalog",
   requireAdminPermission("customers:write"),
   asyncHandler(async (req, res) => {
@@ -2075,6 +2127,25 @@ app.patch(
       allowCouponStack: req.body?.allowCouponStack
     });
     res.json({ ok: true, product });
+  })
+);
+
+app.get(
+  "/api/admin/web-pricing-config",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const config = await getWebPricingConfig();
+    res.json({ ok: true, config });
+  })
+);
+
+app.patch(
+  "/api/admin/web-pricing-config",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const nextConfig = normalizeWebPricingConfig(req.body || {});
+    const saved = await upsertRuntimeConfigValue(WEB_PRICING_CONFIG_KEY, nextConfig);
+    res.json({ ok: true, config: normalizeWebPricingConfig(saved.value) });
   })
 );
 
@@ -5411,6 +5482,22 @@ app.get("/web-demo", checkPublicRouteLockMiddleware, (req, res) => {
 
 app.get("/thiet-ke-web/mau-demo", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/thiet-ke-web/theo-nganh", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "index.html"));
+});
+
+app.get("/thiet-ke-web/theo-nganh/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
+  sendWebDemoDetailPage(req, res);
+});
+
+app.get("/thiet-ke-web/theo-nganh/:id", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "web-design-custom-collection.html"));
+});
+
+app.get("/thiet-ke-web/theo-nganh/:id/goi/:slug", checkPublicRouteLockMiddleware, (req, res) => {
+  res.sendFile(path.join(webRoot, "web-design-custom-package.html"));
 });
 
 app.get("/mau-demo", checkPublicRouteLockMiddleware, (req, res) => {

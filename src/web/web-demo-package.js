@@ -9,6 +9,7 @@ const ADDON_PRODUCT_IDS = {
 };
 
 let catalogProductsByIdPromise = null;
+let webPricingConfigPromise = null;
 
 const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;",
@@ -21,8 +22,16 @@ const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => 
 const parsePackageRoute = () => {
   const parts = location.pathname.split("/").filter(Boolean);
   const khoMauIndex = parts.findIndex((part) => part === "kho-mau");
+  const customDesignIndex = parts.findIndex((part, index) => part === "theo-nganh" && parts[index - 1] === "thiet-ke-web");
   const legacyIndustryIndex = parts.findIndex((part, index) => part === "web-demo" && parts[index - 1] === "catalog");
-  const industryIndex = khoMauIndex >= 0 ? khoMauIndex + 1 : legacyIndustryIndex + 1;
+  let industryIndex = -1;
+  if (khoMauIndex >= 0) {
+    industryIndex = khoMauIndex + 1;
+  } else if (customDesignIndex >= 0) {
+    industryIndex = customDesignIndex + 1;
+  } else if (legacyIndustryIndex >= 0) {
+    industryIndex = legacyIndustryIndex + 1;
+  }
   const planIndex = parts.findIndex((part) => part === "goi") + 1;
   return {
     industrySlug: industryIndex > 0 ? decodeURIComponent(parts[industryIndex] || "") : "",
@@ -52,15 +61,59 @@ const renderMaintenance = (maintenance = []) => maintenance.map(([label, value])
 
 function findPackage() {
   const { industrySlug, planSlug } = parsePackageRoute();
-  const industry = window.webDemoPricingData?.[industrySlug];
+  const isCustomDesignRoute = window.location.pathname.includes('/thiet-ke-web/theo-nganh/');
+  const pricingData = isCustomDesignRoute ? (window.webDesignCustomPricingData || {}) : (window.webDemoPricingData || {});
+  const pricingIndustries = isCustomDesignRoute ? (window.webDesignCustomPricingIndustries || {}) : (window.webDemoPricingIndustries || {});
+  const industry = pricingData?.[industrySlug];
   const plan = industry?.plans?.find((item) => item.slug === planSlug);
-  const industryInfo = window.webDemoPricingIndustries?.[industrySlug] || {};
+  const industryInfo = pricingIndustries?.[industrySlug] || {};
   return { industrySlug, planSlug, industry, industryInfo, plan };
 }
 
 const formatVnd = (amount) => `${Number(amount || 0).toLocaleString("vi-VN")}đ`;
 
 const escapeAttribute = (value) => escapeHtml(value).replace(/`/g, "&#96;");
+
+function getDefaultWebPricingConfig() {
+  return {
+    sharedAddons: {
+      domainAnnual: "350.000đ - 850.000đ/năm",
+      hostingAnnual: "2.400.000đ - 4.800.000đ/năm"
+    },
+    customPlanPrices: {
+      "company-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "company-thuong-hieu": "Báo giá tùy nhu cầu",
+      "shop-ban-hang": "Báo giá tùy nhu cầu",
+      "shop-nang-cao": "Báo giá tùy nhu cầu",
+      "spa-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "menu-chuyen-nghiep": "Báo giá tùy nhu cầu",
+      "trung-tam-dao-tao": "Báo giá tùy nhu cầu"
+    }
+  };
+}
+
+async function getWebPricingConfig() {
+  if (!webPricingConfigPromise) {
+    webPricingConfigPromise = fetch("/api/web-pricing-config")
+      .then((response) => response.ok ? response.json() : { config: getDefaultWebPricingConfig() })
+      .then((payload) => payload?.config || getDefaultWebPricingConfig())
+      .catch(() => getDefaultWebPricingConfig());
+  }
+  return webPricingConfigPromise;
+}
+
+function buildSharedMaintenanceRows(maintenance, sharedAddons) {
+  const rows = Array.isArray(maintenance) ? maintenance : [];
+  const filteredRows = rows.filter(([label]) => {
+    const normalized = String(label || "").trim().toLowerCase();
+    return normalized !== "tên miền" && normalized !== "hosting";
+  });
+  return [
+    ["Tên miền", sharedAddons?.domainAnnual || "350.000đ - 850.000đ/năm"],
+    ["Hosting", sharedAddons?.hostingAnnual || "2.400.000đ - 4.800.000đ/năm"],
+    ...filteredRows
+  ];
+}
 
 function getPlanProductId(industrySlug, planSlug) {
   if (typeof WEB_DEMO_MAP.getPlanProductId === "function") {
@@ -75,6 +128,49 @@ function getTemplateSlugForOrder(industrySlug) {
     return WEB_DEMO_MAP.getTemplateSlugForIndustry(industrySlug);
   }
   return WEB_DEMO_MAP.templateByIndustry?.[industrySlug] || industrySlug;
+}
+
+function ChildVariantsSection(industryId) {
+  const pathname = window.location.pathname || "";
+  const isOnMauDemoPage = pathname.includes("/mau-demo/");
+  if (isOnMauDemoPage) {
+    return "";
+  }
+  
+  const data = window.webDemoPricingData?.[industryId];
+  const plans = Array.isArray(data?.plans) ? data.plans.slice(0, 3) : [];
+  if (!plans.length) {
+    return "";
+  }
+
+  return `
+    <div class="demo-child-variants" aria-label="Mẫu con triển khai nhanh">
+      <div class="demo-child-variants-head">
+        <span>Mẫu con triển khai nhanh</span>
+        <h3>3 mẫu con đã tách riêng theo từng demo</h3>
+      </div>
+      <div class="demo-child-variants-grid">
+        ${plans.map((plan, index) => {
+          const demoVariant = index + 1;
+          const previewHref = `/preview/${encodeURIComponent(industryId)}?demo=${demoVariant}`;
+          const adminHref = `/preview/${encodeURIComponent(industryId)}/admin?demo=${demoVariant}`;
+          const packageHref = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
+          return `
+            <article class="demo-child-variant-card">
+              <b>Mẫu ${demoVariant}</b>
+              <h4>${escapeHtml(plan.name || `Mẫu ${demoVariant}`)}</h4>
+              <p>${escapeHtml(plan.note || "Bản mẫu con để triển khai nhanh theo gói.")}</p>
+              <div class="demo-child-variant-actions">
+                <a href="${previewHref}">Xem live</a>
+                <a href="${adminHref}">Admin local</a>
+                <a class="is-primary" href="${packageHref}">Vào gói triển khai</a>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
 }
 
 async function getCatalogProductsById() {
@@ -249,23 +345,68 @@ function renderNotFound() {
 
 async function renderPackagePage() {
   const { industrySlug, industryInfo, plan } = findPackage();
-  const shared = window.webDemoPricingShared || {};
+  // Check if this is custom design route or landing branch
+  const isCustomDesignRoute = window.location.pathname.includes('/thiet-ke-web/theo-nganh/');
+  const isLandingBranch = industrySlug === 'landing';
+  const shouldHideCheckout = isCustomDesignRoute || isLandingBranch;
+  
+  // Load data from appropriate source
+  let pricingData, pricingShared, pricingIndustries;
+  if (isCustomDesignRoute) {
+    pricingData = window.webDesignCustomPricingData || {};
+    pricingShared = window.webDesignCustomPricingShared || {};
+    pricingIndustries = window.webDesignCustomPricingIndustries || {};
+  } else {
+    pricingData = window.webDemoPricingData || {};
+    pricingShared = window.webDemoPricingShared || {};
+    pricingIndustries = window.webDemoPricingIndustries || {};
+  }
+  
+  const shared = pricingShared;
   const detail = plan?.detail || {};
   const consultUrl = shared.consultUrl || "https://zalo.me/0902964685";
-  const maintenance = detail.maintenance || shared.maintenance || [];
+  const webPricingConfig = await getWebPricingConfig();
+  const customPlanPrices = webPricingConfig?.customPlanPrices || {};
+  const resolvedPlanPrice = isCustomDesignRoute ? (customPlanPrices[plan?.slug] || plan?.price || "Báo giá tùy nhu cầu") : plan?.price;
+  const maintenance = isCustomDesignRoute
+    ? buildSharedMaintenanceRows(detail.maintenance || shared.maintenance || [], webPricingConfig?.sharedAddons || {})
+    : (detail.maintenance || shared.maintenance || []);
 
   if (!plan) {
     renderNotFound();
     return;
   }
 
-  document.title = `${plan.name} | Hồ sơ gói triển khai`;
+  document.title = `${plan.name} | ${isCustomDesignRoute ? 'Thiết kế web tùy chỉnh' : 'Hồ sơ gói triển khai'}`;
+
+  const renderPrimaryButton = () => {
+    if (shouldHideCheckout) {
+      return `<p class="package-landing-notice" style="color: #666; font-weight: 500; text-align: center; margin-bottom: 12px;">Giá trên chỉ là tham khảo. Vui lòng liên hệ tư vấn để nhận báo giá chính xác phù hợp với yêu cầu của Quý khách.</p>`;
+    }
+    return `<button class="package-primary" type="button" id="buyPackageBtn">Dat coc va thanh toan</button>`;
+  };
+
+  const renderAddonSection = () => {
+    if (shouldHideCheckout) {
+      return '';
+    }
+    return `<div class="package-order-box no-print">
+      <h3>Chon addon khi dat goi</h3>
+      <div class="package-addon-list" id="packageAddonOptions"></div>
+      <p class="package-order-note">Tong thanh toan tam tinh: <strong id="packageCheckoutTotal">0đ</strong></p>
+      <p class="package-order-message" id="packageOrderMessage"></p>
+    </div>`;
+  };
+
+  const backHref = isCustomDesignRoute
+    ? `/thiet-ke-web/theo-nganh/${encodeURIComponent(industrySlug)}`
+    : `/kho-mau/${encodeURIComponent(industrySlug)}`;
 
   packageRoot.innerHTML = `
     <section class="package-hero">
       <div class="package-container package-hero-grid">
         <div class="package-hero-copy">
-          <a class="package-back" href="/kho-mau/${encodeURIComponent(industrySlug)}">← Quay lại kho mẫu</a>
+          <a class="package-back" href="${backHref}">← Quay lại danh sách</a>
           <span class="package-eyebrow">Hồ sơ gói triển khai</span>
           <h1>${escapeHtml(plan.name)}</h1>
           <p>${escapeHtml(detail.summary || plan.note)}</p>
@@ -274,21 +415,16 @@ async function renderPackagePage() {
             ${plan.badge ? `<b>${escapeHtml(plan.badge)}</b>` : ""}
           </div>
           <div class="package-actions no-print">
-            <button class="package-primary" type="button" id="buyPackageBtn">Dat coc va thanh toan</button>
+            ${renderPrimaryButton()}
             <a class="package-secondary" href="${escapeHtml(consultUrl)}" target="_blank" rel="noopener">Nhan tu van goi nay</a>
             <button class="package-secondary" type="button" id="printPackage">${escapeHtml(shared.pdfCta || "Tải hồ sơ PDF")}</button>
           </div>
-          <div class="package-order-box no-print">
-            <h3>Chon addon khi dat goi</h3>
-            <div class="package-addon-list" id="packageAddonOptions"></div>
-            <p class="package-order-note">Tong thanh toan tam tinh: <strong id="packageCheckoutTotal">0đ</strong></p>
-            <p class="package-order-message" id="packageOrderMessage"></p>
-          </div>
+          ${renderAddonSection()}
         </div>
         <aside class="package-price-card">
           <span>Chi phí triển khai</span>
-          <strong>${escapeHtml(plan.price)}</strong>
-          <p>Giá có thể thay đổi tùy số lượng trang, nội dung và tính năng riêng.</p>
+          <strong>${escapeHtml(resolvedPlanPrice)}</strong>
+          <p>${isLandingBranch ? 'Giá này là tham khảo. Giá thực tế sẽ được báo giá tùy nhu cầu.' : 'Giá có thể thay đổi tùy số lượng trang, nội dung và tính năng riêng.'}</p>
         </aside>
       </div>
     </section>
@@ -374,6 +510,8 @@ async function renderPackagePage() {
       </div>
     </section>
 
+    ${ChildVariantsSection(industrySlug)}
+
     <section class="package-thanks">
       <div class="package-container package-thanks-box">
         <div>
@@ -394,7 +532,9 @@ async function renderPackagePage() {
     button.addEventListener("click", () => window.print());
   });
 
-  await initCheckoutFlow({ industrySlug, plan });
+  if (!shouldHideCheckout) {
+    await initCheckoutFlow({ industrySlug, plan });
+  }
 }
 
 renderPackagePage().catch(() => {

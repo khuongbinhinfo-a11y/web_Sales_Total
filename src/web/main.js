@@ -463,6 +463,7 @@ function getRouteName(pathname = window.location.pathname) {
   const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
   if (cleaned === "/" || cleaned === "/pricing") return "home";
   if (cleaned === "/thiet-ke-web") return "web";
+  if (cleaned === "/thiet-ke-web/theo-nganh") return "theo-nganh";
   if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo" || cleaned === "/web-demo") return "demo";
   if (cleaned === "/phan-mem" || cleaned === "/san-pham") return "software";
   if (cleaned === "/phan-mem/hoc-tap" || cleaned === "/san-pham/hoc-tap") return "study";
@@ -1173,6 +1174,47 @@ PUBLIC_PAGE_CONTENT.en.home.benefits = {
   ]
 };
 
+Object.assign(PUBLIC_PAGE_CONTENT.vi.routes, {
+  "theo-nganh": {
+    pageTitle: "Thiết kế web theo ngành | Ứng Dụng Thông Minh",
+    hero: {
+      kicker: "",
+      title: "Thiết Kế Website Theo Ngành",
+      desc: "",
+      tags: [],
+      actions: [],
+      imageSrc: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/image/hero-web.jpeg",
+      imageAlt: "Dịch vụ thiết kế website theo ngành"
+    },
+    side: null,
+    story: {
+      eyebrow: "Thiết kế tùy chỉnh",
+      title: "Thiết kế web theo từng ngành cụ thể",
+      copy: "Chọn ngành bên dưới để xem các gói thiết kế phù hợp với lĩnh vực của bạn, kèm phạm vi công việc và định hướng báo giá.",
+      cards: [],
+      checklistTitle: "",
+      checklist: []
+    },
+    support: {
+      eyebrow: "Tư vấn",
+      title: "Cần tư vấn chọn ngành?",
+      copy: "Nhắn Zalo để được hướng dẫn chọn gói thiết kế phù hợp nhất với nhu cầu của bạn.",
+      routeAction: { href: "https://zalo.me/0902964685", label: "Nhắn Zalo tư vấn", sub: "Miễn phí tư vấn, không cần đặt cọc trước", icon: "WEB" }
+    },
+    sections: {
+      webDemo: {
+        eyebrow: "Thiết kế theo ngành",
+        title: "Chọn ngành để xem gói thiết kế phù hợp",
+        sub: "Mỗi ngành có bộ gói riêng với scope, timeline và định hướng giá tư vấn."
+      },
+      footerCta: {
+        title: "Bạn muốn có website thiết kế riêng cho ngành của mình?",
+        desc: "Chọn ngành, xem gói chi tiết và nhắn Zalo để được tư vấn phạm vi + báo giá phù hợp."
+      }
+    }
+  }
+});
+
 Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
   pageTitle: "Thiết kế Web | Ứng Dụng Thông Minh",
   hero: {
@@ -1211,15 +1253,34 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
     }
   },
   webBuild: {
-    summary: {
-      eyebrow: "Web mẫu triển khai nhanh",
-      title: "Giải pháp triển khai nhanh cho nhu cầu cần web sớm",
-      copy: "Bạn có thể chọn gói web mẫu triển khai nhanh để dùng ngay, sau đó tự chỉnh nội dung theo hướng dẫn. Phần chi tiết sẽ tiếp tục được mở rộng ở phase sau.",
-      actions: [
-        { label: "Xem mẫu web", href: "/mau-demo", variant: "accent" },
-        { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
-      ]
-    }
+    summaryCards: [
+      {
+        tone: "fast",
+        eyebrow: "Web mẫu — Dùng ngay",
+        title: "Mua gói web mẫu — chọn ngay, triển khai không cần thiết kế",
+        copy: "Bộ mẫu web dựng sẵn theo từng ngành. Mua gói, tự chỉnh nội dung theo hướng dẫn, dùng ngay — không cần qua bước thiết kế từ đầu.",
+        previewPill: "FAST WEB",
+        previewTitle: "Web mẫu<br/>dùng ngay",
+        previewDesc: "Mẫu có sẵn, mua gói, tự chỉnh — không cần thiết kế từ đầu.",
+        actions: [
+          { label: "Xem kho mẫu web", href: "/kho-mau", variant: "accent" },
+          { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+        ]
+      },
+      {
+        tone: "custom",
+        eyebrow: "Thiết kế riêng — Theo ngành",
+        title: "Thiết kế web tùy chỉnh — theo đúng ngành, tư vấn scope trước",
+        copy: "Mỗi ngành có bộ gói riêng. Xem phạm vi, quy trình và định hướng báo giá trước khi chốt — phù hợp cho nhu cầu cần website làm mới từ đầu theo yêu cầu.",
+        previewPill: "THEO NGÀNH",
+        previewTitle: "Thiết kế<br/>theo ngành",
+        previewDesc: "Tư vấn scope, thiết kế từ đầu, định hướng báo giá theo ngành.",
+        actions: [
+          { label: "Xem thiết kế theo ngành", href: "/thiet-ke-web/theo-nganh", variant: "accent" },
+          { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
+        ]
+      }
+    ]
   }
 });
 
@@ -2044,35 +2105,37 @@ function renderWebBuild(routeContent) {
   const admin = build.admin || {};
   const final = build.final || {};
 
-  if (build.summary) {
-    const summary = build.summary;
+  const summaryCards = build.summaryCards || (build.summary ? [build.summary] : []);
+  if (summaryCards.length) {
     webBuildContent.innerHTML = `
       <div class="web-build-stack">
-        <section class="web-build-summary-card">
-          <div class="web-build-summary-preview" aria-hidden="true">
-            <div class="web-build-summary-browser">
-              <div class="web-build-summary-browser-top"><span></span><span></span><span></span></div>
-              <div class="web-build-summary-page">
-                <div class="web-build-summary-copy">
-                  <span>FAST WEB</span>
-                  <strong>Web mẫu<br/>triển khai nhanh</strong>
-                  <small>Dùng ngay, tự chỉnh nội dung, tối ưu cho nhu cầu triển khai sớm.</small>
+        ${summaryCards.map((summary) => `
+          <section class="web-build-summary-card" data-tone="${escapeHtml(summary.tone || 'fast')}">
+            <div class="web-build-summary-preview" aria-hidden="true">
+              <div class="web-build-summary-browser">
+                <div class="web-build-summary-browser-top"><span></span><span></span><span></span></div>
+                <div class="web-build-summary-page">
+                  <div class="web-build-summary-copy">
+                    <span>${escapeHtml(summary.previewPill || "FAST WEB")}</span>
+                    <strong>${summary.previewTitle || "Web mẫu<br/>triển khai nhanh"}</strong>
+                    <small>${escapeHtml(summary.previewDesc || "Dùng ngay, tự chỉnh nội dung, tối ưu cho nhu cầu triển khai sớm.")}</small>
+                  </div>
+                  <div class="web-build-summary-media">
+                    <i></i>
+                    <i></i>
+                  </div>
+                  <div class="web-build-summary-strip"><i></i><i></i><i></i></div>
                 </div>
-                <div class="web-build-summary-media">
-                  <i></i>
-                  <i></i>
-                </div>
-                <div class="web-build-summary-strip"><i></i><i></i><i></i></div>
               </div>
             </div>
-          </div>
-          <div class="web-build-summary-content">
-            <span class="section-eyebrow">${escapeHtml(summary.eyebrow || "")}</span>
-            <h2>${escapeHtml(summary.title || "")}</h2>
-            <p>${escapeHtml(summary.copy || "")}</p>
-          </div>
-          <div class="web-final-actions">${(summary.actions || []).map(buildActionButtonHtml).join("")}</div>
-        </section>
+            <div class="web-build-summary-content">
+              <span class="section-eyebrow">${escapeHtml(summary.eyebrow || "")}</span>
+              <h2>${escapeHtml(summary.title || "")}</h2>
+              <p>${escapeHtml(summary.copy || "")}</p>
+            </div>
+            <div class="web-final-actions">${(summary.actions || []).map(buildActionButtonHtml).join("")}</div>
+          </section>
+        `).join("")}
       </div>
     `;
     return;
@@ -2440,20 +2503,18 @@ function renderWebDemoMarketLayout(demos) {
 
 function renderWebDemo(nextId) {
   const demos = WEB_DEMOS[lang] || WEB_DEMOS.vi;
-  if (currentRoute === "demo") {
-    renderWebDemoMarketLayout(demos);
-    return;
-  }
 
   if (webDemoLayout) {
     webDemoLayout.classList.remove("is-market-mode");
   }
 
+  const isTheoNganh = currentRoute === "theo-nganh";
+  const industryBaseHref = isTheoNganh ? "/thiet-ke-web/theo-nganh/mau-demo" : "/mau-demo";
+  const demoViewLabel = getWebDemoViewLabel();
+
   if (nextId) activeWebDemo = nextId;
   const item = demos[activeWebDemo] || demos.company;
   if (!item || !webDemoTitle) return;
-
-  const demoViewLabel = getWebDemoViewLabel();
 
   webDemoButtons.forEach((button) => {
     const id = button.dataset.webDemo;
@@ -2466,6 +2527,8 @@ function renderWebDemo(nextId) {
     if (kind && buttonItem) kind.textContent = buttonItem.cardKind;
     if (link) link.textContent = demoViewLabel;
     button.setAttribute("aria-current", id === activeWebDemo ? "true" : "false");
+    // Remap href based on current branch
+    button.href = `${industryBaseHref}/${encodeURIComponent(id)}`;
   });
 
   if (webDemoFrame) webDemoFrame.className = `web-demo-browser is-${activeWebDemo}`;
@@ -2483,7 +2546,7 @@ function renderWebDemo(nextId) {
     webDemoFeatures.innerHTML = item.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("");
   }
   if (webDemoViewLink) {
-    webDemoViewLink.href = `/mau-demo/${encodeURIComponent(activeWebDemo)}`;
+    webDemoViewLink.href = `${industryBaseHref}/${encodeURIComponent(activeWebDemo)}`;
     webDemoViewLink.textContent = demoViewLabel;
   }
 }
