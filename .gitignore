@@ -25,3 +25,8 @@ src/web/Video/hero-web-brand.mp4
 # src/web/*.jpg
 # src/web/*.png
 # src/web/image/
+
+# Public media moved to Cloudflare R2
+/public/og/
+/public/image/
+/products/image/
