@@ -49,6 +49,13 @@ const WEB_CUSTOM_PRICE_FIELDS = [
   "trung-tam-dao-tao"
 ];
 
+const PRODUCT_SCOPE = {
+  SOFTWARE: "software",
+  WEB_DESIGN_CONSULTING: "web_design_consulting",
+  QUICK_WEB_TEMPLATE_PRODUCT: "quick_web_template_product",
+  LEGACY_WEB_DESIGN: "web_design"
+};
+
 function getDefaultWebPricingConfig(){
   return {
     sharedAddons: {
@@ -163,17 +170,85 @@ function productSaleStatusMeta(value){
 }
 
 function getCatalogProductScope(product){
-  if (window.CatalogScope && typeof window.CatalogScope.getProductScope === "function") {
-    return window.CatalogScope.getProductScope(product);
+  const explicitScope = String(product?.productScope || product?.scope || "").trim();
+  if(explicitScope){
+    if(explicitScope === PRODUCT_SCOPE.LEGACY_WEB_DESIGN){
+      return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
+    }
+    if([
+      PRODUCT_SCOPE.SOFTWARE,
+      PRODUCT_SCOPE.WEB_DESIGN_CONSULTING,
+      PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT
+    ].includes(explicitScope)){
+      return explicitScope;
+    }
   }
-  return "software";
+
+  if (window.CatalogScope && typeof window.CatalogScope.getProductScope === "function") {
+    const scope = String(window.CatalogScope.getProductScope(product) || "").trim();
+    if(scope === PRODUCT_SCOPE.LEGACY_WEB_DESIGN){
+      return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
+    }
+    return scope || PRODUCT_SCOPE.SOFTWARE;
+  }
+  return PRODUCT_SCOPE.SOFTWARE;
 }
 
 function getCatalogProductScopeLabel(scope){
   if (window.CatalogScope && typeof window.CatalogScope.getProductScopeLabel === "function") {
-    return window.CatalogScope.getProductScopeLabel(scope);
+    const label = String(window.CatalogScope.getProductScopeLabel(scope) || "").trim();
+    if(label) return label;
   }
-  return scope === "web_design" ? "Web Design" : "Software";
+  if(scope === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT){
+    return "Web nhanh / Kho mẫu";
+  }
+  if(scope === PRODUCT_SCOPE.WEB_DESIGN_CONSULTING || scope === PRODUCT_SCOPE.LEGACY_WEB_DESIGN){
+    return "Thiết kế web tư vấn";
+  }
+  return "Phần mềm";
+}
+
+function isQuickWebTemplateScope(scope){
+  return scope === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT;
+}
+
+function isWebDesignConsultingScope(scope){
+  return scope === PRODUCT_SCOPE.WEB_DESIGN_CONSULTING || scope === PRODUCT_SCOPE.LEGACY_WEB_DESIGN;
+}
+
+async function getCatalogScopeCounts(){
+  const res = await fetchAdmin("/api/admin/catalog");
+  if(res.status === 401){
+    redirectToAdminLogin("/api/admin/catalog");
+    return null;
+  }
+  const data = await res.json().catch(()=>({ products: [] }));
+  if(!res.ok){
+    throw new Error(data.message || "Không tải được catalog admin");
+  }
+
+  const products = Array.isArray(data.products) ? data.products : [];
+  const counts = {
+    total: products.length,
+    software: 0,
+    webDesignConsulting: 0,
+    quickWebTemplateProduct: 0
+  };
+
+  products.forEach((product) => {
+    const scope = getCatalogProductScope(product);
+    if(isQuickWebTemplateScope(scope)){
+      counts.quickWebTemplateProduct += 1;
+      return;
+    }
+    if(isWebDesignConsultingScope(scope)){
+      counts.webDesignConsulting += 1;
+      return;
+    }
+    counts.software += 1;
+  });
+
+  return { counts, products };
 }
 
 async function loadWebPricingConfig(){
@@ -203,9 +278,19 @@ async function loadWebPricingConfig(){
         input.value = config.customPlanPrices[planSlug] || "";
       }
     });
-    if(msgEl){
-      msgEl.textContent = "Đã tải cấu hình giá web.";
-      msgEl.style.color = "var(--muted)";
+
+    try {
+      const catalogMeta = await getCatalogScopeCounts();
+      if(msgEl){
+        const consultingCount = Number(catalogMeta?.counts?.webDesignConsulting || 0);
+        msgEl.textContent = `Đã tải cấu hình giá web. Scope áp dụng: web_design_consulting (${consultingCount} sản phẩm tư vấn).`;
+        msgEl.style.color = "var(--muted)";
+      }
+    } catch {
+      if(msgEl){
+        msgEl.textContent = "Đã tải cấu hình giá web. Scope áp dụng: web_design_consulting.";
+        msgEl.style.color = "var(--muted)";
+      }
     }
   } catch (err) {
     if(msgEl){
@@ -3317,18 +3402,22 @@ function bindProductCardManager() {
     wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Đang tải danh sách sản phẩm...</p>`;
     if(msg){ msg.textContent = ""; }
     try {
-      const res = await fetchAdmin("/api/admin/catalog");
-      if(res.status === 401){ redirectToAdminLogin("/api/admin/catalog"); return; }
-      const data = await res.json().catch(()=>({ products: [] }));
-      if(!res.ok){
-        wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">${escapeHtml(data.message || "Không tải được catalog admin")}</p>`;
+      const catalogMeta = await getCatalogScopeCounts();
+      if(!catalogMeta){
         return;
       }
 
-      const products = Array.isArray(data.products) ? data.products.slice() : [];
+      const dataProducts = Array.isArray(catalogMeta.products) ? catalogMeta.products : [];
+      const products = dataProducts.filter((product) => isQuickWebTemplateScope(getCatalogProductScope(product)));
+
       if(!products.length){
-        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm nào.</p>`;
+        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm scope quick_web_template_product trong catalog.</p>`;
         return;
+      }
+
+      if(msg){
+        msg.textContent = `Đang lọc catalog Web nhanh/Kho mẫu theo scope quick_web_template_product (${products.length}/${catalogMeta.counts.total} sản phẩm).`;
+        msg.style.color = "var(--muted)";
       }
 
       products.sort((left, right) => {
@@ -3349,7 +3438,7 @@ function bindProductCardManager() {
         const meta = productSaleStatusMeta(normalizedStatus);
         const scope = getCatalogProductScope(product);
         const scopeLabel = getCatalogProductScopeLabel(scope);
-        const scopeClass = scope === "web_design" ? "status-badge" : "status-badge status-active";
+        const scopeClass = isQuickWebTemplateScope(scope) ? "status-badge status-active" : "status-badge";
         const basePrice = Number(product.basePrice ?? product.price ?? 0);
         const comparePrice = Number(product.comparePrice ?? basePrice);
         const salePrice = Number(product.salePrice ?? 0);
