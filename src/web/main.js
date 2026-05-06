@@ -465,8 +465,6 @@ function getRouteName(pathname = window.location.pathname) {
   const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
   if (cleaned === "/" || cleaned === "/pricing") return "home";
   if (cleaned === "/thiet-ke-web") return "web";
-  if (cleaned === "/thiet-ke-web/kho-mau") return "kho-mau";
-  if (cleaned === "/thiet-ke-web/theo-nganh") return "theo-nganh";
   if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo" || cleaned === "/web-demo") return "demo";
   if (cleaned === "/phan-mem" || cleaned === "/san-pham") return "software";
   if (cleaned === "/phan-mem/hoc-tap" || cleaned === "/san-pham/hoc-tap") return "study";
@@ -490,7 +488,6 @@ function getForcedCatalogCategory(route = currentRoute) {
 
 function getPrimaryNavRoute(route = currentRoute) {
   if (route === "demo") return "web";
-  if (route === "kho-mau") return "web";
   if (route === "study" || route === "work") return "software";
   return route;
 }
@@ -517,7 +514,7 @@ const PUBLIC_PAGE_CONTENT = {
       banner: [
         { label: "Hero video định vị", sub: "Trang mẹ rõ vai trò", href: "/" },
         { label: "Thiết kế Web", sub: "Landing page, web công ty, web bán hàng", href: "/thiet-ke-web" },
-        { label: "Mẫu demo", sub: "Xem nhanh web theo ngành", href: "/thiet-ke-web/kho-mau" },
+        { label: "Mẫu demo", sub: "Xem nhanh web theo ngành", href: "/thiet-ke-web/theo-nganh" },
         { label: "Phần mềm", sub: "App học tập và công cụ làm việc", href: "/phan-mem" },
         { label: "Học tập", sub: "Nhánh con cho học sinh và ôn luyện", href: "/phan-mem/hoc-tap" },
         { label: "Làm việc", sub: "Nhánh con cho video, quản lý, AI tool", href: "/phan-mem/lam-viec" },
@@ -586,7 +583,7 @@ const PUBLIC_PAGE_CONTENT = {
           desc: "Trang này gom lại những gì khách cần khi hỏi làm web: định hướng, mẫu demo và điểm chạm tư vấn, thay vì trộn lẫn với catalog phần mềm.",
           tags: ["Landing page", "Web công ty", "Web bán hàng", "Tư vấn theo ngành"],
           actions: [
-            { label: "Xem mẫu demo", href: "/thiet-ke-web/kho-mau", variant: "accent" },
+            { label: "Xem thiết kế theo ngành", href: "/thiet-ke-web/theo-nganh", variant: "accent" },
             { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
           ]
         },
@@ -604,7 +601,7 @@ const PUBLIC_PAGE_CONTENT = {
           title: "Nhánh web giờ có không gian riêng",
           copy: "Tất cả nội dung mang tính giới thiệu dịch vụ web được gom về một khu rõ ràng hơn: có hướng chọn ngành, khu demo và CTA tư vấn.",
           cards: [
-            { title: "Xem theo nhóm mẫu", text: "Công ty, shop, salon, industry và landing page đều có chỗ xem nhanh.", linkLabel: "Mở kho mẫu demo", linkHref: "/thiet-ke-web/kho-mau" },
+            { title: "Xem theo nhóm mẫu", text: "Công ty, shop, salon, industry và landing page đều có chỗ xem nhanh.", linkLabel: "Mở thiết kế theo ngành", linkHref: "/thiet-ke-web/theo-nganh" },
             { title: "Đi từ mục tiêu", text: "Khách có thể chọn web để lấy lead, bán hàng, đặt lịch hay xây thương hiệu.", linkLabel: "Xem nhánh web", linkHref: "/thiet-ke-web" },
             { title: "Chốt trao đổi gọn", text: "Sau khi có hướng, khách nhắn Zalo để nhận tư vấn sát ngành và phạm vi hơn.", linkLabel: "Nhắn Zalo", linkHref: "https://zalo.me/0902964685", external: true }
           ],
@@ -619,7 +616,7 @@ const PUBLIC_PAGE_CONTENT = {
           eyebrow: "Nhánh web",
           title: "Muốn chốt nhanh hướng website?",
           copy: "Xem demo rồi nhắn Zalo để trao đổi theo ngành, mục tiêu chốt lead hoặc bán hàng.",
-          routeAction: { href: "/thiet-ke-web/kho-mau", label: "Mở kho mẫu demo", sub: "Xem nhanh từng nhóm ngành", icon: "WEB" }
+          routeAction: { href: "/thiet-ke-web/theo-nganh", label: "Xem thiết kế theo ngành", sub: "Xem nhanh từng nhóm ngành", icon: "WEB" }
         },
         sections: {
           webDemo: {
@@ -955,7 +952,7 @@ const PUBLIC_PAGE_CONTENT = {
       banner: [
         { label: "Hero positioning", sub: "Homepage as a clear parent page", href: "/" },
         { label: "Web Design", sub: "Landing pages, company sites, shop sites", href: "/thiet-ke-web" },
-        { label: "Demo library", sub: "Preview industry-based samples", href: "/thiet-ke-web/kho-mau" },
+        { label: "Demo library", sub: "Preview industry-based samples", href: "/thiet-ke-web/theo-nganh" },
         { label: "Software", sub: "Study apps and work tools", href: "/phan-mem" },
         { label: "Study branch", sub: "Focused learning apps", href: "/phan-mem/hoc-tap" },
         { label: "Work branch", sub: "Focused work tools", href: "/phan-mem/lam-viec" },
@@ -1019,7 +1016,7 @@ PUBLIC_PAGE_CONTENT.en.routes.web.hero = {
   desc: "This page groups the web-design story in one place so visitors do not need to navigate through software cards first.",
   tags: ["Landing pages", "Company sites", "Shop sites", "Industry guidance"],
   actions: [
-    { label: "View demos", href: "/thiet-ke-web/kho-mau", variant: "accent" },
+    { label: "View demos", href: "/thiet-ke-web/theo-nganh", variant: "accent" },
     { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "outline", external: true }
   ]
 };
@@ -1198,18 +1195,17 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes, {
       title: "Chọn nhóm mẫu để xem preview con",
       copy: "Từ lớp đệm này, bạn chọn một nhóm mẫu phù hợp rồi đi vào preview chi tiết để xem bố cục và gói triển khai.",
       cards: [],
-      checklistTitle: "Luồng đúng",
+      checklistTitle: "Luồng mới",
       checklist: [
-        "Lớp đệm: /thiet-ke-web/kho-mau",
-        "Preview con: /kho-mau/:slug",
-        "Không tự redirect xuống /kho-mau/company"
+        "Thiết kế theo ngành: /thiet-ke-web/theo-nganh/:id",
+        "Gói chi tiết: /thiet-ke-web/theo-nganh/:id/goi/:slug"
       ]
     },
     support: {
       eyebrow: "Kho mẫu web",
       title: "Cần tư vấn chọn mẫu triển khai nhanh?",
       copy: "Xem preview từng nhóm mẫu trước, sau đó nhắn Zalo để chốt hướng triển khai phù hợp.",
-      routeAction: { href: "/thiet-ke-web/kho-mau", label: "Mở kho mẫu web", sub: "Trang chủ quick web template", icon: "WEB" }
+      routeAction: { href: "/thiet-ke-web/theo-nganh", label: "Xem thiết kế theo ngành", sub: "Xem preview từng nhóm ngành", icon: "WEB" }
     },
     sections: {
       webDemo: {
@@ -1287,7 +1283,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
     eyebrow: "Nhánh web",
     title: "Muốn chọn mẫu nhanh?",
     copy: "Xem demo theo ngành trước, sau đó nhắn Zalo để chốt hướng triển khai.",
-    routeAction: { href: "/thiet-ke-web/kho-mau", label: "Mở kho mẫu web", sub: "Xem demo theo từng nhóm ngành", icon: "WEB" }
+    routeAction: { href: "/thiet-ke-web/theo-nganh", label: "Xem thiết kế theo ngành", sub: "Xem demo theo từng nhóm ngành", icon: "WEB" }
   },
   sections: {
     webDemo: {
@@ -1311,7 +1307,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.vi.routes.web, {
         previewTitle: "Web mẫu<br/>dùng ngay",
         previewDesc: "Mẫu có sẵn, mua gói, tự chỉnh — không cần thiết kế từ đầu.",
         actions: [
-          { label: "Xem kho mẫu web", href: "/thiet-ke-web/kho-mau", variant: "accent" },
+          { label: "Xem thiết kế theo ngành", href: "/thiet-ke-web/theo-nganh", variant: "accent" },
           { label: "Nhắn Zalo tư vấn", href: "https://zalo.me/0902964685", variant: "outline", external: true }
         ]
       },
@@ -1412,7 +1408,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
     eyebrow: "Web branch",
     title: "Want to choose a sample quickly?",
     copy: "Review industry demos first, then contact us to lock the implementation direction.",
-    routeAction: { href: "/thiet-ke-web/kho-mau", label: "Open demo library", sub: "Browse by industry", icon: "WEB" }
+    routeAction: { href: "/thiet-ke-web/theo-nganh", label: "Open industry demos", sub: "Browse by industry", icon: "WEB" }
   },
   sections: {
     webDemo: {
@@ -1431,7 +1427,7 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes.web, {
       title: "Quick-launch option when you need a website sooner",
       copy: "You can pick a fast web template package to go live quickly, then edit content based on guided steps. Detailed expansion will continue in the next phase.",
       actions: [
-        { label: "View website samples", href: "/thiet-ke-web/kho-mau", variant: "accent" },
+        { label: "View industry demos", href: "/thiet-ke-web/theo-nganh", variant: "accent" },
         { label: "Chat on Zalo", href: "https://zalo.me/0902964685", variant: "outline", external: true }
       ]
     }
@@ -1460,16 +1456,16 @@ Object.assign(PUBLIC_PAGE_CONTENT.en.routes, {
       cards: [],
       checklistTitle: "Expected flow",
       checklist: [
-        "Layer page: /thiet-ke-web/kho-mau",
-        "Child preview: /kho-mau/:slug",
-        "No auto-redirect to /kho-mau/company"
+        "Merged into: /thiet-ke-web",
+        "Custom design: /thiet-ke-web/theo-nganh/:id",
+        "Package: /thiet-ke-web/theo-nganh/:id/goi/:slug"
       ]
     },
     support: {
       eyebrow: "Template gallery",
       title: "Need help choosing a fast template?",
       copy: "Open child previews first, then contact us to finalize the deployment direction.",
-      routeAction: { href: "/thiet-ke-web/kho-mau", label: "Open template gallery", sub: "Quick template home page", icon: "WEB" }
+      routeAction: { href: "/thiet-ke-web/theo-nganh", label: "Open industry demos", sub: "Browse by industry", icon: "WEB" }
     },
     sections: {
       webDemo: {
@@ -2344,9 +2340,9 @@ function renderSupportDockContent(content) {
 }
 
 function normalizeQuickWebKhoMauCtas() {
-  const canonicalHref = "/thiet-ke-web/kho-mau";
-  const ctaMatcher = /(xem kho mẫu web|mở kho mẫu web|view website samples|open demo library|xem mẫu demo|view demos)/i;
-  const invalidHref = new Set(["", "#", "/kho-mau", "/kho-mau/company", "/mau-demo", "/mau-demo/company"]);
+  const canonicalHref = "/thiet-ke-web/theo-nganh";
+  const ctaMatcher = /(xem kho mẫu web|mở kho mẫu web|view website samples|open demo library|xem mẫu demo|view demos|xem thiết kế theo ngành)/i;
+  const invalidHref = new Set(["", "#", "/kho-mau", "/kho-mau/company", "/mau-demo", "/mau-demo/company", "/thiet-ke-web/kho-mau"]);
 
   const anchors = Array.from(document.querySelectorAll("a"));
   anchors.forEach((anchor) => {
@@ -2580,13 +2576,7 @@ function getWebDemoViewLabel() {
 
 function getWebDemoBranchBaseHref() {
   const pathname = String(window.location.pathname || "");
-  if (pathname.startsWith("/thiet-ke-web/kho-mau") || pathname.startsWith("/kho-mau")) {
-    return "/kho-mau";
-  }
   if (pathname.startsWith("/thiet-ke-web")) {
-    return "/thiet-ke-web/theo-nganh/mau-demo";
-  }
-  if (pathname.startsWith("/thiet-ke-web/theo-nganh")) {
     return "/thiet-ke-web/theo-nganh/mau-demo";
   }
   return "/mau-demo";
@@ -2626,8 +2616,8 @@ function renderWebDemoMarketLayout(demos) {
               ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
             </div>
             <div class="web-demo-market-actions">
-              <a href="/kho-mau/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
-              <a class="is-buy" href="/kho-mau/${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
+              <a href="/thiet-ke-web/theo-nganh/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="/thiet-ke-web/theo-nganh/${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
             </div>
           </div>
         </article>

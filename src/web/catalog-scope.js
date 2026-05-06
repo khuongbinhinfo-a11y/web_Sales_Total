@@ -2,7 +2,6 @@
   var PRODUCT_SCOPE = {
     SOFTWARE: "software",
     WEB_DESIGN_CONSULTING: "web_design_consulting",
-    QUICK_WEB_TEMPLATE_PRODUCT: "quick_web_template_product",
     LEGACY_WEB_DESIGN: "web_design"
   };
 
@@ -20,7 +19,7 @@
 
     if (normalized === PRODUCT_SCOPE.SOFTWARE) return PRODUCT_SCOPE.SOFTWARE;
     if (normalized === PRODUCT_SCOPE.WEB_DESIGN_CONSULTING) return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
-    if (normalized === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT) return PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT;
+    if (normalized === "quick_web_template_product") return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
     if (normalized === PRODUCT_SCOPE.LEGACY_WEB_DESIGN) return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
 
     return "";
@@ -59,7 +58,7 @@
         "web-demo"
       ])
     ) {
-      return PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT;
+      return PRODUCT_SCOPE.WEB_DESIGN_CONSULTING;
     }
 
     if (
@@ -104,9 +103,6 @@
   }
 
   function getProductScopeLabel(scope) {
-    if (scope === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT) {
-      return "Web nhanh / Kho mẫu";
-    }
     if (scope === PRODUCT_SCOPE.WEB_DESIGN_CONSULTING || scope === PRODUCT_SCOPE.LEGACY_WEB_DESIGN) {
       return "Thiết kế web tư vấn";
     }

@@ -148,9 +148,8 @@ async function renderCustomDesignCollection() {
   root.innerHTML = `
     <section class="demo-collection-wrap">
       <div class="demo-collection-topbar">
-        <a class="demo-collection-back" href="/thiet-ke-web/theo-nganh">← Quay lại danh sách thiết kế</a>
+        <a class="demo-collection-back" href="/thiet-ke-web">← Quay lại Thiết kế Web</a>
         <div class="demo-collection-actions">
-          <a class="demo-collection-btn" href="/kho-mau/${encodeURIComponent(slug)}">Xem mẫu triển khai nhanh</a>
           <a class="demo-collection-btn is-primary" href="https://zalo.me/0902964685" target="_blank" rel="noopener">Nhắn Zalo tư vấn</a>
         </div>
       </div>

@@ -1,4 +1,4 @@
-const COLLECTIONS = {
+﻿const COLLECTIONS = {
   company: {
     label: "Mẫu lấy lead",
     title: "Kho mẫu công ty / dịch vụ",
@@ -280,16 +280,16 @@ const renderCollectionPage = () => {
 
   const slug = parseSlug();
   const data = COLLECTIONS[slug];
-  const defaultKhoMauRoute = "/kho-mau/company";
+  const backToListRoute = "/thiet-ke-web";
   const websitePriceText = getWebsitePriceForSlug(slug);
-  document.title = `${data.title} | Kho mẫu web`;
+  document.title = `${data.title} | Thiết kế web theo ngành`;
 
   root.innerHTML = `
     <section class="demo-collection-wrap">
       <div class="demo-collection-topbar">
-        <a class="demo-collection-back" href="${defaultKhoMauRoute}">\u2190 Kho mẫu triển khai nhanh</a>
+        <a class="demo-collection-back" href="${backToListRoute}">\u2190 Thiết kế web theo ngành</a>
         <div class="demo-collection-actions">
-          <a class="demo-collection-btn" href="/mau-demo/${encodeURIComponent(slug)}">Xem nhánh tư vấn</a>
+          <a class="demo-collection-btn" href="/thiet-ke-web/theo-nganh/mau-demo/${encodeURIComponent(slug)}">Xem mẫu demo</a>
           <a class="demo-collection-btn is-primary" href="https://zalo.me/0902964685" target="_blank" rel="noopener">Nhắn Zalo</a>
         </div>
       </div>

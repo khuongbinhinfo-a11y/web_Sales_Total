@@ -194,8 +194,6 @@ const WEB_PRICING_CONFIG_KEY = "web_pricing_config";
 const CANONICAL_PUBLIC_ROUTES = [
   { routeId: "home",           displayName: "Trang chủ",                path: "/",                             lockable: true,  sortOrder: 0 },
   { routeId: "thiet-ke-web",   displayName: "Thiết kế web",             path: "/thiet-ke-web",                 lockable: true,  sortOrder: 10 },
-  { routeId: "kho-mau",        displayName: "Kho mẫu web nhanh",        path: "/thiet-ke-web/kho-mau",        lockable: true,  sortOrder: 20 },
-  { routeId: "theo-nganh",     displayName: "Thiết kế theo ngành",      path: "/thiet-ke-web/theo-nganh",      parentId: "thiet-ke-web", lockable: true, sortOrder: 11 },
   { routeId: "demo",           displayName: "Mẫu demo (cũ)",            path: "/mau-demo",                     lockable: true,  sortOrder: 30 },
   { routeId: "phan-mem",       displayName: "Phần mềm",                 path: "/phan-mem",                     lockable: true,  sortOrder: 40 },
   { routeId: "san-pham",       displayName: "Sản phẩm",                 path: "/san-pham",                     lockable: true,  sortOrder: 41 },
@@ -792,8 +790,6 @@ const ROUTE_PATH_TO_ID = {
   "/web-demo": "web",  // alias
   "/thiet-ke-web": "web",
   "/thiet-ke-web/": "web",
-  "/thiet-ke-web/kho-mau": "kho-mau",
-  "/kho-mau": "kho-mau",
   "/thiet-ke-web/mau-demo": "demo",
   "/mau-demo": "demo",
   "/phan-mem": "software",
@@ -5529,16 +5525,16 @@ app.get("/web-demo", checkPublicRouteLockMiddleware, (req, res) => {
   res.sendFile(path.join(webRoot, "index.html"));
 });
 
-app.get("/thiet-ke-web/mau-demo", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "index.html"));
+app.get("/thiet-ke-web/mau-demo", (req, res) => {
+  res.redirect(301, "/thiet-ke-web");
 });
 
-app.get("/thiet-ke-web/theo-nganh", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "index.html"));
+app.get("/thiet-ke-web/theo-nganh", (req, res) => {
+  res.redirect(301, "/thiet-ke-web");
 });
 
-app.get("/thiet-ke-web/kho-mau", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "index.html"));
+app.get("/thiet-ke-web/kho-mau", (req, res) => {
+  res.redirect(301, "/thiet-ke-web");
 });
 
 app.get("/thiet-ke-web/theo-nganh/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
@@ -5590,20 +5586,20 @@ app.get("/mau-demo/:id/chi-tiet", checkPublicRouteLockMiddleware, (req, res) => 
   return res.redirect(301, `/mau-demo/${encodeURIComponent(req.params.id)}`);
 });
 
-app.get("/mau-demo/khomau-:id", checkPublicRouteLockMiddleware, (req, res) => {
-  return res.redirect(301, `/kho-mau/${encodeURIComponent(req.params.id)}`);
+app.get("/mau-demo/khomau-:id", (req, res) => {
+  return res.redirect(301, `/thiet-ke-web/theo-nganh/${encodeURIComponent(req.params.id)}`);
 });
 
 app.get("/mau-demo/:id", checkPublicRouteLockMiddleware, (req, res) => {
   sendWebDemoDetailPage(req, res);
 });
 
-app.get("/kho-mau", checkPublicRouteLockMiddleware, (req, res) => {
-  return res.redirect(301, "/kho-mau/company");
+app.get("/kho-mau", (req, res) => {
+  return res.redirect(301, "/thiet-ke-web");
 });
 
-app.get("/kho-mau/:id", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "web-demo-collection.html"));
+app.get("/kho-mau/:id", (req, res) => {
+  res.redirect(301, `/thiet-ke-web/theo-nganh/${encodeURIComponent(req.params.id)}`);
 });
 
 const VALID_PREVIEW_SLUGS = ["company", "shop", "salon", "industry", "landing"];
@@ -5657,12 +5653,12 @@ app.post(
 app.get("/catalog/web-demo/:industrySlug/goi/:planSlug", (req, res) => {
   return res.redirect(
     301,
-    `/kho-mau/${encodeURIComponent(req.params.industrySlug)}/goi/${encodeURIComponent(req.params.planSlug)}`
+    `/thiet-ke-web/theo-nganh/${encodeURIComponent(req.params.industrySlug)}/goi/${encodeURIComponent(req.params.planSlug)}`
   );
 });
 
-app.get("/kho-mau/:industrySlug/goi/:planSlug", checkPublicRouteLockMiddleware, (req, res) => {
-  res.sendFile(path.join(webRoot, "web-demo-package.html"));
+app.get("/kho-mau/:industrySlug/goi/:planSlug", (req, res) => {
+  res.redirect(301, `/thiet-ke-web/theo-nganh/${encodeURIComponent(req.params.industrySlug)}/goi/${encodeURIComponent(req.params.planSlug)}`);
 });
 
 app.get("/account", asyncHandler(async (req, res) => {

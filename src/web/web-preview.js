@@ -558,7 +558,7 @@ const renderTopbar = (slug, data, planSlug) => {
   <div class="preview-topbar">
     <span>👁 <strong>Đây là bản demo</strong> — mẫu web &ldquo;${e(data.name)}&rdquo;</span>
     <div class="preview-topbar-actions">
-      <a class="preview-topbar-btn is-back" href="/kho-mau/${e(slug)}">← Xem kho mẫu</a>
+      <a class="preview-topbar-btn is-back" href="/thiet-ke-web/theo-nganh/${e(slug)}">← Xem thiết kế web</a>
       <a class="preview-topbar-btn is-admin" href="${adminHref}">⚙ Thử admin</a>
       <a class="preview-topbar-btn is-buy" href="#buy">Mua ngay →</a>
     </div>
@@ -780,7 +780,7 @@ const renderFooter = (slug, brand, config) => {
     <div class="pv-footer-bottom">
       <span>© 2026 ${e(config.siteName || brand)}. All rights reserved.</span>
       <div class="pv-footer-back">
-        <a href="/kho-mau/${e(slug)}">← Xem thêm mẫu ${e(PREVIEW_DATA[slug].name)}</a>
+        <a href="/thiet-ke-web/theo-nganh/${e(slug)}">← Xem thêm mẫu ${e(PREVIEW_DATA[slug].name)}</a>
       </div>
     </div>
   </footer>

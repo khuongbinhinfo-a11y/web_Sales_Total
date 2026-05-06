@@ -107,12 +107,12 @@ function getWebFastPreviewUrl(product){
 
   const productId = String(product?.id || "").trim().toLowerCase();
   if(!productId) return "";
-  if(productId.includes("company")) return "/kho-mau/company";
-  if(productId.includes("shop")) return "/kho-mau/shop";
-  if(productId.includes("salon") || productId.includes("spa")) return "/kho-mau/salon";
-  if(productId.includes("industry")) return "/kho-mau/industry";
-  if(productId.includes("landing")) return "/kho-mau/landing";
-  if(productId.includes("addon")) return "/thiet-ke-web/kho-mau";
+  if(productId.includes("company")) return "/thiet-ke-web/theo-nganh/company";
+  if(productId.includes("shop")) return "/thiet-ke-web/theo-nganh/shop";
+  if(productId.includes("salon") || productId.includes("spa")) return "/thiet-ke-web/theo-nganh/salon";
+  if(productId.includes("industry")) return "/thiet-ke-web/theo-nganh/industry";
+  if(productId.includes("landing")) return "/thiet-ke-web/theo-nganh/landing";
+  if(productId.includes("addon")) return "/thiet-ke-web";
   return "";
 }
 
@@ -2836,7 +2836,7 @@ const ADMIN_CARD_DEFS = [
     cards: [
       { hashes: [],                                                                                                                                        icon: "💻", title: "Phần mềm",            desc: "Quản lý license, kho key và phiên bản." },
       { hashes: [],                                                                                                                                        icon: "🌐", title: "Thiết kế web tư vấn", desc: "Quản lý dịch vụ thiết kế web theo yêu cầu." },
-      { hashes: ["#section-web-demo-admin"],                                                                                                              icon: "🧩", title: "Web nhanh / Kho mẫu", desc: "Quản lý kho giao diện mẫu và web nhanh." },
+      { hashes: ["#section-web-demo-admin"],                                                                                                              icon: "🖥️", title: "Thiết kế Web",         desc: "Cấu hình giá, tư vấn và gói thiết kế theo ngành." },
       { hashes: ["#section-orders","#section-transactions"],                                                                                              icon: "🛒", title: "Đơn hàng",             desc: "Quản lý đơn hàng, thanh toán và trạng thái." },
       { hashes: ["#section-customers"],                                                                                                                   icon: "👥", title: "Khách hàng",           desc: "Quản lý khách hàng, thông tin và lịch sử giao dịch." },
       { hashes: [],                                                                                                                                        icon: "✏️", title: "Nội dung",             desc: "Quản lý bài viết, trang, danh mục và nội dung site." },
@@ -3564,15 +3564,15 @@ function bindProductCardManager() {
       }
 
       const dataProducts = Array.isArray(catalogMeta.products) ? catalogMeta.products : [];
-      const products = dataProducts.filter((product) => isQuickWebTemplateScope(getCatalogProductScope(product)));
+      const products = dataProducts;
 
       if(!products.length){
-        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm scope quick_web_template_product trong catalog.</p>`;
+        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm nào trong catalog.</p>`;
         return;
       }
 
       if(msg){
-        msg.textContent = `Đang lọc catalog Web nhanh/Kho mẫu theo scope quick_web_template_product (${products.length}/${catalogMeta.counts.total} sản phẩm).`;
+        msg.textContent = `Hiển thị tất cả sản phẩm trong catalog (${products.length} sản phẩm).`;
         msg.style.color = "var(--muted)";
       }
 

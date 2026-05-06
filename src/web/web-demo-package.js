@@ -154,7 +154,7 @@ function ChildVariantsSection(industryId) {
           const demoVariant = index + 1;
           const previewHref = `/preview/${encodeURIComponent(industryId)}?demo=${demoVariant}`;
           const adminHref = `/preview/${encodeURIComponent(industryId)}/admin?demo=${demoVariant}`;
-          const packageHref = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
+          const packageHref = `/thiet-ke-web/theo-nganh/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
           return `
             <article class="demo-child-variant-card">
               <b>Mẫu ${demoVariant}</b>
@@ -337,7 +337,7 @@ function renderNotFound() {
         <span>Không tìm thấy gói</span>
         <h1>Gói triển khai này chưa sẵn sàng</h1>
         <p>Vui lòng quay lại danh sách mẫu web demo để chọn lại gói phù hợp.</p>
-        <a href="/kho-mau/company">Quay lại kho mẫu triển khai nhanh</a>
+        <a href="/thiet-ke-web">Quay lại thiết kế web</a>
       </div>
     </section>
   `;
@@ -400,7 +400,7 @@ async function renderPackagePage() {
 
   const backHref = isCustomDesignRoute
     ? `/thiet-ke-web/theo-nganh/${encodeURIComponent(industrySlug)}`
-    : `/kho-mau/${encodeURIComponent(industrySlug)}`;
+    : `/thiet-ke-web/theo-nganh/${encodeURIComponent(industrySlug)}`;
 
   packageRoot.innerHTML = `
     <section class="package-hero">

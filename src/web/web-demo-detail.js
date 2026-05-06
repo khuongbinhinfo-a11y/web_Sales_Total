@@ -368,7 +368,7 @@ function PricingCard(plan, index, shared, industryId) {
   const badge = plan?.badge || (index === 1 ? "Khuyên dùng" : index === 2 ? "Mở rộng" : "");
   const isFeatured = Boolean(plan?.featured) || index === 1;
   const isExpanded = badge === "Mở rộng" || index === 2;
-  const detailUrl = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan?.slug || `goi-${index + 1}`)}`;
+  const detailUrl = `/thiet-ke-web/theo-nganh/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan?.slug || `goi-${index + 1}`)}`;
   const consultUrl = shared?.consultUrl || "https://zalo.me/0902964685";
   const cardClass = [
     "demo-pricing-card",
@@ -427,7 +427,7 @@ function ChildVariantsSection(industryId) {
           const demoVariant = index + 1;
           const previewHref = `/preview/${encodeURIComponent(industryId)}?demo=${demoVariant}`;
           const adminHref = `/preview/${encodeURIComponent(industryId)}/admin?demo=${demoVariant}`;
-          const packageHref = `/kho-mau/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
+          const packageHref = `/thiet-ke-web/theo-nganh/${encodeURIComponent(industryId)}/goi/${encodeURIComponent(plan.slug || `goi-${demoVariant}`)}?demo=${demoVariant}`;
           return `
             <article class="demo-child-variant-card">
               <b>Mẫu ${demoVariant}</b>
