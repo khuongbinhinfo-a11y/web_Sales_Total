@@ -464,7 +464,7 @@ function t(k){ return (T[lang]||T.vi)[k] || k; }
 function getRouteName(pathname = window.location.pathname) {
   const cleaned = String(pathname || "/").replace(/\/+$/, "") || "/";
   if (cleaned === "/" || cleaned === "/pricing") return "home";
-  if (cleaned === "/thiet-ke-web") return "web";
+  if (cleaned === "/thiet-ke-web") return "theo-nganh";
   if (cleaned === "/thiet-ke-web/kho-mau") return "kho-mau";
   if (cleaned === "/thiet-ke-web/theo-nganh") return "theo-nganh";
   if (cleaned === "/mau-demo" || cleaned === "/thiet-ke-web/mau-demo" || cleaned === "/web-demo") return "demo";
@@ -2595,6 +2595,8 @@ function getWebDemoBranchBaseHref() {
 function renderWebDemoMarketLayout(demos) {
   if (!webDemoLayout) return;
 
+  const industryBaseHref = getWebDemoBranchBaseHref();
+
   const entries = ["company", "shop", "salon", "industry", "landing"]
     .map((id) => ({ id, item: demos[id] || WEB_DEMOS.vi[id] }))
     .filter((entry) => Boolean(entry.item));
@@ -2626,8 +2628,8 @@ function renderWebDemoMarketLayout(demos) {
               ${(item.features || []).map((feature) => `<em>${escapeHtml(feature)}</em>`).join("")}
             </div>
             <div class="web-demo-market-actions">
-              <a href="/kho-mau/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
-              <a class="is-buy" href="/kho-mau/${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
+              <a href="${industryBaseHref}/${encodeURIComponent(id)}">${escapeHtml(getWebDemoViewLabel())}</a>
+              <a class="is-buy" href="${industryBaseHref}/${encodeURIComponent(id)}">${lang === "en" ? "View package" : "Xem gói"}</a>
             </div>
           </div>
         </article>
@@ -2639,7 +2641,7 @@ function renderWebDemoMarketLayout(demos) {
 function renderWebDemo(nextId) {
   const demos = WEB_DEMOS[lang] || WEB_DEMOS.vi;
 
-  if (currentRoute === "kho-mau") {
+  if (currentRoute === "kho-mau" || currentRoute === "theo-nganh") {
     renderWebDemoMarketLayout(demos);
     return;
   }
@@ -3678,6 +3680,14 @@ checkAuth().then(() => {
     pendingPostAuthRedirect = nextPath && nextPath.startsWith("/") ? nextPath : ACCOUNT_DOWNLOADS_PATH;
     history.replaceState(null, "", location.pathname);
     showLoginTab();
+    loginModal.classList.add("show");
+    ensureGoogleAuthInit();
+    return;
+  }
+
+  if (params.get("auth") === "register") {
+    history.replaceState(null, "", location.pathname);
+    showRegisterTab();
     loginModal.classList.add("show");
     ensureGoogleAuthInit();
     return;
