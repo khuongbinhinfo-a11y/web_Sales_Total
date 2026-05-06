@@ -1,5 +1,5 @@
 {
-  "latestVersion": "0.1.0",
+  "latestVersion": "0.1.2",
   "minimumSupportedVersion": "0.1.0",
   "required": false,
   "title": "Hoc Hung Khoi Tieu Hoc - ban desktop moi nhat",
@@ -11,5 +11,5 @@
   ],
   "downloadPath": "/app-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe",
   "releaseNotesPath": "/app-updates/app-study-12/latest.yml",
-  "publishedAt": "2026-05-02T00:00:00Z"
+  "publishedAt": "2026-05-06T07:00:00Z"
 }
