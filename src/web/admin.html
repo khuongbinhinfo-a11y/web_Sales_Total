@@ -53,6 +53,7 @@
           <div class="admin-sidebar-group-label">Kho key va xu ly</div>
           <a href="#section-keys"><span class="icon">🔑</span> Kho key</a>
           <a href="#section-product-cards"><span class="icon">🧱</span> Card sản phẩm</a>
+          <a href="#section-web-template-pricing"><span class="icon">🌐</span> Giá web mẫu</a>
           <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
           <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
           <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
@@ -699,14 +700,38 @@
           <p class="admin-section-intro">Dùng khi cần đưa sản phẩm lên trước để chạy quảng cáo nhưng chưa bán, hoặc tạm khóa vì đang lỗi. Card vẫn hiện ngoài storefront, nhưng checkout sẽ bị chặn theo trạng thái anh chọn.</p>
           <div class="info-card">
             <div class="admin-card-head">
-              <div>
-                <b class="admin-card-title">Điều khiển trạng thái bán theo từng sản phẩm</b>
-                <p class="admin-inline-note">Đang bán cho phép mua. Tạm khóa vẫn hiện card nhưng khóa tạo đơn. Coming soon dùng cho sản phẩm chuẩn bị mở bán.</p>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div>
+                  <b class="admin-card-title">Điều khiển trạng thái bán theo từng sản phẩm</b>
+                  <p class="admin-inline-note">Đang bán cho phép mua. Tạm khóa vẫn hiện card nhưng khóa tạo đơn. Coming soon dùng cho sản phẩm chuẩn bị mở bán.</p>
+                </div>
+                <select id="productCardScopeFilter" class="admin-input" style="min-width:180px;font-size:.82rem">
+                  <option value="">Tất cả nhánh</option>
+                  <option value="software">💻 Phần mềm</option>
+                  <option value="web_design_consulting">🌐 Thiết kế web tư vấn</option>
+                </select>
               </div>
               <button id="productCardRefreshBtn" class="btn btn-outline admin-compact-btn">🔄 Làm mới</button>
             </div>
             <p id="productCardMsg" style="margin:0 0 10px;font-size:.82rem;color:var(--muted)"></p>
             <div class="table-wrap" id="productCardWrap"><p style="padding:16px;color:var(--muted)">Đang tải danh sách sản phẩm...</p></div>
+          </div>
+        </section>
+
+        <!-- Web Template Pricing -->
+        <section id="section-web-template-pricing" class="admin-section">
+          <h3>🌐 Giá & khuyến mãi — Web mẫu thiết kế</h3>
+          <p class="admin-section-intro">Điều chỉnh giá gốc hiển thị, giảm giá trực tiếp và trạng thái bán cho từng gói web mẫu tại <code>/thiet-ke-web</code>. Thay đổi áp dụng ngay khi nhấn Lưu từng dòng.</p>
+          <div class="info-card">
+            <div class="admin-card-head">
+              <div>
+                <b class="admin-card-title">Set giá theo từng gói — 5 ngành × 3 gói + 2 addon</b>
+                <p class="admin-inline-note">Giá gốc = <b>comparePrice</b> (gạch ngang). Giá giảm = <b>salePrice</b>. Phải bật checkbox "Giảm trực tiếp" mới có hiệu lực trên storefront.</p>
+              </div>
+              <button id="webTemplatePricingRefreshBtn" class="btn btn-outline admin-compact-btn">🔄 Làm mới</button>
+            </div>
+            <p id="webTemplatePricingMsg" style="margin:0 0 10px;font-size:.82rem;color:var(--muted)"></p>
+            <div id="webTemplatePricingWrap"><p style="padding:16px;color:var(--muted)">Đang tải...</p></div>
           </div>
         </section>
 
@@ -1018,6 +1043,6 @@
     </div>
 
     <script src="/catalog-scope.js"></script>
-    <script src="/admin.js?v=20260506-admin-dashboard-v3"></script>
+    <script src="/admin.js?v=20260507-web-template-pricing"></script>
   </body>
 </html>

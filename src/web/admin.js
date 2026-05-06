@@ -2853,6 +2853,7 @@ const ADMIN_CARD_DEFS = [
       { hashes: ["#section-wallets"],         icon: "💰", title: "Số dư credit",     desc: "Ví credit khách hàng" },
       { hashes: ["#section-keys"],            icon: "🔑", title: "Kho key AI-app",   desc: "Quản trị key theo profile" },
       { hashes: ["#section-product-cards"],   icon: "🧱", title: "Card sản phẩm",    desc: "Bật/tắt bán theo sản phẩm" },
+      { hashes: ["#section-web-template-pricing"], icon: "🌐", title: "Giá web mẫu", desc: "Set giá / sale cho web mẫu /thiet-ke-web" },
       { hashes: ["#section-product-keys"],    icon: "📦", title: "Kho key sản phẩm", desc: "Tồn kho & nhập key" },
       { hashes: ["#section-manual-grant"],    icon: "🎁", title: "Cấp key thủ công", desc: "Cấp bù khi webhook lỗi" },
       { hashes: ["#section-discount-codes"],  icon: "🏷️", title: "Mã giảm giá",      desc: "Tạo & quản lý mã sale" }
@@ -3013,6 +3014,7 @@ bindCustomerModal();
 bindKeyLookup();
 initAdminDashboard();
 bindProductCardManager();
+bindWebTemplatePricingManager();
 bindProductKeyManager();
 bindDiscountCodeAdmin();
 Promise.all([loadMe(), loadAdmin()]).finally(()=>{
@@ -3552,6 +3554,7 @@ function bindProductCardManager() {
   const wrap = document.getElementById("productCardWrap");
   const msg = document.getElementById("productCardMsg");
   const refreshBtn = document.getElementById("productCardRefreshBtn");
+  const scopeFilter = document.getElementById("productCardScopeFilter");
   if (!wrap) return;
 
   async function loadCards() {
@@ -3563,16 +3566,24 @@ function bindProductCardManager() {
         return;
       }
 
+      const activeScope = scopeFilter ? String(scopeFilter.value || "").trim() : "";
       const dataProducts = Array.isArray(catalogMeta.products) ? catalogMeta.products : [];
-      const products = dataProducts.filter((product) => isQuickWebTemplateScope(getCatalogProductScope(product)));
+      const products = dataProducts.filter((product) => {
+        const scope = getCatalogProductScope(product);
+        if (scope === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT) return false;
+        if (activeScope) return scope === activeScope;
+        return true;
+      });
 
       if(!products.length){
-        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm scope quick_web_template_product trong catalog.</p>`;
+        const scopeLabel = activeScope ? getCatalogProductScopeLabel(activeScope) : "";
+        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Chưa có sản phẩm${scopeLabel ? " nhánh " + scopeLabel : ""} trong catalog.</p>`;
         return;
       }
 
       if(msg){
-        msg.textContent = `Đang lọc catalog Web nhanh/Kho mẫu theo scope quick_web_template_product (${products.length}/${catalogMeta.counts.total} sản phẩm).`;
+        const scopeLabel = activeScope ? getCatalogProductScopeLabel(activeScope) : "Tất cả nhánh";
+        msg.textContent = `Đang hiện nhánh: ${scopeLabel} (${products.length}/${catalogMeta.counts.total} sản phẩm).`;
         msg.style.color = "var(--muted)";
       }
 
@@ -3738,7 +3749,240 @@ function bindProductCardManager() {
   }
 
   refreshBtn?.addEventListener("click", loadCards);
+  scopeFilter?.addEventListener("change", loadCards);
   loadCards();
+}
+
+// ═══════════════════ WEB TEMPLATE PRICING MANAGEMENT ═══════════════════
+
+function bindWebTemplatePricingManager() {
+  const wrap = document.getElementById("webTemplatePricingWrap");
+  const msg = document.getElementById("webTemplatePricingMsg");
+  const refreshBtn = document.getElementById("webTemplatePricingRefreshBtn");
+  if (!wrap) return;
+
+  const CATEGORY_ORDER = [
+    { prefix: "company",  label: "🏢 Công ty" },
+    { prefix: "shop",     label: "🛍️ Shop" },
+    { prefix: "salon",    label: "💇 Salon" },
+    { prefix: "industry", label: "🏭 Công nghiệp" },
+    { prefix: "landing",  label: "🚀 Landing Page" },
+    { prefix: "addon",    label: "➕ Addon chung (Tên miền & Hosting)" }
+  ];
+
+  function getCategoryPrefix(productId) {
+    const m = String(productId || "").match(/^prod-web-demo-([a-z]+)-/);
+    return m ? m[1] : "other";
+  }
+
+  function renderRow(product) {
+    const normalizedStatus = normalizeProductSaleStatus(product.saleStatus);
+    const meta = productSaleStatusMeta(normalizedStatus);
+    const friendlyLabel = getWebFastProductLabel(product);
+    const basePrice = Number(product.basePrice ?? product.price ?? 0);
+    const comparePrice = Number(product.comparePrice ?? basePrice);
+    const salePrice = Number(product.salePrice ?? 0);
+    const hasDirectSale = Boolean(product.saleEnabled) && comparePrice > salePrice && salePrice > 0;
+
+    return `<tr data-product-id="${escapeHtml(product.id)}">
+      <td>
+        <strong>${escapeHtml(friendlyLabel?.label || product.name || product.id)}</strong>
+        <div class="admin-product-card-subline">${escapeHtml(product.id)}</div>
+        <div class="admin-product-card-subline wtp-base-price-display">Giá DB: <b>${fmtVnd(basePrice)}</b>${hasDirectSale ? ` → <b style="color:var(--success,#16a34a)">${fmtVnd(salePrice)}</b>` : ""}</div>
+      </td>
+      <td>
+        <select class="admin-input wtp-status-select" style="min-width:120px">
+          <option value="live" ${normalizedStatus === "live" ? "selected" : ""}>Đang bán</option>
+          <option value="locked" ${normalizedStatus === "locked" ? "selected" : ""}>Tạm khóa</option>
+          <option value="coming_soon" ${normalizedStatus === "coming_soon" ? "selected" : ""}>Coming soon</option>
+        </select>
+        <div class="admin-product-state-preview">
+          <span class="admin-product-state-chip ${meta.badgeClass}">${meta.label}</span>
+          <span>${meta.hint}</span>
+        </div>
+      </td>
+      <td>
+        <input class="admin-input wtp-compare-price" type="number" min="0" step="1000" value="${comparePrice}" style="min-width:110px" />
+        <div class="admin-product-card-subline">Giá gạch ngang</div>
+      </td>
+      <td>
+        <input class="admin-input wtp-sale-price" type="number" min="0" step="1000" value="${product.salePrice === null || product.salePrice === undefined ? "" : salePrice}" placeholder="VD: 299000" style="min-width:110px" />
+        <div class="admin-product-card-subline">Sau giảm</div>
+      </td>
+      <td>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.78rem;margin-bottom:6px;white-space:nowrap">
+          <input class="wtp-sale-enabled" type="checkbox" ${product.saleEnabled ? "checked" : ""} />
+          <span>Bật giảm trực tiếp</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.78rem;white-space:nowrap">
+          <input class="wtp-allow-coupon-stack" type="checkbox" ${product.allowCouponStack !== false ? "checked" : ""} />
+          <span>Cộng thêm mã KM</span>
+        </label>
+      </td>
+      <td>
+        <input class="admin-input wtp-note" maxlength="280" placeholder="Ghi chú bán / khóa..." value="${escapeHtml(product.saleNote || "")}" style="min-width:140px" />
+      </td>
+      <td>
+        <button class="btn btn-accent wtp-save-btn" style="min-height:38px">Lưu</button>
+      </td>
+    </tr>`;
+  }
+
+  async function saveRow(button) {
+    const row = button.closest("tr[data-product-id]");
+    const productId = row?.dataset.productId;
+    const statusEl = row?.querySelector(".wtp-status-select");
+    const noteEl = row?.querySelector(".wtp-note");
+    const comparePriceEl = row?.querySelector(".wtp-compare-price");
+    const salePriceEl = row?.querySelector(".wtp-sale-price");
+    const saleEnabledEl = row?.querySelector(".wtp-sale-enabled");
+    const allowCouponStackEl = row?.querySelector(".wtp-allow-coupon-stack");
+    if (!productId || !statusEl || !noteEl || !comparePriceEl || !salePriceEl || !saleEnabledEl || !allowCouponStackEl) return;
+
+    button.disabled = true;
+    button.textContent = "Đang lưu...";
+    if (msg) msg.textContent = "";
+    try {
+      const salePriceRaw = String(salePriceEl.value || "").trim();
+      const comparePriceRaw = String(comparePriceEl.value || "").trim();
+      const res = await fetchAdmin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          saleStatus: statusEl.value,
+          saleNote: noteEl.value,
+          saleEnabled: saleEnabledEl.checked,
+          salePrice: salePriceRaw === "" ? null : Number.parseInt(salePriceRaw, 10),
+          comparePrice: comparePriceRaw === "" ? null : Number.parseInt(comparePriceRaw, 10),
+          allowCouponStack: allowCouponStackEl.checked
+        })
+      });
+      if (res.status === 401) { redirectToAdminLogin(`/api/admin/catalog/products/${encodeURIComponent(productId)}/card-control`); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (msg) { msg.textContent = data.message || "Lưu thất bại"; msg.style.color = "var(--danger)"; }
+        return;
+      }
+      if (msg) { msg.textContent = `✅ Đã lưu: ${data.product?.name || productId}`; msg.style.color = "var(--success,#16a34a)"; }
+      const updated = data.product || {};
+      comparePriceEl.value = String(Number(updated.comparePrice ?? updated.basePrice ?? 0));
+      salePriceEl.value = updated.salePrice === null || updated.salePrice === undefined ? "" : String(Number(updated.salePrice || 0));
+      saleEnabledEl.checked = updated.saleEnabled === true;
+      allowCouponStackEl.checked = updated.allowCouponStack !== false;
+      noteEl.value = updated.saleNote || "";
+      const newStatus = normalizeProductSaleStatus(updated.saleStatus);
+      statusEl.value = newStatus;
+      const statusMeta = productSaleStatusMeta(newStatus);
+      const preview = row.querySelector(".admin-product-state-preview");
+      if (preview) {
+        preview.innerHTML = `<span class="admin-product-state-chip ${statusMeta.badgeClass}">${statusMeta.label}</span><span>${statusMeta.hint}</span>`;
+      }
+      const basePriceDisplay = row.querySelector(".wtp-base-price-display");
+      if (basePriceDisplay) {
+        const bp = Number(updated.basePrice ?? updated.price ?? 0);
+        const sp = Number(updated.salePrice ?? 0);
+        const hasDirectSale = updated.saleEnabled && Number(updated.comparePrice ?? bp) > sp && sp > 0;
+        basePriceDisplay.innerHTML = `Giá DB: <b>${fmtVnd(bp)}</b>${hasDirectSale ? ` → <b style="color:var(--success,#16a34a)">${fmtVnd(sp)}</b>` : ""}`;
+      }
+    } catch (err) {
+      if (msg) { msg.textContent = `Lỗi: ${err.message}`; msg.style.color = "var(--danger)"; }
+    } finally {
+      button.disabled = false;
+      button.textContent = "Lưu";
+    }
+  }
+
+  async function loadPricing() {
+    wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Đang tải danh sách sản phẩm...</p>`;
+    if (msg) msg.textContent = "";
+    try {
+      const catalogMeta = await getCatalogScopeCounts();
+      if (!catalogMeta) return;
+
+      const allProducts = Array.isArray(catalogMeta.products) ? catalogMeta.products : [];
+      const products = allProducts.filter((p) => getCatalogProductScope(p) === PRODUCT_SCOPE.QUICK_WEB_TEMPLATE_PRODUCT);
+
+      if (!products.length) {
+        wrap.innerHTML = `<p style="padding:16px;color:var(--muted)">Không tìm thấy sản phẩm web mẫu (scope: quick_web_template_product).</p>`;
+        return;
+      }
+
+      if (msg) {
+        msg.textContent = `${products.length} sản phẩm web mẫu — điều chỉnh giá rồi nhấn Lưu từng dòng.`;
+        msg.style.color = "var(--muted)";
+      }
+
+      // Group by category prefix
+      const groups = {};
+      for (const p of products) {
+        const prefix = getCategoryPrefix(p.id);
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(p);
+      }
+
+      const tableHeader = `<thead><tr>
+        <th>Sản phẩm</th>
+        <th>Trạng thái bán</th>
+        <th>Giá gốc (gạch ngang)</th>
+        <th>Giá giảm trực tiếp</th>
+        <th>Tùy chọn</th>
+        <th>Ghi chú</th>
+        <th>Lưu</th>
+      </tr></thead>`;
+
+      let html = "";
+      for (const cat of CATEGORY_ORDER) {
+        const catProducts = groups[cat.prefix] || [];
+        if (!catProducts.length) continue;
+        html += `<div style="margin-bottom:24px">
+          <h4 style="margin:0 0 8px;font-size:.92rem;font-weight:700;color:var(--fg,#e2e8f0)">${cat.label}</h4>
+          <div class="table-wrap">
+            <table class="data-table admin-product-card-table">
+              ${tableHeader}
+              <tbody>${catProducts.map((p) => renderRow(p)).join("")}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+
+      // Remaining products not in CATEGORY_ORDER
+      const knownPrefixes = new Set(CATEGORY_ORDER.map((c) => c.prefix));
+      const otherProducts = products.filter((p) => !knownPrefixes.has(getCategoryPrefix(p.id)));
+      if (otherProducts.length) {
+        html += `<div style="margin-bottom:24px">
+          <h4 style="margin:0 0 8px;font-size:.92rem;font-weight:700;color:var(--fg,#e2e8f0)">📦 Khác</h4>
+          <div class="table-wrap">
+            <table class="data-table admin-product-card-table">
+              ${tableHeader}
+              <tbody>${otherProducts.map((p) => renderRow(p)).join("")}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+
+      wrap.innerHTML = html;
+
+      wrap.querySelectorAll(".wtp-save-btn").forEach((btn) => {
+        btn.addEventListener("click", () => saveRow(btn));
+      });
+
+      wrap.querySelectorAll(".wtp-status-select").forEach((select) => {
+        select.addEventListener("change", () => {
+          const row = select.closest("tr");
+          const preview = row?.querySelector(".admin-product-state-preview");
+          const m = productSaleStatusMeta(select.value);
+          if (preview) {
+            preview.innerHTML = `<span class="admin-product-state-chip ${m.badgeClass}">${m.label}</span><span>${m.hint}</span>`;
+          }
+        });
+      });
+    } catch (err) {
+      wrap.innerHTML = `<p style="padding:16px;color:var(--danger)">Lỗi tải: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  refreshBtn?.addEventListener("click", loadPricing);
+  loadPricing();
 }
 
 // ═══════════════════ ROUTE LOCKING MANAGEMENT ═══════════════════

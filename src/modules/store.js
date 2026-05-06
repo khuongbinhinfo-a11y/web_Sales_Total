@@ -1476,8 +1476,10 @@ async function getPublicCatalog() {
   };
 }
 
+// BACKUP: was getCatalog({ includeHidden: true, includeInactive: true })
+// Changed 2026-05-06: exclude inactive products (prod-study-* legacy plans deactivated)
 async function getAdminCatalog() {
-  return getCatalog({ includeHidden: true, includeInactive: true });
+  return getCatalog({ includeHidden: true, includeInactive: false });
 }
 
 async function updateProductCardControl(productId, { saleStatus, saleNote, saleEnabled, salePrice, comparePrice, allowCouponStack }) {
