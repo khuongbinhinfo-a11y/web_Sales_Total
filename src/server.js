@@ -146,7 +146,7 @@ const appUpdatesRoot = path.join(__dirname, "..", "public", "app-updates");
 const googleOAuthClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 let prepareServerPromise;
 
-const R2_PUBLIC_BASE = "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev";
+const R2_PUBLIC_BASE = "https://cdn.ungdungthongminh.shop";
 const DEFAULT_OG_IMAGE = `${R2_PUBLIC_BASE}/og/og-trang-chu.png`;
 
 const webDemoOgImages = {

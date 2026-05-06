@@ -7,7 +7,7 @@ const COLLECTIONS = {
       {
         title: "Hero trust + dịch vụ",
         note: "Ưu tiên độ tin cậy, năng lực và CTA nhận tư vấn.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg",
         planSlug: "co-ban",
         tone: "trust",
         focus: "Định hướng: tạo niềm tin nhanh",
@@ -17,7 +17,7 @@ const COLLECTIONS = {
       {
         title: "Nhiều trang dịch vụ",
         note: "Phù hợp công ty cần tách dịch vụ và quy trình rõ.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg",
         planSlug: "chuyen-nghiep",
         tone: "process",
         focus: "Định hướng: trình bày quy trình",
@@ -27,7 +27,7 @@ const COLLECTIONS = {
       {
         title: "Bản thương hiệu",
         note: "Đẩy mạnh brand, case study và cấu trúc nội dung sâu.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg",
         planSlug: "thuong-hieu",
         tone: "brand",
         focus: "Định hướng: nâng chuẩn hình ảnh",
@@ -44,7 +44,7 @@ const COLLECTIONS = {
       {
         title: "Shop giới thiệu",
         note: "Landing gọn để test thị trường và giới thiệu sản phẩm.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-hero.png",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-shop-hero.png",
         planSlug: "shop-gioi-thieu",
         tone: "intro",
         focus: "Định hướng: ra mắt nhanh",
@@ -54,7 +54,7 @@ const COLLECTIONS = {
       {
         title: "Shop bán hàng",
         note: "Có danh mục rõ, CTA mua nhanh và cấu trúc đơn giản.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-item-fashion.png",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-shop-item-fashion.png",
         planSlug: "shop-ban-hang",
         tone: "sales",
         focus: "Định hướng: tăng tỷ lệ đặt đơn",
@@ -64,7 +64,7 @@ const COLLECTIONS = {
       {
         title: "Shop nâng cao",
         note: "Bản nhiều danh mục với khối tối ưu chuyển đổi.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-bundle.png",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-shop-bundle.png",
         planSlug: "shop-nang-cao",
         tone: "pro",
         focus: "Định hướng: mở rộng hệ sản phẩm",
@@ -81,7 +81,7 @@ const COLLECTIONS = {
       {
         title: "Salon mini",
         note: "Trang dịch vụ gọn, CTA đặt lịch nhanh trên mobile.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "spa-mini",
         tone: "soft",
         focus: "Định hướng: booking nhanh",
@@ -91,7 +91,7 @@ const COLLECTIONS = {
       {
         title: "Salon chuyên nghiệp",
         note: "Thêm gallery, feedback và nhóm combo dịch vụ.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "spa-chuyen-nghiep",
         tone: "luxury",
         focus: "Định hướng: nâng trải nghiệm thương hiệu",
@@ -101,7 +101,7 @@ const COLLECTIONS = {
       {
         title: "Salon bán hàng + booking",
         note: "Kết hợp dịch vụ với sản phẩm bán kèm và tracking.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "spa-ban-hang-dat-lich",
         tone: "hybrid",
         focus: "Định hướng: dịch vụ + sản phẩm",
@@ -118,7 +118,7 @@ const COLLECTIONS = {
       {
         title: "Industry cơ bản",
         note: "Giới thiệu năng lực và danh mục sản phẩm chính.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "local-co-ban",
         tone: "engineer",
         focus: "Định hướng: hồ sơ năng lực",
@@ -128,7 +128,7 @@ const COLLECTIONS = {
       {
         title: "Industry chuyên nghiệp",
         note: "Có nhóm catalog sâu và trang thông số rõ ràng.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "menu-chuyen-nghiep",
         tone: "catalog",
         focus: "Định hướng: catalog chuyên sâu",
@@ -138,7 +138,7 @@ const COLLECTIONS = {
       {
         title: "Industry nâng cao",
         note: "Luồng nhận báo giá chi tiết cho nhiều mã hàng.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "dat-ban-dat-mon",
         tone: "quote",
         focus: "Định hướng: tối ưu báo giá",
@@ -155,7 +155,7 @@ const COLLECTIONS = {
       {
         title: "Landing cơ bản",
         note: "1 mục tiêu chuyển đổi rõ, khối nội dung ngắn gọn.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "tuyen-sinh-co-ban",
         tone: "single",
         focus: "Định hướng: một mục tiêu duy nhất",
@@ -165,7 +165,7 @@ const COLLECTIONS = {
       {
         title: "Landing chuyên nghiệp",
         note: "Thêm trust block, FAQ và nhiều CTA theo hành vi.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "trung-tam-dao-tao",
         tone: "evidence",
         focus: "Định hướng: tăng niềm tin chuyển đổi",
@@ -175,7 +175,7 @@ const COLLECTIONS = {
       {
         title: "Landing hệ thống",
         note: "Dành cho cụm chiến dịch cần nhiều phiên bản landing.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "he-thong-khoa-hoc",
         tone: "funnel",
         focus: "Định hướng: vận hành đa chiến dịch",

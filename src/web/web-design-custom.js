@@ -9,7 +9,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Chuyên nghiệp",
         note: "Thiết kế riêng, chức năng SEO nâng cao, tích hợp hệ thống.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg",
         planSlug: "company-chuyen-nghiep",
         best: "Công ty muốn web khác biệt, có tính năng đặc thù",
         features: ["Thiết kế 100% custom", "Code từ 0 không dùng template", "Tích hợp CRM cơ bản", "SEO chiến lược ngành"]
@@ -17,7 +17,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Thương hiệu Premium",
         note: "Thiết kế cao cấp, UX nâng cao, tích hợp automation marketing.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-company.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-company.jpg",
         planSlug: "company-thuong-hieu",
         best: "Doanh nghiệp lớn cần web chuẩn agency, automation",
         features: ["UX/UI design chuẩn agency", "CRM + Email automation", "Chatbot AI", "Advanced tracking & CRM"]
@@ -32,7 +32,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Shop bán hàng",
         note: "Quản lý sản phẩm đầy đủ, giỏ hàng, thanh toán online, email notification.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-item-fashion.png",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-shop-item-fashion.png",
         planSlug: "shop-ban-hang",
         best: "Shop muốn tự quản lý 100+ sản phẩm, đơn hàng online",
         features: ["Quản lý sản phẩm CMS", "Thanh toán VNPay/MOMO/Stripe", "Quản lý đơn hàng", "Email notification"]
@@ -40,7 +40,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Marketplace Pro",
         note: "Marketplace cho nhiều vendors, automation, AI recommendation.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-shop-bundle.png",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-shop-bundle.png",
         planSlug: "shop-nang-cao",
         best: "Platform lớn muốn mở rộng thành marketplace, vendor management",
         features: ["Multi-vendor system", "Email/SMS automation", "AI recommendation", "BI analytics"]
@@ -55,7 +55,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Salon chuyên nghiệp",
         note: "Online booking 24/7, quản lý staff, loyalty points, gallery chuyên sâu.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "spa-chuyen-nghiep",
         best: "Salon lớn muốn giảm gọi điện, quản lý thời gian staff",
         features: ["Online booking calendar", "Staff schedule management", "Loyalty program", "SMS reminder"]
@@ -70,7 +70,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Catalog chuyên nghiệp",
         note: "Database sản phẩm unlimited, filter nâng cao, request quotation, CRM tracking.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "menu-chuyen-nghiep",
         best: "Công ty kỹ thuật có 5000+ SKU cần B2B buyers tìm dễ",
         features: ["Catalog 5000+ products", "Advanced filter (kích thước, vật liệu, spec)", "PDF spec sheet download", "CRM quotation"]
@@ -85,7 +85,7 @@ const CUSTOM_DESIGN_COLLECTIONS = {
       {
         title: "Gói Landing cao cấp",
         note: "Conversion-focused design, A/B testing, heat map, form optimization, advanced tracking.",
-        image: "https://pub-90b335e287f24c92bbd5856cb9f116d9.r2.dev/web-demo-photo.jpg",
+        image: "https://cdn.ungdungthongminh.shop/web-demo-photo.jpg",
         planSlug: "trung-tam-dao-tao",
         best: "Campaign quảng cáo cần landing page riêng tối ưu chuyển đổi",
         features: ["Conversion-focused design", "A/B testing framework", "Heat map analytics", "Form optimization tracking"]
