@@ -118,7 +118,7 @@ const R2_PUBLIC_BASE = "https://cdn.ungdungthongminh.shop";
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
   { id:"cap01_standard_1year_3grades", appId:"app-study-12",  name:"CAP01 - Standard 01 năm / 03 lớp", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:299000,  credits:900 },
+  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:199000,  credits:900 },
   { id:"cap01_grade_1_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 01", cycle:"yearly", price:299000,  credits:900 },
   { id:"cap01_grade_2_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 02", cycle:"yearly", price:299000,  credits:900 },
   { id:"cap01_grade_3_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 03", cycle:"yearly", price:349000,  credits:900 },

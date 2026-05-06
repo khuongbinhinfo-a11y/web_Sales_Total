@@ -1231,7 +1231,7 @@ async function buildBridgePricingPlans() {
       name: "Tiêu chuẩn 01 năm - 01 lớp",
       prices: {
         monthly: 0,
-        yearly: pickPrice("standard_1year_1grade", 299000),
+        yearly: pickPrice("standard_1year_1grade", 199000),
         lifetime: 0
       },
       source: "web-total",
