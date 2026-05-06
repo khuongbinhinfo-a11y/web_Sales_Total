@@ -34,6 +34,8 @@
           <p>Toi uu cho support key, doi soat thanh toan va cau hinh production trong mot bo cuc doc ro rang.</p>
         </div>
 
+        <div id="adminCardMenu" class="admin-card-menu" aria-label="Danh mục thao tác"></div>
+
         <div class="admin-sidebar-links">
           <div class="admin-sidebar-group-label">Tong quan va ho tro</div>
           <a href="#section-kpi" class="active"><span class="icon">📊</span> Tổng quan</a>
@@ -986,7 +988,25 @@
       </main>
     </div>
 
+    <div id="adminWorkModal" class="admin-work-modal" style="display:none" aria-hidden="true">
+      <div class="admin-work-modal__backdrop"></div>
+      <div class="admin-work-modal__window" role="dialog" aria-modal="true" aria-labelledby="adminWorkModalTitle">
+        <div class="admin-work-modal__header">
+          <div>
+            <p class="admin-work-modal__kicker">Không gian thao tác</p>
+            <h2 id="adminWorkModalTitle">Bảng điều khiển</h2>
+          </div>
+          <button type="button" id="adminWorkModalCloseX" class="admin-work-modal__close" aria-label="Đóng cửa sổ">X</button>
+        </div>
+        <div id="adminWorkModalBody" class="admin-work-modal__body"></div>
+        <div class="admin-work-modal__footer">
+          <button type="button" id="adminWorkModalCancel" class="btn btn-outline">Hủy</button>
+          <button type="button" id="adminWorkModalClose" class="btn btn-accent">Đóng</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/catalog-scope.js"></script>
-    <script src="/admin.js?v=20260506-web-fast-ux"></script>
+    <script src="/admin.js?v=20260506-admin-card-modal"></script>
   </body>
 </html>

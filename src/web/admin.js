@@ -18,6 +18,9 @@ let appRegistryState = {
   selectedAppId: "",
   lastDetail: null
 };
+let adminWorkModalMainPlaceholder = null;
+let adminWorkModalMainHost = null;
+let adminSidebarSetActive = null;
 
 const WEB_FAST_PRODUCT_LABELS = {
   "prod-web-demo-company-basic": { branch: "Web nhanh", label: "Công ty · Mẫu 1: Hero trust + dịch vụ" },
@@ -2822,48 +2825,176 @@ function bindDiscountCodeAdmin(){
   loadDiscountCodes();
 }
 
+function mountAdminMainIntoWorkspaceModal(){
+  const main = document.getElementById("adminMain");
+  const modalBody = document.getElementById("adminWorkModalBody");
+  if(!main || !modalBody) return null;
+  if(main.parentElement === modalBody) return main;
+
+  adminWorkModalMainHost = main.parentNode;
+  adminWorkModalMainPlaceholder = document.createComment("admin-main-modal-placeholder");
+  adminWorkModalMainHost?.insertBefore(adminWorkModalMainPlaceholder, main);
+  modalBody.appendChild(main);
+  return main;
+}
+
+function restoreAdminMainFromWorkspaceModal(){
+  const main = document.getElementById("adminMain");
+  if(!main || !adminWorkModalMainPlaceholder || !adminWorkModalMainHost) return;
+  adminWorkModalMainHost.insertBefore(main, adminWorkModalMainPlaceholder);
+  adminWorkModalMainPlaceholder.remove();
+  adminWorkModalMainPlaceholder = null;
+  adminWorkModalMainHost = null;
+}
+
+function closeAdminWorkspaceModal(){
+  const modal = document.getElementById("adminWorkModal");
+  if(!modal) return;
+  modal.classList.remove("is-open");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("admin-modal-open");
+  restoreAdminMainFromWorkspaceModal();
+}
+
+function openAdminWorkspaceModal(hash, label){
+  const normalizedHash = String(hash || "").trim();
+  const target = normalizedHash ? document.querySelector(normalizedHash) : null;
+  if(normalizedHash && !target) return;
+
+  const modal = document.getElementById("adminWorkModal");
+  const titleEl = document.getElementById("adminWorkModalTitle");
+  if(!modal) return;
+
+  const main = mountAdminMainIntoWorkspaceModal();
+  if(!main) return;
+
+  const title = String(label || "").trim() || "Bảng điều khiển";
+  if(titleEl) titleEl.textContent = title;
+
+  modal.style.display = "flex";
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("admin-modal-open");
+
+  if(normalizedHash){
+    if(window.location.hash !== normalizedHash){
+      history.replaceState(null, "", normalizedHash);
+    }
+    adminSidebarSetActive?.(normalizedHash);
+    requestAnimationFrame(()=>{
+      target?.scrollIntoView({ block: "start" });
+    });
+  }
+}
+
+function buildAdminCardMenu(linkContainer, links){
+  const cardMenu = document.getElementById("adminCardMenu");
+  if(!cardMenu || !linkContainer) return;
+  cardMenu.innerHTML = "";
+
+  const children = Array.from(linkContainer.children);
+  children.forEach((node)=>{
+    if(node.classList?.contains("admin-sidebar-group-label")){
+      const groupEl = document.createElement("div");
+      groupEl.className = "admin-card-menu-group";
+      groupEl.textContent = node.textContent || "Danh mục";
+      cardMenu.appendChild(groupEl);
+      return;
+    }
+
+    if(!(node instanceof HTMLAnchorElement)) return;
+    const hash = node.getAttribute("href") || "";
+    if(!hash.startsWith("#section-")) return;
+
+    const labelClone = node.cloneNode(true);
+    labelClone.querySelector(".icon")?.remove();
+    const label = labelClone.textContent?.trim() || hash.replace("#section-", "");
+    const icon = node.querySelector(".icon")?.textContent?.trim() || "🧩";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "admin-card-menu-btn";
+    btn.setAttribute("data-hash", hash);
+    btn.innerHTML = `
+      <span class="admin-card-menu-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+      <span>
+        <span class="admin-card-menu-label">${escapeHtml(label)}</span>
+        <span class="admin-card-menu-hash">${escapeHtml(hash)}</span>
+      </span>
+    `;
+    btn.addEventListener("click", ()=>{
+      openAdminWorkspaceModal(hash, label);
+    });
+    cardMenu.appendChild(btn);
+  });
+
+  if(links.length){
+    document.body.classList.add("admin-cards-ready");
+  }
+}
+
 function bindAdminSidebarNav(){
-  const links = Array.from(document.querySelectorAll('.admin-sidebar a[href^="#section-"]'));
+  const linkContainer = document.querySelector(".admin-sidebar-links");
+  const links = Array.from(document.querySelectorAll('.admin-sidebar-links a[href^="#section-"]'));
   if(!links.length) return;
-  const scrollRoot = document.getElementById("adminMain");
 
   const setActive = (hash)=>{
     links.forEach((link)=>{
       link.classList.toggle("active", link.getAttribute("href") === hash);
     });
+    document.querySelectorAll(".admin-card-menu-btn[data-hash]").forEach((btn)=>{
+      btn.classList.toggle("is-active", btn.getAttribute("data-hash") === hash);
+    });
   };
+  adminSidebarSetActive = setActive;
+
+  buildAdminCardMenu(linkContainer, links);
 
   links.forEach((link)=>{
-    link.addEventListener("click", ()=> setActive(link.getAttribute("href")));
+    link.addEventListener("click", (event)=>{
+      event.preventDefault();
+      const hash = link.getAttribute("href") || "";
+      const labelClone = link.cloneNode(true);
+      labelClone.querySelector(".icon")?.remove();
+      const label = labelClone.textContent?.trim() || hash;
+      openAdminWorkspaceModal(hash, label);
+    });
   });
 
-  const sections = links
-    .map((link)=>document.querySelector(link.getAttribute("href")))
-    .filter(Boolean);
+  const closeX = document.getElementById("adminWorkModalCloseX");
+  const closeBtn = document.getElementById("adminWorkModalClose");
+  const cancelBtn = document.getElementById("adminWorkModalCancel");
+  closeX?.addEventListener("click", closeAdminWorkspaceModal);
+  closeBtn?.addEventListener("click", closeAdminWorkspaceModal);
+  cancelBtn?.addEventListener("click", closeAdminWorkspaceModal);
 
-  if(sections.length){
-    const observer = new IntersectionObserver((entries)=>{
-      const visible = entries
-        .filter((entry)=>entry.isIntersecting)
-        .sort((left, right)=> right.intersectionRatio - left.intersectionRatio || left.boundingClientRect.top - right.boundingClientRect.top)[0];
-      if(visible?.target?.id){
-        setActive(`#${visible.target.id}`);
-      }
-    }, {
-      root: scrollRoot || null,
-      rootMargin: "-14% 0px -60% 0px",
-      threshold: [0.15, 0.3, 0.5, 0.75]
-    });
-    sections.forEach((section)=>observer.observe(section));
-  }
-
-  if(window.location.hash){
-    setActive(window.location.hash);
-    const initialTarget = document.querySelector(window.location.hash);
-    if(initialTarget && scrollRoot?.contains(initialTarget)){
-      requestAnimationFrame(()=> initialTarget.scrollIntoView({ block: "start" }));
+  // Keep backdrop non-dismissable by design.
+  document.getElementById("adminWorkModal")?.addEventListener("click", (event)=>{
+    if(event.target && event.target.id === "adminWorkModal"){
+      event.stopPropagation();
     }
+  });
+
+  if(window.location.hash && document.querySelector(window.location.hash)){
+    const initialLink = links.find((link)=>link.getAttribute("href") === window.location.hash);
+    const labelClone = initialLink ? initialLink.cloneNode(true) : null;
+    labelClone?.querySelector(".icon")?.remove();
+    const initialLabel = labelClone?.textContent?.trim() || "Bảng điều khiển";
+    openAdminWorkspaceModal(window.location.hash, initialLabel);
+  } else {
+    setActive("#section-kpi");
   }
+
+  window.addEventListener("hashchange", ()=>{
+    const hash = window.location.hash;
+    if(!hash || !document.querySelector(hash)) return;
+    const activeLink = links.find((link)=>link.getAttribute("href") === hash);
+    if(!activeLink) return;
+    const labelClone = activeLink.cloneNode(true);
+    labelClone.querySelector(".icon")?.remove();
+    openAdminWorkspaceModal(hash, labelClone.textContent?.trim() || "Bảng điều khiển");
+  });
 }
 
 // Customer lookup

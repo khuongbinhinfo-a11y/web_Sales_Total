@@ -647,6 +647,15 @@ button{font-family:inherit;cursor:pointer}
 .admin-sidebar-kicker{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(125,211,252,.12);color:#d4f1ff;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .admin-sidebar-brand strong{display:block;margin-top:12px;font-size:1.08rem;line-height:1.35;color:#f8fbff}
 .admin-sidebar-brand p{margin:8px 0 0;color:var(--muted);font-size:.84rem;line-height:1.65}
+.admin-card-menu{display:grid;grid-template-columns:1fr;gap:10px;padding:14px 0 16px}
+.admin-card-menu-group{padding:6px 6px 4px;font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#7dd3fc}
+.admin-card-menu-btn{width:100%;display:grid;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;padding:14px 12px;border-radius:18px;border:1px solid rgba(145,180,255,.2);background:linear-gradient(180deg,rgba(18,33,54,.9),rgba(11,23,39,.95));color:#e7f2ff;text-align:left;cursor:pointer;transition:all var(--transition)}
+.admin-card-menu-btn:hover{transform:translateY(-1px);border-color:rgba(125,211,252,.4);background:linear-gradient(180deg,rgba(24,43,70,.94),rgba(12,25,43,.96))}
+.admin-card-menu-btn.is-active{border-color:rgba(125,211,252,.6);box-shadow:0 8px 22px rgba(56,189,248,.18)}
+.admin-card-menu-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:12px;background:rgba(125,211,252,.16);font-size:1.1rem}
+.admin-card-menu-label{display:block;font-size:.86rem;font-weight:800;line-height:1.2}
+.admin-card-menu-hash{display:block;margin-top:4px;font-size:.72rem;font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#8fb1d4}
+.admin-page.admin-cards-ready .admin-sidebar-links{display:none}
 .admin-sidebar-links{display:flex;flex-direction:column;gap:4px;padding:14px 0}
 .admin-sidebar-group-label{margin:10px 10px 6px;font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7dd3fc}
 .admin-sidebar a{display:flex;align-items:center;gap:10px;padding:12px 14px;font-size:.88rem;font-weight:700;color:#c9dbf5;border:1px solid transparent;border-radius:16px;transition:all var(--transition)}
@@ -658,6 +667,19 @@ button{font-family:inherit;cursor:pointer}
 
 .admin-main{flex:1;min-width:0;min-height:0;padding:0 0 24px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .admin-main .admin-hero,.admin-main .admin-section{scroll-margin-top:18px}
+.admin-page.admin-modal-open{overflow:hidden}
+.admin-work-modal{position:fixed;inset:0;z-index:14000;display:none;align-items:center;justify-content:center;padding:18px}
+.admin-work-modal.is-open{display:flex!important}
+.admin-work-modal__backdrop{position:absolute;inset:0;background:rgba(2,8,18,.78);backdrop-filter:blur(3px)}
+.admin-work-modal__window{position:relative;z-index:1;width:min(1600px,calc(100vw - 28px));height:min(92vh,1080px);display:grid;grid-template-rows:auto 1fr auto;border-radius:24px;border:1px solid rgba(145,180,255,.24);background:linear-gradient(180deg,rgba(8,18,31,.96),rgba(5,12,22,.98));box-shadow:0 28px 90px rgba(0,0,0,.58);overflow:hidden}
+.admin-work-modal__header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid rgba(145,180,255,.16);background:rgba(10,22,37,.92)}
+.admin-work-modal__kicker{margin:0 0 4px;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#7dd3fc}
+.admin-work-modal__header h2{margin:0;font-size:1.12rem;font-weight:800;color:#f8fbff}
+.admin-work-modal__close{width:38px;height:38px;border-radius:12px;border:1px solid rgba(145,180,255,.22);background:rgba(15,31,51,.9);color:#e8f2ff;font-size:1rem;font-weight:800;cursor:pointer}
+.admin-work-modal__close:hover{border-color:rgba(125,211,252,.55);background:rgba(24,44,70,.95)}
+.admin-work-modal__body{min-height:0;padding:0 16px 0;overflow:hidden}
+.admin-work-modal__body .admin-main{height:100%;padding:12px 0 18px;overflow-y:auto}
+.admin-work-modal__footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px;border-top:1px solid rgba(145,180,255,.14);background:rgba(8,18,31,.95)}
 .admin-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.9fr);gap:18px;padding:26px 28px;border-radius:32px;background:linear-gradient(145deg,rgba(13,26,44,.96),rgba(7,18,31,.94));border:1px solid rgba(145,180,255,.14);box-shadow:var(--shadow-lg);margin-bottom:18px;position:relative;overflow:hidden}
 .admin-hero::before{content:"";position:absolute;inset:auto -10% -40% auto;width:320px;height:320px;background:radial-gradient(circle,rgba(125,211,252,.18),transparent 62%);pointer-events:none}
 .admin-hero-copy{position:relative;z-index:1}
@@ -1002,11 +1024,19 @@ button{font-family:inherit;cursor:pointer}
   .admin-page{height:auto;overflow-y:auto}
   .admin-layout{flex:none;flex-direction:column;padding:12px;height:auto;overflow:visible}
   .admin-sidebar{width:100%;min-height:auto;max-height:none;border-right:none;padding:14px;display:flex;flex-direction:column;overflow:visible;gap:0}
+  .admin-card-menu{grid-template-columns:1fr 1fr;gap:8px}
+  .admin-card-menu-group{grid-column:1/-1}
+  .admin-page.admin-cards-ready .admin-sidebar-links{display:none}
   .admin-sidebar-links{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   .admin-sidebar a{white-space:normal;padding:10px 12px}
   .admin-main{min-height:auto;padding:0;overflow:visible}
   .admin-hero{grid-template-columns:1fr;padding:20px 18px;border-radius:24px}
   .admin-hero-links{grid-template-columns:1fr}
+  .admin-work-modal{padding:10px}
+  .admin-work-modal__window{width:calc(100vw - 12px);height:min(96vh,1200px);border-radius:16px}
+  .admin-work-modal__header{padding:12px 14px}
+  .admin-work-modal__footer{padding:10px 14px}
+  .admin-work-modal__body{padding:0 10px}
   .admin-card-head{flex-direction:column}
   .admin-form-grid--actions,.admin-form-grid--lookup,.admin-form-grid--triple,.admin-result-grid,.admin-lease-grid{grid-template-columns:1fr}
   .admin-inline-actions{width:100%}
