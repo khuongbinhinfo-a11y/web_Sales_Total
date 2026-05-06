@@ -5733,6 +5733,9 @@ app.use(
   express.static(path.join(__dirname, "..", "products", "image"))
 );
 
+app.get("/login", (req, res) => res.redirect(302, "/?auth=login"));
+app.get("/signup", (req, res) => res.redirect(302, "/?auth=register"));
+
 app.get("/product/:id", (req, res) => {
   res.sendFile(path.join(webRoot, "product.html"));
 });
