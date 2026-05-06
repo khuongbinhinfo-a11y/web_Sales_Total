@@ -2954,7 +2954,7 @@ function buildAdminCardGrid(){
     cards.forEach(({ hashes, icon, title, desc })=>{
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = primary ? "admin-card-item admin-card-item--primary" : "admin-card-item";
+      btn.className = primary ? "admin-card-item admin-module-card admin-card-menu-btn admin-card-item--primary" : "admin-card-item admin-module-card admin-card-menu-btn";
       btn.innerHTML = `
         <span class="admin-card-item__icon-wrap" aria-hidden="true">${escapeHtml(icon)}</span>
         <span class="admin-card-item__title">${escapeHtml(title)}</span>
