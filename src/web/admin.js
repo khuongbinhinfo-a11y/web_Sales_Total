@@ -98,6 +98,37 @@ function getWebFastProductLabel(product){
   return WEB_FAST_PRODUCT_LABELS[productId] || null;
 }
 
+function getWebFastPreviewUrl(product){
+  const directUrl = String(product?.previewUrl || product?.previewHref || product?.href || "").trim();
+  if(directUrl) return directUrl;
+
+  const productId = String(product?.id || "").trim().toLowerCase();
+  if(!productId) return "";
+  if(productId.includes("company")) return "/kho-mau/company";
+  if(productId.includes("shop")) return "/kho-mau/shop";
+  if(productId.includes("salon") || productId.includes("spa")) return "/kho-mau/salon";
+  if(productId.includes("industry")) return "/kho-mau/industry";
+  if(productId.includes("landing")) return "/kho-mau/landing";
+  if(productId.includes("addon")) return "/thiet-ke-web/kho-mau";
+  return "";
+}
+
+function getWebFastThumbnailUrl(product){
+  const candidates = [
+    product?.thumbnailUrl,
+    product?.thumbnail,
+    product?.imageUrl,
+    product?.cardImage,
+    product?.coverImage,
+    product?.image
+  ];
+  for(const candidate of candidates){
+    const value = String(candidate || "").trim();
+    if(value) return value;
+  }
+  return "";
+}
+
 function wait(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -3444,10 +3475,17 @@ function bindProductCardManager() {
         const salePrice = Number(product.salePrice ?? 0);
         const hasDirectSale = Boolean(product.hasDirectSale) && comparePrice > salePrice;
         const friendlyLabel = getWebFastProductLabel(product);
+        const productId = String(product.id || "").trim();
+        const productSlug = String(product.slug || product.id || "").trim();
+        const previewUrl = getWebFastPreviewUrl(product);
+        const thumbnailUrl = getWebFastThumbnailUrl(product);
         return `<tr data-product-id="${escapeHtml(product.id)}">
           <td>
             <strong>${escapeHtml(friendlyLabel?.label || product.name || product.id)}</strong>
             ${friendlyLabel ? `<div class="admin-product-card-subline">${escapeHtml(friendlyLabel.branch)}</div>` : ""}
+            <div class="admin-product-card-subline"><b>Slug / productId:</b> ${escapeHtml(productSlug || productId)}</div>
+            ${previewUrl ? `<div class="admin-product-card-subline"><b>Preview URL:</b> <a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">${escapeHtml(previewUrl)}</a></div>` : ""}
+            ${thumbnailUrl ? `<div style="margin-top:6px"><img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(product.name || product.id || "thumbnail")}" loading="lazy" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid rgba(145,180,255,.22);background:#0f172a" /></div>` : ""}
             <div class="admin-product-card-subline">${escapeHtml(product.appId || "")} · ${escapeHtml(product.id || "")} · ${escapeHtml(product.cycle || "")}</div>
           </td>
           <td>
