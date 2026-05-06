@@ -26,7 +26,11 @@
       </div>
     </header>
 
-    <div class="admin-layout">
+    <div id="adminCardGrid" class="admin-card-grid" role="main" aria-label="Bảng điều khiển quản trị">
+      <!-- Built by JS: initAdminDashboard() -->
+    </div>
+
+    <div class="admin-layout" style="display:none">
       <nav class="admin-sidebar">
         <div class="admin-sidebar-brand">
           <span class="admin-sidebar-kicker">Admin Console</span>
@@ -992,11 +996,18 @@
       <div class="admin-work-modal__backdrop"></div>
       <div class="admin-work-modal__window" role="dialog" aria-modal="true" aria-labelledby="adminWorkModalTitle">
         <div class="admin-work-modal__header">
-          <div>
-            <p class="admin-work-modal__kicker">Không gian thao tác</p>
-            <h2 id="adminWorkModalTitle">Bảng điều khiển</h2>
+          <div class="admin-work-modal__header-left">
+            <span class="admin-work-modal__card-icon" id="adminWorkModalIcon" aria-hidden="true">🧩</span>
+            <div>
+              <p class="admin-work-modal__kicker">Cửa sổ làm việc</p>
+              <h2 id="adminWorkModalTitle">Bảng điều khiển</h2>
+            </div>
           </div>
-          <button type="button" id="adminWorkModalCloseX" class="admin-work-modal__close" aria-label="Đóng cửa sổ">X</button>
+          <div class="admin-work-modal__winctrl">
+            <button type="button" class="admin-work-modal__wbtn admin-work-modal__wbtn--min" aria-label="Thu nhỏ">—</button>
+            <button type="button" class="admin-work-modal__wbtn admin-work-modal__wbtn--max" aria-label="Phóng to">⬜</button>
+            <button type="button" id="adminWorkModalCloseX" class="admin-work-modal__wbtn admin-work-modal__wbtn--close admin-work-modal__close" aria-label="Đóng cửa sổ">✕</button>
+          </div>
         </div>
         <div id="adminWorkModalBody" class="admin-work-modal__body"></div>
         <div class="admin-work-modal__footer">
@@ -1007,6 +1018,6 @@
     </div>
 
     <script src="/catalog-scope.js"></script>
-    <script src="/admin.js?v=20260506-admin-card-modal"></script>
+    <script src="/admin.js?v=20260506-admin-dashboard-v2"></script>
   </body>
 </html>

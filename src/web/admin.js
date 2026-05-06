@@ -18,9 +18,9 @@ let appRegistryState = {
   selectedAppId: "",
   lastDetail: null
 };
-let adminWorkModalMainPlaceholder = null;
-let adminWorkModalMainHost = null;
-let adminSidebarSetActive = null;
+let adminModalSectionRestoreList = [];
+let adminModalCompositeWrapper = null;
+let adminActiveCardEl = null;
 
 const WEB_FAST_PRODUCT_LABELS = {
   "prod-web-demo-company-basic": { branch: "Web nhanh", label: "Công ty · Mẫu 1: Hero trust + dịch vụ" },
@@ -2825,26 +2825,80 @@ function bindDiscountCodeAdmin(){
   loadDiscountCodes();
 }
 
-function mountAdminMainIntoWorkspaceModal(){
-  const main = document.getElementById("adminMain");
-  const modalBody = document.getElementById("adminWorkModalBody");
-  if(!main || !modalBody) return null;
-  if(main.parentElement === modalBody) return main;
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN CARD GRID DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
 
-  adminWorkModalMainHost = main.parentNode;
-  adminWorkModalMainPlaceholder = document.createComment("admin-main-modal-placeholder");
-  adminWorkModalMainHost?.insertBefore(adminWorkModalMainPlaceholder, main);
-  modalBody.appendChild(main);
-  return main;
+const ADMIN_CARD_DEFS = [
+  {
+    group: null,
+    primary: true,
+    cards: [
+      { hashes: [],                                                                                                                                        icon: "💻", title: "Phần mềm",            desc: "Quản lý license, kho key và phiên bản." },
+      { hashes: [],                                                                                                                                        icon: "🌐", title: "Thiết kế web tư vấn", desc: "Quản lý dịch vụ thiết kế web theo yêu cầu." },
+      { hashes: ["#section-web-demo-admin"],                                                                                                              icon: "🧩", title: "Web nhanh / Kho mẫu", desc: "Quản lý kho giao diện mẫu và web nhanh." },
+      { hashes: ["#section-orders","#section-transactions"],                                                                                              icon: "🛒", title: "Đơn hàng",             desc: "Quản lý đơn hàng, thanh toán và trạng thái." },
+      { hashes: ["#section-customers"],                                                                                                                   icon: "👥", title: "Khách hàng",           desc: "Quản lý khách hàng, thông tin và lịch sử giao dịch." },
+      { hashes: [],                                                                                                                                        icon: "✏️", title: "Nội dung",             desc: "Quản lý bài viết, trang, danh mục và nội dung site." },
+      { hashes: ["#section-admin-access","#section-sepay","#section-public-pages","#section-aiapp-secret","#section-ai-gates","#section-app-registry"], icon: "⚙️", title: "Cấu hình",            desc: "Cấu hình hệ thống, bảo mật và tích hợp thanh toán." }
+    ]
+  },
+  {
+    group: "Công cụ vận hành",
+    primary: false,
+    cards: [
+      { hashes: ["#section-kpi"],             icon: "📊", title: "Tổng quan",       desc: "Doanh thu, đơn hàng, KPI hệ thống" },
+      { hashes: ["#section-key-lookup"],      icon: "🔍", title: "Tra key",          desc: "Kiểm tra key, phiên lease" },
+      { hashes: ["#section-subs"],            icon: "🔄", title: "Subscription",     desc: "Subscription đang hoạt động" },
+      { hashes: ["#section-wallets"],         icon: "💰", title: "Số dư credit",     desc: "Ví credit khách hàng" },
+      { hashes: ["#section-keys"],            icon: "🔑", title: "Kho key AI-app",   desc: "Quản trị key theo profile" },
+      { hashes: ["#section-product-cards"],   icon: "🧱", title: "Card sản phẩm",    desc: "Bật/tắt bán theo sản phẩm" },
+      { hashes: ["#section-product-keys"],    icon: "📦", title: "Kho key sản phẩm", desc: "Tồn kho & nhập key" },
+      { hashes: ["#section-manual-grant"],    icon: "🎁", title: "Cấp key thủ công", desc: "Cấp bù khi webhook lỗi" },
+      { hashes: ["#section-discount-codes"],  icon: "🏷️", title: "Mã giảm giá",      desc: "Tạo & quản lý mã sale" }
+    ]
+  }
+];
+
+function mountSectionsIntoModal(hashes){
+  const modalBody = document.getElementById("adminWorkModalBody");
+  if(!modalBody) return;
+  restoreSectionsFromModal();
+  modalBody.innerHTML = "";
+
+  const list = Array.isArray(hashes) ? hashes.filter(Boolean) : (hashes ? [hashes] : []);
+
+  if(!list.length){
+    modalBody.innerHTML = '<div class="admin-section-placeholder"><p>Mục này đang được hoàn thiện.</p></div>';
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "admin-modal-sections-wrapper";
+
+  list.forEach((hash)=>{
+    const section = document.querySelector(hash);
+    if(section){
+      adminModalSectionRestoreList.push({ section, host: section.parentNode });
+      wrapper.appendChild(section);
+    }
+  });
+
+  if(!wrapper.children.length){
+    modalBody.innerHTML = '<div class="admin-section-placeholder"><p>Mục này đang được hoàn thiện.</p></div>';
+    return;
+  }
+
+  adminModalCompositeWrapper = wrapper;
+  modalBody.appendChild(wrapper);
 }
 
-function restoreAdminMainFromWorkspaceModal(){
-  const main = document.getElementById("adminMain");
-  if(!main || !adminWorkModalMainPlaceholder || !adminWorkModalMainHost) return;
-  adminWorkModalMainHost.insertBefore(main, adminWorkModalMainPlaceholder);
-  adminWorkModalMainPlaceholder.remove();
-  adminWorkModalMainPlaceholder = null;
-  adminWorkModalMainHost = null;
+function restoreSectionsFromModal(){
+  adminModalSectionRestoreList.forEach(({ section, host })=>{
+    if(section && host) host.appendChild(section);
+  });
+  adminModalSectionRestoreList = [];
+  adminModalCompositeWrapper = null;
 }
 
 function closeAdminWorkspaceModal(){
@@ -2854,113 +2908,75 @@ function closeAdminWorkspaceModal(){
   modal.style.display = "none";
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("admin-modal-open");
-  restoreAdminMainFromWorkspaceModal();
+  restoreSectionsFromModal();
+  if(adminActiveCardEl){
+    adminActiveCardEl.classList.remove("is-active");
+    adminActiveCardEl = null;
+  }
 }
 
-function openAdminWorkspaceModal(hash, label){
-  const normalizedHash = String(hash || "").trim();
-  const target = normalizedHash ? document.querySelector(normalizedHash) : null;
-  if(normalizedHash && !target) return;
-
+function openAdminWorkspaceModal(hashes, title, icon){
   const modal = document.getElementById("adminWorkModal");
   const titleEl = document.getElementById("adminWorkModalTitle");
+  const iconEl = document.getElementById("adminWorkModalIcon");
   if(!modal) return;
 
-  const main = mountAdminMainIntoWorkspaceModal();
-  if(!main) return;
+  mountSectionsIntoModal(hashes);
 
-  const title = String(label || "").trim() || "Bảng điều khiển";
-  if(titleEl) titleEl.textContent = title;
+  if(titleEl) titleEl.textContent = title || "Bảng điều khiển";
+  if(iconEl) iconEl.textContent = icon || "🧩";
 
   modal.style.display = "flex";
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("admin-modal-open");
-
-  if(normalizedHash){
-    if(window.location.hash !== normalizedHash){
-      history.replaceState(null, "", normalizedHash);
-    }
-    adminSidebarSetActive?.(normalizedHash);
-    requestAnimationFrame(()=>{
-      target?.scrollIntoView({ block: "start" });
-    });
-  }
 }
 
-function buildAdminCardMenu(linkContainer, links){
-  const cardMenu = document.getElementById("adminCardMenu");
-  if(!cardMenu || !linkContainer) return;
-  cardMenu.innerHTML = "";
+function buildAdminCardGrid(){
+  const grid = document.getElementById("adminCardGrid");
+  if(!grid) return;
+  grid.innerHTML = "";
 
-  const children = Array.from(linkContainer.children);
-  children.forEach((node)=>{
-    if(node.classList?.contains("admin-sidebar-group-label")){
-      const groupEl = document.createElement("div");
-      groupEl.className = "admin-card-menu-group";
-      groupEl.textContent = node.textContent || "Danh mục";
-      cardMenu.appendChild(groupEl);
-      return;
+  ADMIN_CARD_DEFS.forEach(({ group, primary, cards })=>{
+    const groupEl = document.createElement("div");
+    groupEl.className = "admin-card-group";
+
+    if(group){
+      const groupTitle = document.createElement("h2");
+      groupTitle.className = "admin-card-group__title";
+      groupTitle.textContent = group;
+      groupEl.appendChild(groupTitle);
     }
 
-    if(!(node instanceof HTMLAnchorElement)) return;
-    const hash = node.getAttribute("href") || "";
-    if(!hash.startsWith("#section-")) return;
+    const row = document.createElement("div");
+    row.className = primary ? "admin-card-row admin-card-row--primary" : "admin-card-row";
 
-    const labelClone = node.cloneNode(true);
-    labelClone.querySelector(".icon")?.remove();
-    const label = labelClone.textContent?.trim() || hash.replace("#section-", "");
-    const icon = node.querySelector(".icon")?.textContent?.trim() || "🧩";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "admin-card-menu-btn";
-    btn.setAttribute("data-hash", hash);
-    btn.innerHTML = `
-      <span class="admin-card-menu-icon" aria-hidden="true">${escapeHtml(icon)}</span>
-      <span>
-        <span class="admin-card-menu-label">${escapeHtml(label)}</span>
-        <span class="admin-card-menu-hash">${escapeHtml(hash)}</span>
-      </span>
-    `;
-    btn.addEventListener("click", ()=>{
-      openAdminWorkspaceModal(hash, label);
+    cards.forEach(({ hashes, icon, title, desc })=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = primary ? "admin-card-item admin-card-item--primary" : "admin-card-item";
+      btn.innerHTML = `
+        <span class="admin-card-item__icon-wrap" aria-hidden="true">${escapeHtml(icon)}</span>
+        <span class="admin-card-item__title">${escapeHtml(title)}</span>
+        <span class="admin-card-item__desc">${escapeHtml(desc)}</span>
+        <span class="admin-card-item__arrow" aria-hidden="true">→</span>
+      `;
+      btn.addEventListener("click", ()=>{
+        if(adminActiveCardEl) adminActiveCardEl.classList.remove("is-active");
+        btn.classList.add("is-active");
+        adminActiveCardEl = btn;
+        openAdminWorkspaceModal(hashes, title, icon);
+      });
+      row.appendChild(btn);
     });
-    cardMenu.appendChild(btn);
-  });
 
-  if(links.length){
-    document.body.classList.add("admin-cards-ready");
-  }
+    groupEl.appendChild(row);
+    grid.appendChild(groupEl);
+  });
 }
 
-function bindAdminSidebarNav(){
-  const linkContainer = document.querySelector(".admin-sidebar-links");
-  const links = Array.from(document.querySelectorAll('.admin-sidebar-links a[href^="#section-"]'));
-  if(!links.length) return;
-
-  const setActive = (hash)=>{
-    links.forEach((link)=>{
-      link.classList.toggle("active", link.getAttribute("href") === hash);
-    });
-    document.querySelectorAll(".admin-card-menu-btn[data-hash]").forEach((btn)=>{
-      btn.classList.toggle("is-active", btn.getAttribute("data-hash") === hash);
-    });
-  };
-  adminSidebarSetActive = setActive;
-
-  buildAdminCardMenu(linkContainer, links);
-
-  links.forEach((link)=>{
-    link.addEventListener("click", (event)=>{
-      event.preventDefault();
-      const hash = link.getAttribute("href") || "";
-      const labelClone = link.cloneNode(true);
-      labelClone.querySelector(".icon")?.remove();
-      const label = labelClone.textContent?.trim() || hash;
-      openAdminWorkspaceModal(hash, label);
-    });
-  });
+function initAdminDashboard(){
+  buildAdminCardGrid();
 
   const closeX = document.getElementById("adminWorkModalCloseX");
   const closeBtn = document.getElementById("adminWorkModalClose");
@@ -2969,31 +2985,9 @@ function bindAdminSidebarNav(){
   closeBtn?.addEventListener("click", closeAdminWorkspaceModal);
   cancelBtn?.addEventListener("click", closeAdminWorkspaceModal);
 
-  // Keep backdrop non-dismissable by design.
+  // Backdrop non-dismissable by design.
   document.getElementById("adminWorkModal")?.addEventListener("click", (event)=>{
-    if(event.target && event.target.id === "adminWorkModal"){
-      event.stopPropagation();
-    }
-  });
-
-  if(window.location.hash && document.querySelector(window.location.hash)){
-    const initialLink = links.find((link)=>link.getAttribute("href") === window.location.hash);
-    const labelClone = initialLink ? initialLink.cloneNode(true) : null;
-    labelClone?.querySelector(".icon")?.remove();
-    const initialLabel = labelClone?.textContent?.trim() || "Bảng điều khiển";
-    openAdminWorkspaceModal(window.location.hash, initialLabel);
-  } else {
-    setActive("#section-kpi");
-  }
-
-  window.addEventListener("hashchange", ()=>{
-    const hash = window.location.hash;
-    if(!hash || !document.querySelector(hash)) return;
-    const activeLink = links.find((link)=>link.getAttribute("href") === hash);
-    if(!activeLink) return;
-    const labelClone = activeLink.cloneNode(true);
-    labelClone.querySelector(".icon")?.remove();
-    openAdminWorkspaceModal(hash, labelClone.textContent?.trim() || "Bảng điều khiển");
+    if(event.target?.id === "adminWorkModal") event.stopPropagation();
   });
 }
 
@@ -3017,7 +3011,7 @@ loadManualGrantCatalog();
 bindCustomerSearch();
 bindCustomerModal();
 bindKeyLookup();
-bindAdminSidebarNav();
+initAdminDashboard();
 bindProductCardManager();
 bindProductKeyManager();
 bindDiscountCodeAdmin();
