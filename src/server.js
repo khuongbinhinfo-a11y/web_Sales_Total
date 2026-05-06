@@ -375,12 +375,12 @@ function getRequestIp(req) {
 }
 
 function resolveCustomerSessionAppId(req) {
-  const appId = normalizeCap01AppId(req?.body?.appId || req?.query?.appId || "hoctap-cap-01");
-  return appId || "hoctap-cap-01";
+  const appId = normalizeCap01AppId(req?.body?.appId || req?.query?.appId || "app-study-12");
+  return appId || "app-study-12";
 }
 
 async function issueCustomerWebSession(req, res, customer, options = {}) {
-  const appId = String(options.appId || resolveCustomerSessionAppId(req) || "hoctap-cap-01").trim() || "hoctap-cap-01";
+  const appId = String(options.appId || resolveCustomerSessionAppId(req) || "app-study-12").trim() || "app-study-12";
   const deviceId = String(options.deviceId || req.body?.deviceId || req.query?.deviceId || "").trim() || null;
   const deviceName = String(options.deviceName || req.body?.deviceName || req.query?.deviceName || "").trim() || null;
   const sessionId = crypto.randomUUID();
@@ -912,7 +912,7 @@ function buildAiAppLicenseView(license) {
   const grace = computeLicenseGrace(license);
   return {
     ...license,
-    appId: 'hoctap-cap-01',
+    appId: 'app-study-12',
     planId: resolvedPlanId || null,
     tier,
     features,
@@ -1050,7 +1050,7 @@ function buildCap01Entitlement(aiLicense) {
   const plan = String(metadata?.planId || planByProductId[normalizedProductId] || aiLicense?.planId || 'cap01_standard_1year_3grades').trim() || 'cap01_standard_1year_3grades';
 
   return {
-    appId: 'hoctap-cap-01',
+    appId: 'app-study-12',
     productId,
     plan,
     status: 'active',
@@ -1072,15 +1072,15 @@ function buildCap01Entitlement(aiLicense) {
 function normalizeCap01AppId(appIdRaw) {
   const normalized = String(appIdRaw || '').trim().toLowerCase();
   if (!normalized) return '';
-  if (normalized === 'app-study-12' || normalized === 'hoctap-cap-01') {
-    return 'hoctap-cap-01';
+  if (normalized === 'app-study-12') {
+    return 'app-study-12';
   }
   return normalized;
 }
 
 async function handleCap01LicenseVerifyLikeRequest(req, res) {
   const inputAppId = normalizeCap01AppId(req.body?.appId);
-  const appId = inputAppId === 'hoctap-cap-01' ? 'hoctap-cap-01' : inputAppId;
+  const appId = inputAppId === 'app-study-12' ? 'app-study-12' : inputAppId;
   const licenseKey = String(req.body?.licenseKey || '').trim().toUpperCase();
   const deviceId = String(req.body?.deviceId || '').trim() || null;
   const deviceName = String(req.body?.deviceName || '').trim() || null;
@@ -1322,6 +1322,12 @@ function normalizeAppUpdateId(value) {
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+const CANONICAL_APP_ID_MAP = {};
+function resolveCanonicalAppId(value) {
+  const normalized = normalizeAppUpdateId(value);
+  return CANONICAL_APP_ID_MAP[normalized] || normalized;
 }
 
 async function readAppUpdateManifest(appIdRaw) {
@@ -1687,17 +1693,17 @@ function resolveAccountCustomerId(req) {
 }
 
 async function buildAccountDownloadableApp({ customerId, appId, snapshot }) {
-  const normalizedAppId = normalizeAppUpdateId(appId);
+  const normalizedAppId = resolveCanonicalAppId(appId);
   if (!normalizedAppId) {
     return null;
   }
 
   const meta = getAccountAppMeta(normalizedAppId);
   const paidOrders = (snapshot.orders || []).filter(
-    (order) => normalizeAppUpdateId(order.appId) === normalizedAppId && String(order.status || "").toLowerCase() === "paid"
+    (order) => resolveCanonicalAppId(order.appId) === normalizedAppId && String(order.status || "").toLowerCase() === "paid"
   );
   const appLicenses = (snapshot.licenses || []).filter(
-    (license) => normalizeAppUpdateId(license.appId) === normalizedAppId
+    (license) => resolveCanonicalAppId(license.appId) === normalizedAppId
   );
   const entitledLicenses = appLicenses.filter(isLicenseEntitledForAccountDownload);
   const updateEntitlement = buildUpdateEntitlement(appLicenses, null);
@@ -1743,7 +1749,7 @@ async function buildAccountDownloadableApp({ customerId, appId, snapshot }) {
     if (latestVersionAllowed === false) {
       deliveryState = "version_not_entitled";
       note = "Gói hiện tại chưa có quyền tải bản mới nhất đang phát hành.";
-    } else if (artifact?.type === "local" || artifact?.type === "external") {
+    } else if (artifact?.type === "local" || artifact?.type === "external" || artifact?.type === "r2") {
       deliveryState = "download_ready";
       note = manifest?.message || "Bộ cài đã sẵn sàng trong khu vực tài khoản.";
     } else if (manifestRecord) {
@@ -1787,8 +1793,8 @@ async function buildAccountOverview(snapshot) {
   const appIds = uniqueStrings([
     ...(snapshot.orders || [])
       .filter((order) => String(order.status || "").toLowerCase() === "paid")
-      .map((order) => order.appId),
-    ...(snapshot.licenses || []).map((license) => license.appId)
+      .map((order) => resolveCanonicalAppId(order.appId)),
+    ...(snapshot.licenses || []).map((license) => resolveCanonicalAppId(license.appId))
   ]);
 
   const downloadableApps = (await Promise.all(
@@ -3368,6 +3374,44 @@ app.post(
 );
 
 app.post(
+  "/api/v1/ai-app/licenses/deactivate",
+  asyncHandler(async (req, res) => {
+    const customerId = String(req.body?.customerId || "").trim();
+    const appId = String(req.body?.appId || "").trim();
+    const licenseKey = String(req.body?.licenseKey || "").trim();
+    const deviceId = String(req.body?.deviceId || "").trim() || null;
+
+    if (!customerId || !appId || !licenseKey) {
+      return res.status(400).json({ success: false, error: "customerId, appId and licenseKey are required" });
+    }
+
+    const existing = await findAppLicenseByKey({ appId, licenseKey, customerId });
+    if (!existing) {
+      return res.status(404).json({ success: false, error: "License không tồn tại hoặc đã bị thu hồi" });
+    }
+
+    const deactivated = await deactivateCustomerLicense({
+      licenseId: existing.id,
+      customerId,
+      clientId: deviceId,
+      enforceRuntimeLease: true
+    });
+
+    if (!deactivated) {
+      return res.status(404).json({ success: false, error: "Không thể deactivate license" });
+    }
+    if (deactivated.leaseMismatch) {
+      return res.status(403).json({
+        success: false,
+        error: "Phiên đang dùng key nằm trên một thiết bị khác. Chỉ thiết bị đang giữ phiên mới được deactivate."
+      });
+    }
+
+    return res.json({ success: true, license: deactivated });
+  })
+);
+
+app.post(
   "/api/licenses/activate",
   asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
 );
@@ -4780,7 +4824,7 @@ app.post(
     };
 
     await issueCustomerWebSession(req, res, customer, {
-      appId: "hoctap-cap-01",
+      appId: "app-study-12",
       deviceId: req.body?.deviceId,
       deviceName: req.body?.deviceName,
     });
@@ -4815,7 +4859,7 @@ app.post(
     }
 
     await issueCustomerWebSession(req, res, result.customer, {
-      appId: "hoctap-cap-01",
+      appId: "app-study-12",
       deviceId: req.body?.deviceId,
       deviceName: req.body?.deviceName,
     });
@@ -4906,7 +4950,7 @@ app.post(
     const account = await createCustomerAccount(profile.email, profile.fullName);
 
     await issueCustomerWebSession(req, res, account.customer, {
-      appId: "hoctap-cap-01",
+      appId: "app-study-12",
       deviceId: req.body?.deviceId,
       deviceName: req.body?.deviceName,
     });

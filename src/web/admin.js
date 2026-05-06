@@ -2834,12 +2834,11 @@ const ADMIN_CARD_DEFS = [
     group: null,
     primary: true,
     cards: [
-      { hashes: [],                                                                                                                                        icon: "💻", title: "Phần mềm",            desc: "Quản lý license, kho key và phiên bản." },
-      { hashes: [],                                                                                                                                        icon: "🌐", title: "Thiết kế web tư vấn", desc: "Quản lý dịch vụ thiết kế web theo yêu cầu." },
+      { hashes: ["#section-product-cards"],                                                                                                               icon: "💻", title: "Phần mềm",            desc: "Quản lý license, kho key và phiên bản." },
+      { hashes: ["#section-web-demo-admin"],                                                                                                              icon: "🌐", title: "Thiết kế web tư vấn", desc: "Quản lý dịch vụ thiết kế web và bảng giá tư vấn." },
       { hashes: ["#section-web-demo-admin"],                                                                                                              icon: "🧩", title: "Web nhanh / Kho mẫu", desc: "Quản lý kho giao diện mẫu và web nhanh." },
       { hashes: ["#section-orders","#section-transactions"],                                                                                              icon: "🛒", title: "Đơn hàng",             desc: "Quản lý đơn hàng, thanh toán và trạng thái." },
       { hashes: ["#section-customers"],                                                                                                                   icon: "👥", title: "Khách hàng",           desc: "Quản lý khách hàng, thông tin và lịch sử giao dịch." },
-      { hashes: [],                                                                                                                                        icon: "✏️", title: "Nội dung",             desc: "Quản lý bài viết, trang, danh mục và nội dung site." },
       { hashes: ["#section-admin-access","#section-sepay","#section-public-pages","#section-aiapp-secret","#section-ai-gates","#section-app-registry"], icon: "⚙️", title: "Cấu hình",            desc: "Cấu hình hệ thống, bảo mật và tích hợp thanh toán." }
     ]
   },
@@ -2853,7 +2852,7 @@ const ADMIN_CARD_DEFS = [
       { hashes: ["#section-wallets"],         icon: "💰", title: "Số dư credit",     desc: "Ví credit khách hàng" },
       { hashes: ["#section-keys"],            icon: "🔑", title: "Kho key AI-app",   desc: "Quản trị key theo profile" },
       { hashes: ["#section-product-cards"],   icon: "🧱", title: "Card sản phẩm",    desc: "Bật/tắt bán theo sản phẩm" },
-      { hashes: ["#section-web-template-pricing"], icon: "🌐", title: "Giá web mẫu", desc: "Set giá / sale cho web mẫu /thiet-ke-web" },
+      { hashes: ["#section-web-template-pricing"], icon: "💰", title: "Giá web mẫu", desc: "Set giá / sale cho web mẫu /thiet-ke-web" },
       { hashes: ["#section-product-keys"],    icon: "📦", title: "Kho key sản phẩm", desc: "Tồn kho & nhập key" },
       { hashes: ["#section-manual-grant"],    icon: "🎁", title: "Cấp key thủ công", desc: "Cấp bù khi webhook lỗi" },
       { hashes: ["#section-discount-codes"],  icon: "🏷️", title: "Mã giảm giá",      desc: "Tạo & quản lý mã sale" }

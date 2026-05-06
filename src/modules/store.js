@@ -11,8 +11,8 @@ function isR2PrivateArtifactsEnabledForRegistry() {
 const LICENSE_RUNTIME_LEASE_SECONDS = 180;
 const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates");
 const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
-const CAP01_PRIMARY_APP_ID = "hoctap-cap-01";
-const CAP01_APP_ID_ALIASES = new Set(["hoctap-cap-01", "app-study-12"]);
+const CAP01_PRIMARY_APP_ID = "app-study-12";
+const CAP01_APP_ID_ALIASES = new Set(["app-study-12"]);
 const CAP01_SELLABLE_PRODUCT_IDS = new Set([
   "cap01_standard_1year_3grades",
   "cap01_grade_la_1year",
@@ -91,7 +91,7 @@ function resolveAppIdCandidates(appIdRaw) {
   const normalized = normalizePublicAppId(appIdRaw);
   if (!normalized) return [];
   if (normalized === CAP01_PRIMARY_APP_ID) {
-    return ["hoctap-cap-01", "app-study-12"];
+    return ["app-study-12"];
   }
   return [normalized];
 }
@@ -1357,7 +1357,7 @@ async function issueAppLicenseForOrder({ client, order, product }) {
   if (String(product.id || "").trim().toLowerCase() === "cap01_beta_year_299") {
     metadata.planId = "beta_year_299";
     metadata.basePlan = "beta";
-    metadata.appId = "hoctap-cap-01";
+    metadata.appId = "app-study-12";
     metadata.allowedGrades = [];
     metadata.standardGrades = [];
     metadata.standardGradesRequiredCount = 1;
@@ -3547,7 +3547,7 @@ async function ensureCustomerAuthSchema() {
       customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       device_id TEXT,
       device_name TEXT,
-      app_id TEXT NOT NULL DEFAULT 'hoctap-cap-01',
+      app_id TEXT NOT NULL DEFAULT 'app-study-12',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       revoked_at TIMESTAMPTZ,
@@ -3564,12 +3564,12 @@ async function ensureCustomerAuthSchema() {
   `);
 }
 
-async function createCustomerSession({ sessionId, customerId, deviceId, deviceName, appId = "hoctap-cap-01" }) {
+async function createCustomerSession({ sessionId, customerId, deviceId, deviceName, appId = "app-study-12" }) {
   const safeSessionId = String(sessionId || "").trim();
   const safeCustomerId = String(customerId || "").trim();
   const safeDeviceId = String(deviceId || "").trim() || null;
   const safeDeviceName = String(deviceName || "").trim() || null;
-  const safeAppId = String(appId || "hoctap-cap-01").trim() || "hoctap-cap-01";
+  const safeAppId = String(appId || "app-study-12").trim() || "app-study-12";
 
   if (!safeSessionId || !safeCustomerId) {
     return null;
@@ -3701,9 +3701,9 @@ async function revokeCustomerSessionById({ sessionId, reason = "logged_out" }) {
   };
 }
 
-async function revokeOtherCustomerSessions({ customerId, appId = "hoctap-cap-01", excludeSessionId = null, reason = "logged_out_by_new_device" }) {
+async function revokeOtherCustomerSessions({ customerId, appId = "app-study-12", excludeSessionId = null, reason = "logged_out_by_new_device" }) {
   const safeCustomerId = String(customerId || "").trim();
-  const safeAppId = String(appId || "hoctap-cap-01").trim() || "hoctap-cap-01";
+  const safeAppId = String(appId || "app-study-12").trim() || "app-study-12";
   const safeExcludeSessionId = String(excludeSessionId || "").trim() || null;
   const safeReason = String(reason || "logged_out_by_new_device").trim() || "logged_out_by_new_device";
 
