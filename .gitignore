@@ -5,10 +5,14 @@ backups/
 .vercel
 .env*.local
 _external/
-public/app-updates/app-study-12/HocHungKhoi_Desktopapp-Win.exe
-public/app-updates/app-prompt-image-video/Setup_VideoCreator.exe
-public/app-updates/app-bds-website-manager/Setup_BDS.exe
-public/app-updates/map-pro/Setup_MapPro.exe
+
+# Binary/installer artifacts — served via R2, never commit to repo
+public/app-updates/**/*.exe
+public/app-updates/**/*.msi
+public/app-updates/**/*.dmg
+public/app-updates/**/*.blockmap
+public/app-updates/**/*.zip
+
 hero-video.mp4
 public/Video/hero-phamem.mp4
 public/Video/hero-web-brand.mp4
