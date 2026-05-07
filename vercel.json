@@ -5,7 +5,17 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "{src/**,migrations/**,products/**,docs/ai-gates/**,public/app-updates/**,runtime-settings.json,logo.png,logo_2.png}",
+        "includeFiles": [
+          "src/**",
+          "migrations/**",
+          "products/**",
+          "docs/ai-gates/**",
+          "public/app-updates/**/version.json",
+          "public/app-updates/**/latest.yml",
+          "runtime-settings.json",
+          "logo.png",
+          "logo_2.png"
+        ],
         "maxDuration": 10
       }
     }
