@@ -1399,8 +1399,9 @@ const ACCOUNT_DOWNLOAD_APP_META = {
   "app-cap12": {
     appName: "Phần mềm học tập khối cấp 12",
     icon: "🎓",
-    deliveryType: "manifest_download",
-    actionLabel: "Tải app"
+    deliveryType: "website",
+    websiteUrl: "https://hoctap-cap-01.vercel.app/",
+    actionLabel: "Mở trang tải app"
   },
   lamviec: {
     appName: "Công cụ làm việc",
