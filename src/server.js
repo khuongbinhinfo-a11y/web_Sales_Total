@@ -138,6 +138,7 @@ const {
   getR2ArtifactStream
 } = require("./modules/artifactStorage");
 const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/licenseFeatures");
+const APP_MANIFEST_REGISTRY = require("./data/appUpdateManifests");
 
 const app = express();
 const webRoot = path.join(__dirname, "web");
@@ -1339,17 +1340,23 @@ async function readAppUpdateManifest(appIdRaw) {
   }
 
   const manifestPath = path.join(appUpdatesRoot, appId, "version.json");
-  if (!fs.existsSync(manifestPath)) {
-    return null;
+  if (fs.existsSync(manifestPath)) {
+    const raw = await fs.promises.readFile(manifestPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return {
+      appId,
+      manifestPath,
+      manifest: parsed
+    };
   }
 
-  const raw = await fs.promises.readFile(manifestPath, "utf8");
-  const parsed = JSON.parse(raw);
-  return {
-    appId,
-    manifestPath,
-    manifest: parsed
-  };
+  // Fallback: embedded registry — always bundled in serverless (src/**)
+  const embedded = APP_MANIFEST_REGISTRY[appId];
+  if (embedded) {
+    return { appId, manifestPath: null, manifest: { ...embedded } };
+  }
+
+  return null;
 }
 
 function normalizeManifestPublicPaths(manifest) {
