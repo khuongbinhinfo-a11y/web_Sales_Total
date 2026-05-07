@@ -1324,7 +1324,9 @@ function normalizeAppUpdateId(value) {
     .replace(/^-+|-+$/g, "");
 }
 
-const CANONICAL_APP_ID_MAP = {};
+const CANONICAL_APP_ID_MAP = {
+  "lamviec": "map-pro", // demo-map product was registered with wrong app_id; redirect to correct manifest
+};
 function resolveCanonicalAppId(value) {
   const normalized = normalizeAppUpdateId(value);
   return CANONICAL_APP_ID_MAP[normalized] || normalized;
@@ -1763,7 +1765,7 @@ async function buildAccountDownloadableApp({ customerId, appId, snapshot }) {
     action = {
       type: "account_download_api",
       endpoint: `/api/account/downloads/${encodeURIComponent(normalizedAppId)}`,
-      label: deliveryState === "download_ready" ? meta.actionLabel : "Nhận bộ cài",
+      label: meta.actionLabel,
       external: false
     };
   }
