@@ -950,7 +950,7 @@ function buildCap01Entitlement(aiLicense) {
   const defaultEntitlementByProduct = {
     'cap01_standard_1year_3grades': {
       allowedGrades: [],
-      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'cap01_grade_la_1year': {
@@ -984,13 +984,13 @@ function buildCap01Entitlement(aiLicense) {
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'prod-study-month': {
-      allowedGrades: [1, 2],
+      allowedGrades: [],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'prod-study-year': {
-      allowedGrades: [1, 2],
-      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      allowedGrades: [],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'standard_1year_1grade': {
@@ -999,22 +999,22 @@ function buildCap01Entitlement(aiLicense) {
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'prod-study-standard-lifetime': {
-      allowedGrades: [1, 2],
-      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: false },
+      allowedGrades: [],
+      features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: false, aiTutor: false },
       license: { deviceLimit: 1, offlineGraceDays: 7 },
     },
     'prod-study-premium-month': {
-      allowedGrades: [1, 2],
+      allowedGrades: [],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
       license: { deviceLimit: 2, offlineGraceDays: 7 },
     },
     'prod-study-premium-year': {
-      allowedGrades: [1, 2],
+      allowedGrades: [],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
       license: { deviceLimit: 2, offlineGraceDays: 7 },
     },
     'prod-study-premium-lifetime': {
-      allowedGrades: [1, 2],
+      allowedGrades: [],
       features: { desktopOfflineTts: true, downloadByGrade: true, downloadAllGrades: true, aiTutor: true },
       license: { deviceLimit: 2, offlineGraceDays: 7 },
     },
@@ -1031,11 +1031,11 @@ function buildCap01Entitlement(aiLicense) {
   };
 
   const defaultEntitlement = defaultEntitlementByProduct[normalizedProductId] || defaultEntitlementByProduct['cap01_standard_1year_3grades'];
-  const allowedGrades = (normalizedProductId === 'cap01_beta_year_299' && lockedStandardGrades.length > 0)
-    ? lockedStandardGrades
-    : Array.isArray(metadata?.allowedGrades)
+  const metadataAllowedGrades = Array.isArray(metadata?.allowedGrades)
     ? metadata.allowedGrades.map((grade) => Number(grade)).filter((grade) => Number.isInteger(grade) && grade >= 0)
-    : defaultEntitlement.allowedGrades;
+    : null;
+  const allowedGrades = metadataAllowedGrades
+    ?? (lockedStandardGrades.length > 0 ? lockedStandardGrades : defaultEntitlement.allowedGrades);
   const featureFlags = (metadata?.features && typeof metadata.features === 'object')
     ? metadata.features
     : defaultEntitlement.features;

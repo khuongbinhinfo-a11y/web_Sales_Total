@@ -28,7 +28,16 @@ src/web/Video/hero-web-brand.mp4
 # products/image/
 # src/web/*.jpg
 # src/web/*.png
-# src/web/image/
+src/web/image/
+
+# Unused/duplicate root-level images — no code reference
+admin-demo.png
+heroes-home.png
+src/web/heroes-home.png
+src/web/logo_2.png
+
+# Temporary audit/test script — not for commit
+tmp_deep_audit.js
 
 # Public media moved to Cloudflare R2
 /public/og/
