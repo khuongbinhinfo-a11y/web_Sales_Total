@@ -2814,6 +2814,34 @@ function getBrandFilterLabel(key) {
   return labels[key] || key;
 }
 
+function getBrandChipIconMarkup(key) {
+  if (key === "all") {
+    return `<span class="brand-chip-icon brand-chip-icon--all" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+  }
+  if (key === "microsoft") {
+    return `<span class="brand-chip-icon brand-chip-icon--windows" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+  }
+  if (key === "chatgpt") {
+    return `<span class="brand-chip-icon brand-chip-icon--chatgpt" aria-hidden="true">AI</span>`;
+  }
+  if (key === "google") {
+    return `<span class="brand-chip-icon brand-chip-icon--google" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+  }
+  if (key === "canva") {
+    return `<span class="brand-chip-icon brand-chip-icon--canva" aria-hidden="true">C</span>`;
+  }
+  if (key === "adobe") {
+    return `<span class="brand-chip-icon brand-chip-icon--adobe" aria-hidden="true">A</span>`;
+  }
+  if (key === "capcut") {
+    return `<span class="brand-chip-icon brand-chip-icon--capcut" aria-hidden="true">X</span>`;
+  }
+  if (key === "notion") {
+    return `<span class="brand-chip-icon brand-chip-icon--notion" aria-hidden="true">N</span>`;
+  }
+  return `<span class="brand-chip-icon brand-chip-icon--other" aria-hidden="true">+</span>`;
+}
+
 function normalizeBrandKey(value) {
   const token = normalizeText(value).replace(/\s+/g, "");
   if (!token) return "";
@@ -3535,7 +3563,12 @@ function buildBrandTabs() {
   if (!brandTabs) return;
 
   brandTabs.innerHTML = fixedBrands
-    .map((key) => `<button class="cat-tab cat-tab--brand ${activeBrand===key?"active":""}" data-brand="${key}">${getBrandFilterLabel(key)}</button>`)
+    .map((key) => `
+      <button class="cat-tab cat-tab--brand brand-chip ${activeBrand===key?"active":""}" data-brand="${key}">
+        ${getBrandChipIconMarkup(key)}
+        <span class="brand-chip-label">${escapeHtml(getBrandFilterLabel(key))}</span>
+      </button>
+    `)
     .join("");
   brandTabs.querySelectorAll(".cat-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
