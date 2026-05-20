@@ -409,6 +409,14 @@ button{font-family:inherit;cursor:pointer}
 .cat-tab{padding:10px 20px;border-radius:999px;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.86);font-size:.84rem;font-weight:800;color:#5e50b8;letter-spacing:.01em;transition:all var(--transition);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 10px 22px rgba(96,77,178,.05)}
 .cat-tab:hover{border-color:#8b74f0;color:#4c1d95;background:#fff;transform:translateY(-1px);box-shadow:0 12px 26px rgba(109,40,217,.1)}
 .cat-tab.active{background:linear-gradient(135deg,#5f46d1 0%,#7f6be8 100%);color:#fff;border-color:transparent;box-shadow:0 12px 28px rgba(109,40,217,.24)}
+.catalog-filter-stack{display:grid;gap:14px;margin-top:18px}
+.cat-tabs--category{margin-top:0}
+.cat-tabs--brand{gap:10px;margin-top:0}
+.cat-tabs--brand .cat-tab{padding:7px 12px;font-size:.76rem;font-weight:700;background:rgba(255,255,255,.78);box-shadow:none}
+.cat-tabs--brand .cat-tab.active{background:linear-gradient(135deg,#edf4ff,#dbeafe)!important;color:#0f3f99!important;border-color:rgba(21,101,255,.24)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 8px 16px rgba(30,58,138,.08)}
+.catalog-search-wrap{position:relative}
+.catalog-search-input{width:100%;height:46px;padding:0 16px;border:1px solid rgba(124,58,237,.16);border-radius:14px;background:#fff;font-size:.92rem;color:#1f2937;transition:border-color var(--transition),box-shadow var(--transition)}
+.catalog-search-input:focus{outline:none;border-color:#8b74f0;box-shadow:0 0 0 3px rgba(109,40,217,.12)}
 
 /* ═══════════════════ PRODUCT GRID ═══════════════════ */
 .product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
@@ -3769,4 +3777,100 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
   .footer-cta-panel{padding:22px 20px;border-radius:24px}
   .footer-cta-copy h2{font-size:1.62rem}
   .header-nav a.is-active{box-shadow:none}
+}
+
+@media(max-width:768px){
+  .catalog-filter-stack{gap:10px}
+  .cat-tabs--category .cat-tab{padding:9px 14px;font-size:.8rem}
+  .cat-tabs--brand{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:2px
+  }
+  .cat-tabs--brand::-webkit-scrollbar{display:none}
+  .cat-tabs--brand .cat-tab{flex:0 0 auto}
+}
+
+@media(max-width:768px) and (min-width:360px){
+  body[data-route="software"] #productList,
+  body[data-route="study"] #productList,
+  body[data-route="work"] #productList{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px
+  }
+  body[data-route="software"] #productList .p-card,
+  body[data-route="study"] #productList .p-card,
+  body[data-route="work"] #productList .p-card{
+    border-radius:18px
+  }
+  body[data-route="software"] #productList .p-card-img,
+  body[data-route="study"] #productList .p-card-img,
+  body[data-route="work"] #productList .p-card-img{
+    min-height:108px;
+    padding:8px
+  }
+  body[data-route="software"] #productList .p-card-body,
+  body[data-route="study"] #productList .p-card-body,
+  body[data-route="work"] #productList .p-card-body{
+    padding:12px 10px 10px;
+    gap:7px
+  }
+  body[data-route="software"] #productList .p-card-topline,
+  body[data-route="study"] #productList .p-card-topline,
+  body[data-route="work"] #productList .p-card-topline{
+    gap:6px
+  }
+  body[data-route="software"] #productList .p-card-cat,
+  body[data-route="study"] #productList .p-card-cat,
+  body[data-route="work"] #productList .p-card-cat{
+    padding:4px 8px;
+    font-size:.58rem
+  }
+  body[data-route="software"] #productList .p-card-name,
+  body[data-route="study"] #productList .p-card-name,
+  body[data-route="work"] #productList .p-card-name{
+    margin:0;
+    font-size:.9rem;
+    line-height:1.34;
+    min-height:2.4em;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden
+  }
+  body[data-route="software"] #productList .p-card-intro,
+  body[data-route="study"] #productList .p-card-intro,
+  body[data-route="work"] #productList .p-card-intro{
+    font-size:.75rem;
+    line-height:1.42;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden
+  }
+  body[data-route="software"] #productList .p-card-meta,
+  body[data-route="study"] #productList .p-card-meta,
+  body[data-route="work"] #productList .p-card-meta{
+    font-size:.63rem
+  }
+  body[data-route="software"] #productList .p-card-price,
+  body[data-route="study"] #productList .p-card-price,
+  body[data-route="work"] #productList .p-card-price{
+    font-size:1rem
+  }
+  body[data-route="software"] #productList .p-card-old-price,
+  body[data-route="study"] #productList .p-card-old-price,
+  body[data-route="work"] #productList .p-card-old-price{
+    font-size:.68rem
+  }
+  body[data-route="software"] #productList .p-card-btn,
+  body[data-route="study"] #productList .p-card-btn,
+  body[data-route="work"] #productList .p-card-btn{
+    min-height:40px;
+    margin:0 10px 10px;
+    padding:0 10px;
+    font-size:.75rem
+  }
 }

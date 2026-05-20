@@ -2,6 +2,7 @@
 const productList = document.getElementById("productList");
 const langToggle  = document.getElementById("langToggle");
 const catTabs     = document.getElementById("catTabs");
+const brandTabs   = document.getElementById("brandTabs");
 const searchInput = document.getElementById("searchInput");
 const catalogNotice = document.getElementById("catalogNotice");
 
@@ -219,6 +220,8 @@ const catIcons = {
 
 /* ── fixed category list ── */
 const fixedCategories = ["hoctap","lamviec"];
+const fixedBrands = ["all", "microsoft", "chatgpt", "google", "canva", "adobe", "capcut", "notion", "other"];
+const validCatalogCategories = ["all", ...fixedCategories];
 
 /* ── i18n ── */
 const T = {
@@ -435,6 +438,8 @@ const T = {
 let lang = localStorage.getItem("wst_lang") || "vi";
 let allProducts = [];
 let activeCat = "all";
+let activeBrand = "all";
+let catalogRouteDefaultsSynced = false;
 let currentUser = null; // { customer, wallets, subscriptions, orders, keyDeliveries, ... }
 let pendingPostAuthRedirect = null;
 let googleAuthInitialized = false;
@@ -2411,10 +2416,20 @@ function syncHeaderState() {
 }
 
 function syncCatalogRouteState() {
-  const forcedCategory = getForcedCatalogCategory();
-  activeCat = forcedCategory || activeCat || "all";
-  if (!forcedCategory && !["all", "hoctap", "lamviec"].includes(activeCat)) {
-    activeCat = "all";
+  const routeDefaultCategory = getForcedCatalogCategory() || "all";
+  if (!catalogRouteDefaultsSynced) {
+    activeCat = validCatalogCategories.includes(routeDefaultCategory) ? routeDefaultCategory : "all";
+    catalogRouteDefaultsSynced = true;
+  } else if (!validCatalogCategories.includes(activeCat)) {
+    activeCat = validCatalogCategories.includes(routeDefaultCategory) ? routeDefaultCategory : "all";
+  }
+  if (!fixedBrands.includes(activeBrand)) {
+    activeBrand = "all";
+  }
+  if (searchInput) {
+    searchInput.placeholder = lang === "en"
+      ? "Search products, keys, software, AI tools..."
+      : "Tìm sản phẩm, key, phần mềm, công cụ AI...";
   }
 }
 
@@ -2759,7 +2774,101 @@ function getCatalogCategory(product) {
   if (appId === "app-prompt-image-video" || appId === "app-bds-website-manager") return "lamviec";
   if (appId === "hair-spa-manager") return "lamviec";
   if (appId.includes("lamviec") || appId.includes("work")) return "lamviec";
-  return appId;
+  const hint = normalizeText(`${product?.name || ""} ${product?.id || ""} ${product?.appId || ""}`);
+  if (/(hoc|study|cap|lop|on tap|giao duc)/.test(hint)) return "hoctap";
+  if (/(lam viec|work|video|map|salon|bds|google|quan ly|creator|ai)/.test(hint)) return "lamviec";
+  return "lamviec";
+}
+
+function getCategoryFilterLabel(key) {
+  const labels = lang === "en"
+    ? { all: "All", hoctap: "Study", lamviec: "Work" }
+    : { all: "Tất cả", hoctap: "Học tập", lamviec: "Làm việc" };
+  return labels[key] || key;
+}
+
+function getBrandFilterLabel(key) {
+  const labels = lang === "en"
+    ? {
+        all: "All tools",
+        microsoft: "Microsoft",
+        chatgpt: "ChatGPT / OpenAI",
+        google: "Google",
+        canva: "Canva",
+        adobe: "Adobe",
+        capcut: "CapCut",
+        notion: "Notion",
+        other: "Other"
+      }
+    : {
+        all: "Tất cả công cụ",
+        microsoft: "Microsoft",
+        chatgpt: "ChatGPT / OpenAI",
+        google: "Google",
+        canva: "Canva",
+        adobe: "Adobe",
+        capcut: "CapCut",
+        notion: "Notion",
+        other: "Khác"
+      };
+  return labels[key] || key;
+}
+
+function normalizeBrandKey(value) {
+  const token = normalizeText(value).replace(/\s+/g, "");
+  if (!token) return "";
+  if (/(chatgpt|openai|gpt)/.test(token)) return "chatgpt";
+  if (/(microsoft|office|copilot|azure|m365|msword|excel|powerpoint)/.test(token)) return "microsoft";
+  if (/(google|gemini|workspace|gmail|gdrive|googledoc|googlesheet|googlemap)/.test(token)) return "google";
+  if (/canva/.test(token)) return "canva";
+  if (/(adobe|photoshop|illustrator|premiere|aftereffects|acrobat|lightroom)/.test(token)) return "adobe";
+  if (/capcut/.test(token)) return "capcut";
+  if (/notion/.test(token)) return "notion";
+  return "";
+}
+
+function getCatalogBrand(product) {
+  const explicitCandidates = [
+    product?.brand,
+    product?.vendor,
+    product?.provider,
+    product?.toolBrand,
+    product?.manufacturer,
+    product?.metadata?.brand,
+    product?.metadata?.vendor
+  ];
+
+  for (const candidate of explicitCandidates) {
+    const normalized = normalizeBrandKey(candidate);
+    if (normalized) return normalized;
+  }
+
+  const inferredHaystack = [
+    product?.name,
+    product?.id,
+    product?.appId,
+    product?.shortDescription,
+    product?.description
+  ]
+    .map(normalizeText)
+    .join(" ");
+
+  return normalizeBrandKey(inferredHaystack) || "other";
+}
+
+function getProductSearchHaystack(product) {
+  const productName = canonicalProductName(product);
+  return normalizeText([
+    productName,
+    product?.name,
+    product?.id,
+    product?.appId,
+    softwareCode(product?.appId),
+    product?.shortDescription,
+    product?.description,
+    getCategoryFilterLabel(getCatalogCategory(product)),
+    getBrandFilterLabel(getCatalogBrand(product))
+  ].join(" "));
 }
 
 function softwareIntro(product){
@@ -3409,32 +3518,47 @@ async function getApiHealthHint() {
 function buildTabs(){
   if (!catTabs) return;
 
-  const forcedCategory = getForcedCatalogCategory();
-  if (forcedCategory) {
-    catTabs.innerHTML = `<button class="cat-tab active is-locked" data-cat="${forcedCategory}" disabled>${t("cat_" + forcedCategory)}</button>`;
-    return;
-  }
-
-  catTabs.innerHTML = `<button class="cat-tab ${activeCat==="all"?"active":""}" data-cat="all">${t("cat_all")}</button>`;
-  fixedCategories.forEach(key => {
-    catTabs.innerHTML += `<button class="cat-tab ${activeCat===key?"active":""}" data-cat="${key}">${t("cat_"+key)}</button>`;
-  });
+  const categories = ["all", ...fixedCategories];
+  catTabs.innerHTML = categories
+    .map((key) => `<button class="cat-tab ${activeCat===key?"active":""}" data-cat="${key}">${getCategoryFilterLabel(key)}</button>`)
+    .join("");
   catTabs.querySelectorAll(".cat-tab").forEach(btn => {
-    btn.addEventListener("click", ()=>{ activeCat=btn.dataset.cat; renderProducts(); buildTabs(); });
+    btn.addEventListener("click", ()=>{
+      activeCat = btn.dataset.cat || "all";
+      renderProducts();
+      buildTabs();
+    });
+  });
+}
+
+function buildBrandTabs() {
+  if (!brandTabs) return;
+
+  brandTabs.innerHTML = fixedBrands
+    .map((key) => `<button class="cat-tab cat-tab--brand ${activeBrand===key?"active":""}" data-brand="${key}">${getBrandFilterLabel(key)}</button>`)
+    .join("");
+  brandTabs.querySelectorAll(".cat-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeBrand = btn.dataset.brand || "all";
+      renderProducts();
+      buildBrandTabs();
+    });
   });
 }
 
 function renderProducts(){
-  const q = (searchInput.value||"").toLowerCase();
+  const q = normalizeText(searchInput?.value || "");
   const filtered = allProducts.filter(p => {
     const matchScope = isCatalogScopeAllowedForRoute(p, currentRoute);
     if (!matchScope) {
       return false;
     }
-    const displayName = canonicalProductName(p).toLowerCase();
     const matchCat = activeCat==="all" || getCatalogCategory(p)===activeCat;
-    const matchQ   = !q || p.name.toLowerCase().includes(q) || displayName.includes(q) || (p.appId||"").toLowerCase().includes(q);
-    return matchCat && matchQ;
+    const productBrand = getCatalogBrand(p);
+    const matchBrand = activeBrand === "all" || productBrand === activeBrand;
+    const searchHaystack = getProductSearchHaystack(p);
+    const matchQ = !q || searchHaystack.includes(q);
+    return matchCat && matchBrand && matchQ;
   });
 
   productList.innerHTML = "";
@@ -3600,6 +3724,7 @@ async function loadCatalog(){
   allProducts = allProducts.map(p => ({ ...p, image: resolveProductImage(p) }));
   allProducts = buildStorefrontProducts(allProducts);
   buildTabs();
+  buildBrandTabs();
   renderProducts();
   renderHomeBanner();
 }
@@ -3665,6 +3790,7 @@ langToggle.addEventListener("click", ()=>{
   applyLang();
   if (routeNeedsCatalog()) {
     buildTabs();
+    buildBrandTabs();
     renderProducts();
   }
 });
