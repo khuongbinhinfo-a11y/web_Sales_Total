@@ -3,13 +3,6 @@
 /* ── fallback demo data (same as main.js) ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K", cycle:"one_time", price:2000, credits:1 },
-  { id:"cap01_standard_1year_3grades", appId:"app-study-12",  name:"CAP01 - Standard 01 năm / 03 lớp", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:199000,  credits:900 },
-  { id:"cap01_grade_1_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 01", cycle:"yearly", price:299000,  credits:900 },
-  { id:"cap01_grade_2_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 02", cycle:"yearly", price:299000,  credits:900 },
-  { id:"cap01_grade_3_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 03", cycle:"yearly", price:349000,  credits:900 },
-  { id:"cap01_grade_4_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 04", cycle:"yearly", price:349000,  credits:900 },
-  { id:"cap01_grade_5_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 05", cycle:"yearly", price:349000,  credits:900 },
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"map-pro", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:0 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly", price:399000, credits:2 },
@@ -34,6 +27,13 @@ const productImageLibrary = {
   video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật-2.jpeg"),
   bds: imagePathByName("Quản_lý_website_BDS-2.jpeg"),
   salon: imagePathByName("Salon-Manager.png")
+};
+
+const CAP01_REDIRECT_CARD = {
+  title: "Học Tập Thông Minh Cấp 01",
+  description: "Sản phẩm đã chuyển sang Học Chung Khối.",
+  cta: "Xem tại Học Chung Khối",
+  href: "https://hochungkhoi.site"
 };
 
 const SUPPORT_CHAT_URL = "https://zalo.me/0902964685";
@@ -492,7 +492,7 @@ const planBlueprintByApp = {
         features: [
           "Tất cả môn học",
           "01 gói tương ứng 01 key",
-          "Linh hoạt gói 01 lớp hoặc 03 lớp",
+          "Linh hoạt gói 1 lớp hoặc 3 lớp",
           "Ôn tập thông minh AI",
           "Bảng phụ huynh cơ bản",
           "Phòng trí nhớ + TTS",
@@ -529,11 +529,11 @@ const planPackageVariantByApp = {
     year: [
       {
         key: "cap01_standard_1year_3grades",
-        label: "Gói Standard 01 năm / 03 lớp",
-        standardName: "Standard 01 năm / 03 lớp",
+        label: "Gói 1 năm / 3 lớp",
+        standardName: "Gói 1 năm / 3 lớp",
         standardPrice: 599000,
         standardProductId: "cap01_standard_1year_3grades",
-        standardSaveText: "Chọn đúng 3 lớp",
+        standardSaveText: "Chọn 3 lớp phù hợp",
         requiredGradeCount: 3,
         requiresGradeSelection: true,
         standardCompare: {
@@ -543,14 +543,14 @@ const planPackageVariantByApp = {
       },
       {
         key: "cap01_grade_1class_1year",
-        label: "Gói 01 năm / 01 lớp",
-        standardName: "Gói 01 năm / 01 lớp",
+        label: "Gói 1 năm / 1 lớp",
+        standardName: "Gói 1 năm / 1 lớp",
         standardPrice: 299000,
         standardProductId: "cap01_grade_1_1year",
         requiredGradeCount: 1,
         requiresGradeSelection: true,
         selectedGrades: [1],
-        standardTag: "01 lớp",
+        standardTag: "1 lớp",
         standardImage: productImageLibrary.study01Alt,
         standardFeatures: ["Tất cả môn học", "Chọn 1 lớp phù hợp", "Tối đa 2 hồ sơ học sinh", "Không quảng cáo"],
         productIdByGrade: {
@@ -579,7 +579,7 @@ const planPackageVariantByApp = {
   }
 };
 const CAP01_GRADE_OPTIONS = [
-  { value: 0, label: "Lớp Lá" },
+  { value: 0, label: "Mầm non" },
   { value: 1, label: "Lớp 01" },
   { value: 2, label: "Lớp 02" },
   { value: 3, label: "Lớp 03" },
@@ -613,11 +613,39 @@ function softwareCode(appId) {
   const raw = String(appId || "").trim();
   if (!raw) return "APP-UNKNOWN";
   const normalized = raw.toLowerCase();
-  if (normalized === "app-study-12") return "APP-CAP01";
+  if (normalized === "app-study-12") return "APP-STUDY";
   if (normalized === "app-prompt-image-video") return "APP-VIDEO-CREATOR";
   if (normalized === "app-bds-website-manager") return "APP-BDS-WEB";
   if (normalized === "hair-spa-manager") return "APP-SALON";
   return raw.toUpperCase().replace(/[^A-Z0-9-]/g, "-");
+}
+
+function isCap01ProductId(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return (
+    normalized.startsWith("cap01_") ||
+    normalized.startsWith("prod-study-") ||
+    normalized === "standard_1year_1grade"
+  );
+}
+
+function renderCap01RedirectState() {
+  const loading = document.getElementById("pdLoading");
+  const notFound = document.getElementById("pdNotFound");
+  const content = document.getElementById("pdContent");
+  if (loading) loading.classList.add("is-hidden");
+  if (content) content.classList.add("is-hidden");
+  if (notFound) {
+    notFound.classList.remove("is-hidden");
+    notFound.innerHTML = `
+      <div class="pd-not-found-card" style="max-width:720px;margin:0 auto;padding:24px;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(30,41,59,.96));color:#e2e8f0">
+        <p style="margin:0 0 10px;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:#93c5fd">Chuyển hướng</p>
+        <h1 style="margin:0 0 12px;font-size:1.9rem;line-height:1.15">${CAP01_REDIRECT_CARD.title}</h1>
+        <p style="margin:0 0 18px;font-size:1rem;line-height:1.6;color:#cbd5e1">${CAP01_REDIRECT_CARD.description}</p>
+        <a href="${CAP01_REDIRECT_CARD.href}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:999px;background:#93c5fd;color:#0f172a;font-weight:700;text-decoration:none">${CAP01_REDIRECT_CARD.cta}</a>
+      </div>
+    `;
+  }
 }
 
 function shouldUseSameTabCheckout() {
@@ -647,7 +675,7 @@ function resolveDownloadAction(product, content) {
 
   if (appId === "app-study-12") {
     return {
-      href: customLink || "https://hoctap-cap-01.vercel.app/",
+      href: customLink || CAP01_REDIRECT_CARD.href,
       label: "⬇ Mở app học tập",
       external: true
     };
@@ -1477,7 +1505,7 @@ function updateBuyBtn(){
     btn.textContent = selectedPlanGradeIncomplete ? "✅ Chọn đủ lớp" : "⏳ Sắp mở bán";
     btn.disabled = true;
     if(note) note.textContent = selectedPlanGradeIncomplete
-      ? "Gói Standard 03 lớp bắt buộc chọn đúng 3 lớp trước khi thanh toán."
+      ? "Gói 3 lớp bắt buộc chọn đúng 3 lớp trước khi thanh toán."
       : "Chu kỳ/gói này chưa có mã sản phẩm đúng giá, tạm thời chưa thanh toán được.";
     return;
   }
@@ -1529,6 +1557,11 @@ async function loadProduct(productId){
 
   if(product && isInternalTestProduct(product)){
     product = null;
+  }
+
+  if (!product && isCap01ProductId(productId)) {
+    renderCap01RedirectState();
+    return;
   }
 
   if(!product){

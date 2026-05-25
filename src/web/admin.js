@@ -1817,7 +1817,9 @@ async function loadManualGrantCatalog(){
     const data = await res.json().catch(()=>({products:[]}));
     const products = (data.products || []).filter(p => p.active !== false);
     if(!products.length){
-      sel.innerHTML = '<option value="">Không có sản phẩm nào</option>';
+      sel.innerHTML = data.cap01MovedNotice
+        ? '<option value="">Cấp 01 đã chuyển sang Học Chung Khối.</option>'
+        : '<option value="">Không có sản phẩm nào</option>';
       return;
     }
     // Group by appId
@@ -3451,7 +3453,22 @@ function bindProductKeyManager() {
       const data = await res.json().catch(() => ({ summary: [] }));
       if (!res.ok) { summaryWrap.innerHTML = `<p style="color:var(--danger);padding:8px">${escapeHtml(data.message||"Lỗi tải summary")}</p>`; return; }
       const rows = data.summary || [];
-      if (!rows.length) { summaryWrap.innerHTML = `<p style="color:var(--muted);padding:8px;font-size:.85rem">Chưa có sản phẩm nào</p>`; return; }
+      if (!rows.length) {
+        summaryWrap.innerHTML = data.movedNotice
+          ? `<p style="color:var(--muted);padding:8px;font-size:.85rem">Cấp 01 đã chuyển sang Học Chung Khối.</p>`
+          : `<p style="color:var(--muted);padding:8px;font-size:.85rem">Chưa có sản phẩm nào</p>`;
+        if (importProductSel) {
+          importProductSel.innerHTML = data.movedNotice
+            ? '<option value="">Cấp 01 đã chuyển sang Học Chung Khối.</option>'
+            : '<option value="">-- Chọn sản phẩm --</option>';
+        }
+        if (detailProductSel) {
+          detailProductSel.innerHTML = data.movedNotice
+            ? '<option value="">Cấp 01 đã chuyển sang Học Chung Khối.</option>'
+            : '<option value="">-- Chọn sản phẩm --</option>';
+        }
+        return;
+      }
       summaryWrap.innerHTML = `<table class="data-table" style="font-size:.85rem">
         <thead><tr><th>App</th><th>Sản phẩm</th><th style="text-align:center;color:#16a34a">Còn lại</th><th style="text-align:center">Đã giao</th><th style="text-align:center">Tổng</th></tr></thead>
         <tbody>${rows.map(r=>`<tr>

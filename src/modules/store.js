@@ -2,6 +2,12 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { pool } = require("../db/pool");
+const {
+  CAP01_BLOCKED_APP_IDS,
+  CAP01_BLOCKED_PRODUCT_IDS,
+  isCap01AppId,
+  isCap01ProductId
+} = require("../data/cap01");
 
 function isR2PrivateArtifactsEnabledForRegistry() {
   const value = String(process.env.R2_PRIVATE_ARTIFACTS_ENABLED || "").trim().toLowerCase();
@@ -11,68 +17,7 @@ function isR2PrivateArtifactsEnabledForRegistry() {
 const LICENSE_RUNTIME_LEASE_SECONDS = 180;
 const appUpdatesRoot = path.join(__dirname, "..", "..", "public", "app-updates");
 const APP_REGISTRY_DELIVERY_TYPES = new Set(["website", "manifest_download", "manual_delivery"]);
-const CAP01_PRIMARY_APP_ID = "app-study-12";
-const CAP01_APP_ID_ALIASES = new Set(["app-study-12"]);
-const CAP01_SELLABLE_PRODUCT_IDS = new Set([
-  "cap01_standard_1year_3grades",
-  "cap01_grade_la_1year",
-  "cap01_grade_1_1year",
-  "cap01_grade_2_1year",
-  "cap01_grade_3_1year",
-  "cap01_grade_4_1year",
-  "cap01_grade_5_1year"
-]);
-const CAP01_PRODUCT_LICENSE_CONFIG = {
-  cap01_standard_1year_3grades: {
-    planId: "cap01_standard_1year_3grades",
-    packageName: "Goi Standard 01 nam - 03 lop",
-    requiredGradeCount: 3,
-    profileLimit: 3,
-    fixedGrades: []
-  },
-  cap01_grade_la_1year: {
-    planId: "cap01_grade_la_1year",
-    packageName: "Goi 01 nam - Lop La",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [0]
-  },
-  cap01_grade_1_1year: {
-    planId: "cap01_grade_1_1year",
-    packageName: "Goi 01 nam - Lop 01",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [1]
-  },
-  cap01_grade_2_1year: {
-    planId: "cap01_grade_2_1year",
-    packageName: "Goi 01 nam - Lop 02",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [2]
-  },
-  cap01_grade_3_1year: {
-    planId: "cap01_grade_3_1year",
-    packageName: "Goi 01 nam - Lop 03",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [3]
-  },
-  cap01_grade_4_1year: {
-    planId: "cap01_grade_4_1year",
-    packageName: "Goi 01 nam - Lop 04",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [4]
-  },
-  cap01_grade_5_1year: {
-    planId: "cap01_grade_5_1year",
-    packageName: "Goi 01 nam - Lop 05",
-    requiredGradeCount: 1,
-    profileLimit: 2,
-    fixedGrades: [5]
-  }
-};
+const CAP01_PRODUCT_LICENSE_CONFIG = {};
 
 function getCap01ProductLicenseConfig(productIdRaw) {
   const productId = String(productIdRaw || "").trim().toLowerCase();
@@ -81,16 +26,13 @@ function getCap01ProductLicenseConfig(productIdRaw) {
 
 function normalizePublicAppId(appIdRaw) {
   const normalized = String(appIdRaw || "").trim().toLowerCase();
-  if (CAP01_APP_ID_ALIASES.has(normalized)) {
-    return CAP01_PRIMARY_APP_ID;
-  }
   return normalized;
 }
 
 function resolveAppIdCandidates(appIdRaw) {
   const normalized = normalizePublicAppId(appIdRaw);
   if (!normalized) return [];
-  if (normalized === CAP01_PRIMARY_APP_ID) {
+  if (normalized === "app-study-12") {
     return ["app-study-12"];
   }
   return [normalized];
@@ -325,16 +267,18 @@ function summarizeAppRegistryChecks(checks) {
 
 function inferDefaultRegistrySeed(app) {
   const appId = String(app?.id || "").trim();
+  if (isCap01AppId(appId)) {
+    return null;
+  }
   const manifestRecord = readLocalAppManifest(appId);
   const manifest = manifestRecord?.manifest || {};
   const hasManifest = Boolean(manifestRecord);
-  const isStudyWebsite = appId === "app-study-12";
-  const deliveryType = isStudyWebsite ? "website" : (hasManifest ? "manifest_download" : "manual_delivery");
+  const deliveryType = hasManifest ? "manifest_download" : "manual_delivery";
   return {
     displayName: String(app?.name || appId || "Ứng dụng").trim(),
     deliveryType,
-    webUrl: isStudyWebsite ? "https://hoctap-cap-01.vercel.app" : "",
-    pricingUrl: isStudyWebsite ? "https://hoctap-cap-01.vercel.app/#/pricing" : "",
+    webUrl: "",
+    pricingUrl: "",
     downloadUrl: String(manifest.downloadPath || "").trim(),
     manifestUrl: hasManifest ? `/api/v1/app-updates/${appId}/manifest` : "",
     releaseNotesUrl: String(manifest.releaseNotesPath || "").trim(),
@@ -348,7 +292,13 @@ async function ensureAppRegistryRows() {
   );
 
   for (const row of appsResult.rows) {
+    if (isCap01AppId(row.id)) {
+      continue;
+    }
     const seed = inferDefaultRegistrySeed(row);
+    if (!seed) {
+      continue;
+    }
     await pool.query(
       `INSERT INTO app_registry(
          app_id, display_name, delivery_type, web_url, pricing_url,
@@ -421,6 +371,7 @@ async function queryAdminAppRegistryRows() {
        WHERE c.app_id = a.id
          AND c.check_batch_id = lbi.check_batch_id
      ) checks ON TRUE
+     WHERE a.id <> ALL($1::text[])
      GROUP BY a.id, a.name, a.slug, a.status, a.description,
               ar.display_name, ar.business_group, ar.delivery_type, ar.web_url, ar.pricing_url,
               ar.download_url, ar.manifest_url, ar.release_notes_url, ar.update_channel,
@@ -428,7 +379,8 @@ async function queryAdminAppRegistryRows() {
               ar.checklist_note, ar.health_status, ar.health_score, ar.last_verified_at,
               ar.created_at, ar.updated_at,
               checks.critical_count, checks.warning_count, checks.last_checked_at
-     ORDER BY a.created_at ASC`
+     ORDER BY a.created_at ASC`,
+    [Array.from(CAP01_BLOCKED_APP_IDS)]
   );
 
   return result.rows.map(mapAppRegistryRow);
@@ -573,6 +525,10 @@ async function getAdminAppRegistryDetail(appId) {
   const safeAppId = String(appId || "").trim();
   if (!safeAppId) {
     throw createStoreError("Thiếu appId", 400);
+  }
+
+  if (isCap01AppId(safeAppId)) {
+    throw createStoreError("Không tìm thấy app trong registry", 404);
   }
 
   const rows = await queryAdminAppRegistryRows();
@@ -1458,34 +1414,64 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
 
 async function getPublicCatalog() {
   const catalog = await getCatalog({ includeHidden: false });
+  const filteredProducts = (catalog.products || []).filter((product) => {
+    const productId = String(product?.id || "").trim().toLowerCase();
+    if (isCap01ProductId(productId)) {
+      return false;
+    }
+
+    const appId = String(product?.appId || "").trim().toLowerCase();
+    if (isCap01AppId(appId)) {
+      return false;
+    }
+
+    return true;
+  });
+  const filteredApps = (catalog.apps || []).filter((app) => !isCap01AppId(app?.id));
   return {
     ...catalog,
-    products: (catalog.products || []).filter((product) => {
-      const productId = String(product?.id || "").trim().toLowerCase();
-      if (productId === "prod-study-topup") {
-        return false;
-      }
-
-      const appId = String(product?.appId || "").trim().toLowerCase();
-      if (appId === "app-study-12") {
-        return CAP01_SELLABLE_PRODUCT_IDS.has(productId);
-      }
-
-      return true;
-    }),
+    products: filteredProducts,
+    apps: filteredApps,
+    cap01MovedNotice:
+      filteredProducts.length === 0 &&
+      ((catalog.products || []).length > 0 || (catalog.apps || []).some((app) => isCap01AppId(app?.id)))
   };
 }
 
 // BACKUP: was getCatalog({ includeHidden: true, includeInactive: true })
 // Changed 2026-05-06: exclude inactive products (prod-study-* legacy plans deactivated)
 async function getAdminCatalog() {
-  return getCatalog({ includeHidden: true, includeInactive: false });
+  const catalog = await getCatalog({ includeHidden: true, includeInactive: false });
+  const filteredProducts = (catalog.products || []).filter((product) => {
+    const productId = String(product?.id || "").trim().toLowerCase();
+    if (isCap01ProductId(productId)) {
+      return false;
+    }
+    const appId = String(product?.appId || "").trim().toLowerCase();
+    if (isCap01AppId(appId)) {
+      return false;
+    }
+    return true;
+  });
+  const filteredApps = (catalog.apps || []).filter((app) => !isCap01AppId(app?.id));
+  return {
+    ...catalog,
+    products: filteredProducts,
+    apps: filteredApps,
+    cap01MovedNotice:
+      filteredProducts.length === 0 &&
+      ((catalog.products || []).length > 0 || (catalog.apps || []).some((app) => isCap01AppId(app?.id)))
+  };
 }
 
 async function updateProductCardControl(productId, { saleStatus, saleNote, saleEnabled, salePrice, comparePrice, allowCouponStack }) {
   const safeProductId = String(productId || "").trim();
   if (!safeProductId) {
     throw createStoreError("Thiếu productId", 400);
+  }
+
+  if (isCap01ProductId(safeProductId)) {
+    throw createStoreError("Sản phẩm Cấp 01 đã chuyển sang Học Chung Khối.", 410);
   }
 
   const normalizedSaleStatus = normalizeProductSaleStatus(saleStatus);
@@ -1669,6 +1655,10 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
     if (!safeProductId) {
       throw createStoreError("Thieu productId", 400);
     }
+    const safeAppId = String(appId || "").trim();
+    if (isCap01AppId(safeAppId) || isCap01ProductId(safeProductId)) {
+      throw createStoreError("Sản phẩm Cấp 01 đã chuyển sang Học Chung Khối.", 410);
+    }
 
     const normalizedAddonProductIds = Array.from(
       new Set(
@@ -1685,7 +1675,7 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
               currency, credits, sale_status, sale_note
        FROM products
        WHERE app_id = $1 AND id = ANY($2::text[]) AND active = TRUE`,
-      [appId, queryProductIds]
+      [safeAppId, queryProductIds]
     );
 
     const productById = new Map((productResult.rows || []).map((row) => [row.id, row]));
@@ -1733,10 +1723,6 @@ async function createOrder({ customerId, appId, productId, discountCode, selecte
         planId: cap01Config.planId,
         packageName: cap01Config.packageName
       };
-    }
-
-    if (String(product?.id || '').trim().toLowerCase() === 'prod-study-topup') {
-      throw createStoreError("Top-up 300 Credit đã tạm dừng bán trên web", 409);
     }
 
     const itemEntries = queryProductIds.map((id) => {
@@ -4321,6 +4307,13 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
     currency: productRow.currency,
     credits: Number(productRow.credits)
   };
+  if (isCap01AppId(product.appId) || isCap01ProductId(product.id)) {
+    const err = createStoreError(
+      "Cấp 01 đã chuyển sang Học Chung Khối. Không tạo key mới tại web Ứng Dụng Thông Minh.",
+      410
+    );
+    throw err;
+  }
 
   const client = await pool.connect();
   try {
@@ -4900,17 +4893,31 @@ async function listProductKeySummary() {
      GROUP BY p.id, p.name, p.app_id
      ORDER BY p.app_id, p.id`
   );
-  return result.rows.map(r => ({
-    productId: r.product_id,
-    productName: r.product_name,
-    appId: r.app_id,
-    available: Number(r.available),
-    delivered: Number(r.delivered),
-    total: Number(r.total)
-  }));
+  return result.rows
+    .filter((row) => !isCap01AppId(row.app_id) && !isCap01ProductId(row.product_id))
+    .map((r) => ({
+      productId: r.product_id,
+      productName: r.product_name,
+      appId: r.app_id,
+      available: Number(r.available),
+      delivered: Number(r.delivered),
+      total: Number(r.total)
+    }));
 }
 
 async function listProductKeys(productId, { status = null, limit = 200, offset = 0 } = {}) {
+  const productMeta = await pool.query(
+    `SELECT id, app_id
+     FROM products
+     WHERE id = $1
+     LIMIT 1`,
+    [productId]
+  );
+  const productRow = productMeta.rows[0];
+  if (!productRow || isCap01AppId(productRow.app_id) || isCap01ProductId(productRow.id)) {
+    return [];
+  }
+
   const params = [productId];
   let statusClause = "";
   if (status) {
@@ -4937,6 +4944,21 @@ async function listProductKeys(productId, { status = null, limit = 200, offset =
 }
 
 async function bulkImportProductKeys(productId, keyValues) {
+  const productMeta = await pool.query(
+    `SELECT id, app_id
+     FROM products
+     WHERE id = $1
+     LIMIT 1`,
+    [productId]
+  );
+  const productRow = productMeta.rows[0];
+  if (!productRow) {
+    throw createStoreError("Không tìm thấy sản phẩm", 404);
+  }
+  if (isCap01AppId(productRow.app_id) || isCap01ProductId(productRow.id)) {
+    throw createStoreError("Cấp 01 đã chuyển sang Học Chung Khối. Không import key mới tại web Ứng Dụng Thông Minh.", 410);
+  }
+
   const unique = [...new Set(keyValues.map(k => String(k).trim()).filter(Boolean))];
   if (!unique.length) return { inserted: 0, skipped: 0 };
   let inserted = 0;
@@ -4955,6 +4977,22 @@ async function bulkImportProductKeys(productId, keyValues) {
 }
 
 async function deleteProductKey(keyId) {
+  const keyMeta = await pool.query(
+    `SELECT pk.id, p.id AS product_id, p.app_id
+     FROM product_keys pk
+     JOIN products p ON p.id = pk.product_id
+     WHERE pk.id = $1::uuid
+     LIMIT 1`,
+    [keyId]
+  );
+  const keyRow = keyMeta.rows[0];
+  if (!keyRow) {
+    return null;
+  }
+  if (isCap01AppId(keyRow.app_id) || isCap01ProductId(keyRow.product_id)) {
+    throw createStoreError("Key Cấp 01 đang ở chế độ read-only.", 410);
+  }
+
   const result = await pool.query(
     `DELETE FROM product_keys
      WHERE id = $1::uuid AND status = 'available'

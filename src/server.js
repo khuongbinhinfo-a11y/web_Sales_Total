@@ -138,6 +138,14 @@ const {
   getR2ArtifactStream
 } = require("./modules/artifactStorage");
 const { resolveLicenseFeatures, inferPlanTierFromLicense } = require("./modules/licenseFeatures");
+const {
+  buildCap01MovedPayload,
+  buildCap01MovedResponse,
+  CAP01_BLOCKED_APP_IDS,
+  CAP01_BLOCKED_PRODUCT_IDS,
+  isCap01AppId,
+  isCap01ProductId
+} = require("./data/cap01");
 const APP_MANIFEST_REGISTRY = require("./data/appUpdateManifests");
 
 const app = express();
@@ -1082,6 +1090,9 @@ function normalizeCap01AppId(appIdRaw) {
 async function handleCap01LicenseVerifyLikeRequest(req, res) {
   const inputAppId = normalizeCap01AppId(req.body?.appId);
   const appId = inputAppId === 'app-study-12' ? 'app-study-12' : inputAppId;
+  if (isCap01AppId(appId)) {
+    return buildCap01MovedResponse(res);
+  }
   const licenseKey = String(req.body?.licenseKey || '').trim().toUpperCase();
   const deviceId = String(req.body?.deviceId || '').trim() || null;
   const deviceName = String(req.body?.deviceName || '').trim() || null;
@@ -1376,7 +1387,7 @@ function normalizeManifestPublicPaths(manifest) {
 
 const ACCOUNT_DOWNLOAD_TICKET_TTL_SECONDS = 5 * 60;
 const ACCOUNT_SUPPORT_URL = "https://zalo.me/0902964685";
-const ACCOUNT_STUDY_APP_URL = "https://hoctap-cap-01.vercel.app/#/pricing";
+const ACCOUNT_STUDY_APP_URL = "https://hochungkhoi.site";
 const ACCOUNT_DOWNLOAD_APP_META = {
   "app-study-12": {
     appName: "Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học",
@@ -1407,7 +1418,7 @@ const ACCOUNT_DOWNLOAD_APP_META = {
     appName: "Phần mềm học tập khối cấp 12",
     icon: "🎓",
     deliveryType: "website",
-    websiteUrl: "https://hoctap-cap-01.vercel.app/",
+    websiteUrl: "https://hochungkhoi.site",
     actionLabel: "Mở trang tải app"
   },
   lamviec: {
@@ -2198,6 +2209,9 @@ async function handleCreateOrder(req, res) {
   const session = getCustomerFromSession(req);
   const customerId = session ? session.customerId : (req.body.customerId || "cus-demo");
   const { appId, productId, discountCode, selectedGrades, addonProductIds, metadata } = req.body;
+  if (isCap01AppId(appId) || isCap01ProductId(productId)) {
+    return buildCap01MovedResponse(res);
+  }
   const { order, product, addons } = await createOrder({
     customerId,
     appId,
@@ -2376,6 +2390,10 @@ app.post(
   asyncHandler(async (req, res) => {
     const appId  = String(req.params.appId || "").trim().toLowerCase();
     const action = String(req.body?.action || "").trim().toLowerCase().replace(/_/g, "");
+
+    if (isCap01AppId(appId)) {
+      return buildCap01MovedResponse(res);
+    }
 
     if (action === "health") {
       return res.json({ ok: true, code: "healthy", message: "License server is ready." });
@@ -3314,6 +3332,9 @@ app.post(
     if (!appId || !licenseKey) {
       return res.status(400).json({ success: false, error: "appId and licenseKey are required" });
     }
+    if (isCap01AppId(appId)) {
+      return buildCap01MovedResponse(res);
+    }
 
     if (!deviceId) {
       return res.status(400).json({
@@ -3791,7 +3812,17 @@ app.get(
   requireAdminAuth,
   asyncHandler(async (req, res) => {
     const summary = await listProductKeySummary();
-    return res.json({ summary });
+    let movedNotice = false;
+    if (summary.length === 0) {
+      const hiddenResult = await pool.query(
+        `SELECT COUNT(*)::int AS cnt
+         FROM products
+         WHERE app_id = ANY($1::text[]) OR id = ANY($2::text[])`,
+        [Array.from(CAP01_BLOCKED_APP_IDS), Array.from(CAP01_BLOCKED_PRODUCT_IDS)]
+      );
+      movedNotice = Number(hiddenResult.rows[0]?.cnt || 0) > 0;
+    }
+    return res.json({ summary, movedNotice });
   })
 );
 
@@ -3813,14 +3844,26 @@ app.post(
   "/api/admin/product-keys/import",
   requireAdminPermission("admins:write"),
   asyncHandler(async (req, res) => {
-    const productId = String(req.body?.productId || "").trim();
-    const raw = String(req.body?.keys || "").trim();
-    if (!productId) return res.status(400).json({ message: "productId la bat buoc" });
-    if (!raw) return res.status(400).json({ message: "Danh sach key khong duoc trong" });
-    const keyValues = raw.split(/[\n,]+/).map(k => k.trim()).filter(Boolean);
-    if (keyValues.length > 1000) return res.status(400).json({ message: "Toi da 1000 key moi lan import" });
-    const result = await bulkImportProductKeys(productId, keyValues);
-    return res.json({ ok: true, ...result });
+    try {
+      const productId = String(req.body?.productId || "").trim();
+      const raw = String(req.body?.keys || "").trim();
+      if (!productId) return res.status(400).json({ message: "productId la bat buoc" });
+      if (!raw) return res.status(400).json({ message: "Danh sach key khong duoc trong" });
+      const keyValues = raw.split(/[\n,]+/).map(k => k.trim()).filter(Boolean);
+      if (keyValues.length > 1000) return res.status(400).json({ message: "Toi da 1000 key moi lan import" });
+      const result = await bulkImportProductKeys(productId, keyValues);
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      if (err?.statusCode === 410) {
+        return res.status(410).json({
+          ok: false,
+          code: "CAP01_MOVED_TO_HOCHUNGKHOI",
+          message: "Cấp 01 đã chuyển sang Học Chung Khối. Không tạo key mới tại web Ứng Dụng Thông Minh.",
+          redirectUrl: "https://hochungkhoi.site"
+        });
+      }
+      throw err;
+    }
   })
 );
 
@@ -4710,6 +4753,14 @@ app.post(
       });
       return res.json({ ok: true, ...result });
     } catch (err) {
+      if (err?.statusCode === 410) {
+        return res.status(410).json({
+          ok: false,
+          code: "CAP01_MOVED_TO_HOCHUNGKHOI",
+          message: "Cấp 01 đã chuyển sang Học Chung Khối. Không tạo key mới tại web Ứng Dụng Thông Minh.",
+          redirectUrl: "https://hochungkhoi.site"
+        });
+      }
       const status = err.statusCode || 500;
       return res.status(status).json({ message: err.message });
     }

@@ -118,13 +118,6 @@ const R2_PUBLIC_BASE = "https://cdn.ungdungthongminh.shop";
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
   { id:"demo-test2k", appId:"lamviec", name:"Gói test thanh toán 2K",     cycle:"one_time", price:2000,   credits:1 },
-  { id:"cap01_standard_1year_3grades", appId:"app-study-12",  name:"CAP01 - Standard 01 năm / 03 lớp", cycle:"yearly", price:599000,  credits:1800 },
-  { id:"cap01_grade_la_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp Lá", cycle:"yearly", price:199000,  credits:900 },
-  { id:"cap01_grade_1_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 01", cycle:"yearly", price:299000,  credits:900 },
-  { id:"cap01_grade_2_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 02", cycle:"yearly", price:299000,  credits:900 },
-  { id:"cap01_grade_3_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 03", cycle:"yearly", price:349000,  credits:900 },
-  { id:"cap01_grade_4_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 04", cycle:"yearly", price:349000,  credits:900 },
-  { id:"cap01_grade_5_1year", appId:"app-study-12",  name:"CAP01 - 01 năm / Lớp 05", cycle:"yearly", price:349000,  credits:900 },
   { id:"demo-hoc12", appId:"app-cap12", name:"Phần mềm học tập khối cấp 12", cycle:"one_time", price:2000, credits:1 },
   { id:"demo-map",   appId:"map-pro", name:"Phần Mềm Quét Data Khách Hàng Trên Google Map", cycle:"one_time", price:499000, credits:0 },
   { id:"demo-cv1",   appId:"lamviec", name:"Phần mềm tạo video đồng bộ nhân vật", cycle:"monthly",  price:399000, credits:2 },
@@ -2747,7 +2740,7 @@ function softwareCode(appId) {
   const raw = String(appId || "").trim();
   if (!raw) return "APP-UNKNOWN";
   const normalized = raw.toLowerCase();
-  if (normalized === "app-study-12") return "APP-CAP01";
+  if (normalized === "app-study-12") return "APP-STUDY";
   if (normalized === "app-prompt-image-video") return "APP-VIDEO-CREATOR";
   if (normalized === "app-bds-website-manager") return "APP-BDS-WEB";
   if (normalized === "hair-spa-manager") return "APP-SALON";
@@ -3000,29 +2993,49 @@ function getProductDisplayPrice(product) {
   };
 }
 
-function pickStudyCap01Representative(products) {
-  const preferredIds = [
-    "cap01_standard_1year_3grades",
-    "cap01_grade_la_1year",
-    "cap01_grade_1_1year",
-    "cap01_grade_2_1year",
-    "cap01_grade_3_1year",
-    "cap01_grade_4_1year",
-    "cap01_grade_5_1year"
-  ];
-  for (const id of preferredIds) {
-    const found = products.find((item) => item.id === id);
-    if (found) return found;
-  }
-  return products[0] || null;
+const CAP01_REDIRECT_CARD = {
+  title: "Học Tập Thông Minh Cấp 01",
+  description: "Sản phẩm đã chuyển sang Học Chung Khối.",
+  cta: "Xem tại Học Chung Khối",
+  href: "https://hochungkhoi.site"
+};
+
+function isCap01CatalogProduct(product) {
+  const id = normalizeText(product?.id);
+  const appId = normalizeText(product?.appId);
+  const name = normalizeText(product?.name);
+  return (
+    appId === "app study 12" ||
+    appId === "hoctap cap 01" ||
+    id === "cap01 beta year 299" ||
+    /cap01|khoi cap 01|tien tieu hoc|prod study/.test(`${id} ${appId} ${name}`)
+  );
 }
 
 function buildStorefrontProducts(products) {
   const list = Array.isArray(products) ? products.slice() : [];
-  const studyFamily = list.filter(isStudyCap01Family);
-  const others = list.filter((item) => !isStudyCap01Family(item));
-  const representative = pickStudyCap01Representative(studyFamily);
-  return representative ? [representative, ...others] : others;
+  return list.filter((item) => !isCap01CatalogProduct(item));
+}
+
+function renderCap01RedirectCardHtml() {
+  return `
+    <article class="p-card p-card--redirect">
+      <div class="p-card-img">
+        <div class="p-card-img-fallback">
+          <span class="p-card-img-kicker">CHUYỂN HƯỚNG</span>
+          <strong>${escapeHtml(CAP01_REDIRECT_CARD.title)}</strong>
+          <p>${escapeHtml(CAP01_REDIRECT_CARD.description)}</p>
+        </div>
+      </div>
+      <div class="p-card-body">
+        <div class="p-card-topline">
+          <span class="p-card-cat">Học chung khối</span>
+        </div>
+        <h3 class="p-card-name">${escapeHtml(CAP01_REDIRECT_CARD.title)}</h3>
+        <p class="p-card-intro">${escapeHtml(CAP01_REDIRECT_CARD.description)}</p>
+      </div>
+      <a class="p-card-btn" href="${escapeHtml(CAP01_REDIRECT_CARD.href)}" target="_blank" rel="noopener">${escapeHtml(CAP01_REDIRECT_CARD.cta)}</a>
+    </article>`;
 }
 
 /* ═══════════════ AUTH STATE ═══════════════ */
@@ -3594,9 +3607,8 @@ function renderProducts(){
     return matchCat && matchBrand && matchQ;
   });
 
-  productList.innerHTML = "";
+  productList.innerHTML = renderCap01RedirectCardHtml();
   if (!filtered.length) {
-    productList.innerHTML = `<article class="catalog-empty-card"><strong>${t("notice_search_empty")}</strong><p>${t("notice_fallback")}</p></article>`;
     return;
   }
 
