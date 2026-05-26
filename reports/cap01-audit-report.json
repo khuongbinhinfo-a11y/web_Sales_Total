@@ -1,0 +1,1726 @@
+{
+  "generatedAt": "2026-05-25T08:06:06.321Z",
+  "appIds": [
+    "app-study-12",
+    "hoctap-cap-01"
+  ],
+  "productIds": [
+    "cap01_standard_1year_3grades",
+    "cap01_grade_la_1year",
+    "cap01_grade_1_1year",
+    "cap01_grade_2_1year",
+    "cap01_grade_3_1year",
+    "cap01_grade_4_1year",
+    "cap01_grade_5_1year",
+    "prod-study-month",
+    "prod-study-year",
+    "prod-study-premium-month",
+    "prod-study-premium-year",
+    "prod-study-standard-lifetime",
+    "prod-study-premium-lifetime",
+    "prod-study-topup",
+    "standard_1year_1grade",
+    "cap01_beta_year_299"
+  ],
+  "tables": {
+    "apps": {
+      "exists": true,
+      "count": 2
+    },
+    "app_registry": {
+      "exists": true,
+      "count": 2
+    },
+    "products": {
+      "exists": true,
+      "count": 17
+    },
+    "orders": {
+      "exists": true,
+      "count": 101
+    },
+    "order_items": {
+      "exists": false,
+      "count": 0
+    },
+    "payment_transactions": {
+      "exists": true,
+      "count": 6
+    },
+    "payment_webhook_events": {
+      "exists": true,
+      "count": 9
+    },
+    "subscriptions": {
+      "exists": true,
+      "count": 1
+    },
+    "entitlements": {
+      "exists": true,
+      "count": 1
+    },
+    "credit_wallets": {
+      "exists": true,
+      "count": 3
+    },
+    "credit_ledger": {
+      "exists": true,
+      "count": 6
+    },
+    "product_keys": {
+      "exists": true,
+      "count": 17
+    },
+    "order_key_deliveries": {
+      "exists": true,
+      "count": 4
+    },
+    "app_licenses": {
+      "exists": true,
+      "count": 80
+    },
+    "app_license_runtime_leases": {
+      "exists": true,
+      "count": 23
+    },
+    "app_registry_checks": {
+      "exists": true,
+      "count": 0
+    },
+    "app_registry_audit_logs": {
+      "exists": true,
+      "count": 0
+    },
+    "ai_usage_logs": {
+      "exists": true,
+      "count": 0
+    },
+    "email_notification_events": {
+      "exists": true,
+      "count": 2
+    }
+  },
+  "relatedCustomers": [
+    {
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "fullName": "Bình Khương",
+      "testLike": false
+    },
+    {
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "fullName": "Bình Khương",
+      "testLike": false
+    },
+    {
+      "customerId": "cus-demo",
+      "email": "demo@user.local",
+      "fullName": "Demo Customer",
+      "testLike": true
+    },
+    {
+      "customerId": "cus-1776842658846",
+      "email": "gustavjung01@gmail.com",
+      "fullName": "Khuong Duy",
+      "testLike": false
+    }
+  ],
+  "realDataFindings": [
+    {
+      "kind": "paid_order",
+      "orderId": "746f19e8-6762-4b8f-b839-8bd015b48ac1",
+      "orderCode": "WST-MPATZSWG-0354",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_la_1year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "52a4e149-8de1-4018-a29c-a93aba86a01d",
+      "orderCode": "WST-MPATVHQR-7CA5",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_4_1year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "d35c09cc-b917-4262-8705-d21ebc38ee3c",
+      "orderCode": "WST-MP3PIIRO-7E65",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_4_1year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "b4190803-2c93-40ff-8ef9-e1e3fe36e20b",
+      "orderCode": "WST-MOV5XY3K-5FAC",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_standard_1year_3grades"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "4caad1a2-0ae5-48dd-b85c-feb29299c2ca",
+      "orderCode": "WST-MOV2FNZ4-33A8",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_standard_1year_3grades"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "5f3ec5f7-0cad-412f-b2ba-72526bc7c15f",
+      "orderCode": "WST-MOSSKRRA-A4E0",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "91a3d487-0eeb-490a-a24d-68b7078e90f5",
+      "orderCode": "WST-MOR32V1Z-8A20",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_la_1year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "22e56ef8-bcaa-4ec4-804a-99b2eb26dfd3",
+      "orderCode": "WST-MOQ1HQAQ-6AC5",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "1b0752a8-79ee-49ee-aaa7-a3e4dd752665",
+      "orderCode": "WST-MOQ0I9SQ-CB09",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6afb4f59-f427-45dd-991a-e71e6f507e64",
+      "orderCode": "WST-MOQ0BYHS-A088",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "2ab5045e-f47d-4a89-ae67-23df19f5dfcd",
+      "orderCode": "WST-MOQ06H9C-97DF",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "19fe6bca-db05-4d78-9d72-d8d5265a4dc4",
+      "orderCode": "WST-MOPZQYNF-5374",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "ef4770fc-b706-42d4-ba7a-5620bda1eb70",
+      "orderCode": "WST-MOPYF60P-30BC",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "985c9b55-4b76-42b9-9c46-a35e06432bb8",
+      "orderCode": "WST-MOO3FPLF-F1B7",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "0957d395-c03c-45e9-8724-75349d380e94",
+      "orderCode": "WST-MOJW7IC3-ECB4",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "17070071-f00f-4fd3-8cc5-5994de53c2db",
+      "orderCode": "WST-MOJQ2S2A-CF75",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "61b870d3-32b2-49fe-97c5-c755cc08efb8",
+      "orderCode": "WST-MOJNFNH2-55D4",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "1ea789ae-eb08-46c2-ac6e-dac3598290d5",
+      "orderCode": "WST-MOHYO9SU-004A",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6f1db35d-0e25-4fe0-90f8-ca2459b537a4",
+      "orderCode": "WST-MOG07YQA-7B59",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "74505123-076e-4309-811b-0eaa398df80b",
+      "orderCode": "WST-MOFQVQWB-B5E4",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "03a1d488-a849-4390-8602-70123c6fa075",
+      "orderCode": "WST-MOFQUL5L-F67C",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "629975fa-7528-40df-921e-5f0be0fad3bd",
+      "orderCode": "WST-MOFQSQKW-ABCF",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "a177e6e2-5f52-41b3-a6c9-1e507467edd4",
+      "orderCode": "WST-MOFQR19A-8292",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6c421fe6-556d-483b-b3f4-649bdcc7d19a",
+      "orderCode": "WST-MOFQPEYJ-2A31",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "fd8ffc21-9c4e-4717-a0dc-78c1ed24b836",
+      "orderCode": "WST-MOFQL4TK-92D7",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "38e83d6b-ea8e-45e9-85b4-1bd9afae87f0",
+      "orderCode": "WST-MOFIH8OP-EC1D",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "f4052bf9-cae7-47ed-915c-50d13dd5287a",
+      "orderCode": "WST-MOFF5XQN-CCFE",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "47023bbf-6df8-4edf-84c7-c0a7e631b031",
+      "orderCode": "WST-MOF5ZKSN-4C9E",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "14f42b72-2340-4b52-b6ef-0b173a0bead5",
+      "orderCode": "WST-MOEK0KMN-F115",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "50425d6f-383d-46c4-8dc5-860aa5888d80",
+      "orderCode": "WST-MOEJYBW3-E3E3",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "d6e5ccb5-ffac-4538-b985-0b99967ff3f1",
+      "orderCode": "WST-MOEBMGWH-8826",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "343306b8-2ce7-4cdc-88e4-e732c22bc426",
+      "orderCode": "WST-MOE92N63-D5C3",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "1ff2ebf9-fa8f-4aa0-9b3a-fad7c8f8cd7a",
+      "orderCode": "WST-MOE8NAMD-0B55",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "4f0a90bc-9bd0-48d5-9939-d49e2af14d76",
+      "orderCode": "WST-MOE8FYAG-307E",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "3c9f3e44-0a73-4588-8c14-6e752fab80bb",
+      "orderCode": "WST-MODYS00I-3B11",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "2422f155-80a0-476d-ba13-e7d16cbc85cd",
+      "orderCode": "WST-MODYQERS-9001",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "deebc494-79d8-488f-bc11-121b5ed67587",
+      "orderCode": "WST-MODYFCWR-4D5A",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6d21806e-edb7-401c-a2e8-6d75ff97101d",
+      "orderCode": "WST-MODXVSRB-BE0D",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "534134ca-d738-4937-942f-bb565f3431af",
+      "orderCode": "WST-MODWMDRI-6CB1",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "e9842933-cd71-4ca6-aa4a-b257431a023e",
+      "orderCode": "WST-MODW2MNZ-18F9",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "a3d4330b-f34f-4c57-98af-56f53842d80d",
+      "orderCode": "WST-MOD5ABSO-38F2",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "7dc4f7cc-16ca-4a51-ac39-26682652d519",
+      "orderCode": "WST-MOD59F0Q-B445",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-topup"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "8a6876ab-c4ed-4fd6-a101-b6307056c530",
+      "orderCode": "WST-MOD57NV0-9241",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "43e88fde-c108-4c4b-a42a-de3edf0a0e56",
+      "orderCode": "WST-MOD55U27-C9CD",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "74873140-c315-4faa-8ff6-3c3fed2ff88b",
+      "orderCode": "WST-MOD53FCD-6E10",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6465e561-431a-40ea-ad10-2a79aebd0237",
+      "orderCode": "WST-MOD50XYN-2195",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "27d754ee-c36c-4f36-8eed-c0dd9459d7a1",
+      "orderCode": "WST-MOD4XT6K-2DC3",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "408a362e-bfb4-47d2-a987-ca0b0372e73d",
+      "orderCode": "WST-MOD4IB2W-7D61",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "62dd21ea-263c-4845-b9d4-fc626df299d8",
+      "orderCode": "WST-MOD401HB-F0DD",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "8dd07312-7dcb-4b81-aa78-a5a9825272ee",
+      "orderCode": "WST-MOD3VO1S-0320",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "51ee7949-4d41-47e9-ab14-f5a46acdfdbe",
+      "orderCode": "WST-MOD3V1ZW-5871",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "8ebbf485-0e02-4c04-bb51-52cb9d9111a9",
+      "orderCode": "WST-MOD32E47-350F",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "9ebcd97d-2bd7-47cf-b7c9-f72db1de7887",
+      "orderCode": "WST-MOD31F47-2EFF",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "9bb152a6-e144-4ef5-8dfb-0748b8037da8",
+      "orderCode": "WST-MOD2YMQP-509C",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "9793806a-c3c7-41cd-b7f7-e0ae6e17a800",
+      "orderCode": "WST-MOD04W33-7E28",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "82eea3e2-50b8-4ec8-a537-da1437f496cd",
+      "orderCode": "WST-MOD01DXH-BE15",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "f1fbc2e8-427c-44e8-94fa-98a5eac02b88",
+      "orderCode": "WST-MOCXP9YI-7A6C",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "58e1350e-03dd-4f6f-8b14-2da47788707a",
+      "orderCode": "WST-MOCXI4XR-CEC1",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "c6edbb3b-cecf-46d0-8992-5996edcb8daa",
+      "orderCode": "WST-MOCX8Z9X-8391",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "bedd874e-2924-4c49-94ef-d378572ef4e4",
+      "orderCode": "WST-MOCWGVBC-5A1B",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "c7fc7cae-0b3a-4e32-ac7c-aa1927a3ddf6",
+      "orderCode": "WST-MOCWD9HS-DA38",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "addbf56c-c122-49d3-bd4a-14dd73750808",
+      "orderCode": "WST-MOCWCSY6-E01C",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "c4a62da6-a4b7-4280-baa4-0f6f7eddd74b",
+      "orderCode": "WST-MOCWCJTY-A4C2",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "d98ea24a-c2d0-4577-8752-7e7548430d38",
+      "orderCode": "WST-MOCWBHI1-5451",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-topup"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "6d12e536-1389-4e57-aade-dc0ffebc1d9e",
+      "orderCode": "WST-MOCVQ2ID-99D7",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "e88e0193-d151-4941-a7c3-347dfa328088",
+      "orderCode": "WST-MOCVPUL1-9ACB",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "e70feb43-fcdf-40c2-9bc2-82edfda62b5b",
+      "orderCode": "WST-MOCU9YKD-10AF",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "2588b881-e8eb-400b-950b-85d19e6c4a8b",
+      "orderCode": "WST-MOCU9DMQ-25E4",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "5805980f-2bbf-4b0f-ade0-7c1ff2df2a86",
+      "orderCode": "WST-MOCNE15K-2615",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "7c247f7b-e587-416b-b1da-98b7b4846f3c",
+      "orderCode": "WST-MOCMVCRU-A23E",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "4a568252-06e1-4983-a8ca-b44525adcd64",
+      "orderCode": "WST-MOC8DDPL-7787",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "3e830a27-ca32-4e13-8ebc-f1b30a9aafe0",
+      "orderCode": "WST-MOC7ZUFQ-BD8F",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "723bf4be-0cde-40db-a8e6-8b097d0d08d5",
+      "orderCode": "WST-MOC7FHIK-34FB",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "de8fc92c-4ae5-4de3-8b11-608546480a02",
+      "orderCode": "WST-MOBQV3MS-D2A0",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "a88b0cbd-2718-4e3d-a035-826fd7c09a47",
+      "orderCode": "WST-MOBOIF2W-06D0",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "1acf9c5b-4a5e-47ba-97af-68bb0a83ff32",
+      "orderCode": "WST-MOBIVC04-8D53",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "89ae3b22-c76f-4465-b4c3-df7b27b58b21",
+      "orderCode": "WST-MOB8JH6Z-34FF",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "2d669cf5-c025-45c0-9572-53032ad9bb9c",
+      "orderCode": "WST-MO8K6V9P-96AC",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "e25fd41b-86eb-466d-a449-b2d099e071f6",
+      "orderCode": "WST-MO8JJI7V-D6B7",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "88c57210-f24b-428b-9ec3-e45ef180cd52",
+      "orderCode": "WST-MO8J4W44-88E9",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "paid_order",
+      "orderId": "1b9f9196-3016-4d65-84a8-177400f9ef52",
+      "orderCode": "WST-MO8GAHLP-92F8",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_transaction",
+      "transactionId": "abbd9006-6345-4f17-ab3a-d65dc292a2c8",
+      "providerTransactionId": "2522",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_transaction",
+      "transactionId": "4271466f-b53f-46c1-a407-22ae274ba5be",
+      "providerTransactionId": "2521",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_transaction",
+      "transactionId": "cfee1809-e17c-4e5a-8c95-fe3977271de9",
+      "providerTransactionId": "2520",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_transaction",
+      "transactionId": "4e5a2f88-e86c-4435-917e-a23812c7bac9",
+      "providerTransactionId": "manual_test_1776765770000",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_webhook_event",
+      "eventId": "52468486",
+      "providerTransactionId": "2522",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_webhook_event",
+      "eventId": "52463291",
+      "providerTransactionId": "2521",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_webhook_event",
+      "eventId": "52460746",
+      "providerTransactionId": "2520",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "payment_webhook_event",
+      "eventId": "manual_test_1776765770000_WSTMO8GAHLP92F8",
+      "providerTransactionId": "manual_test_1776765770000",
+      "status": "paid",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "abc58fe4-2391-4f60-aafa-f7a0e1a67f70",
+      "licenseKey": "WSTL-MPATZT8H-C15687",
+      "status": "inactive",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_la_1year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "410f21e2-e1ca-4fa3-8d01-f3d9b884a1c5",
+      "licenseKey": "WSTL-MPATVI4D-12A9C8",
+      "status": "inactive",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_4_1year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "41e288ec-8b59-4eb0-9471-c8c21dbe9aab",
+      "licenseKey": "WSTL-MP3PIJ4O-9E3301",
+      "status": "inactive",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_4_1year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "c06b63ea-9886-406e-be7a-0e99ed936af5",
+      "licenseKey": "WSTL-MOV5XYFD-4D82CE",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_standard_1year_3grades"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "ac22b312-fc27-4a2d-b83b-61e2b2565035",
+      "licenseKey": "WSTL-MOV2FOBW-86CE71",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_standard_1year_3grades"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "2a4572b4-52d3-4398-9ca2-b49e24059e6c",
+      "licenseKey": "WSTL-MOSSKS4J-088454",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "97e9ad71-d0e3-41ed-9bef-dc0bbc99bb40",
+      "licenseKey": "WSTL-MOR32VF7-10E46D",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "cap01_grade_la_1year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "187ceb34-57d7-43fc-9902-6fc1bad4bacc",
+      "licenseKey": "WSTL-MOQ1HQN1-FB6038",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "3d9af5a1-8741-4366-9f1c-01d75179218c",
+      "licenseKey": "WSTL-MOQ0IA4K-3919BF",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "6bc3075a-1ebe-4583-aeeb-dec21b749c5b",
+      "licenseKey": "WSTL-MOQ0BYTU-1DD5EC",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "e086309a-4f97-461a-ba0f-15aaeb731cda",
+      "licenseKey": "WSTL-MOQ06HM0-E5633F",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "dd664fef-08d1-4cdf-8899-b25b86759ad0",
+      "licenseKey": "WSTL-MOPZQYZC-5372A5",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "468a3914-a3c3-45a4-85a1-5dc7b623e784",
+      "licenseKey": "WSTL-MOPYF6DP-3305C4",
+      "status": "active",
+      "customerId": "cus-1777220402893",
+      "email": "ungdungthongminh.info@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "7cc380eb-7794-4234-b2b3-88030b3ea684",
+      "licenseKey": "WSTL-MOO3FPYI-42BE67",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "fcf512c0-cc69-4743-81a0-f59048f72bb6",
+      "licenseKey": "WSTL-MOJW7IOT-C4A3B1",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "c774e95f-fd0b-4e44-a8a2-cf469f571711",
+      "licenseKey": "WSTL-MOJQ2SEK-82DA01",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "457e2d58-6270-45ee-a00e-52420188431c",
+      "licenseKey": "WSTL-MOHYOA66-44548F",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "f9543806-5350-4781-bbc9-b98e47e16292",
+      "licenseKey": "WSTL-MOG07Z3W-03D15D",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "6c283923-6eae-46e3-8bd3-294b7dd7ddbe",
+      "licenseKey": "WSTL-MOFQVR9A-17E269",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "e45e9de8-dd2a-4c55-8404-7976924fb864",
+      "licenseKey": "WSTL-MOFQULIJ-62DE83",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "57fe810f-687e-4ee3-ae91-d55899b959aa",
+      "licenseKey": "WSTL-MOFQSQY8-8B6841",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "981a8b93-9b48-4ea0-b3a8-13a6dbf8f2a8",
+      "licenseKey": "WSTL-MOFQR1MA-E5FD87",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "3207aee1-683e-4d22-82de-a4f507abb0f6",
+      "licenseKey": "WSTL-MOFQPFBJ-24E890",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "6f161bf6-2410-456e-b558-b84f3f362d9d",
+      "licenseKey": "WSTL-MOFQL56Y-59040B",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "eda6ce01-8ab6-40c9-91a5-438ba75643d0",
+      "licenseKey": "WSTL-MOFIH92U-328258",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "1b663367-8814-486e-a0b7-be7997ba91b3",
+      "licenseKey": "WSTL-MOFF5Y3D-B41453",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "8270d43f-7257-4c00-b1be-3ec9211123aa",
+      "licenseKey": "WSTL-MOF5ZL5B-7D28FF",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "c7bfd366-12fd-4b5e-ab41-25c643edfc94",
+      "licenseKey": "WSTL-MOEK0KYD-FB2E9E",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "4e143d28-11ad-4371-8f22-6f90aba6ae73",
+      "licenseKey": "WSTL-MOEJYC8W-6B916A",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "6c836c20-0550-4374-a48e-ed536fd99d40",
+      "licenseKey": "WSTL-MOE8FYMU-EF0AEA",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "a50a2041-5264-41eb-ac1f-924230788b94",
+      "licenseKey": "WSTL-MODYS0D9-34D1AB",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "6c616f0f-c814-4252-8940-d538468597fb",
+      "licenseKey": "WSTL-MODYQF4G-B0FE9A",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "834f216f-28a0-4c14-9084-dc63cd58904e",
+      "licenseKey": "WSTL-MODYFD92-4A8ED3",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "8a708572-71e4-46b0-99cb-fe489e5976ad",
+      "licenseKey": "WSTL-MODXVT4J-56A1DD",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "effe8fe1-647e-4eb5-b90d-2de07749173b",
+      "licenseKey": "WSTL-MODWME45-9A54AA",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "4fb97653-fdfa-4233-9a71-77e2e4c4d7a6",
+      "licenseKey": "WSTL-MODW2N0T-A52670",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "a0e7974e-2b46-4dc9-8a54-d22bb7b7bb2e",
+      "licenseKey": "WSTL-MOD5AC5J-1DC137",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "ee3f4572-9b40-44ae-8be7-9e5f14ce1662",
+      "licenseKey": "WSTL-MOD59FD1-FDEC2E",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-topup"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "c98a880f-bb26-4453-a884-369f96267210",
+      "licenseKey": "WSTL-MOD57O7R-11410D",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "8326e270-02c8-4123-ae86-fdba30d6cffa",
+      "licenseKey": "WSTL-MOD55UE6-6BE297",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "42086405-4740-48c7-92af-6ed06d19da55",
+      "licenseKey": "WSTL-MOD53FOM-C62BB0",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "eefeeb03-0ab6-4369-b131-8dd503d30354",
+      "licenseKey": "WSTL-MOD50YB8-AF17EE",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "09ddc334-fbf2-46c3-bb3b-2f521d1a42d6",
+      "licenseKey": "WSTL-MOD4XTIR-29B920",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "22d811ad-3aa5-4183-9ad1-0be7cf6c8fa7",
+      "licenseKey": "WSTL-MOD4IBFF-4213BF",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "9817e549-3226-4e51-a398-bdca0fdc18be",
+      "licenseKey": "WSTL-MOD401TB-EFDA9E",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "4cb7a8ce-bec1-4519-9e19-dd51915f6645",
+      "licenseKey": "WSTL-MOD3VOE0-69C3C4",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "234f5fc5-555c-48c3-ae89-7986c13bf8f9",
+      "licenseKey": "WSTL-MOD3V2CL-E7E2FB",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "e38f0696-f7dd-4b5e-8d04-3e779b1f89f4",
+      "licenseKey": "WSTL-MOD32EGO-83EA50",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "8d0b2f1e-3d70-47a2-8542-711593d4ab6a",
+      "licenseKey": "WSTL-MOD31FGO-743638",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "ce80725b-cf2b-49de-9759-5cd4f6439a61",
+      "licenseKey": "WSTL-MOD2YN3N-C3DB9A",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "f92b4cb7-d62b-485b-a509-c82518aae0a3",
+      "licenseKey": "WSTL-MOD04WFL-75C612",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-standard-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "282a5eb6-7abb-4946-a011-3289ab15e34f",
+      "licenseKey": "WSTL-MOD01EAI-32D95F",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "5f223899-56aa-49c2-82e9-36a5001399d1",
+      "licenseKey": "WSTL-MOCXPAB1-26FC5C",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "b6520bf2-cfa9-4778-a5a8-4f622ca51145",
+      "licenseKey": "WSTL-MOCXI59X-C8F33C",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "af9a9efe-d6a5-4463-a950-082290e8fe3f",
+      "licenseKey": "WSTL-MOCX8ZM9-BAA624",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "5742488e-2979-4976-b3f0-f2d960ffee4c",
+      "licenseKey": "WSTL-MOCWGVNS-8B3A61",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "32c6222d-c5b2-44f9-9643-2dfa076290c7",
+      "licenseKey": "WSTL-MOCWD9TI-DBB873",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "42905140-fec9-4406-9046-8ac15988eaa2",
+      "licenseKey": "WSTL-MOCWCTA3-18ADE6",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "229ca064-fb2c-41be-9cb7-d9e6bc0db346",
+      "licenseKey": "WSTL-MOCWCK5X-0D8E2F",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "40e10c30-169e-4c61-b5b8-d2c8be1100a6",
+      "licenseKey": "WSTL-MOCWBHU5-D7122F",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-topup"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "ddfc4db1-0c86-4955-9d20-1ab7037324e3",
+      "licenseKey": "WSTL-MOCVQ2UB-7921E2",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "b72f9a92-da6e-4238-b3ca-e57061ff46a9",
+      "licenseKey": "WSTL-MOCVPUX5-903131",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-year"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "2b8b8007-bd95-4fcd-a561-2c3622b370ec",
+      "licenseKey": "WSTL-MOCU9YWB-B7DA24",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "8bc39c49-2830-40c4-ac78-31f5d9fed095",
+      "licenseKey": "WSTL-MOCU9DZA-008B1D",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "d2edeed9-e12a-41fb-883b-3e5dcc00eee9",
+      "licenseKey": "WSTL-MOCNE1IP-B54CE2",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "a4c0c4e1-8d0b-4560-a091-ceffc77dfe02",
+      "licenseKey": "WSTL-MOCMVD4W-ECC00C",
+      "status": "inactive",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "standard_1year_1grade"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "c112fc26-86f5-4885-9fae-332cae03ced7",
+      "licenseKey": "WSTL-MOC8DE2C-CB0842",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "73e34643-f11a-4ec4-a748-b6e4baebdc8f",
+      "licenseKey": "WSTL-MOC7ZUS0-609651",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "27983fed-0160-4657-8463-aa1f83810c72",
+      "licenseKey": "WSTL-MOC7FHV8-768C4B",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "93e4d3ee-5f62-4ef8-8050-2e2b157a9dad",
+      "licenseKey": "WSTL-MOBQV3YT-6628A1",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "b03c559b-12f1-4794-abd9-f49bdc50d611",
+      "licenseKey": "WSTL-MOBOIFF8-E18F2E",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "48b13204-3280-4f17-9e80-5ea29cbdaee6",
+      "licenseKey": "WSTL-MOBIVCC7-08235B",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-month"
+    },
+    {
+      "kind": "app_license",
+      "licenseId": "cefcc1ad-e762-42e9-b9a0-dfed2edfe1c6",
+      "licenseKey": "WSTL-MOB8JHKE-01A287",
+      "status": "active",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-study-premium-lifetime"
+    },
+    {
+      "kind": "order_key_delivery",
+      "deliveryId": "0f18db79-c388-4037-bf0c-2fd3c86e2605",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "order_key_delivery",
+      "deliveryId": "eb01e4d1-91b7-4b2b-b09b-b1c3a802384c",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "productId": "prod-test-2k"
+    },
+    {
+      "kind": "credit_wallet",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "balance": 4
+    },
+    {
+      "kind": "credit_ledger",
+      "ledgerId": "ccf977bd-fba7-4c1b-afff-a51883e9c865",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "orderId": "2d669cf5-c025-45c0-9572-53032ad9bb9c"
+    },
+    {
+      "kind": "credit_ledger",
+      "ledgerId": "9f7c1c01-4a06-4157-9e87-d3096bea0cda",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "orderId": "e25fd41b-86eb-466d-a449-b2d099e071f6"
+    },
+    {
+      "kind": "credit_ledger",
+      "ledgerId": "b2b008fb-abca-4947-962b-3842b8277084",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "orderId": "88c57210-f24b-428b-9ec3-e45ef180cd52"
+    },
+    {
+      "kind": "credit_ledger",
+      "ledgerId": "d6f2f7c7-ade0-4f7d-a964-80a3b46af432",
+      "customerId": "cus-1776765450771",
+      "email": "gustavjung24@gmail.com",
+      "appId": "app-study-12",
+      "orderId": "1b9f9196-3016-4d65-84a8-177400f9ef52"
+    }
+  ],
+  "safeToDelete": false
+}
