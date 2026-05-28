@@ -1036,6 +1036,67 @@ function validateFulfillmentMode(value) {
   return FULFILLMENT_MODES.has(String(value || "auto_license").trim().toLowerCase());
 }
 
+// Returns 'auto' for auto_license or NULL, 'manual' for manual_vendor/manual_service
+function getFulfillmentCategory(value) {
+  const mode = normalizeFulfillmentMode(value);
+  if (mode === "manual_vendor" || mode === "manual_service") {
+    return "manual";
+  }
+  return "auto";
+}
+
+async function getProductFulfillmentModeWithClient({ client, productId }) {
+  const result = await client.query(
+    `SELECT fulfillment_mode FROM products WHERE id = $1`,
+    [productId]
+  );
+  if (result.rowCount === 0) {
+    return null;
+  }
+  return normalizeFulfillmentMode(result.rows[0].fulfillment_mode);
+}
+
+async function createManualFulfillmentForOrderWithClient({ client, orderId, productId, fulfillmentMode }) {
+  const result = await client.query(
+    `INSERT INTO order_fulfillments(order_id, product_id, fulfillment_mode, status, delivery_data)
+     VALUES ($1::uuid, $2, $3, 'waiting_manual_fulfillment', '{}'::jsonb)
+     ON CONFLICT (order_id, product_id) DO NOTHING
+     RETURNING id, order_id, product_id, fulfillment_mode, status, delivery_data,
+               admin_note, customer_note, sent_at, sent_by, created_at, updated_at`,
+    [orderId, productId, fulfillmentMode]
+  );
+  if (result.rowCount === 0) {
+    // Already exists - fetch the existing record
+    const existing = await client.query(
+      `SELECT id, order_id, product_id, fulfillment_mode, status, delivery_data,
+              admin_note, customer_note, sent_at, sent_by, created_at, updated_at
+       FROM order_fulfillments
+       WHERE order_id = $1::uuid AND product_id = $2`,
+      [orderId, productId]
+    );
+    return { record: existing.rows[0], created: false };
+  }
+  return { record: result.rows[0], created: true };
+}
+
+function mapOrderFulfillment(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    productId: row.product_id,
+    fulfillmentMode: row.fulfillment_mode,
+    status: row.status,
+    deliveryData: row.delivery_data || {},
+    adminNote: row.admin_note || null,
+    customerNote: row.customer_note || null,
+    sentAt: row.sent_at || null,
+    sentBy: row.sent_by || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 function computeDiscountAmount(amount, percentOff) {
   const safeAmount = Math.max(0, Number(amount) || 0);
   const safePercent = Math.max(0, Math.min(100, Number(percentOff) || 0));
@@ -2295,7 +2356,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     }
 
     const productResult = await client.query(
-      `SELECT id, app_id, cycle, credits
+      `SELECT id, app_id, cycle, credits, fulfillment_mode
        FROM products
        WHERE id = $1`,
       [paidOrder.product_id]
@@ -2304,14 +2365,26 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       throw new Error("Khong tim thay product cho order");
     }
     const product = productResult.rows[0];
+    const fulfillmentCategory = getFulfillmentCategory(product.fulfillment_mode);
 
-    const appLicense = await issueAppLicenseForOrder({
-      client,
-      order: paidOrder,
-      product
-    });
+    // Guard: quote_only products should not enter paid flow
+    if (normalizeFulfillmentMode(product.fulfillment_mode) === "quote_only") {
+      throw createStoreError("San pham quote_only khong the duoc thanh toan truc tuyen", 400);
+    }
 
-    if (product.cycle !== "one_time") {
+    // NOTE: appLicense and keyDelivery handled below based on fulfillment_category
+
+    let appLicense = null;
+    let keyDelivery = null;
+
+    if (fulfillmentCategory === "auto") {
+      appLicense = await issueAppLicenseForOrder({
+        client,
+        order: paidOrder,
+        product
+      });
+
+      if (product.cycle !== "one_time") {
       const { startAt, endAt } = computePeriod(product.cycle);
       await client.query(
         `INSERT INTO subscriptions(id, customer_id, app_id, product_id, status, start_at, end_at, renewal_mode)
@@ -2374,7 +2447,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
       [paidOrder.id]
     );
 
-    let keyDelivery = deliveryResult.rowCount === 0 ? null : mapKeyDelivery(deliveryResult.rows[0]);
+    keyDelivery = deliveryResult.rowCount === 0 ? null : mapKeyDelivery(deliveryResult.rows[0]);
 
     if (!keyDelivery) {
       const keyResult = await client.query(
@@ -2422,6 +2495,15 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
           keyDelivery = await getOrderKeyDelivery(paidOrder.id);
         }
       }
+    }
+    } else {
+      // manual_vendor or manual_service: create fulfillment record, skip auto license/key delivery
+      await createManualFulfillmentForOrderWithClient({
+        client,
+        orderId: paidOrder.id,
+        productId: paidOrder.product_id,
+        fulfillmentMode: normalizeFulfillmentMode(product.fulfillment_mode)
+      });
     }
 
     await client.query("COMMIT");
