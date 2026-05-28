@@ -23,6 +23,7 @@ const {
   getPublicCatalog,
   getAdminCatalog,
   updateProductCardControl,
+  updateProductFulfillmentConfig,
   createOrder,
   applyDiscountToOrder,
   getOrderDetailsById,
@@ -2181,6 +2182,23 @@ app.patch(
       salePrice: req.body?.salePrice,
       comparePrice: req.body?.comparePrice,
       allowCouponStack: req.body?.allowCouponStack
+    });
+    res.json({ ok: true, product });
+  })
+);
+
+app.patch(
+  "/api/admin/catalog/products/:productId/fulfillment-config",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const product = await updateProductFulfillmentConfig(req.params.productId, {
+      fulfillmentMode: req.body?.fulfillmentMode,
+      brandCode: req.body?.brandCode,
+      durationText: req.body?.durationText,
+      deliveryEstimate: req.body?.deliveryEstimate,
+      deliveryFieldSchema: req.body?.deliveryFieldSchema,
+      instructionTemplate: req.body?.instructionTemplate,
+      emailTemplate: req.body?.emailTemplate
     });
     res.json({ ok: true, product });
   })

@@ -1014,8 +1014,26 @@ function mapProductRow(row) {
     active: row.active,
     visibility: row.visibility,
     saleStatus: normalizeProductSaleStatus(row.sale_status),
-    saleNote: String(row.sale_note || "").trim()
+    saleNote: String(row.sale_note || "").trim(),
+    fulfillmentMode: normalizeFulfillmentMode(row.fulfillment_mode),
+    brandCode: row.brand_code || null,
+    durationText: row.duration_text || null,
+    deliveryEstimate: row.delivery_estimate || null,
+    deliveryFieldSchema: row.delivery_field_schema || null,
+    instructionTemplate: row.instruction_template || null,
+    emailTemplate: row.email_template || null
   };
+}
+
+const FULFILLMENT_MODES = new Set(["auto_license", "manual_vendor", "manual_service", "quote_only"]);
+
+function normalizeFulfillmentMode(value) {
+  const normalized = String(value || "auto_license").trim().toLowerCase();
+  return FULFILLMENT_MODES.has(normalized) ? normalized : "auto_license";
+}
+
+function validateFulfillmentMode(value) {
+  return FULFILLMENT_MODES.has(String(value || "auto_license").trim().toLowerCase());
 }
 
 function computeDiscountAmount(amount, percentOff) {
@@ -1392,7 +1410,9 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
   const activeWhere = includeInactive ? "" : "AND active = TRUE";
   const productsResult = await pool.query(
     `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
-            currency, credits, active, visibility, sale_status, sale_note
+            currency, credits, active, visibility, sale_status, sale_note,
+            fulfillment_mode, brand_code, duration_text, delivery_estimate,
+            delivery_field_schema, instruction_template, email_template
      FROM products
      WHERE 1 = 1
        ${activeWhere}
@@ -1523,6 +1543,103 @@ async function updateProductCardControl(productId, { saleStatus, saleNote, saleE
       hasSalePriceInput,
       hasComparePriceInput
     ]
+  );
+
+  if (result.rowCount === 0) {
+    throw createStoreError("Không tìm thấy sản phẩm để cập nhật", 404);
+  }
+
+  return mapProductRow(result.rows[0]);
+}
+
+async function updateProductFulfillmentConfig(productId, input = {}) {
+  const safeProductId = String(productId || "").trim();
+  if (!safeProductId) {
+    throw createStoreError("Thiếu productId", 400);
+  }
+
+  const safeFulfillmentMode = input.fulfillmentMode !== undefined
+    ? normalizeFulfillmentMode(input.fulfillmentMode)
+    : null;
+  const safeBrandCode = input.brandCode !== undefined
+    ? String(input.brandCode || "").trim().slice(0, 100) || null
+    : null;
+  const safeDurationText = input.durationText !== undefined
+    ? String(input.durationText || "").trim().slice(0, 200) || null
+    : null;
+  const safeDeliveryEstimate = input.deliveryEstimate !== undefined
+    ? String(input.deliveryEstimate || "").trim().slice(0, 200) || null
+    : null;
+  const safeDeliveryFieldSchema = input.deliveryFieldSchema !== undefined
+    ? String(input.deliveryFieldSchema || "").trim().slice(0, 4000) || null
+    : null;
+  const safeInstructionTemplate = input.instructionTemplate !== undefined
+    ? String(input.instructionTemplate || "").trim().slice(0, 4000) || null
+    : null;
+  const safeEmailTemplate = input.emailTemplate !== undefined
+    ? String(input.emailTemplate || "").trim().slice(0, 4000) || null
+    : null;
+
+  if (safeFulfillmentMode !== null && !FULFILLMENT_MODES.has(safeFulfillmentMode)) {
+    throw createStoreError("fulfillmentMode phải là một trong: auto_license, manual_vendor, manual_service, quote_only", 400);
+  }
+
+  const setClauses = [];
+  const params = [];
+  let paramIndex = 1;
+
+  if (safeFulfillmentMode !== null) {
+    setClauses.push(`fulfillment_mode = $${paramIndex}`);
+    params.push(safeFulfillmentMode);
+    paramIndex++;
+  }
+  if (safeBrandCode !== null) {
+    setClauses.push(`brand_code = $${paramIndex}`);
+    params.push(safeBrandCode);
+    paramIndex++;
+  }
+  if (safeDurationText !== null) {
+    setClauses.push(`duration_text = $${paramIndex}`);
+    params.push(safeDurationText);
+    paramIndex++;
+  }
+  if (safeDeliveryEstimate !== null) {
+    setClauses.push(`delivery_estimate = $${paramIndex}`);
+    params.push(safeDeliveryEstimate);
+    paramIndex++;
+  }
+  if (safeDeliveryFieldSchema !== null) {
+    setClauses.push(`delivery_field_schema = $${paramIndex}`);
+    params.push(safeDeliveryFieldSchema);
+    paramIndex++;
+  }
+  if (safeInstructionTemplate !== null) {
+    setClauses.push(`instruction_template = $${paramIndex}`);
+    params.push(safeInstructionTemplate);
+    paramIndex++;
+  }
+  if (safeEmailTemplate !== null) {
+    setClauses.push(`email_template = $${paramIndex}`);
+    params.push(safeEmailTemplate);
+    paramIndex++;
+  }
+
+  if (setClauses.length === 0) {
+    throw createStoreError("Không có trường nào để cập nhật", 400);
+  }
+
+  setClauses.push(`updated_at = NOW()`);
+  params.push(safeProductId);
+
+  const result = await pool.query(
+    `UPDATE products
+     SET ${setClauses.join(", ")}
+     WHERE id = $${paramIndex}
+     RETURNING id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
+               currency, credits, active, visibility, sale_status, sale_note,
+               fulfillment_mode, brand_code, duration_text, delivery_estimate,
+               delivery_field_schema, instruction_template, email_template`,
+    params
   );
 
   if (result.rowCount === 0) {
@@ -4457,6 +4574,7 @@ module.exports = {
   getPublicCatalog,
   getAdminCatalog,
   updateProductCardControl,
+  updateProductFulfillmentConfig,
   activateProductKeyForMachine,
   createOrder,
   applyDiscountToOrder,

@@ -91,6 +91,26 @@ END $$;
 DO $$
 BEGIN
   IF to_regclass('public.product_keys') IS NOT NULL THEN
+    UPDATE product_keys
+    SET delivered_order_id = NULL, reserved_order_id = NULL, updated_at = NOW()
+    WHERE product_id = ANY(ARRAY[
+      'cap01_standard_1year_3grades',
+      'cap01_grade_la_1year',
+      'cap01_grade_1_1year',
+      'cap01_grade_2_1year',
+      'cap01_grade_3_1year',
+      'cap01_grade_4_1year',
+      'cap01_grade_5_1year',
+      'prod-study-month',
+      'prod-study-year',
+      'prod-study-premium-month',
+      'prod-study-premium-year',
+      'prod-study-standard-lifetime',
+      'prod-study-premium-lifetime',
+      'prod-study-topup',
+      'standard_1year_1grade',
+      'cap01_beta_year_299'
+    ]::text[]);
     DELETE FROM product_keys
     WHERE product_id = ANY(ARRAY[
       'cap01_standard_1year_3grades',
@@ -110,71 +130,6 @@ BEGIN
       'standard_1year_1grade',
       'cap01_beta_year_299'
     ]::text[]);
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF to_regclass('public.entitlements') IS NOT NULL THEN
-    DELETE FROM entitlements
-    WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[]);
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF to_regclass('public.subscriptions') IS NOT NULL THEN
-    DELETE FROM subscriptions
-    WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
-       OR product_id = ANY(ARRAY[
-         'cap01_standard_1year_3grades',
-         'cap01_grade_la_1year',
-         'cap01_grade_1_1year',
-         'cap01_grade_2_1year',
-         'cap01_grade_3_1year',
-         'cap01_grade_4_1year',
-         'cap01_grade_5_1year',
-         'prod-study-month',
-         'prod-study-year',
-         'prod-study-premium-month',
-         'prod-study-premium-year',
-         'prod-study-standard-lifetime',
-         'prod-study-premium-lifetime',
-         'prod-study-topup',
-         'standard_1year_1grade',
-         'cap01_beta_year_299'
-       ]::text[]);
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF to_regclass('public.credit_ledger') IS NOT NULL THEN
-    DELETE FROM credit_ledger
-    WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
-       OR order_id IN (
-         SELECT id
-         FROM orders
-         WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
-            OR product_id = ANY(ARRAY[
-              'cap01_standard_1year_3grades',
-              'cap01_grade_la_1year',
-              'cap01_grade_1_1year',
-              'cap01_grade_2_1year',
-              'cap01_grade_3_1year',
-              'cap01_grade_4_1year',
-              'cap01_grade_5_1year',
-              'prod-study-month',
-              'prod-study-year',
-              'prod-study-premium-month',
-              'prod-study-premium-year',
-              'prod-study-standard-lifetime',
-              'prod-study-premium-lifetime',
-              'prod-study-topup',
-              'standard_1year_1grade',
-              'cap01_beta_year_299'
-            ]::text[])
-       );
   END IF;
 END $$;
 
@@ -249,6 +204,81 @@ END $$;
 DO $$
 BEGIN
   IF to_regclass('public.orders') IS NOT NULL THEN
+    -- Clean up product_keys referencing scoped orders (by order_id, not product_id)
+    -- These keys have product_ids NOT in the scope array, but their orders ARE in scope
+    DELETE FROM product_keys
+    WHERE delivered_order_id IN (
+      SELECT id FROM orders
+      WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
+         OR product_id = ANY(ARRAY[
+           'cap01_standard_1year_3grades',
+           'cap01_grade_la_1year',
+           'cap01_grade_1_1year',
+           'cap01_grade_2_1year',
+           'cap01_grade_3_1year',
+           'cap01_grade_4_1year',
+           'cap01_grade_5_1year',
+           'prod-study-month',
+           'prod-study-year',
+           'prod-study-premium-month',
+           'prod-study-premium-year',
+           'prod-study-standard-lifetime',
+           'prod-study-premium-lifetime',
+           'prod-study-topup',
+           'standard_1year_1grade',
+           'cap01_beta_year_299'
+         ]::text[])
+    );
+
+    -- Clean up dependent rows by order_id scope BEFORE deleting orders
+    DELETE FROM email_notification_events
+    WHERE order_id IN (
+      SELECT id FROM orders
+      WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
+         OR product_id = ANY(ARRAY[
+           'cap01_standard_1year_3grades',
+           'cap01_grade_la_1year',
+           'cap01_grade_1_1year',
+           'cap01_grade_2_1year',
+           'cap01_grade_3_1year',
+           'cap01_grade_4_1year',
+           'cap01_grade_5_1year',
+           'prod-study-month',
+           'prod-study-year',
+           'prod-study-premium-month',
+           'prod-study-premium-year',
+           'prod-study-standard-lifetime',
+           'prod-study-premium-lifetime',
+           'prod-study-topup',
+           'standard_1year_1grade',
+           'cap01_beta_year_299'
+         ]::text[])
+    );
+
+    DELETE FROM credit_ledger
+    WHERE order_id IN (
+      SELECT id FROM orders
+      WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
+         OR product_id = ANY(ARRAY[
+           'cap01_standard_1year_3grades',
+           'cap01_grade_la_1year',
+           'cap01_grade_1_1year',
+           'cap01_grade_2_1year',
+           'cap01_grade_3_1year',
+           'cap01_grade_4_1year',
+           'cap01_grade_5_1year',
+           'prod-study-month',
+           'prod-study-year',
+           'prod-study-premium-month',
+           'prod-study-premium-year',
+           'prod-study-standard-lifetime',
+           'prod-study-premium-lifetime',
+           'prod-study-topup',
+           'standard_1year_1grade',
+           'cap01_beta_year_299'
+         ]::text[])
+    );
+
     DELETE FROM orders
     WHERE app_id = ANY(ARRAY['app-study-12', 'hoctap-cap-01']::text[])
        OR product_id = ANY(ARRAY[
@@ -269,6 +299,31 @@ BEGIN
          'standard_1year_1grade',
          'cap01_beta_year_299'
        ]::text[]);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regclass('public.subscriptions') IS NOT NULL THEN
+    DELETE FROM subscriptions
+    WHERE product_id = ANY(ARRAY[
+      'cap01_standard_1year_3grades',
+      'cap01_grade_la_1year',
+      'cap01_grade_1_1year',
+      'cap01_grade_2_1year',
+      'cap01_grade_3_1year',
+      'cap01_grade_4_1year',
+      'cap01_grade_5_1year',
+      'prod-study-month',
+      'prod-study-year',
+      'prod-study-premium-month',
+      'prod-study-premium-year',
+      'prod-study-standard-lifetime',
+      'prod-study-premium-lifetime',
+      'prod-study-topup',
+      'standard_1year_1grade',
+      'cap01_beta_year_299'
+    ]::text[]);
   END IF;
 END $$;
 
