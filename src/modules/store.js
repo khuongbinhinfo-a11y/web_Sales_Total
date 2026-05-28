@@ -1097,6 +1097,75 @@ function mapOrderFulfillment(row) {
   };
 }
 
+/**
+ * List manual fulfillments with optional status filter.
+ * Returns fulfillments joined with order + product + customer data.
+ */
+async function listManualFulfillments({ statusFilter = null, limit = 100, offset = 0 }) {
+  const params = [limit, offset];
+  let whereClause = `WHERE f.fulfillment_mode IN ('manual_vendor', 'manual_service')`;
+
+  if (statusFilter && String(statusFilter).trim().toLowerCase() !== "all") {
+    whereClause += ` AND f.status = $3`;
+    params.push(String(statusFilter).trim().toLowerCase());
+  }
+
+  const query = `
+    SELECT
+      f.id,
+      f.order_id,
+      o.order_code,
+      f.product_id,
+      p.name        AS product_name,
+      p.app_id      AS brand_code,
+      f.fulfillment_mode,
+      f.status,
+      f.delivery_data,
+      f.admin_note,
+      f.customer_note,
+      f.sent_at,
+      f.sent_by,
+      f.created_at,
+      f.updated_at,
+      c.full_name   AS customer_name,
+      c.email       AS customer_email,
+      o.amount      AS order_amount,
+      o.currency    AS order_currency,
+      o.paid_at     AS order_paid_at
+    FROM order_fulfillments f
+    JOIN orders o ON o.id = f.order_id
+    JOIN products p ON p.id = f.product_id
+    JOIN customers c ON c.id = o.customer_id
+    ${whereClause}
+    ORDER BY f.created_at DESC
+    LIMIT $1 OFFSET $2
+  `;
+
+  const result = await pool.query(query, params);
+  return result.rows.map(row => ({
+    id: row.id,
+    orderId: row.order_id,
+    orderCode: row.order_code || null,
+    productId: row.product_id,
+    productName: row.product_name || null,
+    brandCode: row.brand_code || null,
+    fulfillmentMode: row.fulfillment_mode,
+    status: row.status,
+    deliveryData: row.delivery_data || {},
+    adminNote: row.admin_note || null,
+    customerNote: row.customer_note || null,
+    sentAt: row.sent_at || null,
+    sentBy: row.sent_by || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    customerName: row.customer_name || null,
+    customerEmail: row.customer_email || null,
+    orderAmount: row.order_amount ? Number(row.order_amount) : null,
+    orderCurrency: row.order_currency || null,
+    orderPaidAt: row.order_paid_at || null
+  }));
+}
+
 function computeDiscountAmount(amount, percentOff) {
   const safeAmount = Math.max(0, Number(amount) || 0);
   const safePercent = Math.max(0, Math.min(100, Number(percentOff) || 0));
@@ -4657,6 +4726,7 @@ module.exports = {
   getAdminCatalog,
   updateProductCardControl,
   updateProductFulfillmentConfig,
+  listManualFulfillments,
   activateProductKeyForMachine,
   createOrder,
   applyDiscountToOrder,

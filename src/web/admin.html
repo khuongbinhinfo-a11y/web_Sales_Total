@@ -56,6 +56,7 @@
           <a href="#section-web-template-pricing"><span class="icon">💰</span> Giá web mẫu</a>
           <a href="#section-product-keys"><span class="icon">📦</span> Kho key sản phẩm</a>
           <a href="#section-manual-grant"><span class="icon">🎁</span> Cấp key thủ công</a>
+          <a href="#section-manual-fulfillment"><span class="icon">🚚</span> Giao hàng thủ công</a>
           <a href="#section-discount-codes"><span class="icon">🏷️</span> Mã giảm giá</a>
 
           <div class="admin-sidebar-group-label">Cau hinh he thong</div>
@@ -1012,6 +1013,49 @@
             </div>
             <p id="keyLookupMsg" style="margin:4px 0 8px;font-size:.82rem;color:var(--muted)"></p>
             <div id="keyLookupResult"></div>
+          </div>
+        </section>
+
+        <!-- Manual Fulfillment -->
+        <section id="section-manual-fulfillment" class="admin-section">
+          <h3>🚚 Giao hàng thủ công</h3>
+          <p class="admin-section-intro">Danh sách đơn hàng cần xử lý giao hàng thủ công cho sản phẩm qua hãng. Các đơn này đã được thanh toán và đang chờ admin xử lý.</p>
+          <div class="info-card">
+            <div class="admin-card-head">
+              <div>
+                <b class="admin-card-title">Danh sách đơn giao hàng thủ công</b>
+                <p class="admin-inline-note">Lọc theo trạng thái để xem đơn cần xử lý hoặc đã hoàn thành.</p>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="fulfillmentStatusFilter" class="admin-input" style="min-width:160px">
+                  <option value="">Tất cả</option>
+                  <option value="waiting_manual_fulfillment">Chờ xử lý</option>
+                  <option value="ready_to_deliver">Sẵn sàng giao</option>
+                  <option value="delivered">Đã giao</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+                <button id="fulfillmentRefreshBtn" class="btn btn-outline admin-compact-btn">🔄 Làm mới</button>
+              </div>
+            </div>
+            <p id="fulfillmentMsg" style="margin:0 0 10px;font-size:.82rem;color:var(--muted)"></p>
+            <div class="table-wrap" id="fulfillmentTableWrap">
+              <table id="fulfillmentTable" class="admin-table" style="display:none">
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Email</th>
+                    <th>Sản phẩm</th>
+                    <th>Loại giao</th>
+                    <th>Trạng thái</th>
+                    <th>Thanh toán</th>
+                    <th>Ngày tạo phiếu</th>
+                  </tr>
+                </thead>
+                <tbody id="fulfillmentTableBody"></tbody>
+              </table>
+              <p id="fulfillmentEmptyState" style="padding:20px;text-align:center;color:var(--muted)">Đang tải...</p>
+            </div>
           </div>
         </section>
       </main>

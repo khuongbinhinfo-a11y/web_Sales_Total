@@ -4871,6 +4871,28 @@ app.patch(
   })
 );
 
+/* ── Manual fulfillment management ── */
+app.get(
+  "/api/admin/fulfillments/manual",
+  requireAdminPermission("orders:read"),
+  asyncHandler(async (req, res) => {
+    const { status, limit, offset } = req.query;
+    const safeLimit = Math.min(Math.max(1, Number(req.query.limit) || 100), 500);
+    const safeOffset = Math.max(0, Number(req.query.offset) || 0);
+    const safeStatus = String(status || "").trim().toLowerCase();
+    const validStatuses = ["waiting_manual_fulfillment", "ready_to_deliver", "delivered", "all"];
+    if (safeStatus && !validStatuses.includes(safeStatus)) {
+      return res.status(400).json({ message: "status không hợp lệ" });
+    }
+    const items = await listManualFulfillments({
+      statusFilter: safeStatus || null,
+      limit: safeLimit,
+      offset: safeOffset
+    });
+    return res.json({ ok: true, items, count: items.length, limit: safeLimit, offset: safeOffset });
+  })
+);
+
 /* ── Customer account auth ── */
 app.post(
   "/api/auth/customer/login",

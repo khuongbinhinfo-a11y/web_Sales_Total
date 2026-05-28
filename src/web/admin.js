@@ -1896,6 +1896,87 @@ function bindManualGrant(){
   });
 }
 
+/* ── Manual Fulfillment ── */
+async function loadManualFulfillments() {
+  const filterEl = document.getElementById("fulfillmentStatusFilter");
+  const table = document.getElementById("fulfillmentTable");
+  const tbody = document.getElementById("fulfillmentTableBody");
+  const emptyEl = document.getElementById("fulfillmentEmptyState");
+  const msgEl = document.getElementById("fulfillmentMsg");
+
+  if (!table || !tbody) return;
+
+  const status = filterEl ? filterEl.value.trim().toLowerCase() : "";
+  if (msgEl) { msgEl.textContent = "Đang tải..."; msgEl.style.color = ""; }
+  if (emptyEl) { emptyEl.style.display = "block"; emptyEl.textContent = "Đang tải..."; }
+  if (table) table.style.display = "none";
+
+  try {
+    const url = new URL("/api/admin/fulfillments/manual", window.location.origin);
+    if (status) url.searchParams.set("status", status);
+    const res = await fetchAdmin(url.pathname + url.search);
+    if (res.status === 401) { redirectToAdminLogin(url.pathname); return; }
+    if (!res.ok) throw new Error("Lỗi " + res.status);
+
+    const data = await res.json().catch(() => ({ items: [], count: 0 }));
+    const items = data.items || [];
+
+    if (!items.length) {
+      if (emptyEl) { emptyEl.style.display = "block"; emptyEl.textContent = "Không có đơn nào"; }
+      if (msgEl) msgEl.textContent = "";
+      return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+      const statusLabels = {
+        waiting_manual_fulfillment: '<span style="color:#e67e22;font-weight:600">Chờ xử lý</span>',
+        ready_to_deliver: '<span style="color:#3498db;font-weight:600">Sẵn sàng giao</span>',
+        delivered: '<span style="color:#27ae60;font-weight:600">Đã giao</span>',
+        cancelled: '<span style="color:#7f8c8d;font-weight:600">Đã hủy</span>'
+      };
+      const modeLabels = {
+        manual_vendor: "Qua hãng",
+        manual_service: "Dịch vụ"
+      };
+      const paidAt = item.orderPaidAt
+        ? new Date(item.orderPaidAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })
+        : "—";
+      const createdAt = item.createdAt
+        ? new Date(item.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })
+        : "—";
+
+      return `<tr>
+        <td>${item.orderCode || item.orderId || "—"}</td>
+        <td>${item.customerName || "—"}</td>
+        <td>${item.customerEmail || "—"}</td>
+        <td>${item.productName || "—"}</td>
+        <td>${modeLabels[item.fulfillmentMode] || item.fulfillmentMode || "—"}</td>
+        <td>${statusLabels[item.status] || item.status || "—"}</td>
+        <td>${paidAt}</td>
+        <td>${createdAt}</td>
+      </tr>`;
+    }).join("");
+
+    if (table) table.style.display = "";
+    if (emptyEl) emptyEl.style.display = "none";
+    if (msgEl) {
+      msgEl.textContent = `${items.length} đơn`;
+      msgEl.style.color = "";
+    }
+  } catch (err) {
+    console.error("loadManualFulfillments error:", err);
+    if (msgEl) { msgEl.textContent = "Lỗi tải danh sách"; msgEl.style.color = "var(--danger)"; }
+  }
+}
+
+function bindManualFulfillmentEvents() {
+  const refreshBtn = document.getElementById("fulfillmentRefreshBtn");
+  const filterEl = document.getElementById("fulfillmentStatusFilter");
+
+  if (refreshBtn) refreshBtn.addEventListener("click", loadManualFulfillments);
+  if (filterEl) filterEl.addEventListener("change", loadManualFulfillments);
+}
+
 function escapeSqlString(value){
   return String(value || "").replace(/'/g, "''");
 }
@@ -3008,6 +3089,8 @@ bindAiAppSecretControls();
 bindAiGateControls();
 bindAppRegistryControls();
 bindManualGrant();
+bindManualFulfillmentEvents();
+loadManualFulfillments();
 bindLicenseCompensationTool();
 loadManualGrantCatalog();
 bindCustomerSearch();
