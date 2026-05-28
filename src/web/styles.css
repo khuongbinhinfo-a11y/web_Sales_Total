@@ -3966,17 +3966,17 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
   body[data-route="software"] #productList .p-card-intro,
   body[data-route="study"] #productList .p-card-intro,
   body[data-route="work"] #productList .p-card-intro{
-    font-size:.75rem;
-    line-height:1.42;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden
+    display:none
   }
   body[data-route="software"] #productList .p-card-meta,
   body[data-route="study"] #productList .p-card-meta,
   body[data-route="work"] #productList .p-card-meta{
-    font-size:.63rem
+    display:none
+  }
+  body[data-route="software"] #productList .p-card-price-row,
+  body[data-route="study"] #productList .p-card-price-row,
+  body[data-route="work"] #productList .p-card-price-row{
+    padding-top:4px
   }
   body[data-route="software"] #productList .p-card-price,
   body[data-route="study"] #productList .p-card-price,
