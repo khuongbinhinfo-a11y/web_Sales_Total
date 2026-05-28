@@ -2812,25 +2812,63 @@ function getBrandChipIconMarkup(key) {
     return `<span class="brand-chip-icon brand-chip-icon--all" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
   }
   if (key === "microsoft") {
-    return `<span class="brand-chip-icon brand-chip-icon--windows" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--microsoft" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#f35325" d="M1 1h9v9H1V1z"/>
+        <path fill="#ba4c00" d="M11 1h9v9h-9V1z"/>
+        <path fill="#05a050" d="M1 11h9v9H1v-9z"/>
+        <path fill="#00b0f0" d="M11 11h9v9h-9v-9z"/>
+      </svg>
+    </span>`;
   }
   if (key === "chatgpt") {
-    return `<span class="brand-chip-icon brand-chip-icon--chatgpt" aria-hidden="true">AI</span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--chatgpt" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle fill="#10a37f" cx="50" cy="50" r="45"/>
+        <path fill="#ffffff" d="M50 15C30 15 15 32 15 50s15 35 35 35 35-17 35-35S70 15 50 15zm-8 18v12h-7v7h7v17h8V52h7v-7h-7V33h-8zm8 29c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8 8 3.6 8 8z"/>
+      </svg>
+    </span>`;
   }
   if (key === "google") {
-    return `<span class="brand-chip-icon brand-chip-icon--google" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--google" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+    </span>`;
   }
   if (key === "canva") {
-    return `<span class="brand-chip-icon brand-chip-icon--canva" aria-hidden="true">C</span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--canva" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle fill="#00C4CC" cx="50" cy="50" r="50"/>
+        <path fill="#ffffff" d="M29 25h18c9.4 0 17 7.6 17 17s-7.6 17-17 17H29V25zm7 7v20h11c6.6 0 12-5.4 12-12s-5.4-12-12-12H36v4z"/>
+      </svg>
+    </span>`;
   }
   if (key === "adobe") {
-    return `<span class="brand-chip-icon brand-chip-icon--adobe" aria-hidden="true">A</span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--adobe" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FF0000" d="M43.9 40.7L36 5.4l-7.9 35.3H7.5L0 12.6h9.9l6.2 25.5 8.1-25.5H32l8.2 25.5 7.5-25.5h9.7l-13.5 28.1z"/>
+      </svg>
+    </span>`;
   }
   if (key === "capcut") {
-    return `<span class="brand-chip-icon brand-chip-icon--capcut" aria-hidden="true">X</span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--capcut" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle fill="#FF2D55" cx="50" cy="50" r="50"/>
+        <path fill="#ffffff" d="M72 32c-6-6-15.8-6-21.8 0L30 52l5.2 5.2c6 6 15.8 6 21.8 0 6-6 6-15.8 0-21.8L72 32zm-21.8 35.2c-6 0-10.8-4.8-10.8-10.8s4.8-10.8 10.8-10.8S61 50.4 61 56.4s-4.8 10.8-10.8 10.8z"/>
+      </svg>
+    </span>`;
   }
   if (key === "notion") {
-    return `<span class="brand-chip-icon brand-chip-icon--notion" aria-hidden="true">N</span>`;
+    return `<span class="brand-chip-icon brand-chip-icon--notion" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect fill="#ffffff" x="10" y="10" width="80" height="80" rx="12"/>
+        <path fill="#000000" d="M25 20h50c2.8 0 5 2.2 5 5v50c0 2.8-2.2 5-5 5H25c-2.8 0-5-2.2-5-5V25c0-2.8 2.2-5 5-5zm5 15h40v8H30v-8zm0 16h40v8H30v-8zm0 16h25v8H30V67z"/>
+      </svg>
+    </span>`;
   }
   return `<span class="brand-chip-icon brand-chip-icon--other" aria-hidden="true">+</span>`;
 }
