@@ -4021,3 +4021,37 @@ body[data-route="web"] .story-card.is-direction-intro .story-link{
     font-size:.75rem
   }
 }
+
+/* ── Manual fulfillment admin ── */
+.fulfillment-detail-wrap{max-width:760px;margin:0 auto}
+.fulfillment-detail-header{border-radius:16px;padding:20px 24px;background:rgba(13,24,40,.84);border:1px solid rgba(145,180,255,.12);margin-bottom:20px}
+.fulfillment-detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+.meta-row{display:flex;gap:8px;font-size:.86rem}
+.meta-label{color:#8fb1d4;font-weight:700;min-width:140px}
+.status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;text-transform:uppercase}
+.status-badge.status-draft{background:rgba(255,193,7,.2);color:#ffc107}
+.status-badge.status-preparing{background:rgba(59,130,246,.2);color:#93c5fd}
+.status-badge.status-ready_to_deliver{background:rgba(74,222,128,.2);color:#86efac}
+.status-badge.status-delivered{background:rgba(74,222,128,.3);color:#4ade80}
+.status-badge.status-cancelled{background:rgba(239,68,68,.2);color:#f87171}
+.fulfillment-form-section{margin-bottom:20px}
+.fulfillment-form-section h4{color:#f7fbff;font-size:.9rem;font-weight:800;margin:0 0 12px;letter-spacing:.04em;text-transform:uppercase}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group-full{grid-column:1/-1}
+.form-group label{font-size:.75rem;color:#8fb1d4;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.form-group input,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid rgba(145,180,255,.18);border-radius:12px;background:rgba(10,22,37,.88);color:#f7fbff;font-size:.86rem;box-sizing:border-box;box-shadow:none;font-family:inherit}
+.form-group input:focus,.form-group textarea:focus{outline:none;border-color:rgba(125,211,252,.48);box-shadow:0 0 0 4px rgba(125,211,252,.12)}
+.form-group textarea{resize:vertical}
+.fulfillment-form-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.fulfillment-form-actions .btn{padding:10px 20px;border-radius:12px;font-size:.88rem;font-weight:700;border:none;cursor:pointer;transition:opacity .15s}
+.fulfillment-form-actions .btn:hover{opacity:.85}
+.fulfillment-form-actions .btn-primary{background:rgba(59,130,246,.3);color:#93c5fd;border:1.5px solid rgba(59,130,246,.4)}
+.fulfillment-form-actions .btn-success{background:rgba(74,222,128,.25);color:#86efac;border:1.5px solid rgba(74,222,128,.35)}
+.fulfillment-form-actions .btn-outline{background:rgba(255,255,255,.06);color:#8fb1d4;border:1.5px solid rgba(255,255,255,.1)}
+.fulfillment-form-status{margin-top:12px;font-size:.86rem;text-align:center;min-height:20px}
+.fulfillment-form-status.success{color:#86efac}
+.fulfillment-form-status.error{color:#f87171}
+.admin-section-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 20px;text-align:center;color:#8fb1d4}
+.admin-section-placeholder p{font-size:.96rem;margin:0}
+.admin-compact-btn{font-size:.8rem;padding:4px 12px;min-height:0;border-radius:8px;border:1.5px solid rgba(145,180,255,.18);background:rgba(255,255,255,.06);color:#8fb1d4;cursor:pointer}

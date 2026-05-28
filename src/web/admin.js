@@ -1954,6 +1954,7 @@ async function loadManualFulfillments() {
         <td>${statusLabels[item.status] || item.status || "—"}</td>
         <td>${paidAt}</td>
         <td>${createdAt}</td>
+        <td><button class="btn btn-outline admin-compact-btn" onclick="openManualFulfillmentDetail('${item.id}')">Xem / xử lý</button></td>
       </tr>`;
     }).join("");
 
@@ -1976,6 +1977,164 @@ function bindManualFulfillmentEvents() {
   if (refreshBtn) refreshBtn.addEventListener("click", loadManualFulfillments);
   if (filterEl) filterEl.addEventListener("change", loadManualFulfillments);
 }
+
+// ── Manual fulfillment detail ────────────────────────────────────────────────
+
+let currentManualFulfillmentId = null;
+
+async function openManualFulfillmentDetail(fulfillmentId) {
+  currentManualFulfillmentId = fulfillmentId;
+  const modal = document.getElementById("adminWorkModal");
+  const titleEl = document.getElementById("adminWorkModalTitle");
+  const bodyEl = document.getElementById("adminWorkModalBody");
+  if (!modal || !bodyEl) { alert("Modal không tìm thấy"); return; }
+
+  bodyEl.innerHTML = '<div class="admin-section-placeholder"><p>Đang tải…</p></div>';
+  if (titleEl) titleEl.textContent = "Chi tiết giao hàng thủ công";
+  modal.style.display = "flex";
+  modal.classList.add("is-open");
+  document.body.classList.add("admin-modal-open");
+
+  try {
+    const res = await fetch(`/api/admin/fulfillments/manual/${encodeURIComponent(fulfillmentId)}`);
+    const data = await res.json();
+    if (!res.ok) { bodyEl.innerHTML = '<div class="admin-section-placeholder"><p>Lỗi: ' + (data.message || "Không tải được") + '</p></div>'; return; }
+    renderManualFulfillmentDetailForm(data.item);
+  } catch(e) {
+    bodyEl.innerHTML = '<div class="admin-section-placeholder"><p>Lỗi kết nối: ' + e.message + '</p></div>';
+  }
+}
+
+function renderManualFulfillmentDetailForm(item) {
+  const bodyEl = document.getElementById("adminWorkModalBody");
+  if (!bodyEl) return;
+  const dd = item.deliveryData || {};
+
+  bodyEl.innerHTML = `
+    <div class="fulfillment-detail-wrap">
+      <div class="fulfillment-detail-header">
+        <div class="fulfillment-detail-meta">
+          <div class="meta-row"><span class="meta-label">Mã đơn:</span> <strong>${item.orderCode || item.orderId || "—"}</strong></div>
+          <div class="meta-row"><span class="meta-label">Sản phẩm:</span> ${item.productName || "—"}</div>
+          <div class="meta-row"><span class="meta-label">Khách hàng:</span> ${item.customerName || "—"} (${item.customerEmail || "—"})</div>
+          <div class="meta-row"><span class="meta-label">Thanh toán:</span> ${item.orderAmount ? item.orderAmount.toLocaleString("vi-VN") + " " + (item.orderCurrency || "VND") : "—"} — ${item.orderPaidAt ? new Date(item.orderPaidAt).toLocaleString("vi-VN") : "—"}</div>
+          <div class="meta-row"><span class="meta-label">Trạng thái hiện tại:</span> <span class="status-badge status-${item.status}">${item.status || "—"}</span></div>
+          <div class="meta-row"><span class="meta-label">Ngày tạo:</span> ${item.createdAt ? new Date(item.createdAt).toLocaleString("vi-VN") : "—"}</div>
+        </div>
+      </div>
+
+      <div class="fulfillment-form-section">
+        <h4>Thông tin giao hàng</h4>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Tài khoản (email):</label>
+            <input type="email" id="ff-accountEmail" value="${escAttr(dd.accountEmail || "")}" placeholder="vendor-account@domain.com">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu:</label>
+            <input type="text" id="ff-accountPassword" value="${escAttr(dd.accountPassword || "")}" placeholder="Mật khẩu tài khoản">
+          </div>
+          <div class="form-group">
+            <label>License Key:</label>
+            <input type="text" id="ff-licenseKey" value="${escAttr(dd.licenseKey || "")}" placeholder="XXXX-XXXX-XXXX-XXXX">
+          </div>
+          <div class="form-group">
+            <label>Link kích hoạt:</label>
+            <input type="url" id="ff-activationLink" value="${escAttr(dd.activationLink || "")}" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Email Tenant:</label>
+            <input type="email" id="ff-tenantEmail" value="${escAttr(dd.tenantEmail || "")}" placeholder="tenant@vendor.com">
+          </div>
+          <div class="form-group">
+            <label>Email Assigned:</label>
+            <input type="email" id="ff-assignedEmail" value="${escAttr(dd.assignedEmail || "")}" placeholder="assigned@client.com">
+          </div>
+          <div class="form-group form-group-full">
+            <label>Mã đơn hãng vận chuyển:</label>
+            <input type="text" id="ff-vendorOrderId" value="${escAttr(dd.vendorOrderId || "")}" placeholder="Mã theo dõi hãng">
+          </div>
+        </div>
+      </div>
+
+      <div class="fulfillment-form-section">
+        <h4>Ghi chú nội bộ</h4>
+        <div class="form-group form-group-full">
+          <textarea id="ff-adminNote" rows="3" placeholder="Ghi chú chỉ hiển thị với admin, không gửi khách">${escHtml(item.adminNote || "")}</textarea>
+        </div>
+      </div>
+
+      <div class="fulfillment-form-section">
+        <h4>Ghi chú gửi khách</h4>
+        <div class="form-group form-group-full">
+          <textarea id="ff-customerNote" rows="2" placeholder="Ghi chú sẽ được gửi cho khách hàng">${escHtml(item.customerNote || "")}</textarea>
+        </div>
+      </div>
+
+      <div class="fulfillment-form-actions">
+        ${item.status === "draft" || item.status === "preparing" ? '<button class="btn btn-primary" id="ff-save-draft-btn">💾 Lưu nháp</button>' : ""}
+        ${item.status === "draft" || item.status === "preparing" ? '<button class="btn btn-success" id="ff-mark-ready-btn">✅ Sẵn sàng giao</button>' : ""}
+        <button class="btn btn-outline" onclick="closeAdminWorkspaceModal()">Đóng</button>
+      </div>
+      <div class="fulfillment-form-status" id="ff-status-msg"></div>
+    </div>
+  `;
+
+  bindDetailFormEvents(item);
+}
+
+function bindDetailFormEvents(item) {
+  const statusMsg = document.getElementById("ff-status-msg");
+  const setMsg = (msg, isError) => { if (statusMsg) { statusMsg.textContent = msg; statusMsg.className = "fulfillment-form-status " + (isError ? "error" : "success"); } };
+
+  const saveDraftBtn = document.getElementById("ff-save-draft-btn");
+  if (saveDraftBtn) saveDraftBtn.addEventListener("click", () => saveDraft(false, setMsg));
+
+  const markReadyBtn = document.getElementById("ff-mark-ready-btn");
+  if (markReadyBtn) markReadyBtn.addEventListener("click", () => saveDraft(true, setMsg));
+}
+
+async function saveDraft(markReady, setMsg) {
+  if (!currentManualFulfillmentId) return;
+  const saveDraftBtn = document.getElementById("ff-save-draft-btn");
+  const markReadyBtn = document.getElementById("ff-mark-ready-btn");
+  if (saveDraftBtn) saveDraftBtn.disabled = true;
+  if (markReadyBtn) markReadyBtn.disabled = true;
+  setMsg("Đang lưu…");
+
+  const payload = {
+    accountEmail:   document.getElementById("ff-accountEmail")?.value || "",
+    accountPassword: document.getElementById("ff-accountPassword")?.value || "",
+    licenseKey:    document.getElementById("ff-licenseKey")?.value || "",
+    activationLink: document.getElementById("ff-activationLink")?.value || "",
+    tenantEmail:   document.getElementById("ff-tenantEmail")?.value || "",
+    assignedEmail: document.getElementById("ff-assignedEmail")?.value || "",
+    vendorOrderId: document.getElementById("ff-vendorOrderId")?.value || "",
+    adminNote:    document.getElementById("ff-adminNote")?.value || "",
+    customerNote: document.getElementById("ff-customerNote")?.value || "",
+    ...(markReady ? { targetStatus: "ready_to_deliver" } : {})
+  };
+
+  try {
+    const res = await fetch(`/api/admin/fulfillments/manual/${encodeURIComponent(currentManualFulfillmentId)}/draft`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) { setMsg(data.message || "Lỗi khi lưu", true); return; }
+    setMsg(markReady ? "✅ Đã chuyển sang \"Sẵn sàng giao\"" : "💾 Đã lưu nháp");
+    setTimeout(() => { closeAdminWorkspaceModal(); loadManualFulfillments(); }, 1200);
+  } catch(e) {
+    setMsg("Lỗi kết nối: " + e.message, true);
+  } finally {
+    if (saveDraftBtn) saveDraftBtn.disabled = false;
+    if (markReadyBtn) markReadyBtn.disabled = false;
+  }
+}
+
+function escAttr(v) { return String(v || "").replace(/"/g, "&quot;"); }
+function escHtml(v) { return String(v || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function escapeSqlString(value){
   return String(value || "").replace(/'/g, "''");

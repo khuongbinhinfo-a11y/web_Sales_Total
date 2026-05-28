@@ -4893,6 +4893,71 @@ app.get(
   })
 );
 
+app.get(
+  "/api/admin/fulfillments/manual/:id",
+  requireAdminPermission("orders:read"),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "Missing fulfillment id" });
+    const detail = await getManualFulfillmentDetail({ fulfillmentId: id });
+    if (!detail) return res.status(404).json({ message: "Không tìm thấy phiếu giao hàng" });
+    return res.json({ ok: true, item: detail });
+  })
+);
+
+app.patch(
+  "/api/admin/fulfillments/manual/:id/draft",
+  requireAdminPermission("orders:write"),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "Missing fulfillment id" });
+
+    const { accountEmail, accountPassword, licenseKey, activationLink,
+            tenantEmail, assignedEmail, vendorOrderId, customerNote,
+            adminNote, targetStatus } = req.body || {};
+
+    // Build delivery_data — never overwrite with undefined keys
+    const current = await getManualFulfillmentDetail({ fulfillmentId: id });
+    if (!current) return res.status(404).json({ message: "Không tìm thấy phiếu giao hàng" });
+
+    const deliveryData = {
+      ...(current.deliveryData || {}),
+      ...(accountEmail !== undefined ? { accountEmail: String(accountEmail || "").trim() } : {}),
+      ...(accountPassword !== undefined ? { accountPassword: String(accountPassword || "") } : {}),
+      ...(licenseKey !== undefined ? { licenseKey: String(licenseKey || "").trim() } : {}),
+      ...(activationLink !== undefined ? { activationLink: String(activationLink || "").trim() } : {}),
+      ...(tenantEmail !== undefined ? { tenantEmail: String(tenantEmail || "").trim() } : {}),
+      ...(assignedEmail !== undefined ? { assignedEmail: String(assignedEmail || "").trim() } : {}),
+      ...(vendorOrderId !== undefined ? { vendorOrderId: String(vendorOrderId || "").trim() } : {})
+    };
+
+    // Validation: if trying to move to ready_to_deliver, must have at least one delivery credential
+    if (targetStatus === "ready_to_deliver") {
+      const hasCred = deliveryData.accountEmail
+        || deliveryData.licenseKey
+        || deliveryData.activationLink
+        || deliveryData.tenantEmail
+        || deliveryData.assignedEmail
+        || deliveryData.vendorOrderId;
+      if (!hasCred) {
+        return res.status(400).json({
+          message: "Cần nhập ít nhất một thông tin giao hàng (email tài khoản, license key, link kích hoạt, email tenant, email assigned, hoặc mã đơn hãng) để chuyển sang trạng thái Sẵn sàng giao."
+        });
+      }
+    }
+
+    const updated = await saveManualFulfillmentDraft({
+      fulfillmentId: id,
+      deliveryData,
+      adminNote,
+      customerNote,
+      targetStatus: targetStatus || undefined
+    });
+    if (!updated) return res.status(404).json({ message: "Không tìm thấy phiếu giao hàng" });
+    return res.json({ ok: true, item: updated });
+  })
+);
+
 /* ── Customer account auth ── */
 app.post(
   "/api/auth/customer/login",

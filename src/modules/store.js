@@ -1166,6 +1166,112 @@ async function listManualFulfillments({ statusFilter = null, limit = 100, offset
   }));
 }
 
+async function getManualFulfillmentDetail({ fulfillmentId }) {
+  if (!fulfillmentId) return null;
+  const query = `
+    SELECT
+      f.id,
+      f.order_id,
+      o.order_code,
+      f.product_id,
+      p.name        AS product_name,
+      p.app_id      AS brand_code,
+      f.fulfillment_mode,
+      f.status,
+      f.delivery_data,
+      f.admin_note,
+      f.customer_note,
+      f.sent_at,
+      f.sent_by,
+      f.created_at,
+      f.updated_at,
+      c.id          AS customer_id,
+      c.full_name   AS customer_name,
+      c.email       AS customer_email,
+      o.amount      AS order_amount,
+      o.currency    AS order_currency,
+      o.paid_at     AS order_paid_at,
+      o.created_at  AS order_created_at
+    FROM order_fulfillments f
+    JOIN orders o ON o.id = f.order_id
+    JOIN products p ON p.id = f.product_id
+    JOIN customers c ON c.id = o.customer_id
+    WHERE f.id = $1
+  `;
+  const result = await pool.query(query, [String(fulfillmentId)]);
+  if (!result.rows.length) return null;
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    orderCode: row.order_code || null,
+    productId: row.product_id,
+    productName: row.product_name || null,
+    brandCode: row.brand_code || null,
+    fulfillmentMode: row.fulfillment_mode,
+    status: row.status,
+    deliveryData: row.delivery_data || {},
+    adminNote: row.admin_note || null,
+    customerNote: row.customer_note || null,
+    sentAt: row.sent_at || null,
+    sentBy: row.sent_by || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    customerId: row.customer_id,
+    customerName: row.customer_name || null,
+    customerEmail: row.customer_email || null,
+    orderAmount: row.order_amount ? Number(row.order_amount) : null,
+    orderCurrency: row.order_currency || null,
+    orderPaidAt: row.order_paid_at || null,
+    orderCreatedAt: row.order_created_at || null
+  };
+}
+
+async function saveManualFulfillmentDraft({ fulfillmentId, deliveryData, adminNote, customerNote, targetStatus }) {
+  if (!fulfillmentId) throw new Error("Missing fulfillmentId");
+
+  const setClauses = [];
+  const params = [];
+  let paramIdx = 1;
+
+  if (deliveryData !== undefined) {
+    setClauses.push(`delivery_data = $${paramIdx}::jsonb`);
+    params.push(JSON.stringify(deliveryData || {}));
+    paramIdx++;
+  }
+  if (adminNote !== undefined) {
+    setClauses.push(`admin_note = $${paramIdx}`);
+    params.push(String(adminNote || "").slice(0, 2000));
+    paramIdx++;
+  }
+  if (customerNote !== undefined) {
+    setClauses.push(`customer_note = $${paramIdx}`);
+    params.push(String(customerNote || "").slice(0, 2000));
+    paramIdx++;
+  }
+  if (targetStatus !== undefined) {
+    setClauses.push(`status = $${paramIdx}`);
+    params.push(String(targetStatus));
+    paramIdx++;
+  }
+
+  setClauses.push(`updated_at = NOW()`);
+
+  if (!setClauses.length) return null;
+
+  params.push(String(fulfillmentId));
+  const query = `
+    UPDATE order_fulfillments
+    SET ${setClauses.join(", ")}
+    WHERE id = $${paramIdx}
+    RETURNING id, order_id, fulfillment_mode, status, delivery_data,
+             admin_note, customer_note, sent_at, sent_by, created_at, updated_at
+  `;
+  const result = await pool.query(query, params);
+  if (!result.rows.length) return null;
+  return mapOrderFulfillment(result.rows[0]);
+}
+
 function computeDiscountAmount(amount, percentOff) {
   const safeAmount = Math.max(0, Number(amount) || 0);
   const safePercent = Math.max(0, Math.min(100, Number(percentOff) || 0));
