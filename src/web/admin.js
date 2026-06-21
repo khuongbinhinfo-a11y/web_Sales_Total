@@ -2854,6 +2854,11 @@ function bindKeyLookup(){
               <div class="admin-kv-row"><span>Hết hạn</span><strong>${l.expiresAt ? fmtDate(l.expiresAt) : "∞ Lifetime"}</strong></div>
               <div class="admin-kv-row"><span>Customer ID</span><strong class="admin-code-text">${escapeHtml(l.customerId||"—")}</strong></div>
               <div class="admin-kv-row"><span>Kích hoạt</span><strong>${l.activatedAt ? fmtDate(l.activatedAt) : "Chưa kích hoạt"}</strong></div>
+              ${l.appId === "app-bloomia-pos" ? `
+              <div class="admin-kv-row"><span>Machine ID</span><strong class="admin-code-text">${escapeHtml(l.machineId||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Machine name</span><strong>${escapeHtml(l.machineName||"—")}</strong></div>
+              <div class="admin-kv-row"><span>Reset count</span><strong>${Number(l.resetCount||0)}</strong></div>
+              ` : ""}
             </div>
           </div>
           <div class="admin-result-card">
@@ -2869,7 +2874,12 @@ function bindKeyLookup(){
           <strong>Metadata</strong>
           <pre style="font-size:.73rem;white-space:pre-wrap;margin:8px 0 0">${escapeHtml(meta)}</pre>
         </div>
-        ${l.status !== "revoked" && l.id ? `<div style="margin-top:10px"><button id="keyRevokeBtn" class="btn" style="background:#dc2626;color:#fff;font-size:.83rem;padding:6px 14px">🔒 Vô hiệu hóa key này</button></div>` : `<div style="margin-top:8px;font-size:.82rem;color:#dc2626;font-weight:600">⛔ Key này đã bị vô hiệu hóa</div>`}
+        ${l.status !== "revoked" && l.id ? `
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button id="keyRevokeBtn" class="btn" style="background:#dc2626;color:#fff;font-size:.83rem;padding:6px 14px">🔒 Vô hiệu hóa key này</button>
+            ${l.appId === "app-bloomia-pos" ? `<button id="keyResetMachineBtn" class="btn btn-accent" style="font-size:.83rem;padding:6px 14px">🔄 Reset máy</button>` : ""}
+          </div>
+        ` : `<div style="margin-top:8px;font-size:.82rem;color:#dc2626;font-weight:600">⛔ Key này đã bị vô hiệu hóa</div>`}
       </div>`;
       if (l.status !== "revoked" && l.id) {
         document.getElementById("keyRevokeBtn")?.addEventListener("click", async () => {
@@ -2886,6 +2896,29 @@ function bindKeyLookup(){
             if(msg){ msg.textContent = "Lỗi: " + err.message; msg.style.color = "var(--danger)"; }
           }
         });
+
+        if (l.appId === "app-bloomia-pos") {
+          document.getElementById("keyResetMachineBtn")?.addEventListener("click", async () => {
+            const reason = window.prompt("Lý do reset máy", "Khach thay may");
+            if (!reason) return;
+            const confirmPassword = window.prompt("Nhập mật khẩu xác nhận");
+            if (!confirmPassword) return;
+            if (!confirm(`Xác nhận reset máy cho key:\n${l.licenseKey || l.id}?\n\nMachine cũ sẽ bị giải phóng.`)) return;
+            try {
+              const rRes = await fetchAdmin(`/api/admin/bloomia/licenses/${encodeURIComponent(l.id)}/reset-machine`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reason, confirmPassword })
+              });
+              const rData = await rRes.json().catch(() => ({}));
+              if (!rRes.ok) { if(msg){ msg.textContent = rData.message || "Lỗi reset máy"; msg.style.color = "var(--danger)"; } return; }
+              if(msg){ msg.textContent = "✅ Đã reset máy cho Bloomia key"; msg.style.color = "var(--success,#16a34a)"; }
+              await doLookup();
+            } catch(err) {
+              if(msg){ msg.textContent = "Lỗi: " + err.message; msg.style.color = "var(--danger)"; }
+            }
+          });
+        }
       }
     } catch(err){
       if(msg){ msg.textContent="Lỗi: "+err.message; msg.style.color="var(--danger)"; }
@@ -4496,4 +4529,3 @@ if (document.readyState === "loading") {
 } else {
   initRouteLocksUI();
 }
-

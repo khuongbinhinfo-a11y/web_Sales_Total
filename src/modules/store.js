@@ -3,6 +3,20 @@ const fs = require("fs");
 const path = require("path");
 const { pool } = require("../db/pool");
 const {
+  BLOOMIA_APP_ID,
+  createBloomiaActivationToken,
+  computeBloomiaOfflineUntil,
+  buildBloomiaOfflineLeasePayload,
+  generateBloomiaLicenseKey,
+  hashBloomiaActivationToken,
+  normalizeBloomiaAppId,
+  normalizeBloomiaDeviceName,
+  normalizeBloomiaLicenseKey,
+  normalizeBloomiaMachineId,
+  signBloomiaOfflineLease
+} = require("./bloomiaLicenses");
+const { env } = require("../config/env");
+const {
   CAP01_BLOCKED_APP_IDS,
   CAP01_BLOCKED_PRODUCT_IDS,
   isCap01AppId,
@@ -1016,6 +1030,7 @@ function mapProductRow(row) {
     saleStatus: normalizeProductSaleStatus(row.sale_status),
     saleNote: String(row.sale_note || "").trim(),
     fulfillmentMode: normalizeFulfillmentMode(row.fulfillment_mode),
+    licenseStrategy: normalizeLicenseStrategy(row.license_strategy),
     brandCode: row.brand_code || null,
     durationText: row.duration_text || null,
     deliveryEstimate: row.delivery_estimate || null,
@@ -1026,6 +1041,7 @@ function mapProductRow(row) {
 }
 
 const FULFILLMENT_MODES = new Set(["auto_license", "manual_vendor", "manual_service", "quote_only"]);
+const LICENSE_STRATEGIES = new Set(["legacy_hybrid", "inventory_key", "generated_machine"]);
 
 function normalizeFulfillmentMode(value) {
   const normalized = String(value || "auto_license").trim().toLowerCase();
@@ -1034,6 +1050,11 @@ function normalizeFulfillmentMode(value) {
 
 function validateFulfillmentMode(value) {
   return FULFILLMENT_MODES.has(String(value || "auto_license").trim().toLowerCase());
+}
+
+function normalizeLicenseStrategy(value) {
+  const normalized = String(value || "legacy_hybrid").trim().toLowerCase();
+  return LICENSE_STRATEGIES.has(normalized) ? normalized : "legacy_hybrid";
 }
 
 // Returns 'auto' for auto_license or NULL, 'manual' for manual_vendor/manual_service
@@ -1347,6 +1368,13 @@ function mapAppLicense(row) {
     deviceId: row.device_id,
     deviceName: row.device_name,
     lastVerifiedAt: row.last_verified_at,
+    activationTokenHash: row.activation_token_hash || null,
+    machineId: row.machine_id || null,
+    machineName: row.machine_name || null,
+    resetCount: Number(row.reset_count || 0),
+    lastResetAt: row.last_reset_at || null,
+    lastResetReason: row.last_reset_reason || null,
+    lastResetByAdmin: row.last_reset_by_admin || null,
     metadata: row.metadata,
     activeLease,
     createdAt: row.created_at,
@@ -1483,6 +1511,22 @@ function computeLicenseExpiry(cycle) {
   return null;
 }
 
+function extendLicenseExpiryFromBase(cycle, baseDate) {
+  if (cycle === "monthly") {
+    const endAt = new Date(baseDate);
+    endAt.setMonth(endAt.getMonth() + 1);
+    return endAt;
+  }
+
+  if (cycle === "yearly") {
+    const endAt = new Date(baseDate);
+    endAt.setFullYear(endAt.getFullYear() + 1);
+    return endAt;
+  }
+
+  return null;
+}
+
 async function getOrderAppLicense(orderId) {
   const result = await pool.query(
     `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
@@ -1501,9 +1545,16 @@ async function getOrderAppLicense(orderId) {
 }
 
 async function issueAppLicenseForOrder({ client, order, product }) {
+  const licenseStrategy = normalizeLicenseStrategy(product?.license_strategy || product?.licenseStrategy);
+  if (licenseStrategy === "inventory_key") {
+    return null;
+  }
+
   const existedResult = await client.query(
     `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
             status, activated_at, expires_at, device_id, device_name, last_verified_at,
+            activation_token_hash, machine_id, machine_name,
+            reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
             metadata, created_at, updated_at
      FROM app_licenses
      WHERE order_id = $1::uuid`,
@@ -1520,7 +1571,8 @@ async function issueAppLicenseForOrder({ client, order, product }) {
   const metadata = {
     source: "auto_after_paid",
     orderCode: order.order_code,
-    cycle: product.cycle
+    cycle: product.cycle,
+    licenseStrategy
   };
 
   if (cap01Config) {
@@ -1583,27 +1635,126 @@ async function issueAppLicenseForOrder({ client, order, product }) {
     };
   }
 
+  const isBloomiaGeneratedLicense =
+    licenseStrategy === "generated_machine" ||
+    normalizeBloomiaAppId(product?.appId || product?.app_id) === BLOOMIA_APP_ID ||
+    normalizeBloomiaAppId(order?.appId || order?.app_id) === BLOOMIA_APP_ID;
+  const licensePlanCode = isBloomiaGeneratedLicense
+    ? (String(product?.cycle || "").trim().toLowerCase() === "yearly"
+      ? "yearly"
+      : String(product?.cycle || "").trim().toLowerCase() === "one_time"
+        ? "lifetime"
+        : String(product?.cycle || "").trim().toLowerCase() || product.id)
+    : product.id;
+
+  if (isBloomiaGeneratedLicense) {
+    const existingBloomiaResult = await client.query(
+      `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+              status, activated_at, expires_at, device_id, device_name, last_verified_at,
+              activation_token_hash, machine_id, machine_name,
+              reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+              metadata, created_at, updated_at
+       FROM app_licenses
+       WHERE customer_id = $1
+         AND app_id = $2
+         AND status <> 'revoked'
+       ORDER BY created_at DESC
+       LIMIT 1
+       FOR UPDATE`,
+      [order.customer_id, order.app_id]
+    );
+
+    if (existingBloomiaResult.rowCount > 0) {
+      const existingBloomia = existingBloomiaResult.rows[0];
+      const previousExpiresAt = existingBloomia.expires_at ? new Date(existingBloomia.expires_at) : null;
+      const renewalBase = previousExpiresAt && previousExpiresAt.getTime() > Date.now()
+        ? previousExpiresAt
+        : new Date();
+      const renewedExpiresAt = extendLicenseExpiryFromBase(product.cycle, renewalBase);
+      const renewalMetadata = {
+        ...(existingBloomia.metadata && typeof existingBloomia.metadata === "object" ? existingBloomia.metadata : {}),
+        source: "auto_after_paid",
+        orderCode: order.order_code,
+        cycle: product.cycle,
+        licenseStrategy,
+        renewal: {
+          orderId: order.id,
+          previousOrderId: existingBloomia.order_id || null,
+          previousExpiresAt: previousExpiresAt ? previousExpiresAt.toISOString() : null,
+          renewedAt: new Date().toISOString()
+        }
+      };
+
+      const updateResult = await client.query(
+        `UPDATE app_licenses
+         SET order_id = $2::uuid,
+             expires_at = $3,
+             status = CASE WHEN status = 'revoked' THEN status ELSE 'active' END,
+             last_verified_at = CASE WHEN last_verified_at IS NULL THEN NOW() ELSE last_verified_at END,
+             metadata = $4::jsonb,
+             updated_at = NOW()
+         WHERE id = $1::uuid
+         RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+                   status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                   activation_token_hash, machine_id, machine_name,
+                   reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+                   metadata, created_at, updated_at`,
+        [
+          existingBloomia.id,
+          order.id,
+          renewedExpiresAt ? renewedExpiresAt.toISOString() : null,
+          JSON.stringify(renewalMetadata)
+        ]
+      );
+
+      await client.query(
+        `INSERT INTO app_license_renewals(
+           license_id, customer_id, app_id, previous_order_id, new_order_id,
+           previous_expires_at, new_expires_at
+         )
+         VALUES ($1::uuid, $2, $3, $4::uuid, $5::uuid, $6, $7)`,
+        [
+          existingBloomia.id,
+          order.customer_id,
+          order.app_id,
+          existingBloomia.order_id || null,
+          order.id,
+          previousExpiresAt ? previousExpiresAt.toISOString() : null,
+          renewedExpiresAt ? renewedExpiresAt.toISOString() : null
+        ]
+      );
+
+      return mapAppLicense(updateResult.rows[0]);
+    }
+  }
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const licenseKey = generateReadableLicenseKey();
+    const licenseKey = isBloomiaGeneratedLicense
+      ? generateBloomiaLicenseKey()
+      : generateReadableLicenseKey();
     try {
       const inserted = await client.query(
         `INSERT INTO app_licenses(
            id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle,
-           license_key, status, expires_at, metadata
+           license_key, status, expires_at, activation_token_hash, machine_id, machine_name,
+           reset_count, metadata
          )
          VALUES (
            gen_random_uuid(), $1, $2, $3, $4::uuid, $5, $6,
-           $7, 'inactive', $8, $9::jsonb
+           $7, 'inactive', $8, NULL, NULL, NULL,
+           0, $9::jsonb
          )
          RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
                    status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                   activation_token_hash, machine_id, machine_name,
+                   reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
                    metadata, created_at, updated_at`,
         [
           order.customer_id,
           order.app_id,
           order.product_id,
           order.id,
-          product.id,
+          licensePlanCode,
           product.cycle,
           licenseKey,
           expiresAt ? expiresAt.toISOString() : null,
@@ -1647,7 +1798,7 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
   const productsResult = await pool.query(
     `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
             currency, credits, active, visibility, sale_status, sale_note,
-            fulfillment_mode, brand_code, duration_text, delivery_estimate,
+            fulfillment_mode, license_strategy, brand_code, duration_text, delivery_estimate,
             delivery_field_schema, instruction_template, email_template
      FROM products
      WHERE 1 = 1
@@ -1797,6 +1948,9 @@ async function updateProductFulfillmentConfig(productId, input = {}) {
   const safeFulfillmentMode = input.fulfillmentMode !== undefined
     ? normalizeFulfillmentMode(input.fulfillmentMode)
     : null;
+  const safeLicenseStrategy = input.licenseStrategy !== undefined
+    ? normalizeLicenseStrategy(input.licenseStrategy)
+    : null;
   const safeBrandCode = input.brandCode !== undefined
     ? String(input.brandCode || "").trim().slice(0, 100) || null
     : null;
@@ -1819,6 +1973,9 @@ async function updateProductFulfillmentConfig(productId, input = {}) {
   if (safeFulfillmentMode !== null && !FULFILLMENT_MODES.has(safeFulfillmentMode)) {
     throw createStoreError("fulfillmentMode phải là một trong: auto_license, manual_vendor, manual_service, quote_only", 400);
   }
+  if (safeLicenseStrategy !== null && !LICENSE_STRATEGIES.has(safeLicenseStrategy)) {
+    throw createStoreError("licenseStrategy phải là một trong: legacy_hybrid, inventory_key, generated_machine", 400);
+  }
 
   const setClauses = [];
   const params = [];
@@ -1827,6 +1984,11 @@ async function updateProductFulfillmentConfig(productId, input = {}) {
   if (safeFulfillmentMode !== null) {
     setClauses.push(`fulfillment_mode = $${paramIndex}`);
     params.push(safeFulfillmentMode);
+    paramIndex++;
+  }
+  if (safeLicenseStrategy !== null) {
+    setClauses.push(`license_strategy = $${paramIndex}`);
+    params.push(safeLicenseStrategy);
     paramIndex++;
   }
   if (safeBrandCode !== null) {
@@ -1873,7 +2035,7 @@ async function updateProductFulfillmentConfig(productId, input = {}) {
      WHERE id = $${paramIndex}
      RETURNING id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
                currency, credits, active, visibility, sale_status, sale_note,
-               fulfillment_mode, brand_code, duration_text, delivery_estimate,
+               fulfillment_mode, license_strategy, brand_code, duration_text, delivery_estimate,
                delivery_field_schema, instruction_template, email_template`,
     params
   );
@@ -2531,7 +2693,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     }
 
     const productResult = await client.query(
-      `SELECT id, app_id, cycle, credits, fulfillment_mode
+      `SELECT id, app_id, cycle, credits, fulfillment_mode, license_strategy
        FROM products
        WHERE id = $1`,
       [paidOrder.product_id]
@@ -2541,6 +2703,7 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     }
     const product = productResult.rows[0];
     const fulfillmentCategory = getFulfillmentCategory(product.fulfillment_mode);
+    const licenseStrategy = normalizeLicenseStrategy(product.license_strategy);
 
     // Guard: quote_only products should not enter paid flow
     if (normalizeFulfillmentMode(product.fulfillment_mode) === "quote_only") {
@@ -2553,124 +2716,126 @@ async function markOrderPaid({ orderId, provider, providerTransactionId, payload
     let keyDelivery = null;
 
     if (fulfillmentCategory === "auto") {
-      appLicense = await issueAppLicenseForOrder({
-        client,
-        order: paidOrder,
-        product
-      });
+      if (licenseStrategy !== "inventory_key") {
+        appLicense = await issueAppLicenseForOrder({
+          client,
+          order: paidOrder,
+          product
+        });
+      }
 
       if (product.cycle !== "one_time") {
-      const { startAt, endAt } = computePeriod(product.cycle);
+        const { startAt, endAt } = computePeriod(product.cycle);
+        await client.query(
+          `INSERT INTO subscriptions(id, customer_id, app_id, product_id, status, start_at, end_at, renewal_mode)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'active', $4, $5, 'manual')
+           ON CONFLICT (customer_id, app_id)
+           DO UPDATE SET
+             product_id = EXCLUDED.product_id,
+             status = EXCLUDED.status,
+             start_at = EXCLUDED.start_at,
+             end_at = EXCLUDED.end_at,
+             renewal_mode = EXCLUDED.renewal_mode`,
+          [paidOrder.customer_id, paidOrder.app_id, product.id, startAt.toISOString(), endAt.toISOString()]
+        );
+        await client.query(
+          `INSERT INTO entitlements(id, customer_id, app_id, feature_flags, valid_until, updated_at)
+           VALUES (gen_random_uuid(), $1, $2, $3::jsonb, $4, NOW())
+           ON CONFLICT (customer_id, app_id)
+           DO UPDATE SET
+             feature_flags = EXCLUDED.feature_flags,
+             valid_until = EXCLUDED.valid_until,
+             updated_at = NOW()`,
+          [
+            paidOrder.customer_id,
+            paidOrder.app_id,
+            JSON.stringify(["ai_tutor", "de_thi_thu", "bao_cao_tien_do"]),
+            endAt.toISOString()
+          ]
+        );
+      }
+
       await client.query(
-        `INSERT INTO subscriptions(id, customer_id, app_id, product_id, status, start_at, end_at, renewal_mode)
-         VALUES (gen_random_uuid(), $1, $2, $3, 'active', $4, $5, 'manual')
+        `INSERT INTO credit_wallets(customer_id, app_id, balance, updated_at)
+         VALUES ($1, $2, $3, NOW())
          ON CONFLICT (customer_id, app_id)
          DO UPDATE SET
-           product_id = EXCLUDED.product_id,
-           status = EXCLUDED.status,
-           start_at = EXCLUDED.start_at,
-           end_at = EXCLUDED.end_at,
-           renewal_mode = EXCLUDED.renewal_mode`,
-        [paidOrder.customer_id, paidOrder.app_id, product.id, startAt.toISOString(), endAt.toISOString()]
-      );
-      await client.query(
-        `INSERT INTO entitlements(id, customer_id, app_id, feature_flags, valid_until, updated_at)
-         VALUES (gen_random_uuid(), $1, $2, $3::jsonb, $4, NOW())
-         ON CONFLICT (customer_id, app_id)
-         DO UPDATE SET
-           feature_flags = EXCLUDED.feature_flags,
-           valid_until = EXCLUDED.valid_until,
+           balance = credit_wallets.balance + EXCLUDED.balance,
            updated_at = NOW()`,
+        [paidOrder.customer_id, paidOrder.app_id, product.credits]
+      );
+
+      await client.query(
+        `INSERT INTO credit_ledger(id, customer_id, app_id, change_amount, reason, order_id)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::uuid)`,
         [
           paidOrder.customer_id,
           paidOrder.app_id,
-          JSON.stringify(["ai_tutor", "de_thi_thu", "bao_cao_tien_do"]),
-          endAt.toISOString()
+          product.credits,
+          product.cycle === "one_time" ? "topup_purchase" : "subscription_grant",
+          paidOrder.id
         ]
       );
-    }
 
-    await client.query(
-      `INSERT INTO credit_wallets(customer_id, app_id, balance, updated_at)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (customer_id, app_id)
-       DO UPDATE SET
-         balance = credit_wallets.balance + EXCLUDED.balance,
-         updated_at = NOW()`,
-      [paidOrder.customer_id, paidOrder.app_id, product.credits]
-    );
-
-    await client.query(
-      `INSERT INTO credit_ledger(id, customer_id, app_id, change_amount, reason, order_id)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::uuid)`,
-      [
-        paidOrder.customer_id,
-        paidOrder.app_id,
-        product.credits,
-        product.cycle === "one_time" ? "topup_purchase" : "subscription_grant",
-        paidOrder.id
-      ]
-    );
-
-    const deliveryResult = await client.query(
-      `SELECT d.id, d.order_id, o.order_code, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
-              d.delivered_payload, d.delivered_at, k.key_value
-       FROM order_key_deliveries d
-       JOIN product_keys k ON k.id = d.key_id
-       JOIN orders o ON o.id = d.order_id
-       WHERE d.order_id = $1::uuid`,
-      [paidOrder.id]
-    );
-
-    keyDelivery = deliveryResult.rowCount === 0 ? null : mapKeyDelivery(deliveryResult.rows[0]);
-
-    if (!keyDelivery) {
-      const keyResult = await client.query(
-        `SELECT id, key_value
-         FROM product_keys
-         WHERE product_id = $1 AND status = 'available'
-         ORDER BY created_at ASC
-         FOR UPDATE SKIP LOCKED
-         LIMIT 1`,
-        [paidOrder.product_id]
+      const deliveryResult = await client.query(
+        `SELECT d.id, d.order_id, o.order_code, d.product_id, d.key_id, d.delivered_to_customer, d.delivery_channel,
+                d.delivered_payload, d.delivered_at, k.key_value
+         FROM order_key_deliveries d
+         JOIN product_keys k ON k.id = d.key_id
+         JOIN orders o ON o.id = d.order_id
+         WHERE d.order_id = $1::uuid`,
+        [paidOrder.id]
       );
 
-      if (keyResult.rowCount > 0) {
-        const selectedKey = keyResult.rows[0];
+      keyDelivery = deliveryResult.rowCount === 0 ? null : mapKeyDelivery(deliveryResult.rows[0]);
 
-        await client.query(
-          `UPDATE product_keys
-           SET status = 'delivered', delivered_order_id = $1::uuid, updated_at = NOW()
-           WHERE id = $2::uuid`,
-          [paidOrder.id, selectedKey.id]
+      if (!keyDelivery && licenseStrategy !== "generated_machine") {
+        const keyResult = await client.query(
+          `SELECT id, key_value
+           FROM product_keys
+           WHERE product_id = $1 AND status = 'available'
+           ORDER BY created_at ASC
+           FOR UPDATE SKIP LOCKED
+           LIMIT 1`,
+          [paidOrder.product_id]
         );
 
-        const insertedDelivery = await client.query(
-          `INSERT INTO order_key_deliveries(
-             id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload
-           )
-           VALUES (gen_random_uuid(), $1::uuid, $2, $3::uuid, $4, 'portal_auto', $5::jsonb)
-           ON CONFLICT (order_id) DO NOTHING
-           RETURNING id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload, delivered_at`,
-          [
-            paidOrder.id,
-            paidOrder.product_id,
-            selectedKey.id,
-            paidOrder.customer_id,
-            JSON.stringify({ keyValue: selectedKey.key_value, source: "auto_after_paid" })
-          ]
-        );
+        if (keyResult.rowCount > 0) {
+          const selectedKey = keyResult.rows[0];
 
-        if (insertedDelivery.rowCount > 0) {
-          keyDelivery = {
-            ...mapKeyDelivery(insertedDelivery.rows[0]),
-            keyValue: selectedKey.key_value
-          };
-        } else {
-          keyDelivery = await getOrderKeyDelivery(paidOrder.id);
+          await client.query(
+            `UPDATE product_keys
+             SET status = 'delivered', delivered_order_id = $1::uuid, updated_at = NOW()
+             WHERE id = $2::uuid`,
+            [paidOrder.id, selectedKey.id]
+          );
+
+          const insertedDelivery = await client.query(
+            `INSERT INTO order_key_deliveries(
+               id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload
+             )
+             VALUES (gen_random_uuid(), $1::uuid, $2, $3::uuid, $4, 'portal_auto', $5::jsonb)
+             ON CONFLICT (order_id) DO NOTHING
+             RETURNING id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload, delivered_at`,
+            [
+              paidOrder.id,
+              paidOrder.product_id,
+              selectedKey.id,
+              paidOrder.customer_id,
+              JSON.stringify({ keyValue: selectedKey.key_value, source: "auto_after_paid" })
+            ]
+          );
+
+          if (insertedDelivery.rowCount > 0) {
+            keyDelivery = {
+              ...mapKeyDelivery(insertedDelivery.rows[0]),
+              keyValue: selectedKey.key_value
+            };
+          } else {
+            keyDelivery = await getOrderKeyDelivery(paidOrder.id);
+          }
         }
       }
-    }
     } else {
       // manual_vendor or manual_service: create fulfillment record, skip auto license/key delivery
       await createManualFulfillmentForOrderWithClient({
@@ -2896,7 +3061,9 @@ async function findAppLicenseByKeyAdmin(licenseKey) {
     `SELECT al.id, al.customer_id, al.app_id, al.product_id, al.order_id,
             al.plan_code, al.billing_cycle, al.license_key,
             al.status, al.activated_at, al.expires_at, al.device_id, al.device_name,
-            al.last_verified_at, al.metadata, al.created_at, al.updated_at,
+            al.last_verified_at, al.activation_token_hash, al.machine_id, al.machine_name,
+            al.reset_count, al.last_reset_at, al.last_reset_reason, al.last_reset_by_admin,
+            al.metadata, al.created_at, al.updated_at,
             rtl.license_id AS lease_license_id,
             rtl.customer_id AS lease_customer_id,
             rtl.app_id AS lease_app_id,
@@ -3081,6 +3248,294 @@ async function verifyAppLicenseByKey({ appId, licenseKey, customerId, customerEm
                status, activated_at, expires_at, device_id, device_name, last_verified_at,
                metadata, created_at, updated_at`,
     [normalizedLicenseKey, appIdCandidates, runtimeClientId, runtimeClientName, normalizedClientProfile, runtimeAppVersion, enforceSingleDeviceAcrossProfiles]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapAppLicense(result.rows[0]);
+}
+
+function buildBloomiaLicenseOfflineLease(license, { issuedAt = new Date() } = {}) {
+  if (!license?.id || !license?.machineId) {
+    return { offlineLease: null, offlineUntil: null };
+  }
+
+  const offlineUntilDate = computeBloomiaOfflineUntil({ expiresAt: license.expiresAt, now: issuedAt });
+  const payload = buildBloomiaOfflineLeasePayload({
+    appId: BLOOMIA_APP_ID,
+    licenseId: license.id,
+    machineId: license.machineId,
+    status: license.status,
+    expiresAt: license.expiresAt,
+    offlineUntil: offlineUntilDate,
+    issuedAt
+  });
+
+  if (!env.bloomiaLicensePrivateKey) {
+    return {
+      offlineLease: null,
+      offlineUntil: payload.offlineUntil,
+      payload
+    };
+  }
+
+  return {
+    offlineLease: signBloomiaOfflineLease(payload, env.bloomiaLicensePrivateKey),
+    offlineUntil: payload.offlineUntil,
+    payload
+  };
+}
+
+function buildBloomiaLicenseResponse(license, { activationToken = null, issuedAt = new Date() } = {}) {
+  const lease = buildBloomiaLicenseOfflineLease(license, { issuedAt });
+  return {
+    success: true,
+    status: "active",
+    data: {
+      ...(activationToken ? { activationToken } : {}),
+      license: {
+        id: license.id,
+        appId: BLOOMIA_APP_ID,
+        planCode: license.planCode || license.productId || null,
+        status: license.status,
+        expiresAt: license.expiresAt || null,
+        lastVerifiedAt: license.lastVerifiedAt || null,
+        machineId: license.machineId || null,
+        machineName: license.machineName || null
+      },
+      offlineLease: lease.offlineLease,
+      offlineUntil: lease.offlineUntil
+    }
+  };
+}
+
+async function activateBloomiaLicense({ appId, licenseKey, machineId, deviceName, appVersion }) {
+  const normalizedAppId = normalizeBloomiaAppId(appId);
+  const normalizedLicenseKey = normalizeBloomiaLicenseKey(licenseKey);
+  const normalizedMachineId = normalizeBloomiaMachineId(machineId);
+  const normalizedDeviceName = normalizeBloomiaDeviceName(deviceName);
+  const normalizedAppVersion = String(appVersion || "").trim() || null;
+
+  if (normalizedAppId !== BLOOMIA_APP_ID) {
+    return { ok: false, status: 400, code: "invalid_app", message: "Chi chap nhan appId app-bloomia-pos." };
+  }
+  if (!normalizedLicenseKey || !normalizedMachineId) {
+    return { ok: false, status: 400, code: "bad_request", message: "Thieu appId, licenseKey hoac machineId." };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const lookup = await client.query(
+      `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+              status, activated_at, expires_at, device_id, device_name, last_verified_at,
+              activation_token_hash, machine_id, machine_name,
+              reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+              metadata, created_at, updated_at
+       FROM app_licenses
+       WHERE license_key = $1 AND app_id = $2
+       LIMIT 1
+       FOR UPDATE`,
+      [normalizedLicenseKey, BLOOMIA_APP_ID]
+    );
+
+    if (lookup.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 404, code: "license_not_found", message: "Khong tim thay license Bloomia." };
+    }
+
+    const existing = lookup.rows[0];
+    const status = String(existing.status || "").toLowerCase();
+    if (status === "revoked" || status === "suspended") {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 410, code: status, message: "License Bloomia da bi khoa hoac vo hieu." };
+    }
+    if (existing.expires_at && new Date(existing.expires_at).getTime() <= Date.now()) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 410, code: "expired", message: "License Bloomia da het han." };
+    }
+
+    if (existing.machine_id && String(existing.machine_id) !== normalizedMachineId) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 409, code: "machine_mismatch", message: "License da duoc khoa tren may khac." };
+    }
+
+    const activationToken = createBloomiaActivationToken();
+    const activationTokenHash = hashBloomiaActivationToken(activationToken);
+    const nextMetadata = {
+      ...(existing.metadata && typeof existing.metadata === "object" ? existing.metadata : {}),
+      bloomia: {
+        appVersion: normalizedAppVersion,
+        deviceName: normalizedDeviceName,
+        machineId: normalizedMachineId,
+        activatedAt: new Date().toISOString()
+      }
+    };
+
+    const updateResult = await client.query(
+      `UPDATE app_licenses
+       SET status = 'active',
+           activated_at = COALESCE(activated_at, NOW()),
+           last_verified_at = NOW(),
+           device_id = COALESCE(device_id, $2),
+           device_name = COALESCE(device_name, $3),
+           activation_token_hash = $4,
+           machine_id = $2,
+           machine_name = $3,
+           metadata = $5::jsonb,
+           updated_at = NOW()
+       WHERE id = $1::uuid
+       RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+                 status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                 activation_token_hash, machine_id, machine_name,
+                 reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+                 metadata, created_at, updated_at`,
+      [existing.id, normalizedMachineId, normalizedDeviceName, activationTokenHash, JSON.stringify(nextMetadata)]
+    );
+
+    const updated = mapAppLicense(updateResult.rows[0]);
+    await client.query("COMMIT");
+    return buildBloomiaLicenseResponse(updated, { activationToken });
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // ignore rollback errors
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function verifyBloomiaLicense({ appId, activationToken, machineId, deviceName, appVersion }) {
+  const normalizedAppId = normalizeBloomiaAppId(appId);
+  const normalizedToken = String(activationToken || "").trim();
+  const normalizedMachineId = normalizeBloomiaMachineId(machineId);
+  const normalizedDeviceName = normalizeBloomiaDeviceName(deviceName);
+  const normalizedAppVersion = String(appVersion || "").trim() || null;
+
+  if (normalizedAppId !== BLOOMIA_APP_ID) {
+    return { ok: false, status: 400, code: "invalid_app", message: "Chi chap nhan appId app-bloomia-pos." };
+  }
+  if (!normalizedToken || !normalizedMachineId) {
+    return { ok: false, status: 400, code: "bad_request", message: "Thieu activationToken hoac machineId." };
+  }
+
+  const tokenHash = hashBloomiaActivationToken(normalizedToken);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const lookup = await client.query(
+      `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+              status, activated_at, expires_at, device_id, device_name, last_verified_at,
+              activation_token_hash, machine_id, machine_name,
+              reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+              metadata, created_at, updated_at
+       FROM app_licenses
+       WHERE activation_token_hash = $1
+         AND app_id = $2
+       LIMIT 1
+       FOR UPDATE`,
+      [tokenHash, BLOOMIA_APP_ID]
+    );
+
+    if (lookup.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 401, code: "invalid", message: "Khong the xac thuc license Bloomia." };
+    }
+
+    const existing = lookup.rows[0];
+    const status = String(existing.status || "").toLowerCase();
+    if (status === "revoked" || status === "suspended") {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 410, code: status, message: "License Bloomia da bi khoa hoac vo hieu." };
+    }
+    if (existing.expires_at && new Date(existing.expires_at).getTime() <= Date.now()) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 410, code: "expired", message: "License Bloomia da het han." };
+    }
+    if (String(existing.machine_id || "") !== normalizedMachineId) {
+      await client.query("ROLLBACK");
+      return { ok: false, status: 409, code: "machine_mismatch", message: "License dang gan voi may khac." };
+    }
+
+    const nextMetadata = {
+      ...(existing.metadata && typeof existing.metadata === "object" ? existing.metadata : {}),
+      bloomia: {
+        appVersion: normalizedAppVersion,
+        deviceName: normalizedDeviceName,
+        machineId: normalizedMachineId,
+        lastVerifiedAt: new Date().toISOString()
+      }
+    };
+
+    const updateResult = await client.query(
+      `UPDATE app_licenses
+       SET status = 'active',
+           last_verified_at = NOW(),
+           device_name = COALESCE($3, device_name),
+           metadata = $4::jsonb,
+           updated_at = NOW()
+       WHERE id = $1::uuid
+       RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+                 status, activated_at, expires_at, device_id, device_name, last_verified_at,
+                 activation_token_hash, machine_id, machine_name,
+                 reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+                 metadata, created_at, updated_at`,
+      [existing.id, normalizedMachineId, normalizedDeviceName, JSON.stringify(nextMetadata)]
+    );
+
+    const updated = mapAppLicense(updateResult.rows[0]);
+    await client.query("COMMIT");
+
+    return buildBloomiaLicenseResponse(updated);
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // ignore rollback errors
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function resetBloomiaLicenseMachine({ licenseId, adminId, reason }) {
+  const safeLicenseId = String(licenseId || "").trim();
+  if (!safeLicenseId) {
+    throw createStoreError("Thiếu licenseId", 400);
+  }
+
+  const safeReason = String(reason || "").trim().slice(0, 500);
+  const result = await pool.query(
+    `UPDATE app_licenses
+     SET machine_id = NULL,
+         machine_name = NULL,
+         activation_token_hash = NULL,
+         device_id = NULL,
+         device_name = NULL,
+         status = CASE
+           WHEN expires_at IS NOT NULL AND expires_at <= NOW() THEN 'expired'
+           WHEN status = 'revoked' THEN 'revoked'
+           ELSE 'inactive'
+         END,
+         reset_count = COALESCE(reset_count, 0) + 1,
+         last_reset_at = NOW(),
+         last_reset_reason = $2,
+         last_reset_by_admin = $3::uuid,
+         updated_at = NOW()
+     WHERE id = $1::uuid AND app_id = $4
+     RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
+               status, activated_at, expires_at, device_id, device_name, last_verified_at,
+               activation_token_hash, machine_id, machine_name,
+               reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
+               metadata, created_at, updated_at`,
+    [safeLicenseId, safeReason, adminId || null, BLOOMIA_APP_ID]
   );
 
   if (result.rowCount === 0) {
@@ -4661,7 +5116,7 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
 
   const safeProductId = String(productId || "").trim();
   const productResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, currency, credits
+    `SELECT id, app_id, name, cycle, price, currency, credits, license_strategy
      FROM products
      WHERE id = $1 AND active = TRUE`,
     [safeProductId]
@@ -4679,7 +5134,8 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
     cycle: productRow.cycle,
     price: Number(productRow.price),
     currency: productRow.currency,
-    credits: Number(productRow.credits)
+    credits: Number(productRow.credits),
+    license_strategy: productRow.license_strategy
   };
   if (isCap01AppId(product.appId) || isCap01ProductId(product.id)) {
     const err = createStoreError(
@@ -4725,6 +5181,9 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
     };
 
     const license = await issueAppLicenseForOrder({ client, order, product });
+    if (!license) {
+      throw createStoreError("San pham nay khong cap app license tu dong", 400);
+    }
 
     // Override source metadata so manual grants are distinguishable from auto grants
     await client.query(
@@ -4834,6 +5293,9 @@ module.exports = {
   updateProductFulfillmentConfig,
   listManualFulfillments,
   activateProductKeyForMachine,
+  activateBloomiaLicense,
+  verifyBloomiaLicense,
+  resetBloomiaLicenseMachine,
   createOrder,
   applyDiscountToOrder,
   getOrderById,

@@ -8,10 +8,11 @@ async function seed() {
     await client.query(
       `INSERT INTO apps(id, name, slug, status, description)
        VALUES
-         ('hoctap-cap-01', 'Học Hứng Khởi Tiểu Học - Desktop Offline', 'hoc-hung-khoi-tieu-hoc-desktop-offline', 'active', 'Ban desktop offline tap trung vao TTS theo lop 1 va lop 2.'),
-         ('app-study-12', 'Phần mềm ôn tập cho khối cấp 01 và Tiền Tiểu học', 'phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc', 'active', 'Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc.'),
-         ('lamviec', 'Phần mềm làm việc', 'phan-mem-lam-viec', 'active', 'Bo cong cu phan mem phuc vu cong viec va tu dong hoa quy trinh.'),
-         ('app-cap12', 'Phần mềm học tập khối cấp 12', 'phan-mem-hoc-tap-khoi-cap-12', 'active', 'San pham hoc tap khoi cap 12 gia test de kiem tra card va thanh toan.'),
+         ('hoctap-cap-01', 'Hoc Hung Khoi Tieu Hoc - Desktop Offline', 'hoc-hung-khoi-tieu-hoc-desktop-offline', 'active', 'Ban desktop offline tap trung vao TTS theo lop 1 va lop 2.'),
+         ('app-study-12', 'Phan mem on tap cho khoi cap 01 va Tien Tieu hoc', 'phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc', 'active', 'Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc.'),
+         ('lamviec', 'Phan mem lam viec', 'phan-mem-lam-viec', 'active', 'Bo cong cu phan mem phuc vu cong viec va tu dong hoa quy trinh.'),
+         ('app-cap12', 'Phan mem hoc tap khoi cap 12', 'phan-mem-hoc-tap-khoi-cap-12', 'active', 'San pham hoc tap khoi cap 12 gia test de kiem tra card va thanh toan.'),
+         ('app-bloomia-pos', 'Bloomia Studio POS', 'bloomia-studio-pos', 'active', 'Phan mem ban hang va cap license rieng cho Bloomia Studio POS.'),
          ('app-ai-writing', 'AI Writing Coach', 'ai-writing-coach', 'coming_soon', 'Cong cu viet va sua bai theo ngu canh hoc tap va cong viec.')
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
@@ -21,11 +22,13 @@ async function seed() {
     );
 
     await client.query(
-      `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active)
+      `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active, fulfillment_mode, license_strategy)
        VALUES
-         ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE),
-         ('demo-map', 'lamviec', 'Phần Mềm Quét Data Khách Hàng Trên Google Map', 'one_time', 499000, 'VND', 3, TRUE),
-         ('demo-hoc12', 'app-cap12', 'Phần mềm học tập khối cấp 12', 'one_time', 2000, 'VND', 1, TRUE),
+         ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE, 'auto_license', 'legacy_hybrid'),
+         ('demo-map', 'lamviec', 'Phan Mem Quet Data Khach Hang Tren Google Map', 'one_time', 499000, 'VND', 3, TRUE, 'auto_license', 'legacy_hybrid'),
+         ('demo-hoc12', 'app-cap12', 'Phan mem hoc tap khoi cap 12', 'one_time', 2000, 'VND', 1, TRUE, 'auto_license', 'legacy_hybrid'),
+         ('prod-bloomia-yearly', 'app-bloomia-pos', 'Bloomia Studio POS - Goi Nam', 'yearly', 0, 'VND', 0, FALSE, 'auto_license', 'generated_machine'),
+         ('prod-bloomia-lifetime', 'app-bloomia-pos', 'Bloomia Studio POS - Vinh vien', 'one_time', 0, 'VND', 0, FALSE, 'auto_license', 'generated_machine')
        ON CONFLICT (id) DO UPDATE SET
          app_id = EXCLUDED.app_id,
          name = EXCLUDED.name,
@@ -33,7 +36,9 @@ async function seed() {
          price = EXCLUDED.price,
          currency = EXCLUDED.currency,
          credits = EXCLUDED.credits,
-         active = EXCLUDED.active`
+         active = EXCLUDED.active,
+         fulfillment_mode = EXCLUDED.fulfillment_mode,
+         license_strategy = EXCLUDED.license_strategy`
     );
 
     await client.query(
@@ -58,7 +63,7 @@ async function seed() {
          (gen_random_uuid(), 'demo-map', 'WST-MAP-0001', 'available'),
          (gen_random_uuid(), 'demo-map', 'WST-MAP-0002', 'available'),
          (gen_random_uuid(), 'demo-hoc12', 'WST-HOC12-TEST-0001', 'available'),
-         (gen_random_uuid(), 'demo-hoc12', 'WST-HOC12-TEST-0002', 'available'),
+         (gen_random_uuid(), 'demo-hoc12', 'WST-HOC12-TEST-0002', 'available')
        ON CONFLICT (key_value) DO NOTHING`
     );
 

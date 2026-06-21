@@ -182,6 +182,10 @@ const env = {
     process.env.AI_APP_SHARED_KEY || process.env.WEB_TOTAL_AI_APP_KEY || ""
   ).trim(),
   aiAppOfflineGraceDays: toPositiveInt(process.env.AI_APP_OFFLINE_GRACE_DAYS, 7),
+  bloomiaLicensePrivateKey: String(process.env.BLOOMIA_LICENSE_PRIVATE_KEY || "").trim(),
+  bloomiaLicensePublicKey: String(
+    process.env.BLOOMIA_LICENSE_PUBLIC_KEY || process.env.VITE_BLOOMIA_LICENSE_PUBLIC_KEY || ""
+  ).trim(),
   adminAccessKey: String(process.env.ADMIN_ACCESS_KEY || "").trim(),
   adminOwnerKeyLoginEnabled: toBool(process.env.ADMIN_OWNER_KEY_LOGIN_ENABLED, false),
   adminLoginWindowMs: toPositiveInt(process.env.ADMIN_LOGIN_WINDOW_MS, 15 * 60 * 1000),

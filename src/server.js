@@ -75,6 +75,9 @@ const {
   createDiscountCode,
   updateDiscountCodeActive,
   activateProductKeyForMachine,
+  activateBloomiaLicense,
+  verifyBloomiaLicense,
+  resetBloomiaLicenseMachine,
   listAdminAppRegistry,
   getAdminAppRegistryDetail,
   upsertAdminAppRegistry,
@@ -178,7 +181,53 @@ const homePageMetadata = {
 };
 
 app.disable("x-powered-by");
-app.use(cors());
+function normalizeCorsOrigin(origin) {
+  const raw = String(origin || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(raw);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return raw;
+  }
+}
+
+const allowedCorsOrigins = new Set(
+  [
+    env.publicAppBaseUrl,
+    env.appBaseUrl,
+    "https://ungdungthongminh.shop",
+    "https://www.ungdungthongminh.shop",
+    "http://localhost:3900",
+    "http://127.0.0.1:3900",
+    "http://localhost:1420",
+    "http://127.0.0.1:1420",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+    "tauri://localhost"
+  ]
+    .map(normalizeCorsOrigin)
+    .filter(Boolean)
+);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalized = normalizeCorsOrigin(origin);
+    if (allowedCorsOrigins.has(normalized)) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
+  },
+  credentials: true
+}));
 app.use(express.urlencoded({ extended: false }));
 
 function asyncHandler(fn) {
@@ -2193,6 +2242,7 @@ app.patch(
   asyncHandler(async (req, res) => {
     const product = await updateProductFulfillmentConfig(req.params.productId, {
       fulfillmentMode: req.body?.fulfillmentMode,
+      licenseStrategy: req.body?.licenseStrategy,
       brandCode: req.body?.brandCode,
       durationText: req.body?.durationText,
       deliveryEstimate: req.body?.deliveryEstimate,
@@ -3478,6 +3528,84 @@ app.post(
 app.post(
   "/api/v1/licenses/verify",
   asyncHandler(async (req, res) => handleCap01LicenseVerifyLikeRequest(req, res))
+);
+
+function sendBloomiaLicenseFailure(res, result) {
+  const httpStatus = Number(result?.status || 400) || 400;
+  const bodyStatus = String(result?.code || result?.status || "invalid").trim() || "invalid";
+  const errorMessage = String(result?.message || "Khong the xac thuc license Bloomia.").trim();
+  return res.status(httpStatus).json({
+    success: false,
+    status: bodyStatus,
+    error: errorMessage
+  });
+}
+
+app.post(
+  "/api/v1/bloomia/licenses/activate",
+  asyncHandler(async (req, res) => {
+    const result = await activateBloomiaLicense({
+      appId: req.body?.appId,
+      licenseKey: req.body?.licenseKey,
+      machineId: req.body?.machineId,
+      deviceName: req.body?.deviceName,
+      appVersion: req.body?.appVersion
+    });
+
+    if (!result?.success) {
+      return sendBloomiaLicenseFailure(res, result);
+    }
+
+    return res.json(result);
+  })
+);
+
+app.post(
+  "/api/v1/bloomia/licenses/verify",
+  asyncHandler(async (req, res) => {
+    const result = await verifyBloomiaLicense({
+      appId: req.body?.appId,
+      activationToken: req.body?.activationToken,
+      machineId: req.body?.machineId,
+      deviceName: req.body?.deviceName,
+      appVersion: req.body?.appVersion
+    });
+
+    if (!result?.success) {
+      return sendBloomiaLicenseFailure(res, result);
+    }
+
+    return res.json(result);
+  })
+);
+
+app.post(
+  "/api/admin/bloomia/licenses/:licenseId/reset-machine",
+  requireAdminPermission("customers:write"),
+  asyncHandler(async (req, res) => {
+    const adminSession = getAdminFromSession(req);
+    const admin = adminSession?.id ? await findAdminById(adminSession.id) : null;
+    if (!admin || !verifyPassword(String(req.body?.confirmPassword || ""), admin.passwordHash)) {
+      return res.status(401).json({ message: "Mật khẩu xác nhận không đúng" });
+    }
+
+    const reason = String(req.body?.reason || "").trim();
+    if (!reason) {
+      return res.status(400).json({ message: "reason is required" });
+    }
+
+    const license = await resetBloomiaLicenseMachine({
+      licenseId: req.params.licenseId,
+      adminId: admin.id,
+      reason
+    });
+
+    if (!license) {
+      return res.status(404).json({ message: "Không tìm thấy Bloomia license" });
+    }
+
+    return res.json({ ok: true, license });
+  })
 );
 
 app.post(

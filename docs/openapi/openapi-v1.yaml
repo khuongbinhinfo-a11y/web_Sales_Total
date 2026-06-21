@@ -706,6 +706,96 @@ paths:
               schema:
                 $ref: "#/components/schemas/LicenseMutationResponse"
 
+  /api/v1/bloomia/licenses/activate:
+    post:
+      tags: [Bloomia]
+      summary: Activate Bloomia machine license
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BloomiaActivateLicenseRequest"
+      responses:
+        "200":
+          description: Activated license
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaLicenseEnvelope"
+        "400":
+          description: Malformed request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "404":
+          description: License not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "409":
+          description: Machine mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "410":
+          description: Expired or revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+
+  /api/v1/bloomia/licenses/verify:
+    post:
+      tags: [Bloomia]
+      summary: Verify Bloomia machine activation token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BloomiaVerifyLicenseRequest"
+      responses:
+        "200":
+          description: Verified license
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaLicenseEnvelope"
+        "400":
+          description: Malformed request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "401":
+          description: Activation token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "404":
+          description: License not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "409":
+          description: Machine mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+        "410":
+          description: Expired or revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaErrorResponse"
+
   /api/licenses/{licenseId}/deactivate:
     post:
       tags: [Account]
@@ -827,6 +917,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminDashboardResponse"
+
+  /api/admin/bloomia/licenses/{licenseId}/reset-machine:
+    post:
+      tags: [Admin]
+      summary: Reset Bloomia machine binding
+      security:
+        - adminCookieAuth: []
+      parameters:
+        - in: path
+          name: licenseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BloomiaResetMachineRequest"
+      responses:
+        "200":
+          description: Machine reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BloomiaResetMachineResponse"
+        "400":
+          description: Missing reason or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid confirmation password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: License not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/admin/me:
     get:
@@ -1466,6 +1600,27 @@ components:
           type: string
           format: date-time
           nullable: true
+        activationTokenHash:
+          type: string
+          nullable: true
+        machineId:
+          type: string
+          nullable: true
+        machineName:
+          type: string
+          nullable: true
+        resetCount:
+          type: integer
+        lastResetAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastResetReason:
+          type: string
+          nullable: true
+        lastResetByAdmin:
+          type: string
+          nullable: true
         metadata:
           type: object
           additionalProperties: true
@@ -1525,6 +1680,114 @@ components:
           type: string
 
     LicenseMutationResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        license:
+          $ref: "#/components/schemas/AppLicense"
+
+    BloomiaActivateLicenseRequest:
+      type: object
+      required: [appId, licenseKey, machineId]
+      properties:
+        appId:
+          type: string
+          enum: [app-bloomia-pos]
+        licenseKey:
+          type: string
+        machineId:
+          type: string
+        deviceName:
+          type: string
+        appVersion:
+          type: string
+
+    BloomiaVerifyLicenseRequest:
+      type: object
+      required: [appId, activationToken, machineId]
+      properties:
+        appId:
+          type: string
+          enum: [app-bloomia-pos]
+        activationToken:
+          type: string
+        machineId:
+          type: string
+        deviceName:
+          type: string
+        appVersion:
+          type: string
+
+    BloomiaLicenseData:
+      type: object
+      properties:
+        activationToken:
+          type: string
+        license:
+          type: object
+          properties:
+            id:
+              type: string
+            appId:
+              type: string
+            planCode:
+              type: string
+              nullable: true
+            status:
+              type: string
+            expiresAt:
+              type: string
+              format: date-time
+              nullable: true
+            lastVerifiedAt:
+              type: string
+              format: date-time
+              nullable: true
+            machineId:
+              type: string
+              nullable: true
+            machineName:
+              type: string
+              nullable: true
+        offlineLease:
+          type: string
+          nullable: true
+        offlineUntil:
+          type: string
+          format: date-time
+          nullable: true
+
+    BloomiaLicenseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+        data:
+          $ref: "#/components/schemas/BloomiaLicenseData"
+
+    BloomiaErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+        error:
+          type: string
+
+    BloomiaResetMachineRequest:
+      type: object
+      required: [reason, confirmPassword]
+      properties:
+        reason:
+          type: string
+        confirmPassword:
+          type: string
+
+    BloomiaResetMachineResponse:
       type: object
       properties:
         ok:
