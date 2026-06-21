@@ -43,3 +43,11 @@ tmp_deep_audit.js
 /public/og/
 /public/image/
 /products/image/
+
+# Deploy keys and local temp files
+.deploy_keys/
+.tmp_vps_key
+.git-diff-preview*
+
+# Editor / workspace
+.vscode/

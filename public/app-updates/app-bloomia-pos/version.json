@@ -1,0 +1,14 @@
+{
+  "latestVersion": "1.0.0",
+  "minimumSupportedVersion": "1.0.0",
+  "required": false,
+  "title": "Bloomia POS",
+  "message": "Bloomia POS Windows installer",
+  "notes": [
+    "Windows x64 installer"
+  ],
+  "downloadPath": "https://pub-ddb20c1432674f3d97ae6d00d291bbb9.r2.dev/downloads/Bloomia_1.0.0_x64-setup.exe",
+  "releaseNotesPath": "/app-updates/app-bloomia-pos/release-notes.txt",
+  "publishedAt": "2026-06-21T00:00:00Z",
+  "sha256": ""
+}
