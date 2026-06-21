@@ -27,8 +27,8 @@ async function seed() {
          ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE, 'auto_license', 'legacy_hybrid'),
          ('demo-map', 'lamviec', 'Phan Mem Quet Data Khach Hang Tren Google Map', 'one_time', 499000, 'VND', 3, TRUE, 'auto_license', 'legacy_hybrid'),
          ('demo-hoc12', 'app-cap12', 'Phan mem hoc tap khoi cap 12', 'one_time', 2000, 'VND', 1, TRUE, 'auto_license', 'legacy_hybrid'),
-         ('prod-bloomia-yearly', 'app-bloomia-pos', 'Bloomia Studio POS - Goi Nam', 'yearly', 0, 'VND', 0, FALSE, 'auto_license', 'generated_machine'),
-         ('prod-bloomia-lifetime', 'app-bloomia-pos', 'Bloomia Studio POS - Vinh vien', 'one_time', 0, 'VND', 0, FALSE, 'auto_license', 'generated_machine')
+         ('prod-bloomia-yearly', 'app-bloomia-pos', 'Bloomia Studio POS - Goi Nam', 'yearly', 990000, 'VND', 0, TRUE, 'auto_license', 'generated_machine'),
+         ('prod-bloomia-lifetime', 'app-bloomia-pos', 'Bloomia Studio POS - Vinh vien', 'one_time', 2500000, 'VND', 0, TRUE, 'auto_license', 'generated_machine')
        ON CONFLICT (id) DO UPDATE SET
          app_id = EXCLUDED.app_id,
          name = EXCLUDED.name,

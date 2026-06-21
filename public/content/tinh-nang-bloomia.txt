@@ -1,0 +1,16 @@
+BLOOMIA – PHẦN MỀM QUẢN LÝ TIỆM HOA
+
+Bloomia là phần mềm desktop dành cho cửa hàng hoa, giúp quản lý công việc hằng ngày trong một giao diện nhẹ nhàng, rõ ràng và dễ sử dụng.
+
+Các tính năng chính:
+- Bán hàng và tạo hóa đơn nhanh.
+- Quản lý đơn hoa, lịch giao và trạng thái đơn.
+- Theo dõi tồn kho, nhập hàng, xuất kho và điều chỉnh số lượng.
+- Quản lý mẫu hoa, nguyên liệu và chi phí thực hiện.
+- Lưu thông tin khách hàng và lịch sử mua hàng.
+- Xem báo cáo doanh thu, chi phí và hiệu quả kinh doanh.
+- In hóa đơn trực tiếp bằng máy in local.
+- Sao lưu, khôi phục và xuất dữ liệu an toàn.
+- Kiểm tra và cài đặt bản cập nhật ngay trong ứng dụng.
+
+Bloomia phù hợp cho các tiệm hoa muốn làm việc chuyên nghiệp hơn nhưng vẫn giữ được sự đơn giản, tinh tế và tập trung vào trải nghiệm khách hàng.

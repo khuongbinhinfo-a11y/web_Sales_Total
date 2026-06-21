@@ -6050,6 +6050,10 @@ app.use(
   "/image",
   express.static(path.join(__dirname, "..", "public", "image"))
 );
+app.use(
+  "/content",
+  express.static(path.join(__dirname, "..", "public", "content"))
+);
 app.use("/Video", express.static(path.join(__dirname, "..", "public", "Video")));
 app.use("/og", express.static(ogRoot));
 if (isR2PrivateArtifactsEnabled()) {

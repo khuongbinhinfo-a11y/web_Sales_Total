@@ -114,6 +114,7 @@ function initSupportDock() {
 initSupportDock();
 
 const R2_PUBLIC_BASE = "https://cdn.ungdungthongminh.shop";
+const LOCAL_CONTENT_BASE = "/content";
 
 /* ── fallback demo data when API/DB unavailable ── */
 const fallbackProducts = [
@@ -131,6 +132,10 @@ function imagePathByName(fileName) {
   return `${R2_PUBLIC_BASE}/products/image/${encodeURIComponent(fileName)}`;
 }
 
+function contentPathByName(fileName) {
+  return `${LOCAL_CONTENT_BASE}/${encodeURIComponent(fileName)}`;
+}
+
 const productImageLibrary = {
   study01: imagePathByName("phần mềm học tập khối cấp 01.jpeg"),
   study01Alt: imagePathByName("phần mềm học tập khối cấp 01_2.jpeg"),
@@ -139,7 +144,9 @@ const productImageLibrary = {
   mapAlt: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật.jpeg"),
   bds: imagePathByName("Quản_lý_website_BDS.jpeg"),
-  salon: imagePathByName("Salon-Manager.png")
+  salon: imagePathByName("Salon-Manager.png"),
+  bloomia: contentPathByName("bloomia-product-ad-1600x1000.png"),
+  cap01Hero: contentPathByName("landing-hero.jpg")
 };
 
 function normalizeText(value) {
@@ -163,6 +170,9 @@ function resolveProductImage(product) {
   const productId = normalizeText(product?.id);
   const hint = `${name} ${appId} ${productId}`;
 
+  if (/(bloomia|flower|tiem hoa|cua hang hoa)/.test(hint)) {
+    return productImageLibrary.bloomia;
+  }
   if (/(prod study month)/.test(productId)) {
     return productImageLibrary.study01Alt;
   }
@@ -2955,6 +2965,12 @@ function softwareIntro(product){
       : "A workflow solution that automates repetitive tasks and improves professional output.";
   }
 
+  if (app.includes("bloomia") || /bloomia/.test(name)) {
+    return lang === "vi"
+      ? "Bloomia là phần mềm quản lý tiệm hoa với bán hàng nhanh, hồ sơ đơn hoa, tồn kho và license riêng cho mỗi máy."
+      : "Bloomia is a florist POS system with fast sales, flower orders, inventory tracking, and machine-bound licensing.";
+  }
+
   if (app.includes("hair") || app.includes("salon")) {
     return lang === "vi"
       ? "Phần mềm quản lý salon tóc: lịch hẹn, khách hàng, dịch vụ, thu chi và vận hành tại quầy trong một nơi."
@@ -3035,7 +3051,8 @@ const CAP01_REDIRECT_CARD = {
   title: "Học Tập Thông Minh Cấp 01",
   description: "Sản phẩm đã chuyển sang Học Chung Khối.",
   cta: "Xem tại Học Chung Khối",
-  href: "https://hochungkhoi.site"
+  href: "https://hochungkhoi.site",
+  image: productImageLibrary.cap01Hero
 };
 
 function isCap01CatalogProduct(product) {
@@ -3059,11 +3076,7 @@ function renderCap01RedirectCardHtml() {
   return `
     <article class="p-card p-card--redirect">
       <div class="p-card-img">
-        <div class="p-card-img-fallback">
-          <span class="p-card-img-kicker">CHUYỂN HƯỚNG</span>
-          <strong>${escapeHtml(CAP01_REDIRECT_CARD.title)}</strong>
-          <p>${escapeHtml(CAP01_REDIRECT_CARD.description)}</p>
-        </div>
+        <img class="p-card-img-photo" src="${escapeHtml(CAP01_REDIRECT_CARD.image)}" alt="${escapeHtml(CAP01_REDIRECT_CARD.title)}" loading="lazy" decoding="async">
       </div>
       <div class="p-card-body">
         <div class="p-card-topline">

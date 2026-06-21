@@ -13,9 +13,14 @@ const fallbackProducts = [
 ];
 
 const R2_PUBLIC_BASE = "https://cdn.ungdungthongminh.shop";
+const LOCAL_CONTENT_BASE = "/content";
 
 function imagePathByName(fileName) {
   return `${R2_PUBLIC_BASE}/products/image/${encodeURIComponent(fileName)}`;
+}
+
+function contentPathByName(fileName) {
+  return `${LOCAL_CONTENT_BASE}/${encodeURIComponent(fileName)}`;
 }
 
 const productImageLibrary = {
@@ -26,14 +31,17 @@ const productImageLibrary = {
   mapAlt: imagePathByName("Phần mềm quét data KH-GGmap-2.jpeg"),
   video: imagePathByName("Phần mềm tạo video đồng bộ nhân vật-2.jpeg"),
   bds: imagePathByName("Quản_lý_website_BDS-2.jpeg"),
-  salon: imagePathByName("Salon-Manager.png")
+  salon: imagePathByName("Salon-Manager.png"),
+  bloomia: contentPathByName("bloomia-product-ad-1600x1000.png"),
+  cap01Hero: contentPathByName("landing-hero.jpg")
 };
 
 const CAP01_REDIRECT_CARD = {
   title: "Học Tập Thông Minh Cấp 01",
   description: "Sản phẩm đã chuyển sang Học Chung Khối.",
   cta: "Xem tại Học Chung Khối",
-  href: "https://hochungkhoi.site"
+  href: "https://hochungkhoi.site",
+  image: productImageLibrary.cap01Hero
 };
 
 const SUPPORT_CHAT_URL = "https://zalo.me/0902964685";
@@ -132,6 +140,9 @@ function resolveProductImage(product) {
   const productId = normalizeText(product?.id);
   const hint = `${name} ${appId} ${productId}`;
 
+  if (/(bloomia|flower|tiem hoa|cua hang hoa)/.test(hint)) {
+    return productImageLibrary.bloomia;
+  }
   if (/(prod study month)/.test(productId)) {
     return productImageLibrary.study01Alt;
   }
@@ -176,7 +187,56 @@ function resolveProductImage(product) {
 }
 
 /* ── product catalog content (features + guide per product) ── */
+const bloomiaProductContent = {
+  desc: "Bloomia là phần mềm desktop quản lý tiệm hoa, tập trung vào bán hàng nhanh, đơn hoa, tồn kho và license riêng cho từng máy.",
+  icon: "💐",
+  descImage: productImageLibrary.bloomia,
+  longDescription: {
+    highlights: [
+      "Bán hàng và tạo hóa đơn nhanh ngay tại quầy.",
+      "Quản lý đơn hoa, lịch giao và trạng thái xử lý rõ ràng.",
+      "Theo dõi tồn kho, nhập hàng, xuất kho và điều chỉnh số lượng linh hoạt."
+    ],
+    sections: [
+      {
+        heading: "Tổng quan sản phẩm",
+        paragraphs: [
+          "Bloomia là phần mềm desktop dành cho cửa hàng hoa cần quy trình gọn gàng, dễ dùng và tập trung vào vận hành thực tế.",
+          "Sản phẩm hỗ trợ theo dõi doanh thu, chi phí, lịch sử khách hàng và các thao tác bán hàng thường ngày trong cùng một giao diện."
+        ]
+      },
+      {
+        heading: "Điểm nổi bật",
+        paragraphs: [
+          "Quản lý mẫu hoa, nguyên liệu, chi phí thực hiện và báo cáo hiệu quả kinh doanh.",
+          "Hỗ trợ in hóa đơn trực tiếp bằng máy in local, sao lưu, khôi phục và xuất dữ liệu an toàn."
+        ]
+      },
+      {
+        heading: "Triển khai license",
+        paragraphs: [
+          "Bloomia dùng license riêng cho từng máy để dễ kiểm soát triển khai và kích hoạt.",
+          "Phù hợp với mô hình bán theo năm hoặc trọn đời mà bạn đang đưa lên catalog."
+        ]
+      }
+    ]
+  },
+  features: [
+    { icon: "⚡", title: "Bán hàng nhanh", detail: "Tạo hóa đơn và xử lý đơn hoa trong vài thao tác." },
+    { icon: "🌷", title: "Quản lý đơn hoa", detail: "Theo dõi lịch giao, trạng thái và ghi chú khách hàng." },
+    { icon: "📦", title: "Kiểm soát tồn kho", detail: "Nhập, xuất và điều chỉnh số lượng theo thực tế." },
+    { icon: "🔐", title: "License theo máy", detail: "Mỗi máy được cấp license riêng để triển khai chặt chẽ." }
+  ],
+  guide: [
+    { title: "Bước 1: Chọn gói", detail: "Chọn gói năm hoặc trọn đời phù hợp nhu cầu vận hành." },
+    { title: "Bước 2: Thanh toán", detail: "Hoàn tất thanh toán để hệ thống kích hoạt quyền dùng." },
+    { title: "Bước 3: Kích hoạt", detail: "Nhập license trên đúng máy để bắt đầu sử dụng." }
+  ]
+};
+
 const productContent = {
+  "prod-bloomia-yearly": bloomiaProductContent,
+  "prod-bloomia-lifetime": bloomiaProductContent,
   "prod-study-month": {
     desc: "Học Hứng Khởi là ứng dụng học tập cho học sinh tiểu học, giúp con học theo lộ trình rõ ràng, luyện tập ngắn và phụ huynh theo dõi tiến bộ dễ dàng mỗi ngày.",
     icon: "📚",
@@ -639,6 +699,9 @@ function renderCap01RedirectState() {
     notFound.classList.remove("is-hidden");
     notFound.innerHTML = `
       <div class="pd-not-found-card" style="max-width:720px;margin:0 auto;padding:24px;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(30,41,59,.96));color:#e2e8f0">
+        <div style="margin:0 0 16px;border-radius:16px;overflow:hidden;background:#0f172a">
+          <img src="${escapeHtml(CAP01_REDIRECT_CARD.image)}" alt="${escapeHtml(CAP01_REDIRECT_CARD.title)}" style="display:block;width:100%;height:auto;object-fit:cover">
+        </div>
         <p style="margin:0 0 10px;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:#93c5fd">Chuyển hướng</p>
         <h1 style="margin:0 0 12px;font-size:1.9rem;line-height:1.15">${CAP01_REDIRECT_CARD.title}</h1>
         <p style="margin:0 0 18px;font-size:1rem;line-height:1.6;color:#cbd5e1">${CAP01_REDIRECT_CARD.description}</p>
@@ -774,6 +837,9 @@ function resolveProductContent(product, productName) {
   }
 
   const appId = String(product?.appId || "").trim().toLowerCase();
+  if (appId === "app-bloomia-pos") {
+    return bloomiaProductContent;
+  }
   if (appId === "app-study-12") {
     return productContent["prod-study-month"] || getDefaultProductContent(productName);
   }
