@@ -4737,21 +4737,33 @@ async function registerAdminLoginFailureGuard({ ipAddress, username, windowMs, m
 async function clearAdminLoginFailureGuard({ ipAddress, username }) {
   const safeIp = normalizeGuardValue(ipAddress) || "unknown";
   const safeUsername = normalizeGuardValue(username);
+  const conditions = [
+    { dimension: "ip", subject: safeIp }
+  ];
 
-  if (!safeUsername) {
+  if (safeUsername) {
+    conditions.push(
+      { dimension: "username", subject: safeUsername },
+      { dimension: "pair", subject: guardPairSubject(safeIp, safeUsername) }
+    );
+  }
+
+  const dimensionSubjects = conditions.map((item) => [item.dimension, item.subject]).filter(([, subject]) => Boolean(subject));
+  if (!dimensionSubjects.length) {
     return;
   }
 
-  await pool.query(
-    `UPDATE admin_login_guards
-     SET fail_count = 0,
-         first_failed_at = NULL,
-         lock_until = NULL,
-         updated_at = NOW()
-     WHERE (dimension = 'username' AND subject = $1)
-        OR (dimension = 'pair' AND subject = $2)`,
-    [safeUsername, guardPairSubject(safeIp, safeUsername)]
-  );
+  for (const [dimension, subject] of dimensionSubjects) {
+    await pool.query(
+      `UPDATE admin_login_guards
+       SET fail_count = 0,
+           first_failed_at = NULL,
+           lock_until = NULL,
+           updated_at = NOW()
+       WHERE dimension = $1 AND subject = $2`,
+      [dimension, subject]
+    );
+  }
 }
 
 async function recordAdminLoginAudit({
@@ -4799,11 +4811,12 @@ async function recordAdminLoginAudit({
 }
 
 async function findAdminByUsername(username) {
+  const safeLogin = String(username || "").trim().toLowerCase();
   const result = await pool.query(
     `SELECT id, username, email, role, permissions, password_hash, is_active, created_by, created_at, last_login_at
      FROM admin_users
-     WHERE username = $1`,
-    [username]
+     WHERE LOWER(username) = $1 OR LOWER(email) = $1`,
+    [safeLogin]
   );
   if (result.rowCount === 0) {
     return null;

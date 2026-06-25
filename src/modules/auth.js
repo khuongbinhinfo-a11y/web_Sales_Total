@@ -693,15 +693,15 @@ function adminLoginPage() {
     <div class="card">
       <h2>Admin Login</h2>
       <form id="adminLoginForm" method="post" action="/auth/admin/login">
-        <label>Username</label>
-        <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01" required />
+        <label>Username hoặc email</label>
+        <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01 hoặc email" required />
         <label>Password</label>
         <input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="••••••••" required />
         <label>Email nhan OTP</label>
         <div id="adminOtpEmailHint" class="hintbox">Day la email da dang ky cua tai khoan admin. Khong nhap o day.</div>
         <label>OTP email (bat buoc cho owner/manager)</label>
         <input type="text" id="adminOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
-        <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
+        <div class="tip">Buoc 1: nhap username hoac email/password va bam Login de nhan OTP qua email.</div>
         <div class="tip">Buoc 2: nhap OTP roi bam Login lai de vao trang admin.</div>
         <button id="adminLoginBtn" type="submit">Login Admin</button>
         <div id="adminLoginMsg" class="msg info"></div>
