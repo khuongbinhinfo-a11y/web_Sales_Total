@@ -348,6 +348,39 @@ function isOtpRequiredForAdminRole(role) {
   return env.adminOtpRequiredRoles.includes(String(role || "").trim().toLowerCase());
 }
 
+function normalizeAdminLoginIdentifier(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isAdminOtpBypassed(adminProfile, config = env) {
+  const configured = Array.isArray(config?.adminOtpBypassAccounts) ? config.adminOtpBypassAccounts : [];
+  if (!configured.length) {
+    return false;
+  }
+
+  const identitySet = new Set();
+  for (const raw of configured) {
+    const normalized = normalizeAdminLoginIdentifier(raw);
+    if (!normalized) {
+      continue;
+    }
+    identitySet.add(normalized);
+    if (normalized.startsWith("@")) {
+      identitySet.add(normalized.slice(1));
+    }
+  }
+
+  const email = normalizeAdminLoginIdentifier(adminProfile?.email);
+  const username = normalizeAdminLoginIdentifier(adminProfile?.username);
+  const usernameWithAt = username ? `@${username.replace(/^@+/, "")}` : "";
+
+  return Boolean(
+    (email && identitySet.has(email)) ||
+    (username && identitySet.has(username)) ||
+    (usernameWithAt && identitySet.has(usernameWithAt))
+  );
+}
+
 function getCustomerFromSession(req) {
   const cookies = parseCookies(req);
   const token = cookies.wst_customer_session;
@@ -693,15 +726,15 @@ function adminLoginPage() {
     <div class="card">
       <h2>Admin Login</h2>
       <form id="adminLoginForm" method="post" action="/auth/admin/login">
-        <label>Username</label>
-        <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01" required />
+        <label>Username hoặc email</label>
+        <input type="text" id="adminUsername" name="username" autocomplete="username" placeholder="manager01 hoặc email" required />
         <label>Password</label>
         <input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="••••••••" required />
         <label>Email nhan OTP</label>
         <div id="adminOtpEmailHint" class="hintbox">Day la email da dang ky cua tai khoan admin. Khong nhap o day.</div>
         <label>OTP email (bat buoc cho owner/manager)</label>
         <input type="text" id="adminOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 so OTP" />
-        <div class="tip">Buoc 1: nhap username/password va bam Login de nhan OTP qua email.</div>
+        <div class="tip">Buoc 1: nhap username hoac email/password va bam Login de nhan OTP qua email.</div>
         <div class="tip">Buoc 2: nhap OTP roi bam Login lai de vao trang admin.</div>
         <button id="adminLoginBtn" type="submit">Login Admin</button>
         <div id="adminLoginMsg" class="msg info"></div>
@@ -938,6 +971,7 @@ module.exports = {
   createAdminOtpChallengeToken,
   getAdminOtpChallengeFromSession,
   isOtpRequiredForAdminRole,
+  isAdminOtpBypassed,
   getAdminFromSession,
   requireAdminPermission,
   hasAdminPermission,

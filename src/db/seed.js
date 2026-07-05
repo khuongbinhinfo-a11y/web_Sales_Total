@@ -11,6 +11,7 @@ async function seed() {
          ('hoctap-cap-01', 'Hoc Hung Khoi Tieu Hoc - Desktop Offline', 'hoc-hung-khoi-tieu-hoc-desktop-offline', 'active', 'Ban desktop offline tap trung vao TTS theo lop 1 va lop 2.'),
          ('app-study-12', 'Phan mem on tap cho khoi cap 01 va Tien Tieu hoc', 'phan-mem-on-tap-khoi-cap-01-tien-tieu-hoc', 'active', 'Nen tang on tap thong minh cho hoc sinh khoi cap 01 va Tien Tieu hoc.'),
          ('lamviec', 'Phan mem lam viec', 'phan-mem-lam-viec', 'active', 'Bo cong cu phan mem phuc vu cong viec va tu dong hoa quy trinh.'),
+         ('map-pro', 'Phan Mem Quet Data Khach Hang Tren Google Map', 'phan-mem-quet-data-google-map', 'active', 'Tool quet du lieu doanh nghiep, dia diem tu Google Map, xuat Excel tu dong.'),
          ('app-cap12', 'Phan mem hoc tap khoi cap 12', 'phan-mem-hoc-tap-khoi-cap-12', 'active', 'San pham hoc tap khoi cap 12 gia test de kiem tra card va thanh toan.'),
          ('app-bloomia-pos', 'Bloomia Studio POS', 'bloomia-studio-pos', 'active', 'Phan mem ban hang va cap license rieng cho Bloomia Studio POS.'),
          ('app-ai-writing', 'AI Writing Coach', 'ai-writing-coach', 'coming_soon', 'Cong cu viet va sua bai theo ngu canh hoc tap va cong viec.')
@@ -25,7 +26,7 @@ async function seed() {
       `INSERT INTO products(id, app_id, name, cycle, price, currency, credits, active, fulfillment_mode, license_strategy)
        VALUES
          ('prod-test-2k', 'app-study-12', 'INTERNAL Sepay Test', 'one_time', 2000, 'VND', 1, FALSE, 'auto_license', 'legacy_hybrid'),
-         ('demo-map', 'lamviec', 'Phan Mem Quet Data Khach Hang Tren Google Map', 'one_time', 499000, 'VND', 3, TRUE, 'auto_license', 'legacy_hybrid'),
+         ('demo-map', 'map-pro', 'Phan Mem Quet Data Khach Hang Tren Google Map', 'one_time', 499000, 'VND', 0, TRUE, 'auto_license', 'inventory_key'),
          ('demo-hoc12', 'app-cap12', 'Phan mem hoc tap khoi cap 12', 'one_time', 2000, 'VND', 1, TRUE, 'auto_license', 'legacy_hybrid'),
          ('prod-bloomia-yearly', 'app-bloomia-pos', 'Bloomia Studio POS - Goi Nam', 'yearly', 990000, 'VND', 0, TRUE, 'auto_license', 'generated_machine'),
          ('prod-bloomia-lifetime', 'app-bloomia-pos', 'Bloomia Studio POS - Vinh vien', 'one_time', 2500000, 'VND', 0, TRUE, 'auto_license', 'generated_machine')

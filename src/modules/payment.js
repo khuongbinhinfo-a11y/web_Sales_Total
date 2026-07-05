@@ -17,15 +17,15 @@ function sanitizeMailboxAddress(value) {
   return String(angleMatch ? angleMatch[1] : raw).trim();
 }
 
-function resolveResendSenderProfile(purpose) {
+function resolveResendSenderProfile(purpose, config = env) {
   const normalizedPurpose = String(purpose || "").trim().toLowerCase();
-  const defaultAddress = sanitizeMailboxAddress(env.emailFromDefault);
-  const securityAddress = sanitizeMailboxAddress(env.emailFromSecurity) || defaultAddress;
-  const supportAddress = sanitizeMailboxAddress(env.emailFromSupport) || defaultAddress;
-  const quoteAddress = sanitizeMailboxAddress(env.emailFromQuotes) || defaultAddress;
-  const careerAddress = sanitizeMailboxAddress(env.emailFromCareers) || defaultAddress;
+  const defaultAddress = sanitizeMailboxAddress(config.emailFromDefault);
+  const securityAddress = sanitizeMailboxAddress(config.emailFromSecurity) || defaultAddress;
+  const supportAddress = sanitizeMailboxAddress(config.emailFromSupport) || defaultAddress;
+  const quoteAddress = sanitizeMailboxAddress(config.emailFromQuotes) || defaultAddress;
+  const careerAddress = sanitizeMailboxAddress(config.emailFromCareers) || defaultAddress;
 
-  if (normalizedPurpose.startsWith("admin_login:")) {
+  if (normalizedPurpose.startsWith("admin_login:") || normalizedPurpose === "admin_password_change") {
     return { displayName: `${BRAND_NAME} | Bảo mật`, address: securityAddress };
   }
 
@@ -52,13 +52,18 @@ function resolveResendSenderProfile(purpose) {
   return { displayName: BRAND_NAME, address: defaultAddress };
 }
 
-function resolveSupportReplyAddress() {
-  return sanitizeMailboxAddress(env.emailReplyTo) || sanitizeMailboxAddress(env.gmailNotifyFrom);
+function resolveSupportReplyAddress(config = env) {
+  return sanitizeMailboxAddress(config.emailReplyTo) || sanitizeMailboxAddress(config.gmailNotifyFrom);
 }
 
-function isResendNotifyEnabled() {
-  const defaultSender = resolveResendSenderProfile("default");
-  return env.resendEnabled && Boolean(env.resendApiKey) && Boolean(defaultSender.address);
+function isResendNotifyEnabled(config = env) {
+  const defaultSender = resolveResendSenderProfile("default", config);
+  return config.resendEnabled && Boolean(config.resendApiKey) && Boolean(defaultSender.address);
+}
+
+function canSendResendMessageForPurpose(purpose, config = env) {
+  const senderProfile = resolveResendSenderProfile(purpose, config);
+  return config.resendEnabled && Boolean(config.resendApiKey) && Boolean(senderProfile.address);
 }
 
 function getPaymentProviderMode() {
@@ -607,7 +612,7 @@ async function getGoogleAccessTokenByRefreshToken() {
 }
 
 async function sendGmailMessage({ subject, text, html, to, purpose = "default" }) {
-  if (isResendNotifyEnabled()) {
+  if (canSendResendMessageForPurpose(purpose)) {
     const resendResult = await sendResendMessage({ subject, text, html, to, purpose });
     if (resendResult.ok || !isGmailNotifyEnabled()) {
       return resendResult;
@@ -1342,6 +1347,7 @@ module.exports = {
   sendGmailMessage,
   isGmailNotifyEnabled,
   isResendNotifyEnabled,
+  canSendResendMessageForPurpose,
   sendTelegramMessage,
   isTelegramNotifyEnabled,
   isMockPaymentMode,

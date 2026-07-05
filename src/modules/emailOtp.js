@@ -2,7 +2,11 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { env } = require("../config/env");
 const { pool } = require("../db/pool");
-const { sendGmailMessage, isGmailNotifyEnabled, isResendNotifyEnabled } = require("./payment");
+const {
+  sendGmailMessage,
+  isGmailNotifyEnabled,
+  canSendResendMessageForPurpose
+} = require("./payment");
 
 const OTP_TTL_MINUTES = 10;
 const OTP_LENGTH = 6;
@@ -29,8 +33,12 @@ function generateOtpCode() {
   return String(Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
-function isEmailOtpConfigured() {
-  return Boolean(hasSmtpTransportConfig() || isResendNotifyEnabled() || isGmailNotifyEnabled());
+function isEmailOtpConfigured(purpose = "default", config = env) {
+  return Boolean(
+    (config === env && hasSmtpTransportConfig()) ||
+      canSendResendMessageForPurpose(purpose, config) ||
+      (config === env ? isGmailNotifyEnabled() : false)
+  );
 }
 
 function getTransporter() {
@@ -122,7 +130,7 @@ async function sendOtpEmail({ to, subject, text, purpose }) {
   const html = `<p>${text}</p>`;
   let emailApiFailureReason = "";
 
-  if (isResendNotifyEnabled() || isGmailNotifyEnabled()) {
+  if (canSendResendMessageForPurpose(purpose) || isGmailNotifyEnabled()) {
     try {
       const result = await sendGmailMessage({
         subject,
@@ -182,7 +190,7 @@ async function issueAndSendOtp({ email, purpose }) {
     throw err;
   }
 
-  if (!isEmailOtpConfigured()) {
+  if (!isEmailOtpConfigured(normalizedPurpose)) {
     const err = new Error("He thong email OTP chua duoc cau hinh");
     err.statusCode = 503;
     throw err;

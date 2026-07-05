@@ -1026,7 +1026,7 @@ function mapProductRow(row) {
     currency: row.currency,
     credits: Number(row.credits),
     active: row.active,
-    visibility: row.visibility,
+    visibility: row.visibility ?? "public",
     saleStatus: normalizeProductSaleStatus(row.sale_status),
     saleNote: String(row.sale_note || "").trim(),
     fulfillmentMode: normalizeFulfillmentMode(row.fulfillment_mode),
@@ -1495,6 +1495,64 @@ function generateReadableLicenseKey() {
   return `WSTL-${timePart}-${randomPart}`;
 }
 
+function isMapProAppId(appIdRaw) {
+  return normalizePublicAppId(appIdRaw) === "map-pro";
+}
+
+async function createManualProductKeyDelivery({ client, customerId, order, product, adminNote }) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const licenseKey = generateReadableLicenseKey();
+    try {
+      const insertedKey = await client.query(
+        `INSERT INTO product_keys(
+           id, product_id, key_value, status, delivered_order_id, updated_at
+         )
+         VALUES (
+           gen_random_uuid(), $1, $2, 'delivered', $3::uuid, NOW()
+         )
+         RETURNING id, key_value`,
+        [product.id, licenseKey, order.id]
+      );
+
+      const keyRow = insertedKey.rows[0];
+      await client.query(
+        `INSERT INTO order_key_deliveries(
+           id, order_id, product_id, key_id, delivered_to_customer, delivery_channel, delivered_payload
+         )
+         VALUES (
+           gen_random_uuid(), $1::uuid, $2, $3::uuid, $4, 'admin_manual_grant', $5::jsonb
+         )`,
+        [
+          order.id,
+          product.id,
+          keyRow.id,
+          customerId,
+          JSON.stringify({
+            keyValue: keyRow.key_value,
+            source: "manual_grant",
+            adminNote: adminNote || ""
+          })
+        ]
+      );
+
+      return {
+        licenseKey: keyRow.key_value,
+        expiresAt: null
+      };
+    } catch (error) {
+      const uniqueLicenseKeyConflict =
+        error?.code === "23505" &&
+        (String(error?.constraint || "").includes("key_value") ||
+          String(error?.detail || "").includes("key_value"));
+      if (!uniqueLicenseKeyConflict || attempt === 4) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error("Khong the tao product key thu cong");
+}
+
 function computeLicenseExpiry(cycle) {
   if (cycle === "monthly") {
     const endAt = new Date();
@@ -1544,7 +1602,7 @@ async function getOrderAppLicense(orderId) {
   return mapAppLicense(result.rows[0]);
 }
 
-async function issueAppLicenseForOrder({ client, order, product }) {
+async function issueAppLicenseForOrder({ client, order, product, forceNewLicense = false }) {
   const licenseStrategy = normalizeLicenseStrategy(product?.license_strategy || product?.licenseStrategy);
   if (licenseStrategy === "inventory_key") {
     return null;
@@ -1647,7 +1705,7 @@ async function issueAppLicenseForOrder({ client, order, product }) {
         : String(product?.cycle || "").trim().toLowerCase() || product.id)
     : product.id;
 
-  if (isBloomiaGeneratedLicense) {
+  if (isBloomiaGeneratedLicense && !forceNewLicense) {
     const existingBloomiaResult = await client.query(
       `SELECT id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
               status, activated_at, expires_at, device_id, device_name, last_verified_at,
@@ -1795,17 +1853,33 @@ async function getCatalog({ includeHidden = false, includeInactive = false } = {
   );
   const visibilityWhere = includeHidden ? "" : "AND visibility = 'public'";
   const activeWhere = includeInactive ? "" : "AND active = TRUE";
-  const productsResult = await pool.query(
-    `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
-            currency, credits, active, visibility, sale_status, sale_note,
-            fulfillment_mode, license_strategy, brand_code, duration_text, delivery_estimate,
-            delivery_field_schema, instruction_template, email_template
-     FROM products
-     WHERE 1 = 1
-       ${activeWhere}
-       ${visibilityWhere}
-     ORDER BY created_at ASC`
-  );
+
+  let productsResult;
+  try {
+    productsResult = await pool.query(
+      `SELECT id, app_id, name, cycle, price, compare_price, sale_price, sale_enabled, allow_coupon_stack,
+              currency, credits, active, visibility, sale_status, sale_note,
+              fulfillment_mode, license_strategy, brand_code, duration_text, delivery_estimate,
+              delivery_field_schema, instruction_template, email_template
+       FROM products
+       WHERE 1 = 1
+         ${activeWhere}
+         ${visibilityWhere}
+       ORDER BY created_at ASC`
+    );
+  } catch (err) {
+    if (err?.code === "42703") {
+      productsResult = await pool.query(
+        `SELECT id, app_id, name, cycle, price, currency, credits, active
+         FROM products
+         WHERE 1 = 1
+           ${activeWhere}
+         ORDER BY created_at ASC`
+      );
+    } else {
+      throw err;
+    }
+  }
 
   return {
     apps: appsResult.rows.map((row) => ({
@@ -3477,8 +3551,8 @@ async function verifyBloomiaLicense({ appId, activationToken, machineId, deviceN
       `UPDATE app_licenses
        SET status = 'active',
            last_verified_at = NOW(),
-           device_name = COALESCE($3, device_name),
-           metadata = $4::jsonb,
+           device_name = COALESCE($2, device_name),
+           metadata = $3::jsonb,
            updated_at = NOW()
        WHERE id = $1::uuid
        RETURNING id, customer_id, app_id, product_id, order_id, plan_code, billing_cycle, license_key,
@@ -3486,7 +3560,7 @@ async function verifyBloomiaLicense({ appId, activationToken, machineId, deviceN
                  activation_token_hash, machine_id, machine_name,
                  reset_count, last_reset_at, last_reset_reason, last_reset_by_admin,
                  metadata, created_at, updated_at`,
-      [existing.id, normalizedMachineId, normalizedDeviceName, JSON.stringify(nextMetadata)]
+      [existing.id, normalizedDeviceName, JSON.stringify(nextMetadata)]
     );
 
     const updated = mapAppLicense(updateResult.rows[0]);
@@ -4737,21 +4811,33 @@ async function registerAdminLoginFailureGuard({ ipAddress, username, windowMs, m
 async function clearAdminLoginFailureGuard({ ipAddress, username }) {
   const safeIp = normalizeGuardValue(ipAddress) || "unknown";
   const safeUsername = normalizeGuardValue(username);
+  const conditions = [
+    { dimension: "ip", subject: safeIp }
+  ];
 
-  if (!safeUsername) {
+  if (safeUsername) {
+    conditions.push(
+      { dimension: "username", subject: safeUsername },
+      { dimension: "pair", subject: guardPairSubject(safeIp, safeUsername) }
+    );
+  }
+
+  const dimensionSubjects = conditions.map((item) => [item.dimension, item.subject]).filter(([, subject]) => Boolean(subject));
+  if (!dimensionSubjects.length) {
     return;
   }
 
-  await pool.query(
-    `UPDATE admin_login_guards
-     SET fail_count = 0,
-         first_failed_at = NULL,
-         lock_until = NULL,
-         updated_at = NOW()
-     WHERE (dimension = 'username' AND subject = $1)
-        OR (dimension = 'pair' AND subject = $2)`,
-    [safeUsername, guardPairSubject(safeIp, safeUsername)]
-  );
+  for (const [dimension, subject] of dimensionSubjects) {
+    await pool.query(
+      `UPDATE admin_login_guards
+       SET fail_count = 0,
+           first_failed_at = NULL,
+           lock_until = NULL,
+           updated_at = NOW()
+       WHERE dimension = $1 AND subject = $2`,
+      [dimension, subject]
+    );
+  }
 }
 
 async function recordAdminLoginAudit({
@@ -4799,11 +4885,12 @@ async function recordAdminLoginAudit({
 }
 
 async function findAdminByUsername(username) {
+  const safeLogin = String(username || "").trim().toLowerCase();
   const result = await pool.query(
     `SELECT id, username, email, role, permissions, password_hash, is_active, created_by, created_at, last_login_at
      FROM admin_users
-     WHERE username = $1`,
-    [username]
+     WHERE LOWER(username) = $1 OR LOWER(email) = $1`,
+    [safeLogin]
   );
   if (result.rowCount === 0) {
     return null;
@@ -5180,7 +5267,7 @@ async function manualGrantLicense({ customerEmail, productId, adminNote }) {
       product_id: orderRow.product_id
     };
 
-    const license = await issueAppLicenseForOrder({ client, order, product });
+    const license = await issueAppLicenseForOrder({ client, order, product, forceNewLicense: true });
     if (!license) {
       throw createStoreError("San pham nay khong cap app license tu dong", 400);
     }

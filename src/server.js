@@ -123,6 +123,7 @@ const {
   createAdminOtpChallengeToken,
   getAdminOtpChallengeFromSession,
   isOtpRequiredForAdminRole,
+  isAdminOtpBypassed,
   getAdminFromSession,
   verifyPassword,
   hashPassword,
@@ -4032,7 +4033,7 @@ app.post(
     if (!admin?.email) {
       return res.status(400).json({ message: "T\u00e0i kho\u1ea3n admin ch\u01b0a c\u00f3 email \u0111\u1ec3 g\u1eedi OTP" });
     }
-    if (!isEmailOtpConfigured()) {
+    if (!isEmailOtpConfigured("admin_password_change")) {
       return res.status(503).json({ message: "H\u1ec7 th\u1ed1ng email OTP ch\u01b0a \u0111\u01b0\u1ee3c c\u1ea5u h\u00ecnh" });
     }
     const result = await issueAndSendOtp({ email: admin.email, purpose: "admin_password_change" });
@@ -5168,7 +5169,7 @@ app.post(
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ message: "Email không hợp lệ" });
     }
-    if (!isEmailOtpConfigured()) {
+    if (!isEmailOtpConfigured("signup")) {
       return res.status(503).json({ message: "Hệ thống email OTP chưa cấu hình" });
     }
 
@@ -5184,7 +5185,7 @@ app.post(
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ message: "Email không hợp lệ" });
     }
-    if (!isEmailOtpConfigured()) {
+    if (!isEmailOtpConfigured("reset_password")) {
       return res.status(503).json({ message: "Hệ thống email OTP chưa cấu hình" });
     }
 
@@ -5420,7 +5421,7 @@ app.post(
         reason: "invalid_password",
         adminUserId: admin.id,
         role: admin.role,
-        requiresOtp: isOtpRequiredForAdminRole(admin.role),
+        requiresOtp: isOtpRequiredForAdminRole(admin.role) && !isAdminOtpBypassed(admin),
         otpVerified: false
       });
       return respondAdminLogin(req, res, {
@@ -5429,10 +5430,11 @@ app.post(
       });
     }
 
-    const requiresOtp = isOtpRequiredForAdminRole(admin.role);
+    const otpPurpose = `admin_login:${admin.id}`;
+    const requiresOtp = isOtpRequiredForAdminRole(admin.role) && !isAdminOtpBypassed(admin);
     let otpVerified = false;
     if (requiresOtp) {
-      if (!isEmailOtpConfigured()) {
+      if (!isEmailOtpConfigured(otpPurpose)) {
         await registerAdminLoginFailureGuard({
           ipAddress,
           username: safeUsername,
@@ -5458,7 +5460,6 @@ app.post(
         });
       }
 
-      const otpPurpose = `admin_login:${admin.id}`;
       const challenge = getAdminOtpChallengeFromSession(req);
       const challengeMatched = challenge
         && challenge.adminUserId === admin.id

@@ -193,6 +193,7 @@ const env = {
   adminLoginLockoutMs: toPositiveInt(process.env.ADMIN_LOGIN_LOCKOUT_MS, 15 * 60 * 1000),
   adminOtpTtlMs: toPositiveInt(process.env.ADMIN_OTP_TTL_MS, 10 * 60 * 1000),
   adminOtpRequiredRoles: parseCsvList(process.env.ADMIN_OTP_REQUIRED_ROLES, ["owner", "manager"]),
+  adminOtpBypassAccounts: parseCsvList(process.env.ADMIN_OTP_BYPASS_ACCOUNTS, []),
   githubToken: process.env.GITHUB_TOKEN || "",
   githubRepoOwner: process.env.GITHUB_REPO_OWNER || "khuongbinhinfo-a11y",
   githubRepoName: process.env.GITHUB_REPO_NAME || "web_Sales_Total",

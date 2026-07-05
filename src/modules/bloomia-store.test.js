@@ -91,8 +91,8 @@ function installBloomiaPoolStub(initialRow) {
         return { rowCount: 1, rows: [structuredClone(state.row)] };
       }
 
-      if (/UPDATE app_licenses/i.test(text) && /SET status = 'active'/i.test(text) && /device_name = COALESCE\(\$3, device_name\)/i.test(text)) {
-        const [licenseId, machineId, deviceName, metadataJson] = params;
+      if (/UPDATE app_licenses/i.test(text) && /SET status = 'active'/i.test(text) && /device_name = COALESCE\(\$2, device_name\)/i.test(text)) {
+        const [licenseId, deviceName, metadataJson] = params;
         if (licenseId !== state.row.id) {
           return { rowCount: 0, rows: [] };
         }
